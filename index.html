@@ -132,21 +132,32 @@
   .bd-sub{color:var(--muted);font-size:11px;font-weight:500;margin-left:6px}
   .bd-empty{font-size:12px;color:var(--faint);padding:8px}
 
-  /* quadrant sliders */
-  .quad-wrap{display:grid;grid-template-columns:50px 1fr 110px;grid-template-rows:1fr 26px 22px;column-gap:6px;row-gap:4px;align-items:stretch}
-  .quad-svgwrap{grid-column:2;grid-row:1;min-width:0}
-  .quad-yctrl{grid-column:1;grid-row:1;display:flex;flex-direction:row;gap:2px;justify-content:center;align-items:stretch;min-height:300px}
-  .quad-yctrl .qsl-v{writing-mode:vertical-lr;direction:rtl;width:22px;height:100%;margin:0;padding:0;-webkit-appearance:slider-vertical;appearance:slider-vertical}
-  .quad-yval{grid-column:3;grid-row:1;font-size:10.5px;color:var(--muted);padding:6px 0 0 4px;line-height:1.35;align-self:start}
-  .quad-yval b{color:var(--ink);font-weight:650;display:block}
-  .quad-xctrl{grid-column:2;grid-row:2;display:flex;gap:8px;align-items:center}
-  .quad-xctrl .qsl{flex:1;margin:0;height:22px}
-  .quad-xval{grid-column:2;grid-row:3;font-size:10.5px;color:var(--muted);text-align:center}
-  .quad-xval b{color:var(--ink);font-weight:650}
-  .qsl{accent-color:var(--karrot)}
-  .quad-reset{grid-column:3;grid-row:2 / span 2;justify-self:start;align-self:start;padding:5px 11px;border-radius:7px;background:var(--surface-2);color:var(--muted);font-size:11px;font-weight:650;height:26px;white-space:nowrap}
+  /* quadrant + dual-thumb sliders pinned to plot area */
+  .quad-wrap{position:relative;display:flex;flex-direction:column;gap:6px}
+  /* svg wrap gets padding-left for y slider and padding-bottom for x slider */
+  .quad-svgwrap{position:relative;min-width:0;padding-left:28px;padding-bottom:26px;max-width:1208px;margin:0 auto;width:100%}
+  .quad-svgwrap svg.chart{display:block}
+  .dual{position:absolute;user-select:none;touch-action:none}
+  .dual .dtrk{position:absolute;background:var(--surface-2);border-radius:3px}
+  .dual .dfill{position:absolute;background:var(--karrot);border-radius:3px;opacity:.6}
+  .dual .dthb{position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;border:2.5px solid var(--karrot);box-shadow:0 1px 3px rgba(0,0,0,.22);z-index:2;transition:box-shadow .12s}
+  .dual .dthb.act,.dual .dthb:hover{box-shadow:0 2px 9px rgba(255,111,15,.5)}
+  /* X slider: aligned to plot horizontally — padding-left(28)+pad.l(66)=94 from left, pad.r(38) from right */
+  .dual-x{left:94px;right:38px;bottom:2px;height:20px;cursor:pointer}
+  .dual-x .dtrk{left:0;right:0;top:50%;height:5px;transform:translateY(-50%)}
+  .dual-x .dfill{top:50%;height:5px;transform:translateY(-50%)}
+  .dual-x .dthb{top:50%;transform:translate(-50%,-50%);cursor:ew-resize}
+  /* Y slider: aligned to plot vertically — pad.t(16) from top, padding-bottom(26)+pad.b(44)=70 from bottom */
+  .dual-y{left:4px;top:16px;bottom:70px;width:20px;cursor:pointer}
+  .dual-y .dtrk{top:0;bottom:0;left:50%;width:5px;transform:translateX(-50%)}
+  .dual-y .dfill{left:50%;width:5px;transform:translateX(-50%)}
+  .dual-y .dthb{left:50%;transform:translate(-50%,-50%);cursor:ns-resize}
+  /* value row */
+  .quad-rangerow{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);padding:2px 0;position:relative}
+  .quad-rangerow .qrv b{color:var(--ink);font-weight:650}
+  .quad-rangerow .qrv-k{color:var(--faint);font-weight:600;margin-right:4px}
+  .quad-reset{margin-left:auto;padding:4px 11px;border-radius:7px;background:var(--surface-2);color:var(--muted);font-size:11px;font-weight:650}
   .quad-reset:hover{background:var(--surface-3);color:var(--ink)}
-  @media(max-width:700px){.quad-wrap{grid-template-columns:1fr}.quad-yctrl,.quad-yval{display:none}.quad-xctrl,.quad-xval,.quad-reset{grid-column:1}}
   #quad circle.qb{cursor:pointer;transition:fill-opacity .12s}
   #quad circle.qb:hover{fill-opacity:.92!important}
   .dtog{display:flex;gap:5px;margin-bottom:12px}
@@ -296,12 +307,12 @@
         <div class="keyrow" id="keyrow"></div>
         <p class="qhint" id="qhint"></p>
         <div class="quad-wrap">
-          <div class="quad-yctrl"><input type="range" id="qyhi" class="qsl qsl-v" min="1" max="100" value="100" title="세로축 상한"><input type="range" id="qylo" class="qsl qsl-v" min="0" max="99" value="0" title="세로축 하한"></div>
-          <div class="quad-svgwrap"><svg class="chart" id="quad"></svg></div>
-          <div class="quad-yval" id="qyv"></div>
-          <div class="quad-xctrl"><input type="range" id="qxlo" class="qsl" min="0" max="99" value="0" title="가로축 하한"><input type="range" id="qxhi" class="qsl" min="1" max="100" value="100" title="가로축 상한"></div>
-          <div class="quad-xval" id="qxv"></div>
-          <button class="quad-reset" id="qrst" type="button" title="전체 범위로">↻ 전체</button>
+          <div class="quad-svgwrap" id="qsvgwrap">
+            <svg class="chart" id="quad"></svg>
+            <div class="dual dual-x" id="qxRange"><div class="dtrk"></div><div class="dfill"></div><div class="dthb" data-h="lo"></div><div class="dthb" data-h="hi"></div></div>
+            <div class="dual dual-y" id="qyRange"><div class="dtrk"></div><div class="dfill"></div><div class="dthb" data-h="lo"></div><div class="dthb" data-h="hi"></div></div>
+          </div>
+          <div class="quad-rangerow"><span class="qrv" id="qxv"></span><span class="qrv" id="qyv"></span><button class="quad-reset" id="qrst" type="button" title="전체 범위로">↻ 전체</button></div>
         </div>
         <div class="qnote" id="qnote"></div>
         <div class="twocol" style="margin-top:22px">
@@ -2493,7 +2504,9 @@ function renderKeyrow(ds){const L=ds.L,a=ds.agg,tiles=[];
 /* quadrant */
 let qView={xlo:0,xhi:100,ylo:0,yhi:100};
 function renderQuad(ds){const L=ds.L,S=ds.S,svg=$("#quad");
-  const W=Math.max(360,Math.min((svg.parentElement&&svg.parentElement.clientWidth)||760,1180)),H=400,pad={l:66,r:38,t:16,b:44};
+  const par=svg.parentElement,parW=par?par.clientWidth:760;
+  const cs=par?getComputedStyle(par):null,padL=cs?parseFloat(cs.paddingLeft)||0:0;
+  const W=Math.max(360,Math.min(parW-padL,1180)),H=400,pad={l:66,r:38,t:16,b:44};
   svg.setAttribute("width",W);svg.setAttribute("height",H);svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   const ec=S.goodCol,dir=S.goodDir;let pts=ds.agg.filter(e=>e.비용>0&&e[ec]!=null&&(e[S.volCol]||0)>=Math.max(1,minVol(L)/3));
   pts.sort((a,b)=>b.비용-a.비용);const CAP=L.key==="ad"?70:160,capped=pts.length>CAP;pts=pts.slice(0,CAP);
@@ -2504,8 +2517,8 @@ function renderQuad(ds){const L=ds.L,S=ds.S,svg=$("#quad");
   const xmin=qView.xlo/100*xFull,xmax=Math.max(xmin+xFull*0.02,qView.xhi/100*xFull);
   const ymin=qView.ylo/100*yFull,ymax=Math.max(ymin+yFull*0.02,qView.yhi/100*yFull);
   const yfmt=v=>S.goodFmt==="pct"?fmtPct(v):fmtWon(v);
-  $("#qxv").innerHTML=`광고비<br><b>${fmtKRW(xmin)} – ${fmtKRW(xmax)}</b>`;
-  $("#qyv").innerHTML=`${S.goodLabel}<br><b>${yfmt(ymin)} – ${yfmt(ymax)}</b>`;
+  $("#qxv").innerHTML=`<span class="qrv-k">광고비</span><b>${fmtKRW(xmin)} – ${fmtKRW(xmax)}</b>`;
+  $("#qyv").innerHTML=`<span class="qrv-k">${S.goodLabel}</span><b>${yfmt(ymin)} – ${yfmt(ymax)}</b>`;
   const vpts=pts.filter(p=>p.비용>=xmin&&p.비용<=xmax&&p[ec]>=ymin&&p[ec]<=ymax);
   if(!vpts.length){svg.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="var(--faint)" font-size="12">선택한 범위에 포인트 없음 · 슬라이더를 조정해 보세요</text>`;$("#qnote").innerHTML="";return;}
   const vmax=Math.max(...vpts.map(p=>p[S.volCol]||0))||1;
@@ -2734,19 +2747,37 @@ $("#table tbody").addEventListener("click",e=>{const tr=e.target.closest("tr");i
 let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{if(active&&DATASETS[active]){renderQuad(DATASETS[active]);renderTrend(DATASETS[active]);}const inner=document.querySelector(".isle"),sc=document.querySelector(".tbl-scroll");if(inner&&sc)inner.style.width=sc.clientWidth+"px";},140);});
 
 function _qRender(){if(active&&DATASETS[active])renderQuad(DATASETS[active]);}
-function _qSyncFromUI(){
-  let xlo=+$("#qxlo").value,xhi=+$("#qxhi").value,ylo=+$("#qylo").value,yhi=+$("#qyhi").value;
-  if(xlo>=xhi)xlo=xhi-1;if(ylo>=yhi)ylo=yhi-1;
-  $("#qxlo").value=xlo;$("#qxhi").value=xhi;$("#qylo").value=ylo;$("#qyhi").value=yhi;
-  qView={xlo,xhi,ylo,yhi};_qRender();}
-["qxlo","qxhi","qylo","qyhi"].forEach(id=>{const el=$("#"+id);if(el)el.addEventListener("input",_qSyncFromUI);});
-$("#qrst").addEventListener("click",()=>{qView={xlo:0,xhi:100,ylo:0,yhi:100};
-  $("#qxlo").value=0;$("#qxhi").value=100;$("#qylo").value=0;$("#qyhi").value=100;_qRender();});
-const _origSetActive=setActive;setActive=function(k){qView={xlo:0,xhi:100,ylo:0,yhi:100};
-  ["qxlo","qylo"].forEach(id=>{const e=$("#"+id);if(e)e.value=0;});
-  ["qxhi","qyhi"].forEach(id=>{const e=$("#"+id);if(e)e.value=100;});
-  _origSetActive(k);};
+function setupDual(rootId,vertical,getQ,setQ){const el=$("#"+rootId);
+  const fill=el.querySelector(".dfill"),thumbs=[...el.querySelectorAll(".dthb")];
+  const t=h=>thumbs.find(x=>x.dataset.h===h);
+  function paint(){const q=getQ();
+    if(vertical){const lo=q.lo+"%",hi=q.hi+"%";
+      t("lo").style.top=(100-q.lo)+"%";t("hi").style.top=(100-q.hi)+"%";
+      fill.style.top=(100-q.hi)+"%";fill.style.bottom=q.lo+"%";}
+    else{t("lo").style.left=q.lo+"%";t("hi").style.left=q.hi+"%";
+      fill.style.left=q.lo+"%";fill.style.right=(100-q.hi)+"%";}}
+  function fracFromEvent(e){const r=el.getBoundingClientRect();
+    if(vertical){const f=(e.clientY-r.top)/r.height;return Math.max(0,Math.min(1,1-f));}
+    const f=(e.clientX-r.left)/r.width;return Math.max(0,Math.min(1,f));}
+  let drag=null;
+  function down(e){e.preventDefault();const tg=e.target.closest(".dthb");
+    if(tg){drag=tg.dataset.h;tg.classList.add("act");}
+    else{const pct=fracFromEvent(e)*100,q=getQ();drag=Math.abs(pct-q.lo)<Math.abs(pct-q.hi)?"lo":"hi";t(drag).classList.add("act");}
+    move(e);window.addEventListener("pointermove",move);window.addEventListener("pointerup",up);}
+  function move(e){if(!drag)return;const pct=Math.round(fracFromEvent(e)*100),q={...getQ()};
+    if(drag==="lo")q.lo=Math.min(pct,q.hi-1);else q.hi=Math.max(pct,q.lo+1);
+    setQ(q);paint();}
+  function up(){if(drag)t(drag).classList.remove("act");drag=null;
+    window.removeEventListener("pointermove",move);window.removeEventListener("pointerup",up);}
+  el.addEventListener("pointerdown",down);
+  return{paint,reset:()=>{const q=getQ();q.lo=0;q.hi=100;setQ(q);paint();}};}
+const _qxRange=setupDual("qxRange",false,()=>({lo:qView.xlo,hi:qView.xhi}),q=>{qView.xlo=q.lo;qView.xhi=q.hi;_qRender();});
+const _qyRange=setupDual("qyRange",true,()=>({lo:qView.ylo,hi:qView.yhi}),q=>{qView.ylo=q.lo;qView.yhi=q.hi;_qRender();});
+function _qResetRanges(){qView={xlo:0,xhi:100,ylo:0,yhi:100};_qxRange.paint();_qyRange.paint();}
+$("#qrst").addEventListener("click",()=>{_qResetRanges();_qRender();});
+const _origSetActive=setActive;setActive=function(k){_qResetRanges();_origSetActive(k);};
 renderGlossary();renderFooter();loadEmbedded();refreshAll();
+_qxRange.paint();_qyRange.paint();
 </script>
 </body>
 </html>
