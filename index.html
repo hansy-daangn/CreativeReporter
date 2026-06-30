@@ -160,9 +160,14 @@
   .quad-reset:hover{background:var(--surface-3);color:var(--ink)}
   #quad circle.qb{cursor:pointer;transition:fill-opacity .12s}
   #quad circle.qb:hover{fill-opacity:.92!important}
-  .dtog{display:flex;gap:5px;margin-bottom:12px}
+  .dtog{display:flex;gap:5px;flex-wrap:wrap}
   .dtog button{padding:4px 11px;border-radius:7px;background:var(--surface-2);color:var(--muted);font-size:11.5px;font-weight:600}
+  .dtog button:hover{color:var(--ink)}
   .dtog button.on{background:var(--ink);color:#fff}
+  .bd-tog-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .bd-tog-row .bd-tog-lab{font-size:10px;color:var(--faint);font-weight:700;letter-spacing:.06em;text-transform:uppercase;flex:0 0 auto;width:34px}
+  .bd-tog-row + .bd-tog-row{margin-top:-2px}
+  #bd{margin-top:6px}
 
   /* table */
   .tbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
@@ -317,7 +322,10 @@
         <div class="qnote" id="qnote"></div>
         <div class="twocol" style="margin-top:22px">
           <div><div class="sub-h" style="margin-top:0">주차별 추세</div><div style="position:relative"><svg class="chart" id="trend"></svg></div><div class="leg" id="trendLeg"></div></div>
-          <div id="bdWrap"><div class="sub-h" id="bdTitle" style="margin-top:0">분류별 비교</div><div class="dtog" id="dtog"></div><div id="bd"></div></div>
+          <div id="bdWrap"><div class="sub-h" id="bdTitle" style="margin-top:0">분류별 비교</div>
+            <div class="bd-tog-row"><span class="bd-tog-lab">분류</span><div class="dtog" id="dtog"></div></div>
+            <div class="bd-tog-row"><span class="bd-tog-lab">지표</span><div class="dtog" id="mtogBd"></div></div>
+            <div id="bd"></div></div>
         </div>
       </section>
 
@@ -2563,43 +2571,54 @@ function renderTrend(ds){const svg=$("#trend"),L=ds.L,S=ds.S;
   svg.innerHTML=s;$("#trendLeg").innerHTML=`<span><i style="background:var(--karrot)"></i>광고비</span><span><i style="background:var(--c2)"></i>${L.hasConv?S.goodLabel:"CPC"} (낮을수록 좋음)</span>`;
   svg.querySelectorAll(".tp").forEach(c=>{c.addEventListener("mousemove",e=>{const i=+c.dataset.i,w=wk[i];showTip(`<b>${WEEKS[i].slice(5).replace("-","/")} 주</b><br><span class="t-k">광고비</span> ${fmtWon(w.비용)}<br><span class="t-k">${L.hasConv?S.goodLabel:"CPC"}</span> ${eff[i]!=null?fmtWon(eff[i]):"–"}`,e.clientX,e.clientY);});c.addEventListener("mouseleave",hideTip);});}
 
-/* breakdown — dimension toggle (format / size / service) */
-let bdDim=null;
+/* breakdown — dimension + metric segments */
+let bdDim=null,bdMet=null;
+const BD_METRICS=[
+  {k:"eCPI",lab:"eCPI",dir:-1,fmt:fmtWon,help:"낮을수록 좋음",conv:true},
+  {k:"eCPA",lab:"활성 eCPA",dir:-1,fmt:fmtWon,help:"낮을수록 좋음",conv:true},
+  {k:"CPC",lab:"CPC",dir:-1,fmt:fmtWon,help:"낮을수록 좋음"},
+  {k:"CTR",lab:"CTR",dir:1,fmt:fmtPct,help:"높을수록 좋음"},
+  {k:"CPM",lab:"CPM",dir:-1,fmt:fmtWon,help:"낮을수록 좋음"},
+];
 function renderBreakdown(ds){const L=ds.L,a=ds.agg;
   const cand=[["포맷","fo"],["사이즈","size"],["서비스","ve"]].filter(([,k])=>new Set(a.filter(e=>e.tags[k]).map(e=>e.tags[k])).size>=2);
   if(!cand.length){$("#bdWrap").style.display="none";return;}$("#bdWrap").style.display="";
   if(!bdDim||!cand.find(d=>d[1]===bdDim))bdDim=cand[0][1];
   $("#dtog").innerHTML=cand.map(([lab,k])=>`<button data-d="${k}" class="${k===bdDim?"on":""}">${lab}</button>`).join("");
   $$("#dtog button").forEach(b=>b.onclick=()=>{bdDim=b.dataset.d;renderBreakdown(ds);});
+  const mets=BD_METRICS.filter(m=>!m.conv||L.hasConv);
+  if(!bdMet||!mets.find(m=>m.k===bdMet))bdMet=L.key==="cg"?"CTR":"eCPI";
+  const primary=mets.find(m=>m.k===bdMet)||mets[0];
+  $("#mtogBd").innerHTML=mets.map(m=>`<button data-m="${m.k}" class="${m.k===bdMet?"on":""}">${m.lab}</button>`).join("");
+  $$("#mtogBd button").forEach(b=>b.onclick=()=>{bdMet=b.dataset.m;renderBreakdown(ds);});
   const dimLab=(cand.find(d=>d[1]===bdDim)||cand[0])[0];
-  let primary,primaryDir,primaryFmt,primaryLab,primaryHelp;
-  if(L.key==="cg"){primary="CTR";primaryDir=1;primaryFmt=fmtPct;primaryLab="CTR";primaryHelp="높을수록 좋음";}
-  else{primary="eCPI";primaryDir=-1;primaryFmt=fmtWon;primaryLab="eCPI";primaryHelp="낮을수록 좋음";}
-  $("#bdTitle").innerHTML=`${dimLab}별 비교<span class="bd-sub">· 기준 ${primaryLab} (${primaryHelp})</span>`;
+  $("#bdTitle").innerHTML=`${dimLab}별 비교<span class="bd-sub">· 기준 ${primary.lab} (${primary.help})</span>`;
   const g={};a.forEach(e=>{const k=e.tags[bdDim];if(!k)return;(g[k]=g[k]||[]).push(e);});
   let rows=Object.entries(g).map(([k,arr])=>{const sum=c=>arr.reduce((s,e)=>s+(e[c]||0),0);
     const 비용=sum("비용"),노출=sum("노출 수"),클릭=sum("클릭 수"),어트리뷰션=sum("어트리뷰션 수"),활성=sum("활성 유저 수");
-    return{k,n:arr.length,비용,
+    return{k,n:arr.length,비용,노출,클릭,어트리뷰션,활성,
       CPC:클릭>0?비용/클릭:null, CTR:노출>0?클릭/노출:null,
-      eCPI:어트리뷰션>0?비용/어트리뷰션:null, eCPA:활성>0?비용/활성:null};}).filter(r=>r[primary]!=null);
-  rows.sort((x,y)=>primaryDir>0?y[primary]-x[primary]:x[primary]-y[primary]);
+      CPM:노출>0?비용/노출*1000:null,
+      eCPI:어트리뷰션>0?비용/어트리뷰션:null, eCPA:활성>0?비용/활성:null};}).filter(r=>r[primary.k]!=null&&r[primary.k]>0);
+  rows.sort((x,y)=>primary.dir>0?y[primary.k]-x[primary.k]:x[primary.k]-y[primary.k]);
   if(bdDim==="size")rows=rows.slice(0,8);
-  if(!rows.length){$("#bd").innerHTML=`<div class="bd-empty">${primaryLab} 비교 가능한 데이터 없음</div>`;return;}
-  const vals=rows.map(r=>r[primary]),vMin=Math.min(...vals),vMax=Math.max(...vals),span=vMax-vMin;
+  if(!rows.length){$("#bd").innerHTML=`<div class="bd-empty">${primary.lab} 비교 가능한 그룹이 없음 (값이 0이거나 측정값 없음)</div>`;return;}
+  const vals=rows.map(r=>r[primary.k]),vMin=Math.min(...vals),vMax=Math.max(...vals),span=vMax-vMin;
   $("#bd").innerHTML=`<div class="bd">`+rows.map((r,i)=>{
-    const goodness=span===0?1:(primaryDir>0?(r[primary]-vMin)/span:(vMax-r[primary])/span);
+    const goodness=span===0?1:(primary.dir>0?(r[primary.k]-vMin)/span:(vMax-r[primary.k])/span);
     const widthPct=18+goodness*82;
     const barCls=i===0?"best":(rows.length>=3&&i===rows.length-1?"worst":"");
     const tag=i===0?'<span class="bd-tag good">최고</span>':(rows.length>=3&&i===rows.length-1?'<span class="bd-tag bad">최저</span>':'');
     const m=[];
-    if(L.hasConv){if(r.eCPI!=null)m.push(`eCPI <b>${fmtWon(r.eCPI)}</b>`);if(r.eCPA!=null)m.push(`eCPA <b>${fmtWon(r.eCPA)}</b>`);}
-    if(r.CPC!=null)m.push(`CPC <b>${fmtWon(r.CPC)}</b>`);
-    if(r.CTR!=null)m.push(`CTR <b>${fmtPct(r.CTR)}</b>`);
+    if(L.hasConv){if(r.eCPI!=null&&r.eCPI>0)m.push(`eCPI <b>${fmtWon(r.eCPI)}</b>`);if(r.eCPA!=null&&r.eCPA>0)m.push(`eCPA <b>${fmtWon(r.eCPA)}</b>`);}
+    if(r.CPC!=null&&r.CPC>0)m.push(`CPC <b>${fmtWon(r.CPC)}</b>`);
+    if(r.CTR!=null&&r.CTR>0)m.push(`CTR <b>${fmtPct(r.CTR)}</b>`);
+    if(r.CPM!=null&&r.CPM>0)m.push(`CPM <b>${fmtWon(r.CPM)}</b>`);
     m.push(`<span class="bd-cost">광고비 ${fmtKRW(r.비용)}원</span>`);
     return `<div class="bd-row">
       <div class="lab">${r.k}<span class="bd-n">${r.n}</span>${tag}</div>
       <div class="bd-bar ${barCls}"><i style="width:${widthPct.toFixed(1)}%"></i></div>
-      <div class="bd-pri num"><span class="bd-pri-k">${primaryLab}</span><b>${primaryFmt(r[primary])}</b></div>
+      <div class="bd-pri num"><span class="bd-pri-k">${primary.lab}</span><b>${primary.fmt(r[primary.k])}</b></div>
       <div class="bd-metrics">${m.join(" · ")}</div>
     </div>`;}).join("")+`</div>`;}
 
@@ -2704,7 +2723,7 @@ function show(ds){scope(ds);
   requestAnimationFrame(()=>{renderQuad(ds);renderTrend(ds);renderBreakdown(ds);
     requestAnimationFrame(()=>{renderTlegend();renderTable(ds);});});}
 function setActive(k){if(!DATASETS[k])return;active=k;
-  bdDim=null;tableShowAll=false;tState={sort:"score",dir:-1,q:""};
+  bdDim=null;bdMet=null;tableShowAll=false;tState={sort:"score",dir:-1,q:""};
   if($("#search"))$("#search").value="";if($("#showAll"))$("#showAll").checked=false;
   renderSeg();show(DATASETS[k]);}
 function renderSeg(){$("#seg").innerHTML=TAB_ORDER.filter(k=>DATASETS[k]).map(k=>{const L=LEVELS[k];return `<button role="tab" data-k="${k}" class="${k===active?"on":""}">${L.name}<span class="sc">${DATASETS[k].aggAll.length}</span></button>`;}).join("");$$("#seg button").forEach(b=>b.onclick=()=>setActive(b.dataset.k));}
@@ -2715,7 +2734,7 @@ function loadEmbedded(){const el=document.getElementById("csv-ad");if(!el)return
   const raw=el.textContent.trim();if(!raw||raw.startsWith("__CSV"))return;
   const r=parseCSV(raw);setWeeksFromDatasets(r.data);
   ingest(r.headers,r.data,"내장 샘플");}
-function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;bdDim=null;tableShowAll=false;
+function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;bdDim=null;bdMet=null;tableShowAll=false;
   tState={sort:"score",dir:-1,q:""};ISLE.name=null;ISLE.metric=null;
   const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
 function handleFiles(files){const arr=[...files];let pending=arr.length;if(!pending)return;
