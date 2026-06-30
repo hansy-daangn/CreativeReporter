@@ -113,12 +113,42 @@
   @media(max-width:760px){.twocol{grid-template-columns:1fr}}
   .leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:6px}
   .leg span{display:inline-flex;align-items:center;gap:5px}.leg i{width:10px;height:10px;border-radius:3px}
-  .bd{display:grid;gap:9px}
-  .bd-row{display:grid;grid-template-columns:96px 1fr auto;gap:10px;align-items:center;font-size:12px}
-  .bd-row .lab{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .bd-bar{height:18px;border-radius:5px;background:var(--surface-2);overflow:hidden}
-  .bd-bar i{display:block;height:100%;border-radius:5px;background:var(--karrot)}
-  .bd-row .val{color:var(--muted);font-size:11px;white-space:nowrap}
+  .bd{display:grid;gap:14px}
+  .bd-row{display:grid;grid-template-columns:130px 1fr 130px;column-gap:12px;row-gap:4px;align-items:center;font-size:12px}
+  .bd-row .lab{font-weight:650;display:flex;align-items:center;gap:6px;flex-wrap:wrap;overflow:hidden}
+  .bd-row .lab .bd-n{font-size:10.5px;color:var(--faint);font-weight:500;background:var(--surface-3);padding:0 6px;border-radius:5px}
+  .bd-row .lab .bd-tag{font-size:9.5px;font-weight:800;padding:1px 5px;border-radius:4px;letter-spacing:.02em}
+  .bd-row .lab .bd-tag.good{color:var(--g1);background:var(--g1-f)}
+  .bd-row .lab .bd-tag.bad{color:var(--w2);background:var(--w2-f)}
+  .bd-bar{height:14px;border-radius:5px;background:var(--surface-2);overflow:hidden}
+  .bd-bar i{display:block;height:100%;border-radius:5px;background:var(--karrot);transition:width .22s}
+  .bd-bar.best i{background:var(--g1)} .bd-bar.worst i{background:var(--w2)}
+  .bd-pri{font-size:12px;text-align:right;white-space:nowrap;color:var(--ink)}
+  .bd-pri .bd-pri-k{color:var(--faint);font-size:10.5px;margin-right:3px;font-weight:600}
+  .bd-pri b{font-weight:740;font-size:13px}
+  .bd-metrics{grid-column:1 / -1;font-size:11px;color:var(--muted);padding-left:0;line-height:1.5}
+  .bd-metrics b{color:var(--ink);font-weight:650}
+  .bd-metrics .bd-cost{color:var(--faint);font-size:10.5px;margin-left:6px}
+  .bd-sub{color:var(--muted);font-size:11px;font-weight:500;margin-left:6px}
+  .bd-empty{font-size:12px;color:var(--faint);padding:8px}
+
+  /* quadrant sliders */
+  .quad-wrap{display:grid;grid-template-columns:50px 1fr 110px;grid-template-rows:1fr 26px 22px;column-gap:6px;row-gap:4px;align-items:stretch}
+  .quad-svgwrap{grid-column:2;grid-row:1;min-width:0}
+  .quad-yctrl{grid-column:1;grid-row:1;display:flex;flex-direction:row;gap:2px;justify-content:center;align-items:stretch;min-height:300px}
+  .quad-yctrl .qsl-v{writing-mode:vertical-lr;direction:rtl;width:22px;height:100%;margin:0;padding:0;-webkit-appearance:slider-vertical;appearance:slider-vertical}
+  .quad-yval{grid-column:3;grid-row:1;font-size:10.5px;color:var(--muted);padding:6px 0 0 4px;line-height:1.35;align-self:start}
+  .quad-yval b{color:var(--ink);font-weight:650;display:block}
+  .quad-xctrl{grid-column:2;grid-row:2;display:flex;gap:8px;align-items:center}
+  .quad-xctrl .qsl{flex:1;margin:0;height:22px}
+  .quad-xval{grid-column:2;grid-row:3;font-size:10.5px;color:var(--muted);text-align:center}
+  .quad-xval b{color:var(--ink);font-weight:650}
+  .qsl{accent-color:var(--karrot)}
+  .quad-reset{grid-column:3;grid-row:2 / span 2;justify-self:start;align-self:start;padding:5px 11px;border-radius:7px;background:var(--surface-2);color:var(--muted);font-size:11px;font-weight:650;height:26px;white-space:nowrap}
+  .quad-reset:hover{background:var(--surface-3);color:var(--ink)}
+  @media(max-width:700px){.quad-wrap{grid-template-columns:1fr}.quad-yctrl,.quad-yval{display:none}.quad-xctrl,.quad-xval,.quad-reset{grid-column:1}}
+  #quad circle.qb{cursor:pointer;transition:fill-opacity .12s}
+  #quad circle.qb:hover{fill-opacity:.92!important}
   .dtog{display:flex;gap:5px;margin-bottom:12px}
   .dtog button{padding:4px 11px;border-radius:7px;background:var(--surface-2);color:var(--muted);font-size:11.5px;font-weight:600}
   .dtog button.on{background:var(--ink);color:#fff}
@@ -265,7 +295,14 @@
         <div class="card-h"><h2>분석</h2></div>
         <div class="keyrow" id="keyrow"></div>
         <p class="qhint" id="qhint"></p>
-        <div style="position:relative"><svg class="chart" id="quad"></svg></div>
+        <div class="quad-wrap">
+          <div class="quad-yctrl"><input type="range" id="qyhi" class="qsl qsl-v" min="1" max="100" value="100" title="세로축 상한"><input type="range" id="qylo" class="qsl qsl-v" min="0" max="99" value="0" title="세로축 하한"></div>
+          <div class="quad-svgwrap"><svg class="chart" id="quad"></svg></div>
+          <div class="quad-yval" id="qyv"></div>
+          <div class="quad-xctrl"><input type="range" id="qxlo" class="qsl" min="0" max="99" value="0" title="가로축 하한"><input type="range" id="qxhi" class="qsl" min="1" max="100" value="100" title="가로축 상한"></div>
+          <div class="quad-xval" id="qxv"></div>
+          <button class="quad-reset" id="qrst" type="button" title="전체 범위로">↻ 전체</button>
+        </div>
         <div class="qnote" id="qnote"></div>
         <div class="twocol" style="margin-top:22px">
           <div><div class="sub-h" style="margin-top:0">주차별 추세</div><div style="position:relative"><svg class="chart" id="trend"></svg></div><div class="leg" id="trendLeg"></div></div>
@@ -2454,27 +2491,47 @@ function renderKeyrow(ds){const L=ds.L,a=ds.agg,tiles=[];
   $("#keyrow").innerHTML=tiles.slice(0,3).map(t=>`<div class="ktile ${t.cls}"><div class="kt-k">${ICON[t.ic]||""}${t.k}</div><div class="kt-v">${t.v}</div><div class="kt-s">${t.s}</div></div>`).join("");}
 
 /* quadrant */
+let qView={xlo:0,xhi:100,ylo:0,yhi:100};
 function renderQuad(ds){const L=ds.L,S=ds.S,svg=$("#quad");
   const W=Math.max(360,Math.min((svg.parentElement&&svg.parentElement.clientWidth)||760,1180)),H=400,pad={l:66,r:38,t:16,b:44};
   svg.setAttribute("width",W);svg.setAttribute("height",H);svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   const ec=S.goodCol,dir=S.goodDir;let pts=ds.agg.filter(e=>e.비용>0&&e[ec]!=null&&(e[S.volCol]||0)>=Math.max(1,minVol(L)/3));
   pts.sort((a,b)=>b.비용-a.비용);const CAP=L.key==="ad"?70:160,capped=pts.length>CAP;pts=pts.slice(0,CAP);
-  $("#qhint").textContent=`효율 지도 — 가로축 광고비, 세로축 ${S.goodLabel}(${S.goodHelp}), 원 크기 ${L.volLab}${capped?` · 광고비 상위 ${CAP}`:""}`;
-  if(pts.length<3){svg.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="var(--faint)" font-size="13">지도를 그릴 데이터가 부족합니다</text>`;$("#qnote").innerHTML="";return;}
-  const xs=pts.map(p=>p.비용),ys=pts.map(p=>p[ec]),xmax=Math.max(...xs)*1.12,ymax=Math.max(...ys)*1.1;
-  const xmed=quantile([...xs].sort((a,b)=>a-b),0.5),ymed=quantile([...ys].sort((a,b)=>a-b),0.5),vmax=Math.max(...pts.map(p=>p[S.volCol]||0))||1;
-  const X=v=>pad.l+(v/xmax)*(W-pad.l-pad.r),Y=v=>H-pad.b-(v/ymax)*(H-pad.t-pad.b),R=v=>4+Math.sqrt((v||0)/vmax)*16;
+  $("#qhint").textContent=`효율 지도 — 가로축 광고비, 세로축 ${S.goodLabel}(${S.goodHelp}), 원 크기 ${L.volLab}${capped?` · 광고비 상위 ${CAP}`:""} · 원을 클릭하면 아래 표에서 상세를 엽니다`;
+  if(pts.length<3){svg.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="var(--faint)" font-size="13">지도를 그릴 데이터가 부족합니다</text>`;$("#qnote").innerHTML="";$("#qxv").textContent="";$("#qyv").innerHTML="";return;}
+  const xs=pts.map(p=>p.비용),ys=pts.map(p=>p[ec]);
+  const xFull=Math.max(...xs)*1.12,yFull=Math.max(...ys)*1.1;
+  const xmin=qView.xlo/100*xFull,xmax=Math.max(xmin+xFull*0.02,qView.xhi/100*xFull);
+  const ymin=qView.ylo/100*yFull,ymax=Math.max(ymin+yFull*0.02,qView.yhi/100*yFull);
+  const yfmt=v=>S.goodFmt==="pct"?fmtPct(v):fmtWon(v);
+  $("#qxv").innerHTML=`광고비<br><b>${fmtKRW(xmin)} – ${fmtKRW(xmax)}</b>`;
+  $("#qyv").innerHTML=`${S.goodLabel}<br><b>${yfmt(ymin)} – ${yfmt(ymax)}</b>`;
+  const vpts=pts.filter(p=>p.비용>=xmin&&p.비용<=xmax&&p[ec]>=ymin&&p[ec]<=ymax);
+  if(!vpts.length){svg.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="var(--faint)" font-size="12">선택한 범위에 포인트 없음 · 슬라이더를 조정해 보세요</text>`;$("#qnote").innerHTML="";return;}
+  const vmax=Math.max(...vpts.map(p=>p[S.volCol]||0))||1;
+  const sxs=vpts.map(p=>p.비용).sort((a,b)=>a-b),sys=vpts.map(p=>p[ec]).sort((a,b)=>a-b);
+  const xmed=quantile(sxs,0.5),ymed=quantile(sys,0.5);
+  const X=v=>pad.l+((v-xmin)/(xmax-xmin))*(W-pad.l-pad.r),Y=v=>H-pad.b-((v-ymin)/(ymax-ymin))*(H-pad.t-pad.b),R=v=>4+Math.sqrt((v||0)/vmax)*16;
   let s=`<g class="axis">`;
-  for(let i=0;i<=4;i++){const gx=pad.l+i/4*(W-pad.l-pad.r);s+=`<line class="gl" x1="${gx}" y1="${pad.t}" x2="${gx}" y2="${H-pad.b}"/><text x="${gx}" y="${H-pad.b+16}" text-anchor="middle">${fmtKRW(i/4*xmax)}</text>`;}
-  for(let i=0;i<=4;i++){const gy=H-pad.b-i/4*(H-pad.t-pad.b);s+=`<line class="gl" x1="${pad.l}" y1="${gy}" x2="${W-pad.r}" y2="${gy}"/><text x="${pad.l-8}" y="${gy+3}" text-anchor="end">${S.goodFmt==="pct"?fmtPct(i/4*ymax):fmtWon(i/4*ymax)}</text>`;}
+  for(let i=0;i<=4;i++){const gx=pad.l+i/4*(W-pad.l-pad.r),xv=xmin+i/4*(xmax-xmin);s+=`<line class="gl" x1="${gx}" y1="${pad.t}" x2="${gx}" y2="${H-pad.b}"/><text x="${gx}" y="${H-pad.b+16}" text-anchor="middle">${fmtKRW(xv)}</text>`;}
+  for(let i=0;i<=4;i++){const gy=H-pad.b-i/4*(H-pad.t-pad.b),yv=ymin+i/4*(ymax-ymin);s+=`<line class="gl" x1="${pad.l}" y1="${gy}" x2="${W-pad.r}" y2="${gy}"/><text x="${pad.l-8}" y="${gy+3}" text-anchor="end">${yfmt(yv)}</text>`;}
   s+=`</g><line x1="${X(xmed)}" y1="${pad.t}" x2="${X(xmed)}" y2="${H-pad.b}" stroke="#D8D6CC"/><line x1="${pad.l}" y1="${Y(ymed)}" x2="${W-pad.r}" y2="${Y(ymed)}" stroke="#D8D6CC"/>`;
   const good=v=>dir<0?v<=ymed:v>=ymed;
-  pts.forEach((p,i)=>{const cx=X(p.비용),cy=Y(p[ec]),r=R(p[S.volCol]),g=good(p[ec]),big=p.비용>=xmed;let col=g?(big?"var(--g1)":"var(--karrot)"):(big?"var(--w2)":"var(--w1)");
+  vpts.forEach((p,i)=>{const cx=X(p.비용),cy=Y(p[ec]),r=R(p[S.volCol]),g=good(p[ec]),big=p.비용>=xmed;let col=g?(big?"var(--g1)":"var(--karrot)"):(big?"var(--w2)":"var(--w1)");
     s+=`<circle class="qb" data-i="${i}" cx="${cx}" cy="${cy}" r="${r}" fill="${col}" fill-opacity="0.58" stroke="${col}" stroke-width="1.2"/>`;});
-  const placed=[];pts.slice(0,3).forEach(p=>{const r=R(p[S.volCol]);let lx=X(p.비용),anchor="middle";if(lx>W-pad.r-70){lx=W-pad.r-2;anchor="end";}else if(lx<pad.l+44){lx=pad.l+2;anchor="start";}let ly=Y(p[ec])-r-5;placed.forEach(q=>{if(Math.abs(lx-q.x)<92&&Math.abs(ly-q.y)<13)ly=q.y-13;});placed.push({x:lx,y:ly});s+=`<text x="${lx}" y="${Math.max(ly,12)}" text-anchor="${anchor}" font-size="9.5" fill="var(--ink)" font-weight="600">${trunc(p.name,15)}</text>`;});
+  const placed=[];vpts.slice(0,3).forEach(p=>{const r=R(p[S.volCol]);let lx=X(p.비용),anchor="middle";if(lx>W-pad.r-70){lx=W-pad.r-2;anchor="end";}else if(lx<pad.l+44){lx=pad.l+2;anchor="start";}let ly=Y(p[ec])-r-5;placed.forEach(q=>{if(Math.abs(lx-q.x)<92&&Math.abs(ly-q.y)<13)ly=q.y-13;});placed.push({x:lx,y:ly});s+=`<text x="${lx}" y="${Math.max(ly,12)}" text-anchor="${anchor}" font-size="9.5" fill="var(--ink)" font-weight="600">${trunc(p.name,15)}</text>`;});
   svg.innerHTML=s;
-  svg.querySelectorAll(".qb").forEach(c=>{c.addEventListener("mousemove",e=>{const p=pts[+c.dataset.i];showTip(`<b>${p.name}</b><br><span class="t-k">광고비</span> ${fmtWon(p.비용)}<br><span class="t-k">${S.goodLabel}</span> ${gv(p,S)}<br><span class="t-k">${L.volLab}</span> ${fmtInt(p[S.volCol])}`,e.clientX,e.clientY);});c.addEventListener("mouseleave",hideTip);});
+  svg.querySelectorAll(".qb").forEach(c=>{const p=vpts[+c.dataset.i];
+    c.addEventListener("mousemove",e=>{showTip(`<b>${p.name}</b><br><span class="t-k">광고비</span> ${fmtWon(p.비용)}<br><span class="t-k">${S.goodLabel}</span> ${gv(p,S)}<br><span class="t-k">${L.volLab}</span> ${fmtInt(p[S.volCol])}<br><span class="t-k" style="font-size:10px">클릭 → 표에서 자세히</span>`,e.clientX,e.clientY);});
+    c.addEventListener("mouseleave",hideTip);
+    c.addEventListener("click",()=>{hideTip();goToIslandFromQuad(p.name);});});
   $("#qnote").innerHTML=`<div><b style="color:var(--g1)">● 잘 나가는 ${L.name}</b> — 돈도 효율도 좋음. 유지·확대.</div><div><b style="color:var(--w2)">● 돈 쓰는데 약함</b> — 우선 손볼 곳.</div><div><b style="color:var(--karrot)">● 싸게 잘 나옴</b> — 더 밀어볼 만함.</div><div><b style="color:var(--w1)">● 성과 약함</b> — 정리 후보.</div>`;}
+function goToIslandFromQuad(name){if(!curDS)return;
+  tState.q="";tableShowAll=true;const sb=$("#search");if(sb)sb.value="";const sa=$("#showAll");if(sa)sa.checked=true;
+  renderTable(curDS);
+  requestAnimationFrame(()=>{const tr=[...document.querySelectorAll("#table tbody tr.row")].find(t=>t.getAttribute("data-name")===name);
+    if(!tr)return;if(ISLE.name!==name)toggleIsland(curDS,name,tr);
+    (document.querySelector(".isle-row")||tr).scrollIntoView({behavior:"smooth",block:"center"});});}
 
 /* trend */
 function renderTrend(ds){const svg=$("#trend"),L=ds.L,S=ds.S;
@@ -2495,19 +2552,43 @@ function renderTrend(ds){const svg=$("#trend"),L=ds.L,S=ds.S;
 
 /* breakdown — dimension toggle (format / size / service) */
 let bdDim=null;
-function renderBreakdown(ds){const L=ds.L,a=ds.agg,volK=L.hasConv?L.volCol:"클릭 수",effLab=L.hasConv?L.volLab+"당":"클릭당";
+function renderBreakdown(ds){const L=ds.L,a=ds.agg;
   const cand=[["포맷","fo"],["사이즈","size"],["서비스","ve"]].filter(([,k])=>new Set(a.filter(e=>e.tags[k]).map(e=>e.tags[k])).size>=2);
   if(!cand.length){$("#bdWrap").style.display="none";return;}$("#bdWrap").style.display="";
   if(!bdDim||!cand.find(d=>d[1]===bdDim))bdDim=cand[0][1];
   $("#dtog").innerHTML=cand.map(([lab,k])=>`<button data-d="${k}" class="${k===bdDim?"on":""}">${lab}</button>`).join("");
   $$("#dtog button").forEach(b=>b.onclick=()=>{bdDim=b.dataset.d;renderBreakdown(ds);});
   const dimLab=(cand.find(d=>d[1]===bdDim)||cand[0])[0];
-  $("#bdTitle").textContent=`${dimLab}별 비교`;
+  let primary,primaryDir,primaryFmt,primaryLab,primaryHelp;
+  if(L.key==="cg"){primary="CTR";primaryDir=1;primaryFmt=fmtPct;primaryLab="CTR";primaryHelp="높을수록 좋음";}
+  else{primary="eCPI";primaryDir=-1;primaryFmt=fmtWon;primaryLab="eCPI";primaryHelp="낮을수록 좋음";}
+  $("#bdTitle").innerHTML=`${dimLab}별 비교<span class="bd-sub">· 기준 ${primaryLab} (${primaryHelp})</span>`;
   const g={};a.forEach(e=>{const k=e.tags[bdDim];if(!k)return;(g[k]=g[k]||[]).push(e);});
-  let rows=Object.entries(g).map(([k,arr])=>{const c=arr.reduce((s,e)=>s+e.비용,0),v=arr.reduce((s,e)=>s+(e[volK]||0),0);return{k,비용:c,n:arr.length,eff:v>0?c/v:null};}).sort((a,b)=>b.비용-a.비용);
+  let rows=Object.entries(g).map(([k,arr])=>{const sum=c=>arr.reduce((s,e)=>s+(e[c]||0),0);
+    const 비용=sum("비용"),노출=sum("노출 수"),클릭=sum("클릭 수"),어트리뷰션=sum("어트리뷰션 수"),활성=sum("활성 유저 수");
+    return{k,n:arr.length,비용,
+      CPC:클릭>0?비용/클릭:null, CTR:노출>0?클릭/노출:null,
+      eCPI:어트리뷰션>0?비용/어트리뷰션:null, eCPA:활성>0?비용/활성:null};}).filter(r=>r[primary]!=null);
+  rows.sort((x,y)=>primaryDir>0?y[primary]-x[primary]:x[primary]-y[primary]);
   if(bdDim==="size")rows=rows.slice(0,8);
-  const max=Math.max(...rows.map(r=>r.비용))||1;
-  $("#bd").innerHTML=`<div class="bd">`+rows.map(r=>`<div class="bd-row"><div class="lab">${r.k} <span style="color:var(--faint);font-weight:500">${r.n}</span></div><div class="bd-bar"><i style="width:${(r.비용/max*100).toFixed(1)}%"></i></div><div class="val num">${fmtKRW(r.비용)}원 · ${effLab} ${r.eff!=null?fmtWon(r.eff):"–"}</div></div>`).join("")+`</div>`;}
+  if(!rows.length){$("#bd").innerHTML=`<div class="bd-empty">${primaryLab} 비교 가능한 데이터 없음</div>`;return;}
+  const vals=rows.map(r=>r[primary]),vMin=Math.min(...vals),vMax=Math.max(...vals),span=vMax-vMin;
+  $("#bd").innerHTML=`<div class="bd">`+rows.map((r,i)=>{
+    const goodness=span===0?1:(primaryDir>0?(r[primary]-vMin)/span:(vMax-r[primary])/span);
+    const widthPct=18+goodness*82;
+    const barCls=i===0?"best":(rows.length>=3&&i===rows.length-1?"worst":"");
+    const tag=i===0?'<span class="bd-tag good">최고</span>':(rows.length>=3&&i===rows.length-1?'<span class="bd-tag bad">최저</span>':'');
+    const m=[];
+    if(L.hasConv){if(r.eCPI!=null)m.push(`eCPI <b>${fmtWon(r.eCPI)}</b>`);if(r.eCPA!=null)m.push(`eCPA <b>${fmtWon(r.eCPA)}</b>`);}
+    if(r.CPC!=null)m.push(`CPC <b>${fmtWon(r.CPC)}</b>`);
+    if(r.CTR!=null)m.push(`CTR <b>${fmtPct(r.CTR)}</b>`);
+    m.push(`<span class="bd-cost">광고비 ${fmtKRW(r.비용)}원</span>`);
+    return `<div class="bd-row">
+      <div class="lab">${r.k}<span class="bd-n">${r.n}</span>${tag}</div>
+      <div class="bd-bar ${barCls}"><i style="width:${widthPct.toFixed(1)}%"></i></div>
+      <div class="bd-pri num"><span class="bd-pri-k">${primaryLab}</span><b>${primaryFmt(r[primary])}</b></div>
+      <div class="bd-metrics">${m.join(" · ")}</div>
+    </div>`;}).join("")+`</div>`;}
 
 /* table — all rows, no pagination */
 let tState={sort:"score",dir:-1,q:""};
@@ -2652,6 +2733,19 @@ $("#showAll").addEventListener("change",e=>{tableShowAll=e.target.checked;if(act
 $("#table tbody").addEventListener("click",e=>{const tr=e.target.closest("tr");if(!tr||tr.classList.contains("isle-row"))return;const nm=tr.getAttribute("data-name");if(nm==null||!curDS)return;toggleIsland(curDS,nm,tr);});
 let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{if(active&&DATASETS[active]){renderQuad(DATASETS[active]);renderTrend(DATASETS[active]);}const inner=document.querySelector(".isle"),sc=document.querySelector(".tbl-scroll");if(inner&&sc)inner.style.width=sc.clientWidth+"px";},140);});
 
+function _qRender(){if(active&&DATASETS[active])renderQuad(DATASETS[active]);}
+function _qSyncFromUI(){
+  let xlo=+$("#qxlo").value,xhi=+$("#qxhi").value,ylo=+$("#qylo").value,yhi=+$("#qyhi").value;
+  if(xlo>=xhi)xlo=xhi-1;if(ylo>=yhi)ylo=yhi-1;
+  $("#qxlo").value=xlo;$("#qxhi").value=xhi;$("#qylo").value=ylo;$("#qyhi").value=yhi;
+  qView={xlo,xhi,ylo,yhi};_qRender();}
+["qxlo","qxhi","qylo","qyhi"].forEach(id=>{const el=$("#"+id);if(el)el.addEventListener("input",_qSyncFromUI);});
+$("#qrst").addEventListener("click",()=>{qView={xlo:0,xhi:100,ylo:0,yhi:100};
+  $("#qxlo").value=0;$("#qxhi").value=100;$("#qylo").value=0;$("#qyhi").value=100;_qRender();});
+const _origSetActive=setActive;setActive=function(k){qView={xlo:0,xhi:100,ylo:0,yhi:100};
+  ["qxlo","qylo"].forEach(id=>{const e=$("#"+id);if(e)e.value=0;});
+  ["qxhi","qyhi"].forEach(id=>{const e=$("#"+id);if(e)e.value=100;});
+  _origSetActive(k);};
 renderGlossary();renderFooter();loadEmbedded();refreshAll();
 </script>
 </body>
