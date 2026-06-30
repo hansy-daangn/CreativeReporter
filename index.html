@@ -213,6 +213,13 @@
   .ov-close{margin-top:18px;display:flex;justify-content:flex-end}
   .ov-close button{padding:9px 18px;border-radius:9px;background:var(--ink);color:#fff;font-size:13px;font-weight:600}
 
+  /* drop overlay */
+  .drop-ov{position:fixed;inset:0;background:rgba(20,20,15,.55);display:none;align-items:center;justify-content:center;z-index:100;pointer-events:none}
+  .drop-ov.show{display:flex}
+  .drop-ov .box{background:var(--surface);border-radius:18px;padding:34px 52px;display:flex;flex-direction:column;align-items:center;gap:12px;box-shadow:0 30px 80px -20px rgba(0,0,0,.5);border:2px dashed var(--karrot)}
+  .drop-ov .box svg{width:40px;height:40px;color:var(--karrot)}
+  .drop-ov .box b{font-size:16px;font-weight:740;letter-spacing:-.01em}
+  .drop-ov .box span{font-size:12.5px;color:var(--muted)}
   .tooltip{position:fixed;pointer-events:none;background:var(--ink);color:#fff;padding:8px 11px;border-radius:9px;font-size:11.5px;line-height:1.45;box-shadow:0 8px 24px -8px rgba(0,0,0,.45);opacity:0;transition:opacity .1s;z-index:90;max-width:280px}
   .tooltip .t-k{color:rgba(255,255,255,.6)}
   .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:11px;font-size:13px;opacity:0;transition:.25s;z-index:95}
@@ -298,6 +305,7 @@
 </div>
 
 <div class="ov" id="gloss"><div class="ov-card"><h2>지표 풀이</h2><p class="ov-sub">짧게 — 화살표는 좋은 방향입니다.</p><div class="gloss-grid" id="glossGrid"></div><div class="ov-close"><button id="glossClose">닫기</button></div></div></div>
+<div class="drop-ov" id="dropOv"><div class="box"><svg viewBox="0 0 24 24" fill="none"><path d="M12 16V4m0 0L7 9m5-5l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><b>여기 놓으면 CSV로 바꿔드릴게요</b><span>기존 내용은 새 데이터로 교체됩니다</span></div></div>
 <div class="tooltip" id="tip"></div>
 <div class="toast" id="toast"></div>
 
@@ -2735,12 +2743,31 @@ function renderFooter(){$("#ft").textContent="모든 계산은 브라우저 안�
 function refreshAll(){if(!active||!DATASETS[active])active=TAB_ORDER.find(k=>DATASETS[k])||Object.keys(DATASETS)[0];renderSeg();if(active)setActive(active);}
 
 function loadEmbedded(){const map={"csv-ad":"내장 샘플(소재)","csv-cg":"내장 샘플(그룹)","csv-adset":"내장 샘플(광고세트)"};["csv-ad","csv-cg","csv-adset"].forEach(id=>{const raw=document.getElementById(id).textContent.trim();if(!raw||raw.startsWith("__CSV"))return;const{headers,data}=parseCSV(raw);ingest(headers,data,map[id]);});}
-function handleFiles(files){const arr=[...files];let pending=arr.length,loaded=[];if(!pending)return;
-  arr.forEach(f=>{const rd=new FileReader();rd.onload=()=>{const{headers,data}=parseCSV(rd.result);const k=ingest(headers,data,f.name);if(k)loaded.push(LEVELS[k].name);if(--pending===0){if(loaded.length){active=null;refreshAll();toast("불러옴: "+loaded.join(", "));}}};rd.onerror=()=>{if(--pending===0)refreshAll();};rd.readAsText(f,"utf-8");});}
-const drop=$("#drop"),fileInput=$("#file");
+function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;bdDim=null;tableShowAll=false;
+  tState={sort:"score",dir:-1,q:""};ISLE.name=null;ISLE.metric=null;
+  const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
+function handleFiles(files){const arr=[...files];let pending=arr.length;if(!pending)return;
+  const parsed=[],failed=[];
+  function done(){
+    if(!parsed.length){toast("CSV 형식을 알 수 없음 — ad_name/creative_group_name/adset_name 컬럼이 필요");return;}
+    resetAll();const loaded=[];
+    parsed.forEach(p=>{const k=ingest(p.headers,p.data,p.fname);if(k)loaded.push(LEVELS[k].name);});
+    refreshAll();toast("교체됨: "+loaded.join(", ")+(failed.length?` · 건너뜀 ${failed.length}건`:""));
+  }
+  arr.forEach(f=>{const rd=new FileReader();
+    rd.onload=()=>{const r=parseCSV(rd.result);const k=detect(r.headers);
+      if(k)parsed.push({headers:r.headers,data:r.data,fname:f.name});else failed.push(f.name);
+      if(--pending===0)done();};
+    rd.onerror=()=>{failed.push(f.name);if(--pending===0)done();};
+    rd.readAsText(f,"utf-8");});}
+const fileInput=$("#file"),dropOv=$("#dropOv");
 fileInput.addEventListener("change",e=>handleFiles(e.target.files));
-["dragenter","dragover"].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();}));
-document.addEventListener("drop",e=>{e.preventDefault();if(e.dataTransfer&&e.dataTransfer.files.length)handleFiles(e.dataTransfer.files);});
+let _dragDepth=0;
+function _hasFiles(e){return e.dataTransfer&&[...e.dataTransfer.types||[]].includes("Files");}
+document.addEventListener("dragenter",e=>{if(!_hasFiles(e))return;e.preventDefault();_dragDepth++;if(dropOv)dropOv.classList.add("show");});
+document.addEventListener("dragover",e=>{if(!_hasFiles(e))return;e.preventDefault();});
+document.addEventListener("dragleave",e=>{if(!_hasFiles(e))return;_dragDepth--;if(_dragDepth<=0){_dragDepth=0;if(dropOv)dropOv.classList.remove("show");}});
+document.addEventListener("drop",e=>{e.preventDefault();_dragDepth=0;if(dropOv)dropOv.classList.remove("show");if(e.dataTransfer&&e.dataTransfer.files.length)handleFiles(e.dataTransfer.files);});
 let _sq;$("#search").addEventListener("input",e=>{const v=e.target.value;clearTimeout(_sq);_sq=setTimeout(()=>{tState.q=v;if(active)renderTable(DATASETS[active]);},120);});
 $("#showAll").addEventListener("change",e=>{tableShowAll=e.target.checked;if(active)renderTable(DATASETS[active]);});
 $("#table tbody").addEventListener("click",e=>{const tr=e.target.closest("tr");if(!tr||tr.classList.contains("isle-row"))return;const nm=tr.getAttribute("data-name");if(nm==null||!curDS)return;toggleIsland(curDS,nm,tr);});
