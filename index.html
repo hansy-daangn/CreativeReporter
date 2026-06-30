@@ -31,10 +31,13 @@
 
   /* ===== sidebar (fill-based separation, dark) ===== */
   .side{background:var(--side); color:var(--side-ink); position:sticky; top:0; height:100vh; overflow:auto; display:flex; flex-direction:column; padding:20px 16px}
-  .mark{display:flex; align-items:center; gap:10px; padding:4px 6px 18px}
-  .mark .m-ico{width:30px;height:30px;border-radius:9px;background:var(--karrot);display:grid;place-items:center;flex:0 0 auto}
-  .mark .m-ico svg{width:17px;height:17px}
-  .mark b{font-size:14px; font-weight:700; letter-spacing:-.01em; color:#fff}
+  /* level seg (sidebar) — vertical */
+  .side .seg{display:flex;flex-direction:column;gap:4px;background:transparent;padding:0;border-radius:0}
+  .side .seg button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:10px 12px;border-radius:9px;background:transparent;color:var(--side-muted);font-size:13px;font-weight:650;transition:.12s;box-shadow:none}
+  .side .seg button:hover{background:var(--side-2);color:var(--side-ink)}
+  .side .seg button.on{background:var(--karrot);color:#fff;box-shadow:none}
+  .side .seg button .sc{font-size:10.5px;font-weight:600;background:rgba(255,255,255,.08);color:var(--side-faint);padding:1px 7px;border-radius:6px;opacity:1}
+  .side .seg button.on .sc{background:rgba(255,255,255,.22);color:#fff}
   /* media segment (sidebar, secondary) */
   .mseg{display:flex; flex-direction:column; gap:4px}
   .mseg button{display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; text-align:left; padding:9px 12px; border-radius:9px; color:var(--side-muted); font-size:13px; font-weight:650; transition:.12s}
@@ -69,17 +72,7 @@
 
   /* ===== main ===== */
   .main{min-width:0; display:flex; flex-direction:column}
-  .hd{background:var(--surface); padding:16px 30px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap}
-  .hd-l{display:flex; flex-direction:column; gap:8px}
-  .seg{display:inline-flex; background:var(--surface-2); border-radius:11px; padding:4px; gap:3px}
-  .seg button{display:flex; align-items:center; gap:7px; padding:8px 15px; border-radius:8px; font-size:13.5px; font-weight:650; color:var(--muted); transition:.12s}
-  .seg button:hover{color:var(--ink)}
-  .seg button.on{background:var(--karrot); color:#fff; box-shadow:0 2px 9px -3px rgba(255,111,15,.6)}
-  .seg button .sc{font-size:10.5px; font-weight:600; opacity:.75; background:rgba(0,0,0,.06); padding:0 6px; border-radius:5px}
-  .seg button.on .sc{background:rgba(255,255,255,.22)}
-  .hd .scope{margin:0; font-size:12px; color:var(--muted)}
-  .hd .date{font-size:12px; color:var(--faint); font-weight:600; white-space:nowrap}
-  .content{padding:22px 30px 8px; display:flex; flex-direction:column; gap:20px}
+  .content{padding:28px 30px 8px; display:flex; flex-direction:column; gap:20px}
 
   .card{background:var(--surface); border-radius:var(--r); box-shadow:var(--sh); padding:22px 24px}
   .card-h{display:flex; align-items:baseline; gap:10px; margin:0 0 16px}
@@ -220,6 +213,13 @@
   .ov-close{margin-top:18px;display:flex;justify-content:flex-end}
   .ov-close button{padding:9px 18px;border-radius:9px;background:var(--ink);color:#fff;font-size:13px;font-weight:600}
 
+  /* drop overlay */
+  .drop-ov{position:fixed;inset:0;background:rgba(20,20,15,.55);display:none;align-items:center;justify-content:center;z-index:100;pointer-events:none}
+  .drop-ov.show{display:flex}
+  .drop-ov .box{background:var(--surface);border-radius:18px;padding:34px 52px;display:flex;flex-direction:column;align-items:center;gap:12px;box-shadow:0 30px 80px -20px rgba(0,0,0,.5);border:2px dashed var(--karrot)}
+  .drop-ov .box svg{width:40px;height:40px;color:var(--karrot)}
+  .drop-ov .box b{font-size:16px;font-weight:740;letter-spacing:-.01em}
+  .drop-ov .box span{font-size:12.5px;color:var(--muted)}
   .tooltip{position:fixed;pointer-events:none;background:var(--ink);color:#fff;padding:8px 11px;border-radius:9px;font-size:11.5px;line-height:1.45;box-shadow:0 8px 24px -8px rgba(0,0,0,.45);opacity:0;transition:opacity .1s;z-index:90;max-width:280px}
   .tooltip .t-k{color:rgba(255,255,255,.6)}
   .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:11px;font-size:13px;opacity:0;transition:.25s;z-index:95}
@@ -234,7 +234,7 @@
     .side-sec{margin-top:16px}
     .skpi{flex-direction:row;flex-wrap:wrap;gap:18px}
     .side-foot{margin-top:16px}
-    .hd{padding:16px 18px}.content{padding:16px 18px 4px}.card{padding:18px}
+    .content{padding:18px 18px 4px}.card{padding:18px}
   }
   @media(max-width:760px){.isle{grid-template-columns:1fr;gap:18px}}
   @media (prefers-reduced-motion: reduce){*{transition:none!important}}
@@ -245,8 +245,11 @@
 <div class="app">
   <!-- SIDEBAR: identity + media + summary + actions -->
   <aside class="side">
-    <div class="mark"><span class="m-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M5 3h11l3 4-8 14L3 7l2-4z" stroke="#fff" stroke-width="1.7" stroke-linejoin="round"/><path d="M3 7h16" stroke="#fff" stroke-width="1.3"/></svg></span><b>소재 성과</b></div>
-    <div class="side-sec" style="margin-top:6px">
+    <div class="side-sec" style="margin-top:2px">
+      <div class="side-h">레벨</div>
+      <div class="seg" id="seg" role="tablist"></div>
+    </div>
+    <div class="side-sec">
       <div class="side-h">매체</div>
       <div class="mseg" id="mseg"></div>
     </div>
@@ -266,10 +269,6 @@
 
   <!-- MAIN -->
   <div class="main">
-    <header class="hd">
-      <div class="hd-l"><div class="seg" id="seg" role="tablist"></div><p class="scope" id="scope"></p></div>
-      <div class="date" id="dateRange"></div>
-    </header>
     <div class="content">
 
       <section class="card">
@@ -306,6 +305,7 @@
 </div>
 
 <div class="ov" id="gloss"><div class="ov-card"><h2>지표 풀이</h2><p class="ov-sub">짧게 — 화살표는 좋은 방향입니다.</p><div class="gloss-grid" id="glossGrid"></div><div class="ov-close"><button id="glossClose">닫기</button></div></div></div>
+<div class="drop-ov" id="dropOv"><div class="box"><svg viewBox="0 0 24 24" fill="none"><path d="M12 16V4m0 0L7 9m5-5l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><b>여기 놓으면 CSV로 바꿔드릴게요</b><span>기존 내용은 새 데이터로 교체됩니다</span></div></div>
 <div class="tooltip" id="tip"></div>
 <div class="toast" id="toast"></div>
 
@@ -2724,9 +2724,7 @@ function scope(ds){const m=ds.media;
   ds.agg  = m?ds.aggAll.filter(e=>e.tags.ch===m):ds.aggAll;
   ds.weekly = weeklyTotals(ds.data); ds.S = computeScores(ds);}
 function show(ds){scope(ds);
-  $("#scope").textContent=ds.L.scope;
-  $("#dateRange").textContent="2026.06.01 – 06.22 · 4주";
-  $("#src").innerHTML=`데이터 <b>${ds.src||"내장 샘플"}</b> · ${ds.L.name} ${ds.aggAll.length.toLocaleString()}개`;
+  $("#src").innerHTML=`데이터 <b>${ds.src||"내장 샘플"}</b> · ${ds.L.name} ${ds.aggAll.length.toLocaleString()}개 · 2026.06.01–06.22 · 4주`;
   renderMediaSeg(ds);renderSideKpis(ds);renderLeaderboard(ds);renderKeyrow(ds);
   requestAnimationFrame(()=>{renderQuad(ds);renderTrend(ds);renderBreakdown(ds);
     requestAnimationFrame(()=>{renderTlegend();renderTable(ds);});});}
@@ -2745,12 +2743,31 @@ function renderFooter(){$("#ft").textContent="모든 계산은 브라우저 안�
 function refreshAll(){if(!active||!DATASETS[active])active=TAB_ORDER.find(k=>DATASETS[k])||Object.keys(DATASETS)[0];renderSeg();if(active)setActive(active);}
 
 function loadEmbedded(){const map={"csv-ad":"내장 샘플(소재)","csv-cg":"내장 샘플(그룹)","csv-adset":"내장 샘플(광고세트)"};["csv-ad","csv-cg","csv-adset"].forEach(id=>{const raw=document.getElementById(id).textContent.trim();if(!raw||raw.startsWith("__CSV"))return;const{headers,data}=parseCSV(raw);ingest(headers,data,map[id]);});}
-function handleFiles(files){const arr=[...files];let pending=arr.length,loaded=[];if(!pending)return;
-  arr.forEach(f=>{const rd=new FileReader();rd.onload=()=>{const{headers,data}=parseCSV(rd.result);const k=ingest(headers,data,f.name);if(k)loaded.push(LEVELS[k].name);if(--pending===0){if(loaded.length){active=null;refreshAll();toast("불러옴: "+loaded.join(", "));}}};rd.onerror=()=>{if(--pending===0)refreshAll();};rd.readAsText(f,"utf-8");});}
-const drop=$("#drop"),fileInput=$("#file");
+function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;bdDim=null;tableShowAll=false;
+  tState={sort:"score",dir:-1,q:""};ISLE.name=null;ISLE.metric=null;
+  const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
+function handleFiles(files){const arr=[...files];let pending=arr.length;if(!pending)return;
+  const parsed=[],failed=[];
+  function done(){
+    if(!parsed.length){toast("CSV 형식을 알 수 없음 — ad_name/creative_group_name/adset_name 컬럼이 필요");return;}
+    resetAll();const loaded=[];
+    parsed.forEach(p=>{const k=ingest(p.headers,p.data,p.fname);if(k)loaded.push(LEVELS[k].name);});
+    refreshAll();toast("교체됨: "+loaded.join(", ")+(failed.length?` · 건너뜀 ${failed.length}건`:""));
+  }
+  arr.forEach(f=>{const rd=new FileReader();
+    rd.onload=()=>{const r=parseCSV(rd.result);const k=detect(r.headers);
+      if(k)parsed.push({headers:r.headers,data:r.data,fname:f.name});else failed.push(f.name);
+      if(--pending===0)done();};
+    rd.onerror=()=>{failed.push(f.name);if(--pending===0)done();};
+    rd.readAsText(f,"utf-8");});}
+const fileInput=$("#file"),dropOv=$("#dropOv");
 fileInput.addEventListener("change",e=>handleFiles(e.target.files));
-["dragenter","dragover"].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();}));
-document.addEventListener("drop",e=>{e.preventDefault();if(e.dataTransfer&&e.dataTransfer.files.length)handleFiles(e.dataTransfer.files);});
+let _dragDepth=0;
+function _hasFiles(e){return e.dataTransfer&&[...e.dataTransfer.types||[]].includes("Files");}
+document.addEventListener("dragenter",e=>{if(!_hasFiles(e))return;e.preventDefault();_dragDepth++;if(dropOv)dropOv.classList.add("show");});
+document.addEventListener("dragover",e=>{if(!_hasFiles(e))return;e.preventDefault();});
+document.addEventListener("dragleave",e=>{if(!_hasFiles(e))return;_dragDepth--;if(_dragDepth<=0){_dragDepth=0;if(dropOv)dropOv.classList.remove("show");}});
+document.addEventListener("drop",e=>{e.preventDefault();_dragDepth=0;if(dropOv)dropOv.classList.remove("show");if(e.dataTransfer&&e.dataTransfer.files.length)handleFiles(e.dataTransfer.files);});
 let _sq;$("#search").addEventListener("input",e=>{const v=e.target.value;clearTimeout(_sq);_sq=setTimeout(()=>{tState.q=v;if(active)renderTable(DATASETS[active]);},120);});
 $("#showAll").addEventListener("change",e=>{tableShowAll=e.target.checked;if(active)renderTable(DATASETS[active]);});
 $("#table tbody").addEventListener("click",e=>{const tr=e.target.closest("tr");if(!tr||tr.classList.contains("isle-row"))return;const nm=tr.getAttribute("data-name");if(nm==null||!curDS)return;toggleIsland(curDS,nm,tr);});
