@@ -38,16 +38,6 @@
   .side .seg button.on{background:var(--karrot);color:#fff;box-shadow:none}
   .side .seg button .sc{font-size:10.5px;font-weight:600;background:rgba(255,255,255,.08);color:var(--side-faint);padding:1px 7px;border-radius:6px;opacity:1}
   .side .seg button.on .sc{background:rgba(255,255,255,.22);color:#fff}
-  /* media segment (sidebar, secondary) */
-  .mseg{display:flex; flex-direction:column; gap:4px}
-  .mseg button{display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; text-align:left; padding:9px 12px; border-radius:9px; color:var(--side-muted); font-size:13px; font-weight:650; transition:.12s}
-  .mseg button:hover{background:var(--side-2); color:var(--side-ink)}
-  .mseg button.on{background:rgba(255,255,255,.13); color:#fff}
-  .mseg button .c{font-size:10.5px; font-weight:600; color:var(--side-faint); background:rgba(255,255,255,.06); padding:1px 7px; border-radius:6px}
-  .mseg button.on .c{color:var(--side-ink); background:rgba(255,255,255,.12)}
-  .mseg .solo{padding:9px 12px; font-size:13px; font-weight:650; color:#fff; display:flex; justify-content:space-between}
-  .mseg .solo .c{font-size:10.5px;color:var(--side-faint)}
-
   .side-sec{margin-top:22px}
   .side-h{font-size:10.5px; font-weight:700; letter-spacing:.06em; color:var(--side-faint); text-transform:uppercase; padding:0 6px 9px}
   .skpi{display:flex; flex-direction:column; gap:14px; padding:2px 6px}
@@ -229,8 +219,6 @@
   @media(max-width:900px){
     .app{grid-template-columns:1fr}
     .side{position:static;height:auto;flex-direction:column}
-    .mseg{flex-direction:row;flex-wrap:wrap}
-    .mseg button{flex:0 1 auto}
     .side-sec{margin-top:16px}
     .skpi{flex-direction:row;flex-wrap:wrap;gap:18px}
     .side-foot{margin-top:16px}
@@ -250,11 +238,7 @@
       <div class="seg" id="seg" role="tablist"></div>
     </div>
     <div class="side-sec">
-      <div class="side-h">매체</div>
-      <div class="mseg" id="mseg"></div>
-    </div>
-    <div class="side-sec">
-      <div class="side-h">요약 (이 매체)</div>
+      <div class="side-h">요약</div>
       <div class="skpi" id="skpi"></div>
     </div>
     <div class="side-foot">
@@ -2330,108 +2314,7 @@
 2026-06-15,moloco_jobs_1200x1600.png,0.0,0,,1,0.0,,1,0.0,,,,
 2026-06-01,Daangn_ep2_1080x1920.mp4,0.0,0,,0,,,2,0.0,1.0,0.0,1.0,0.0
 2026-06-01,video_maugrowth_jobs_keywordWinterA_1920x1080.mp4,0.0,0,,1,0.0,,1,0.0,,,,
-2026-06-01,video_jobs_newyearBogum_1920x1080_2602.mp4,0.0,0,,1,0.0,,1,0.0,1.0,0.0,1.0,0.0
-</script>
-<script id="csv-cg" type="text/plain">date,creative_group_name,비용,노출 수,CPM,클릭 수,CPC,CTR
-2026-06-22,maugrowth_localbiz_realdaangn_2606,11602919.005112119,6872971,1688.195542380743,171625,67.60622872607208,0.024971005988531015
-2026-06-08,maugrowth_jobs_neighbour_2511,8054421.021662049,1648862,4884.836342678798,134623,59.82945723733722,0.08164600797398448
-2026-06-15,maugrowth_localbiz_realdaangn_2606,6949846.800619101,5377494,1292.3950822853733,123953,56.06840335142434,0.02305032790366665
-2026-06-15,maugrowth_realty_lifedaangn_2509,5945838.73291772,197657,30081.599603948864,61073,97.35625780488465,0.3089847564214776
-2026-06-01,maugrowth_fleamarket_newYear_2601,5090872.183833029,4541939,1120.8587750370555,118772,42.86256174715446,0.026150064983259353
-2026-06-01,maugrowth_jobs_neighbour_2511,4949852.16404658,885586,5589.352320437066,98932,50.03287272112744,0.11171359980848838
-2026-06-01,maugrowth_localbiz_realdaangn_2606,4618465.81809501,1741144,2652.5467268043362,77743,59.40683814742176,0.04465052861796612
-2026-06-08,maugrowth_localbiz_realdaangn_2606,4475240.948763269,4030328,1110.3912507277992,77167,57.99423262227726,0.019146580625695974
-2026-06-22,maugrowth_nocommission_2509,4250569.275002259,1017378,4177.964606077838,98097,43.33026774521401,0.09642138910021644
-2026-06-15,maugrowth_flemarket_keywordSpring_2603,3995705.0440413393,3053402,1308.607593772893,65776,60.74715768732272,0.021541873621619426
-2026-06-08,maugrowth_nocommission_2509,3854364.3318765196,2286840,1685.4543089488202,107688,35.79195761715808,0.04709030802329853
-2026-06-01,maugrowth_fleamarket_10years_2511,3780904.84698122,1339967,2821.640269485159,69280,54.5742616481123,0.051702765814382
-2026-06-22,maugrowth_realty_lifedaangn_2509,3437161.1872156304,187451,18336.318222978967,40207,85.486636337345,0.21449338760529418
-2026-06-22,maugrowth_jobs_neighbour_2511,3390923.84096228,3257141,1041.0737026620218,41500,81.70900821595856,0.012741235334914884
-2026-06-08,maugrowth_flemarket_keywordSpring_2603,3361662.0572168203,2401031,1400.0910680523577,56499,59.49949657899822,0.023531141413834306
-2026-06-01,maugrowth_nocommission_2509,3110639.94736369,1617920,1922.6166605046542,97339,31.956769099371165,0.0601630488528481
-2026-06-15,maugrowth_jobs_neighbour_2511,3108146.7060487894,939659,3307.7389840876203,57554,54.004008514591334,0.06124987894544723
-2026-06-22,maugrowth_flemarket_keywordSpring_2603,2672285.0453273803,2288924,1167.4852661457437,34922,76.5215350016431,0.015256950427362376
-2026-06-15,maugrowth_fleamarket_newYear_2601,2445609.7301986003,1568486,1559.2168053770326,53728,45.51834667582267,0.03425468891657305
-2026-06-15,maugrowth_nocommission_2509,2386064.94577395,659573,3617.5903891971775,77904,30.628272563333717,0.11811277902521783
-2026-06-08,maugrowth_fleamarket_newYear_2601,2266422.4710815805,1292446,1753.591617043637,51219,44.2496431223097,0.039629508699009476
-2026-06-15,maugrowth_realty_RentKarrot_2604,2258413.4778330303,325806,6931.773748282813,27408,82.39979122274629,0.08412368096351816
-2026-06-22,maugrowth_fleamarket_shortform_2601,2165766.41302378,127003,17052.876018863964,55974,38.69236454467753,0.4407297465414203
-2026-06-01,maugrowth_fleamarket_shortform_2601,1999789.1531977798,145340,13759.38594466616,61832,32.34230096386628,0.42543002614558967
-2026-06-15,maugrowth_fleamarket_shortform_2601,1870260.1241517898,128306,14576.56013087299,55782,33.52802201699096,0.43475753277321405
-2026-06-08,maugrowth_fleamarket_shortform_2601,1690698.63148613,118848,14225.72219546084,49330,34.27323396485161,0.415067985998923
-2026-06-01,maugrowth_realty_RentKarrot_2604,1595245.1516332095,385239,4140.923301205769,23480,67.94059419221506,0.06094917700440506
-2026-06-08,maugrowth_realty_RentKarrot_2604,1589940.0571227598,401135,3963.603418108018,21324,74.56106064166009,0.05315916088100016
-2026-06-01,maugrowth_fleamarket_simbatdan_2605,1549967.18351405,3309206,468.38038596389885,30394,50.995827581563795,0.009184680554791692
-2026-06-22,maugrowth_fleamarket_newYear_2601,1399252.97085035,700440,1997.6771327313547,25879,54.069051000825,0.036946776312032435
-2026-06-08,maugrowth_fleamarket_simbatdan_2605,1341943.64206931,2566386,522.8923638413356,27237,49.26914278625803,0.010612978717932533
-2026-06-22,maugrowth_pickup_2603,1129328.92720886,244732,4614.553581913522,15201,74.29306803558055,0.06211284180246147
-2026-06-08,maugrowth_realty_secretkey_2601,1088136.9414710198,151553,7179.910272122754,13950,78.00264813412328,0.0920470066577369
-2026-06-22,maugrowth_realty_RentKarrot_2604,947006.1249253501,129923,7288.97981824119,11515,82.24108770519757,0.08862941896353994
-2026-06-15,maugrowth_fleamarket_simbatdan_2605,923964.38109409,1606094,575.2866152878287,19254,47.98817809775059,0.011988090360838158
-2026-06-15,maugrowth_pickup_2603,921103.0527045198,1098536,838.4823553388509,15918,57.86550148916446,0.01449019422212836
-2026-06-01,maugrowth_realty_secretkey_2601,698234.3695234599,270976,2576.7387869164054,7851,88.93572405088014,0.028973045583372697
-2026-06-22,maugrowth_fleamarket_simbatdan_2605,684176.23349509,1494856,457.68705045508733,12737,53.71564995643323,0.008520553150269993
-2026-06-01,maugrowth_pickup_2603,662809.8403353,483918,1369.673871059353,26675,24.84760413628116,0.055122975380126386
-2026-06-01,maugrowth_flemarket_keywordSpring_2603,595697.7264233798,424470,1403.3918213852094,13076,45.55657130799785,0.030805475063019765
-2026-06-01,maugrowth_fleamarket_declutter_2510,580426.9271047101,181932,3190.350939387849,17590,32.9975512850887,0.09668447551832553
-2026-06-15,maugrowth_fleamarket_declutter_2510,568473.4201421101,200657,2833.0604969779774,16063,35.390239690102106,0.08005202908445756
-2026-06-08,maugrowth_realty_lifedaangn_2509,545559.03853129,41737,13071.352481761745,5887,92.67182580793104,0.14104990775570836
-2026-06-22,maugrowth_fleamarket_declutter_2510,491231.59088261996,168494,2915.4248274871507,10305,47.66924705314119,0.06115944781416549
-2026-06-01,maugrowth_realty_lifedaangn_2509,439515.88870994,143418,3064.579681141419,6132,71.67578093769407,0.04275613939672845
-2026-06-08,maugrowth_fleamarket_declutter_2510,422654.66212452,196309,2153.007055838092,9956,42.452256139465646,0.050715963098991894
-2026-06-08,maugrowth_fleamarket_10years_2511,325416.45687292004,18468,17620.557552139922,5635,57.74914940069566,0.30512237383582413
-2026-06-08,maugrowth_pickup_2603,281005.62142226,299972,936.7728368723082,7362,38.16973939449335,0.02454229061379062
-2026-06-15,maugrowth_realty_secretkey_2601,90117.41255384001,7730,11658.138752113844,1207,74.66231363201327,0.15614489003880982
-2026-06-01,maugrowth_opendoor_fleamarket_2509,0.0,0,,0,,
-2026-06-22,maugrowth_bogum_2601,0.0,0,,0,,
-2026-06-15,maugrowth_fleamarket_10years_2511,0.0,0,,0,,
-2026-06-01,maugrowth_bogum_2601,0.0,0,,0,,
-2026-06-22,maugrowth_fleamarket_10years_2511,0.0,0,,0,,
-2026-06-01,maugrowth_jobsPromo2601,0.0,0,,0,,
-2026-06-15,maugrowth_opendoor_fleamarket_2509,0.0,0,,0,,
-2026-06-08,maugrowth_opendoor_fleamarket_2509,0.0,0,,0,,
-2026-06-22,maugrowth_opendoor_fleamarket_2509,0.0,0,,0,,
-2026-06-08,maugrowth_jobsneighbourbranding_jobs_ios_2511,0.0,0,,0,,
-2026-06-08,maugrowth_bogum_2601,0.0,0,,0,,
-2026-06-01,maugrowth_jobsneighbourbranding_jobs_ios_2511,0.0,0,,0,,
-2026-06-22,maugrowth_realty_secretkey_2601,0.0,0,,0,,
-2026-06-15,maugrowth_bogum_2601,0.0,0,,0,,
-2026-06-01,maugrowth_meetdaangn_fleamarket_ios_2510,0.0,0,,0,,
-</script>
-<script id="csv-adset" type="text/plain">date,adset_name,비용,노출 수,CPM,클릭 수,CPC,어트리뷰션 수,eCPI,활성 유저 수,활성 유저 eCPA,신규+재활성 유저 수,신규+재활성 유저 eCPA
-2026-06-22,maugrowth_fleamarket_2601,19207505.91631,13741319,1397.7920108186122,106185,180.8871866677026,69828,275.06882506029103,16769.0,1145.417491580297,15256.0,1259.013235206476
-2026-06-15,Google_UA_maugrowth_fleamarket_2507,18762217.199967,1420672,13206.579139989384,48638,385.7522348774004,34561,542.8725210487834,20140.0,931.5897318752235,18290.0,1025.8183269528158
-2026-06-01,Google_UA_maugrowth_fleamarket_2507,17788501.322893,1349586,13180.709730904886,38364,463.67691906195915,25553,696.1414050363168,17433.0,1020.3924352029485,14403.0,1235.0552886824273
-2026-06-15,maugrowth_fleamarket_2601,17522963.368262,12447590,1407.7394393824025,96503,181.57946766693263,63868,274.36217461423564,15687.0,1117.037251753809,14172.0,1236.4495743904884
-2026-06-22,Google_UA_maugrowth_fleamarket_2507,17411704.389007002,1417570,12282.782782513035,45039,386.591718044517,32152,541.5434308598843,17775.0,979.5614283548243,16252.0,1071.3576414599436
-2026-06-08,Google_UA_maugrowth_fleamarket_2507,17106066.679814,1177904,14522.462509520301,38725,441.73187036317626,27355,625.3360146157557,17178.0,995.8124740839446,15233.0,1122.9611159859514
-2026-06-22,Google_UA_maugrowth_realty_2509,15475375.181294,1571593,9846.935676917625,20779,744.7603436784253,11617,1332.1318052245847,4259.0,3633.5701294421224,3812.0,4059.6472144003146
-2026-06-08,maugrowth_fleamarket_2601,12513662.829356998,9896201,1264.491579077365,78084,160.25898813274165,51258,244.1309225751492,12427.0,1006.973753066468,10807.0,1157.921979213195
-2026-06-22,maugrowth_fleamarket_2605,11481304.368835,6593296,1741.3603710245984,52198,219.95678701933025,36837,311.67859404498193,5842.0,1965.303726264122,5113.0,2245.5122958801094
-2026-06-01,maugrowth_fleamarket_2601,11432660.611765001,8688876,1315.7813060935614,67946,168.260980952006,44652,256.0391608833871,12101.0,944.7699042860095,9509.0,1202.2989390856033
-2026-06-15,maugrowth_fleamarket_2605,10186154.286868999,6220307,1637.5645586092453,49618,205.29151289590467,34936,291.56612911807304,5543.0,1837.6608852370555,4579.0,2224.536861076436
-2026-06-01,maugrowth_fleamarket_2605,9804048.20686,6694434,1464.507411210567,50016,196.0182383009437,37329,262.6389189868467,8557.0,1145.7342768330022,3969.0,2470.155758846057
-2026-06-08,maugrowth_fleamarket_2605,9076034.475603,5808782,1562.4677386073363,47480,191.15489628481464,34311,264.52258679732444,5816.0,1560.5286237281637,4126.0,2199.71751711173
-2026-06-15,Google_UA_maugrowth_realty_2509,8760573.354202,775893,11290.955523766808,12373,708.0395501658451,6963,1258.160757461152,3529.0,2482.452069765373,3129.0,2799.799729690636
-2026-06-08,Google_UA_maugrowth_realty_2509,7196161.653589999,614436,11711.816452144729,7760,927.3404192770618,4091,1759.0226481520408,2262.0,3181.326990977011,1891.0,3805.4794572131145
-2026-06-01,Google_UA_maugrowth_realty_2509,6812742.800303,628579,10838.323902489585,7152,952.5647092146253,3388,2010.84498237987,2092.0,3256.569216206023,1614.0,4221.030235627633
-2026-06-08,Google_UA_maugrowth_fleamarket_2606,4951830.570638,374578,13219.758156213125,4010,1234.8704664932668,1001,4946.883686951049,424.0,11678.845685466982,343.0,14436.823821102042
-2026-06-01,Google_UA_maugrowth_fleamarket_2606,4825755.474636001,339389,14218.950745710677,2918,1653.7887164619603,967,4990.439994452948,538.0,8969.805714936803,368.0,13113.465963684785
-2026-06-22,maugrowth_fleamarket_251024,4287959.524343001,1697995,2525.3075093525013,13100,327.3251545300001,10183,421.0900053366396,2509.0,1709.0312970677564,2380.0,1801.6636656903365
-2026-06-15,maugrowth_fleamarket_251024,3357139.357405,1681206,1996.863773627384,12246,274.14170810101257,8653,387.97403876170114,2202.0,1524.5864475045412,2065.0,1625.7333449903147
-2026-06-01,maugrowth_fleamarket_251024,2338720.638104,1246881,1875.6566489536692,10190,229.5113481947007,6282,372.2891814874244,1700.0,1375.7180224141177,1433.0,1632.0451068415912
-2026-06-08,maugrowth_fleamarket_251024,2214435.3060299996,1096615,2019.3370563324406,8811,251.3262179128362,6023,367.66317549892074,1594.0,1389.2316850878292,1477.0,1499.2791510020309
-2026-06-01,maugrowth_branding_2508,2136768.345896,1678928,1272.698022724024,12158,175.74998732488896,7328,291.58956685262007,1941.0,1100.8595290551264,1674.0,1276.4446510728794
-2026-06-08,maugrowth_branding_2508,1731283.136298,1179115,1468.2903162948485,9582,180.68076980776456,5913,292.7926832907154,1478.0,1171.3688337604872,1348.0,1284.3346708442136
-2026-06-15,Google_UA_maugrowth_fleamarket_2606,929606.9342070001,70242,13234.34603523533,734,1266.4944607724797,386,2408.3081197072543,164.0,5668.334964676829,144.0,6455.603709770834
-2026-06-15,maugrowth_branding_2508,673861.507038,448048,1503.9940074233118,3385,199.07282334948303,2251,299.3609538151933,556.0,1211.9811277661872,504.0,1337.0267996785715
-2026-06-22,,0.0,0,,0,,1925,0.0,,,,
-2026-06-01,,0.0,0,,0,,1,0.0,,,,
-2026-06-08,,0.0,0,,0,,6,0.0,,,,
-2026-06-15,,0.0,0,,0,,1752,0.0,,,,
-2026-06-22,Google_UA_maugrowth_fleamarket_2606,0.0,0,,0,,1,0.0,,,,
-2026-06-22,maugrowth_branding_2508,0.0,0,,0,,1,0.0,,,,
-</script>
+2026-06-01,video_jobs_newyearBogum_1920x1080_2602.mp4,0.0,0,,1,0.0,,1,0.0,1.0,0.0,1.0,0.0</script>
 
 <script>
 "use strict";
@@ -2474,18 +2357,10 @@ const TAB_ORDER=["ad","cg","adset"];
 function detect(h){const s=new Set(h);if(s.has("adset_name"))return"adset";if(s.has("creative_group_name"))return"cg";if(s.has("ad_name"))return"ad";return null;}
 
 const VERTICALS=[[/fleamarket|flemarket|중고|sellitems|declutter|nocommission|simbatdan/i,"중고거래"],[/realty|부동산|rentkarrot|lifedaangn/i,"부동산"],[/localbiz|biz_|동네|realdaangn/i,"동네업체"],[/jobs|알바|baro_running/i,"알바"],[/branding|brand/i,"브랜딩"]];
-function tagEntity(name){const t={ch:null,ve:null,fo:null,size:null};if(!name)return t;
-  t.ch=/google/i.test(name)?"Google":/moloco|molco/i.test(name)?"Moloco":/meta|facebook|instagram/i.test(name)?"Meta":null;
+function tagEntity(name){const t={ve:null,fo:null,size:null};if(!name)return t;
   for(const[re,l]of VERTICALS){if(re.test(name)){t.ve=l;break;}}
   if(/\.mp4|(^|_)vid/i.test(name))t.fo="영상";else if(/\.png|\.jpe?g|(^|_)img/i.test(name))t.fo="이미지";
   const m=name.match(/(\d{3,4})\s*[x×]\s*(\d{3,4})/);if(m)t.size=m[1]+"×"+m[2];return t;}
-function fileChannel(fname){if(!fname)return null;const f=String(fname).toLowerCase();
-  if(/moloco|molco/.test(f))return "Moloco";
-  if(/google/.test(f))return "Google";
-  if(/meta|facebook|instagram/.test(f))return "Meta";
-  const stem=String(fname).replace(/\.csv$/i,"").replace(/[_\-]+/g," ").trim();
-  if(!stem||/^[0-9a-f.\s]+$/i.test(stem))return "업로드";
-  return stem.length<=24?stem:"업로드";}
 
 let WEEKS=["2026-06-01","2026-06-08","2026-06-15","2026-06-22"];
 function setWeeksFromDatasets(){const s=new Set();
@@ -2548,10 +2423,10 @@ function sdelta(dd){if(dd==null)return"<span>지난주 –</span>";const c=Math.
 /* leaderboard */
 function chipsHTML(t){return [t.ve&&`<span class="chip">${t.ve}</span>`,t.fo&&`<span class="chip fo">${t.fo}</span>`,t.size&&`<span class="chip">${t.size}</span>`].filter(Boolean).join("");}
 function renderLeaderboard(ds){const L=ds.L,S=ds.S;
-  $("#rankMeta").innerHTML=`이 매체 안에서 · 기준 <b>${S.goodLabel}</b>(${S.goodHelp}) + 규모`;
+  $("#rankMeta").innerHTML=`전체 기준 <b>${S.goodLabel}</b>(${S.goodHelp}) + 규모`;
   const best=S.best.slice(0,3),worst=S.worst.slice(0,3).filter(w=>!best.includes(w));
   const sp=t=>t==="g2"?"sp-g2":t==="g1"?"sp-g1":t==="m"?"sp-mid":t==="w1"?"sp-w1":t==="w2"?"sp-w2":"sp-na";
-  if(!best.length){$("#best").innerHTML=`<div class="lcard"><div class="lreason">순위를 매길 데이터가 부족합니다 (이 매체에서 최소 ${L.volLab} ${minVol(L)}건 이상 필요).</div></div>`;$("#worst").innerHTML="";$("#worstG").style.display="none";return;}
+  if(!best.length){$("#best").innerHTML=`<div class="lcard"><div class="lreason">순위를 매길 데이터가 부족합니다 (최소 ${L.volLab} ${minVol(L)}건 이상 필요).</div></div>`;$("#worst").innerHTML="";$("#worstG").style.display="none";return;}
   const rk=["g","s","b"];
   $("#best").innerHTML=best.map((e,i)=>{const dom=i===0&&e.dom==="good";
     return `<div class="lcard ${dom?"gold":""}"><div class="lhead"><span class="rk ${rk[i]}">${i+1}</span><span class="lname">${e.name}</span>${dom?'<span class="dom-pill">독보적</span>':""}</div>
@@ -2645,7 +2520,7 @@ function islandMetrics(L,e){const M=[];const add=(k,lab,dir,fmt,good)=>M.push({k
   else{add("eCPI","설치당",-1,fmtWon,true);add("활성 유저 eCPA","유저당",-1,fmtWon,true);if(e.CTR!=null)add("CTR","클릭률",1,fmtPct,true);}
   add("비용","규모",1,v=>fmtKRW(v)+"원",false);return M;}
 function defaultMetric(ds,e){const M=islandMetrics(ds.L,e);return (M.find(m=>m.good&&e[m.k]!=null)||M.find(m=>e[m.k]!=null)||M[M.length-1]).k;}
-function cohorts(ds,e){const a=ds.agg,out=[{label:`전체 (${e.tags.ch||"이 매체"})`,mem:a}];
+function cohorts(ds,e){const a=ds.agg,out=[{label:"전체",mem:a}];
   if(e.tags.ve)out.push({label:"같은 서비스 · "+e.tags.ve,mem:a.filter(x=>x.tags.ve===e.tags.ve)});
   if(e.tags.fo)out.push({label:"같은 포맷 · "+e.tags.fo,mem:a.filter(x=>x.tags.fo===e.tags.fo)});
   if(e.tags.size)out.push({label:"같은 사이즈 · "+e.tags.size,mem:a.filter(x=>x.tags.size===e.tags.size)});
@@ -2724,42 +2599,28 @@ $("#gloss").addEventListener("click",e=>{if(e.target.id==="gloss")$("#gloss").cl
 
 /* state */
 const DATASETS={};let active=null;
-function ingest(headers,data,fname,opts){const k=detect(headers);if(!k){toast("형식을 알 수 없는 CSV: "+(fname||""));return null;}const L=LEVELS[k];
-  const nc=L.nameCol;const forceCh=(opts&&opts.byName)?null:fileChannel(fname);
-  for(let i=0;i<data.length;i++){data[i]._ch=forceCh||tagEntity(data[i][nc]).ch||"기타";}
-  const agg=aggregate(data,L);
-  if(forceCh)agg.forEach(e=>{e.tags.ch=forceCh;});
-  else agg.forEach(e=>{if(!e.tags.ch)e.tags.ch="기타";});
-  DATASETS[k]={key:k,L,dataAll:data,aggAll:agg,media:null,src:fname,channelLabel:forceCh};return k;}
-function mediaList(ds){const m={};ds.aggAll.forEach(e=>{const c=e.tags.ch||"기타";m[c]=(m[c]||0)+e.비용;});return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);}
-function defaultMedia(ds){return mediaList(ds)[0]||null;}
-function scope(ds){const m=ds.media;
-  ds.data = m?ds.dataAll.filter(r=>r._ch===m):ds.dataAll;
-  ds.agg  = m?ds.aggAll.filter(e=>e.tags.ch===m):ds.aggAll;
-  ds.weekly = weeklyTotals(ds.data); ds.S = computeScores(ds);}
+function ingest(headers,data,fname){const k=detect(headers);if(!k){toast("형식을 알 수 없는 CSV: "+(fname||""));return null;}const L=LEVELS[k];
+  DATASETS[k]={key:k,L,dataAll:data,aggAll:aggregate(data,L),src:fname};return k;}
+function scope(ds){ds.data=ds.dataAll;ds.agg=ds.aggAll;
+  ds.weekly=weeklyTotals(ds.data);ds.S=computeScores(ds);}
 function show(ds){scope(ds);
-  $("#src").innerHTML=`데이터 <b>${ds.src||"내장 샘플"}</b> · ${ds.L.name} ${ds.aggAll.length.toLocaleString()}개 · 2026.06.01–06.22 · 4주`;
-  renderMediaSeg(ds);renderSideKpis(ds);renderLeaderboard(ds);renderKeyrow(ds);
+  const wk=WEEKS.length?`${WEEKS[0]} – ${WEEKS.at(-1)} · ${WEEKS.length}주`:"";
+  $("#src").innerHTML=`데이터 <b>${ds.src||"내장 샘플"}</b> · ${ds.L.name} ${ds.aggAll.length.toLocaleString()}개${wk?" · "+wk:""}`;
+  renderSideKpis(ds);renderLeaderboard(ds);renderKeyrow(ds);
   requestAnimationFrame(()=>{renderQuad(ds);renderTrend(ds);renderBreakdown(ds);
     requestAnimationFrame(()=>{renderTlegend();renderTable(ds);});});}
-function setActive(k){if(!DATASETS[k])return;active=k;const ds=DATASETS[k];
-  if(!ds.media||!mediaList(ds).includes(ds.media))ds.media=defaultMedia(ds);
+function setActive(k){if(!DATASETS[k])return;active=k;
   bdDim=null;tableShowAll=false;tState={sort:"score",dir:-1,q:""};
   if($("#search"))$("#search").value="";if($("#showAll"))$("#showAll").checked=false;
-  renderSeg();show(ds);}
-function setMedia(m){if(!active)return;const ds=DATASETS[active];if(ds.media===m)return;ds.media=m;bdDim=null;show(ds);}
+  renderSeg();show(DATASETS[k]);}
 function renderSeg(){$("#seg").innerHTML=TAB_ORDER.filter(k=>DATASETS[k]).map(k=>{const L=LEVELS[k];return `<button role="tab" data-k="${k}" class="${k===active?"on":""}">${L.name}<span class="sc">${DATASETS[k].aggAll.length}</span></button>`;}).join("");$$("#seg button").forEach(b=>b.onclick=()=>setActive(b.dataset.k));}
-function renderMediaSeg(ds){const list=mediaList(ds),el=$("#mseg"),cnt=c=>ds.aggAll.filter(e=>(e.tags.ch||"기타")===c).length;
-  if(list.length<=1){el.innerHTML=`<div class="solo">${list[0]||"—"}<span class="c">${list[0]?cnt(list[0]):0}</span></div>`;return;}
-  el.innerHTML=list.map(c=>`<button data-m="${c}" class="${c===ds.media?"on":""}">${c}<span class="c">${cnt(c)}</span></button>`).join("");
-  $$("#mseg button").forEach(b=>b.onclick=()=>setMedia(b.dataset.m));}
-function renderFooter(){$("#ft").textContent="모든 계산은 브라우저 안에서 수행 · 매체별로 분리해 매체 내에서만 비교·순위 · 효율 = 총비용÷총전환 가중 집계 · 비용 0(미집행)은 표에서 기본 숨김";}
+function renderFooter(){$("#ft").textContent="모든 계산은 브라우저 안에서 수행 · 효율 = 총비용÷총전환 가중 집계 · 비용 0(미집행)은 표에서 기본 숨김";}
 function refreshAll(){if(!active||!DATASETS[active])active=TAB_ORDER.find(k=>DATASETS[k])||Object.keys(DATASETS)[0];renderSeg();if(active)setActive(active);}
 
-function loadEmbedded(){const map={"csv-ad":"내장 샘플(소재)","csv-cg":"내장 샘플(그룹)","csv-adset":"내장 샘플(광고세트)"};
-  const sets=[];["csv-ad","csv-cg","csv-adset"].forEach(id=>{const raw=document.getElementById(id).textContent.trim();if(!raw||raw.startsWith("__CSV"))return;const r=parseCSV(raw);sets.push({id,headers:r.headers,data:r.data});});
-  setWeeksFromDatasets(...sets.map(s=>s.data));
-  sets.forEach(s=>ingest(s.headers,s.data,map[s.id],{byName:true}));}
+function loadEmbedded(){const el=document.getElementById("csv-ad");if(!el)return;
+  const raw=el.textContent.trim();if(!raw||raw.startsWith("__CSV"))return;
+  const r=parseCSV(raw);setWeeksFromDatasets(r.data);
+  ingest(r.headers,r.data,"내장 샘플");}
 function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;bdDim=null;tableShowAll=false;
   tState={sort:"score",dir:-1,q:""};ISLE.name=null;ISLE.metric=null;
   const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
@@ -2767,10 +2628,10 @@ function handleFiles(files){const arr=[...files];let pending=arr.length;if(!pend
   const parsed=[],failed=[];
   function done(){
     if(!parsed.length){toast("CSV 형식을 알 수 없음 — ad_name/creative_group_name/adset_name 컬럼이 필요");return;}
-    resetAll();setWeeksFromDatasets(...parsed.map(p=>p.data));const loaded=[],chs=new Set();
-    parsed.forEach(p=>{const k=ingest(p.headers,p.data,p.fname);if(k){loaded.push(LEVELS[k].name);const c=fileChannel(p.fname);if(c)chs.add(c);}});
-    refreshAll();const chTxt=chs.size?` · ${[...chs].join("/")}`:"";
-    toast("교체됨: "+loaded.join(", ")+chTxt+(failed.length?` · 건너뜀 ${failed.length}건`:""));
+    resetAll();setWeeksFromDatasets(...parsed.map(p=>p.data));const loaded=[];
+    parsed.forEach(p=>{const k=ingest(p.headers,p.data,p.fname);if(k)loaded.push(LEVELS[k].name);});
+    refreshAll();
+    toast("교체됨: "+loaded.join(", ")+(failed.length?` · 건너뜀 ${failed.length}건`:""));
   }
   arr.forEach(f=>{const rd=new FileReader();
     rd.onload=()=>{const r=parseCSV(rd.result);const k=detect(r.headers);
