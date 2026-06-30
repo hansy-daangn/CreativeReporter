@@ -30,7 +30,22 @@
   .app{display:grid; grid-template-columns:248px 1fr; min-height:100vh}
 
   /* ===== sidebar (fill-based separation, dark) ===== */
-  .side{background:var(--side); color:var(--side-ink); position:sticky; top:0; height:100vh; overflow:auto; display:flex; flex-direction:column; padding:20px 16px}
+  .side{background:var(--side); color:var(--side-ink); position:sticky; top:0; height:100vh; overflow-x:hidden; overflow-y:auto; display:flex; flex-direction:column; padding:20px 14px; min-width:0}
+  .side *{min-width:0}
+  .side-h-sub{color:var(--side-faint);font-weight:600;font-size:9.5px;text-transform:none;letter-spacing:0;margin-left:4px}
+  /* sidebar leaderboard */
+  .srank{display:flex;flex-direction:column;gap:2px;padding:0 2px}
+  .srank-h{font-size:9.5px;font-weight:800;letter-spacing:.08em;color:var(--side-faint);margin-top:8px;padding:0 4px 4px}
+  .srank-h.good{color:#5FD0A8} .srank-h.bad{color:#F58AA0}
+  .srk-row{display:grid;grid-template-columns:20px 1fr;column-gap:8px;align-items:start;padding:6px 4px;border-radius:7px}
+  .srk-row+.srk-row{border-top:1px solid rgba(255,255,255,.05)}
+  .srk-rank{width:20px;height:20px;border-radius:5px;display:grid;place-items:center;font-size:10.5px;font-weight:800;background:rgba(255,255,255,.12);color:#fff;margin-top:1px}
+  .srk-row.bad .srk-rank{background:rgba(245,138,160,.22);color:#F58AA0}
+  .srk-name{color:#fff;font-weight:650;font-size:11.5px;line-height:1.3;word-break:break-all;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .srk-meta{grid-column:2;color:var(--side-muted);font-size:10.5px;line-height:1.45;margin-top:2px;word-break:break-all}
+  .srk-meta b{color:#fff;font-weight:650}
+  .srk-meta .sp{padding:1px 5px;border-radius:4px;font-size:9.5px;font-weight:800;margin-right:5px;vertical-align:1px}
+  .srk-empty{font-size:10.5px;color:var(--side-faint);padding:6px 4px}
   /* level seg (sidebar) — vertical */
   .side .seg{display:flex;flex-direction:column;gap:4px;background:transparent;padding:0;border-radius:0}
   .side .seg button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:10px 12px;border-radius:9px;background:transparent;color:var(--side-muted);font-size:13px;font-weight:650;transition:.12s;box-shadow:none}
@@ -287,6 +302,15 @@
       <div class="side-h">요약</div>
       <div class="skpi" id="skpi"></div>
     </div>
+    <div class="side-sec">
+      <div class="side-h">성과 순위 <span class="side-h-sub" id="srankSub"></span></div>
+      <div class="srank">
+        <div class="srank-h good">▲ TOP 3</div>
+        <div id="srTop"></div>
+        <div class="srank-h bad" id="srBadH">▼ BAD 3</div>
+        <div id="srBad"></div>
+      </div>
+    </div>
     <div class="side-foot">
       <div class="src" id="src"></div>
       <div class="sbtns">
@@ -300,12 +324,6 @@
   <!-- MAIN -->
   <div class="main">
     <div class="content">
-
-      <section class="card">
-        <div class="card-h"><h2>성과 순위</h2><span class="meta" id="rankMeta"></span></div>
-        <div class="ldr-g"><div class="ldr-h good"><span class="dot"></span>잘 나온 소재 TOP 3</div><div class="lead" id="best"></div></div>
-        <div class="ldr-g" id="worstG"><div class="ldr-h bad"><span class="dot"></span>아쉬운 소재 TOP 3</div><div class="lead" id="worst"></div></div>
-      </section>
 
       <section class="card">
         <div class="card-h"><h2>분석</h2></div>
@@ -323,7 +341,7 @@
         <div class="twocol" style="margin-top:22px">
           <div><div class="sub-h" style="margin-top:0">주차별 추세</div><div style="position:relative"><svg class="chart" id="trend"></svg></div><div class="leg" id="trendLeg"></div></div>
           <div id="bdWrap"><div class="sub-h" id="bdTitle" style="margin-top:0">분류별 비교</div>
-            <div class="bd-tog-row"><span class="bd-tog-lab">분류</span><div class="dtog" id="dtog"></div></div>
+            <div class="bd-tog-row"><span class="bd-tog-lab">유형</span><div class="dtog" id="dtog"></div></div>
             <div class="bd-tog-row"><span class="bd-tog-lab">지표</span><div class="dtog" id="mtogBd"></div></div>
             <div id="bd"></div></div>
         </div>
@@ -2480,20 +2498,19 @@ function sdelta(dd){if(dd==null)return"<span>지난주 –</span>";const c=Math.
 /* leaderboard */
 function chipsHTML(t){return [t.ve&&`<span class="chip">${t.ve}</span>`,t.fo&&`<span class="chip fo">${t.fo}</span>`,t.size&&`<span class="chip">${t.size}</span>`].filter(Boolean).join("");}
 function renderLeaderboard(ds){const L=ds.L,S=ds.S;
-  $("#rankMeta").innerHTML=`전체 기준 <b>${S.goodLabel}</b>(${S.goodHelp}) + 규모`;
+  const sub=$("#srankSub");if(sub)sub.innerHTML=`· ${S.goodLabel}`;
   const best=S.best.slice(0,3),worst=S.worst.slice(0,3).filter(w=>!best.includes(w));
   const sp=t=>t==="g2"?"sp-g2":t==="g1"?"sp-g1":t==="m"?"sp-mid":t==="w1"?"sp-w1":t==="w2"?"sp-w2":"sp-na";
-  if(!best.length){$("#best").innerHTML=`<div class="lcard"><div class="lreason">순위를 매길 데이터가 부족합니다 (최소 ${L.volLab} ${minVol(L)}건 이상 필요).</div></div>`;$("#worst").innerHTML="";$("#worstG").style.display="none";return;}
-  const rk=["g","s","b"];
-  $("#best").innerHTML=best.map((e,i)=>{const dom=i===0&&e.dom==="good";
-    return `<div class="lcard ${dom?"gold":""}"><div class="lhead"><span class="rk ${rk[i]}">${i+1}</span><span class="lname">${e.name}</span>${dom?'<span class="dom-pill">독보적</span>':""}</div>
-      <div class="chips">${chipsHTML(e.tags)}</div>
-      <div class="lfoot"><span class="sp ${sp(e.tier)}">${e.score}</span><span class="lreason">${S.goodLabel} <b>${gv(e,S)}</b> · ${degText(e,S)}</span></div></div>`;}).join("");
-  $("#worstG").style.display=worst.length?"":"none";
-  $("#worst").innerHTML=worst.map((e,i)=>{const dom=i===0&&e.dom==="bad";
-    return `<div class="lcard bad"><div class="lhead"><span class="rk r">${i+1}</span><span class="lname">${e.name}</span>${dom?'<span class="dom-pill bad">독보적 나쁨</span>':""}</div>
-      <div class="chips">${chipsHTML(e.tags)}</div>
-      <div class="lfoot"><span class="sp ${sp(e.tier)}">${e.score??"–"}</span><span class="lreason">${S.goodLabel} <b>${gv(e,S)}</b> · ${degText(e,S)}</span></div></div>`;}).join("");}
+  const top=$("#srTop"),bad=$("#srBad"),badH=$("#srBadH");
+  if(!best.length){top.innerHTML=`<div class="srk-empty">순위 데이터 부족 (최소 ${L.volLab} ${minVol(L)}건 필요)</div>`;bad.innerHTML="";if(badH)badH.style.display="none";return;}
+  const row=(e,i,isBad)=>{const dom=isBad?e.dom==="bad":(i===0&&e.dom==="good");
+    const tag=dom?(isBad?'<span class="dom-tag bad" style="font-size:8.5px;margin-left:5px">독보적</span>':'<span class="dom-tag" style="font-size:8.5px;margin-left:5px">독보적</span>'):"";
+    return `<div class="srk-row${isBad?" bad":""}"><div class="srk-rank">${i+1}</div>
+      <div class="srk-name" title="${escAttr(e.name)}">${e.name}${tag}</div>
+      <div class="srk-meta"><span class="sp ${sp(e.tier)}">${e.score??"–"}</span>${S.goodLabel} <b>${gv(e,S)}</b> · ${degText(e,S)}</div></div>`;};
+  top.innerHTML=best.map((e,i)=>row(e,i,false)).join("");
+  if(badH)badH.style.display=worst.length?"":"none";
+  bad.innerHTML=worst.map((e,i)=>row(e,i,true)).join("");}
 
 /* key summary tiles */
 function renderKeyrow(ds){const L=ds.L,a=ds.agg,tiles=[];
@@ -2592,15 +2609,24 @@ function renderBreakdown(ds){const L=ds.L,a=ds.agg;
   const primary=mets.find(m=>m.k===bdMet)||mets[0];
   $("#mtogBd").innerHTML=mets.map(m=>`<button data-m="${m.k}" class="${m.k===bdMet?"on":""}">${m.lab}</button>`).join("");
   $$("#mtogBd button").forEach(b=>b.onclick=()=>{bdMet=b.dataset.m;renderBreakdown(ds);});
-  const dimLab=(cand.find(d=>d[1]===bdDim)||cand[0])[0];
-  $("#bdTitle").innerHTML=`${dimLab}별 비교<span class="bd-sub">· 기준 ${primary.lab} (${primary.help})</span>`;
+  $("#bdTitle").innerHTML=`유형별 비교<span class="bd-sub">· 기준 ${primary.lab} (${primary.help}) · 상하 10% 트림 평균</span>`;
   const g={};a.forEach(e=>{const k=e.tags[bdDim];if(!k)return;(g[k]=g[k]||[]).push(e);});
-  let rows=Object.entries(g).map(([k,arr])=>{const sum=c=>arr.reduce((s,e)=>s+(e[c]||0),0);
-    const 비용=sum("비용"),노출=sum("노출 수"),클릭=sum("클릭 수"),어트리뷰션=sum("어트리뷰션 수"),활성=sum("활성 유저 수");
-    return{k,n:arr.length,비용,노출,클릭,어트리뷰션,활성,
-      CPC:클릭>0?비용/클릭:null, CTR:노출>0?클릭/노출:null,
-      CPM:노출>0?비용/노출*1000:null,
-      eCPI:어트리뷰션>0?비용/어트리뷰션:null, eCPA:활성>0?비용/활성:null};}).filter(r=>r[primary.k]!=null&&r[primary.k]>0);
+  function trimMet(arr,valFn,numFn,denFn){
+    const items=arr.map(e=>{const v=valFn(e),n=numFn(e)||0,d=denFn(e)||0;return{v,n,d};}).filter(x=>x.v!=null&&x.v>0&&x.d>0);
+    if(!items.length)return null;
+    let kept=items;
+    if(items.length>=10){items.sort((a,b)=>a.v-b.v);const cut=Math.floor(items.length*0.1);kept=items.slice(cut,items.length-cut);}
+    const num=kept.reduce((s,x)=>s+x.n,0),den=kept.reduce((s,x)=>s+x.d,0);
+    return den>0?num/den:null;}
+  let rows=Object.entries(g).map(([k,arr])=>{
+    const 비용=arr.reduce((s,e)=>s+(e.비용||0),0);
+    return{k,n:arr.length,비용,
+      CPC:trimMet(arr,e=>e.CPC,e=>e.비용,e=>e["클릭 수"]),
+      CTR:trimMet(arr,e=>e.CTR,e=>e["클릭 수"],e=>e["노출 수"]),
+      CPM:trimMet(arr,e=>e["노출 수"]>0?e.비용/e["노출 수"]*1000:null,e=>e.비용*1000,e=>e["노출 수"]),
+      eCPI:trimMet(arr,e=>e.eCPI,e=>e.비용,e=>e["어트리뷰션 수"]),
+      eCPA:trimMet(arr,e=>e["활성 유저 eCPA"],e=>e.비용,e=>e["활성 유저 수"])};
+  }).filter(r=>r[primary.k]!=null&&r[primary.k]>0);
   rows.sort((x,y)=>primary.dir>0?y[primary.k]-x[primary.k]:x[primary.k]-y[primary.k]);
   if(bdDim==="size")rows=rows.slice(0,8);
   if(!rows.length){$("#bd").innerHTML=`<div class="bd-empty">${primary.lab} 비교 가능한 그룹이 없음 (값이 0이거나 측정값 없음)</div>`;return;}
