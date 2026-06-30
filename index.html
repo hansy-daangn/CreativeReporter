@@ -31,10 +31,13 @@
 
   /* ===== sidebar (fill-based separation, dark) ===== */
   .side{background:var(--side); color:var(--side-ink); position:sticky; top:0; height:100vh; overflow:auto; display:flex; flex-direction:column; padding:20px 16px}
-  .mark{display:flex; align-items:center; gap:10px; padding:4px 6px 18px}
-  .mark .m-ico{width:30px;height:30px;border-radius:9px;background:var(--karrot);display:grid;place-items:center;flex:0 0 auto}
-  .mark .m-ico svg{width:17px;height:17px}
-  .mark b{font-size:14px; font-weight:700; letter-spacing:-.01em; color:#fff}
+  /* level seg (sidebar) — vertical */
+  .side .seg{display:flex;flex-direction:column;gap:4px;background:transparent;padding:0;border-radius:0}
+  .side .seg button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:10px 12px;border-radius:9px;background:transparent;color:var(--side-muted);font-size:13px;font-weight:650;transition:.12s;box-shadow:none}
+  .side .seg button:hover{background:var(--side-2);color:var(--side-ink)}
+  .side .seg button.on{background:var(--karrot);color:#fff;box-shadow:none}
+  .side .seg button .sc{font-size:10.5px;font-weight:600;background:rgba(255,255,255,.08);color:var(--side-faint);padding:1px 7px;border-radius:6px;opacity:1}
+  .side .seg button.on .sc{background:rgba(255,255,255,.22);color:#fff}
   /* media segment (sidebar, secondary) */
   .mseg{display:flex; flex-direction:column; gap:4px}
   .mseg button{display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; text-align:left; padding:9px 12px; border-radius:9px; color:var(--side-muted); font-size:13px; font-weight:650; transition:.12s}
@@ -69,17 +72,7 @@
 
   /* ===== main ===== */
   .main{min-width:0; display:flex; flex-direction:column}
-  .hd{background:var(--surface); padding:16px 30px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap}
-  .hd-l{display:flex; flex-direction:column; gap:8px}
-  .seg{display:inline-flex; background:var(--surface-2); border-radius:11px; padding:4px; gap:3px}
-  .seg button{display:flex; align-items:center; gap:7px; padding:8px 15px; border-radius:8px; font-size:13.5px; font-weight:650; color:var(--muted); transition:.12s}
-  .seg button:hover{color:var(--ink)}
-  .seg button.on{background:var(--karrot); color:#fff; box-shadow:0 2px 9px -3px rgba(255,111,15,.6)}
-  .seg button .sc{font-size:10.5px; font-weight:600; opacity:.75; background:rgba(0,0,0,.06); padding:0 6px; border-radius:5px}
-  .seg button.on .sc{background:rgba(255,255,255,.22)}
-  .hd .scope{margin:0; font-size:12px; color:var(--muted)}
-  .hd .date{font-size:12px; color:var(--faint); font-weight:600; white-space:nowrap}
-  .content{padding:22px 30px 8px; display:flex; flex-direction:column; gap:20px}
+  .content{padding:28px 30px 8px; display:flex; flex-direction:column; gap:20px}
 
   .card{background:var(--surface); border-radius:var(--r); box-shadow:var(--sh); padding:22px 24px}
   .card-h{display:flex; align-items:baseline; gap:10px; margin:0 0 16px}
@@ -234,7 +227,7 @@
     .side-sec{margin-top:16px}
     .skpi{flex-direction:row;flex-wrap:wrap;gap:18px}
     .side-foot{margin-top:16px}
-    .hd{padding:16px 18px}.content{padding:16px 18px 4px}.card{padding:18px}
+    .content{padding:18px 18px 4px}.card{padding:18px}
   }
   @media(max-width:760px){.isle{grid-template-columns:1fr;gap:18px}}
   @media (prefers-reduced-motion: reduce){*{transition:none!important}}
@@ -245,8 +238,11 @@
 <div class="app">
   <!-- SIDEBAR: identity + media + summary + actions -->
   <aside class="side">
-    <div class="mark"><span class="m-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M5 3h11l3 4-8 14L3 7l2-4z" stroke="#fff" stroke-width="1.7" stroke-linejoin="round"/><path d="M3 7h16" stroke="#fff" stroke-width="1.3"/></svg></span><b>소재 성과</b></div>
-    <div class="side-sec" style="margin-top:6px">
+    <div class="side-sec" style="margin-top:2px">
+      <div class="side-h">레벨</div>
+      <div class="seg" id="seg" role="tablist"></div>
+    </div>
+    <div class="side-sec">
       <div class="side-h">매체</div>
       <div class="mseg" id="mseg"></div>
     </div>
@@ -266,10 +262,6 @@
 
   <!-- MAIN -->
   <div class="main">
-    <header class="hd">
-      <div class="hd-l"><div class="seg" id="seg" role="tablist"></div><p class="scope" id="scope"></p></div>
-      <div class="date" id="dateRange"></div>
-    </header>
     <div class="content">
 
       <section class="card">
@@ -2724,9 +2716,7 @@ function scope(ds){const m=ds.media;
   ds.agg  = m?ds.aggAll.filter(e=>e.tags.ch===m):ds.aggAll;
   ds.weekly = weeklyTotals(ds.data); ds.S = computeScores(ds);}
 function show(ds){scope(ds);
-  $("#scope").textContent=ds.L.scope;
-  $("#dateRange").textContent="2026.06.01 – 06.22 · 4주";
-  $("#src").innerHTML=`데이터 <b>${ds.src||"내장 샘플"}</b> · ${ds.L.name} ${ds.aggAll.length.toLocaleString()}개`;
+  $("#src").innerHTML=`데이터 <b>${ds.src||"내장 샘플"}</b> · ${ds.L.name} ${ds.aggAll.length.toLocaleString()}개 · 2026.06.01–06.22 · 4주`;
   renderMediaSeg(ds);renderSideKpis(ds);renderLeaderboard(ds);renderKeyrow(ds);
   requestAnimationFrame(()=>{renderQuad(ds);renderTrend(ds);renderBreakdown(ds);
     requestAnimationFrame(()=>{renderTlegend();renderTable(ds);});});}
