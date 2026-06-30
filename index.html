@@ -2449,6 +2449,7 @@ function computeScores(ds){const L=ds.L,a=ds.agg;
   const sc=elig.map(e=>e.score).sort((x,y)=>x-y);
   elig.forEach(e=>{const p=pctRank(sc,e.score);e.tier=p>=0.8?"g2":p>=0.6?"g1":p>=0.4?"m":p>=0.2?"w1":"w2";});
   const best=elig.slice().sort((x,y)=>y.score-x.score);
+  best.forEach((e,i)=>{e.rank=i+1;});
   const medSpend=quantile(a.map(x=>x.비용).sort((p,q)=>p-q),0.5);
   let pool=elig.filter(e=>e.비용>=medSpend);if(pool.length<2)pool=elig.slice();
   const worst=goodDir<0?pool.slice().sort((x,y)=>y[goodCol]-x[goodCol]):pool.slice().sort((x,y)=>x[goodCol]-y[goodCol]);
@@ -2679,7 +2680,11 @@ function tableCols(L){const c=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score",t:"�
   return c;}
 function fcell(v,f){return f==="won"?fmtWon(v):f==="int"?fmtInt(v):f==="pct"?fmtPct(v):v;}
 function tierBadge(e){if(e.dom==="good")return `<span class="dom-tag" title="독보적으로 잘 나옴">독보적</span>`;
-  return e.tier==="g2"?`<span class="b-gold" title="매우 좋음">${ICON.crown}</span>`:e.tier==="g1"?`<span class="b-g1" title="좋음">${thumbs("up",1)}</span>`:e.tier==="w1"?`<span class="b-w1" title="주의">${thumbs("down",1)}</span>`:e.tier==="w2"?`<span class="b-w2" title="나쁨">${thumbs("down",1)}</span>`:"";}
+  if(e.tier==="g2"&&e.rank&&e.rank<=7)return `<span class="b-gold" title="매우 좋음 · TOP ${e.rank}">${ICON.crown}</span>`;
+  if(e.tier==="g2"||e.tier==="g1")return `<span class="b-g1" title="좋음">${thumbs("up",1)}</span>`;
+  if(e.tier==="w1")return `<span class="b-w1" title="주의">${thumbs("down",1)}</span>`;
+  if(e.tier==="w2")return `<span class="b-w2" title="나쁨">${thumbs("down",1)}</span>`;
+  return "";}
 function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L),thead=$("#table thead"),tbody=$("#table tbody");curDS=ds;ISLE.name=null;
   thead.innerHTML="<tr>"+cols.map(c=>{const sorted=tState.sort===c.k,arr=sorted?(tState.dir<0?"▼":"▲"):"";const cl=(c.k==="name"?"name ":c.k==="_b"?"bdg ":"")+(c.help?"help ":"")+(sorted?"sorted":"");return `<th class="${cl.trim()}" data-k="${c.k}" ${c.help?`title="${c.help}"`:""}>${c.t} <span class="arr">${arr}</span></th>`;}).join("")+"</tr>";
   let rows=ds.agg.slice();
@@ -2701,7 +2706,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L),thead=$("#table t
       let cls="num";if(c.k===gc&&r.tier!=="na"){cls+=({g2:" tg2",g1:" tg1",w1:" tw1",w2:" tw2"})[r.tier]||"";}
       return `<td class="${cls}">${fcell(r[c.k],c.f)}</td>`;}).join("")+"</tr>";}).join("");
   thead.querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(tState.sort===k)tState.dir*=-1;else{tState.sort=k;tState.dir=(k==="name")?1:-1;}renderTable(ds);});}
-function renderTlegend(){$("#tlegend").innerHTML=`<span><span class="dom-tag">독보적</span></span><span><span class="b-gold">${ICON.crown}</span>매우 좋음</span><span><span class="b-g1">${thumbs("up",1)}</span>좋음</span><span><span class="b-w1">${thumbs("down",1)}</span>주의</span><span><span class="b-w2">${thumbs("down",1)}</span>나쁨</span>`;}
+function renderTlegend(){$("#tlegend").innerHTML=`<span><span class="dom-tag">독보적</span></span><span><span class="b-gold">${ICON.crown}</span>TOP 7</span><span><span class="b-g1">${thumbs("up",1)}</span>좋음</span><span><span class="b-w1">${thumbs("down",1)}</span>주의</span><span><span class="b-w2">${thumbs("down",1)}</span>나쁨</span>`;}
 
 /* glossary */
 const GLOSSARY=[["광고비","이 소재에 쓴 돈"],["노출","사용자에게 보여진 횟수"],["클릭","눌린 횟수"],["CTR","클릭률 = 클릭÷노출",1,"높을수록 좋음"],["CPC","클릭 1번당 비용",1,"낮을수록 좋음"],["설치","이 소재로 생긴 앱 설치 수(어트리뷰션)"],["eCPI","설치 1건당 비용 — 소재 효율의 핵심",1,"낮을수록 좋음"],["활성 유저","설치 후 실제로 앱을 쓴 사람"],["eCPA","활성 유저 1명당 비용",1,"낮을수록 좋음"],["점수","효율(70%)+규모(30%)를 0~100으로"]];
