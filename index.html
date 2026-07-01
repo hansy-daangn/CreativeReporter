@@ -249,6 +249,7 @@
   .fam .mb svg{width:13px;height:13px;vertical-align:middle}
   .fam-wrap{max-height:280px;overflow:auto;border-radius:10px}
   .fam-note{font-size:11px;color:var(--faint);margin-top:8px}
+  .isle-load{font-size:12px;color:var(--faint);padding:16px 4px}
 
   .ft{padding:18px 30px 26px;font-size:11px;color:var(--faint)}
   /* glossary overlay */
@@ -2661,10 +2662,11 @@ function islandMetrics(L,e){const M=[];const add=(k,lab,dir,fmt,good)=>M.push({k
   add("비용","규모",1,v=>fmtKRW(v)+"원",false);return M;}
 function defaultMetric(ds,e){const M=islandMetrics(ds.L,e);return (M.find(m=>m.good&&e[m.k]!=null)||M.find(m=>e[m.k]!=null)||M[M.length-1]).k;}
 function cohorts(ds,e){const a=ds.agg,out=[{label:"전체",mem:a}];
-  if(e.tags.ve)out.push({label:"같은 서비스 · "+e.tags.ve,mem:a.filter(x=>x.tags.ve===e.tags.ve)});
-  if(e.tags.fo)out.push({label:"같은 포맷 · "+e.tags.fo,mem:a.filter(x=>x.tags.fo===e.tags.fo)});
-  if(e.tags.size)out.push({label:"같은 사이즈 · "+e.tags.size,mem:a.filter(x=>x.tags.size===e.tags.size)});
-  const fk=familyKey(e.name),fam=a.filter(x=>familyKey(x.name)===fk);if(fam.length>1)out.push({label:"같은 이름그룹 (해상도만 다름)",mem:fam});
+  if(e.tags.ve)out.push({label:"같은 서비스 · "+e.tags.ve,mem:ds.byVe.get(e.tags.ve)||[]});
+  if(e.tags.fo)out.push({label:"같은 포맷 · "+e.tags.fo,mem:ds.byFo.get(e.tags.fo)||[]});
+  if(e.tags.size)out.push({label:"같은 사이즈 · "+e.tags.size,mem:ds.bySize.get(e.tags.size)||[]});
+  const fam=ds.byFk.get(e._fk||familyKey(e.name))||[];
+  if(fam.length>1)out.push({label:"같은 이름그룹 (해상도만 다름)",mem:fam});
   return out;}
 function cohortStat(members,m,e){const vals=members.filter(x=>x[m.k]!=null&&x.비용>0).map(x=>({n:x.name,v:x[m.k]}));
   if(!vals.length||e[m.k]==null)return null;const sorted=[...vals].sort((a,b)=>m.dir<0?a.v-b.v:b.v-a.v);const N=sorted.length;
@@ -2680,7 +2682,7 @@ function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>
   const scoreTxt=e.score!=null?`<span class="sp ${sp(e.tier)}">${e.score}점</span>`:`<span class="sp sp-na">점수 –</span>`;
   const bars=cohorts(ds,e).map(c=>posBar(c.label,cohortStat(c.mem,cur,e),cur)).join("");
   const toggles=M.map(m=>`<button data-m="${m.k}" class="${m.k===cur.k?"on":""}">${m.lab}</button>`).join("");
-  const fk=familyKey(e.name),fam=ds.agg.filter(x=>familyKey(x.name)===fk).sort((a,b)=>(b.score??-1)-(a.score??-1));
+  const fam=(ds.byFk.get(e._fk||familyKey(e.name))||[e]).slice().sort((a,b)=>(b.score??-1)-(a.score??-1));
   const effK=L.key==="cg"?"CTR":L.effCol,effFmt=L.key==="cg"?fmtPct:fmtWon,effLab=L.key==="cg"?"CTR":L.effLabel;
   let famHTML=fam.length<=1?`<div class="fam-note">해상도만 다른 동일 이름 소재가 없습니다.</div>`:
     `<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">해상도</th><th>광고비</th><th>${effLab}</th><th>점수</th></tr></thead><tbody>`+
@@ -2689,15 +2691,17 @@ function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>
   inner.innerHTML=`<div class="isle-hd">${scoreTxt}<span class="nm">${e.name}</span>${chipsHTML(e.tags)}</div>
     <div><div class="ish">기준별 위치 <span class="n">${cur.good?cur.lab+" 기준 · 막대가 길수록 좋음":"광고비 규모"}</span></div><div class="mtog">${toggles}</div>${bars}</div>
     <div><div class="ish">이름이 같은 소재 <span class="n">해상도만 다른 ${fam.length}개</span></div>${famHTML}</div>`;
-  inner.querySelectorAll(".mtog button").forEach(b=>b.addEventListener("click",ev=>{ev.stopPropagation();ISLE.metric=b.dataset.m;fillIsland(ds,e,inner);}));}
+  inner.querySelectorAll(".mtog button").forEach(b=>b.addEventListener("click",ev=>{ev.stopPropagation();ISLE.metric=b.dataset.m;inner.querySelectorAll(".mtog button").forEach(x=>x.classList.toggle("on",x.dataset.m===ISLE.metric));requestAnimationFrame(()=>fillIsland(ds,e,inner));}));}
 function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-row");const wasOpen=ISLE.name===name;
   if(existing)existing.remove();$$("#table tbody tr.exp").forEach(t=>t.classList.remove("exp"));
   if(wasOpen){ISLE.name=null;return;}
-  const e=ds.agg.find(x=>x.name===name);if(!e)return;ISLE.name=name;ISLE.metric=defaultMetric(ds,e);
+  const e=(ds.byName&&ds.byName.get(name))||ds.agg.find(x=>x.name===name);if(!e)return;ISLE.name=name;ISLE.metric=defaultMetric(ds,e);
   tr.classList.add("exp");const row=document.createElement("tr");row.className="isle-row";
   const td=document.createElement("td");td.colSpan=tableCols(ds.L).length;const inner=document.createElement("div");inner.className="isle";
   td.appendChild(inner);row.appendChild(td);tr.parentNode.insertBefore(row,tr.nextSibling);
-  const sc=document.querySelector(".tbl-scroll");inner.style.width=(sc?sc.clientWidth:1000)+"px";fillIsland(ds,e,inner);}
+  const sc=document.querySelector(".tbl-scroll");inner.style.width=(sc?sc.clientWidth:1000)+"px";
+  inner.innerHTML=`<div class="isle-load">불러오는 중…</div>`;
+  requestAnimationFrame(()=>{if(ISLE.name===name)fillIsland(ds,e,inner);});}
 function tableCols(L){const c=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score",t:"점수",help:"효율 70% + 규모 30%를 0~100점으로"},
   {k:"비용",t:"광고비",f:"won",help:"쓴 광고비"},{k:"노출 수",t:"노출",f:"int",help:"보여진 횟수"},{k:"클릭 수",t:"클릭",f:"int",help:"눌린 횟수"},
   {k:"CTR",t:"CTR",f:"pct",help:"클릭률 = 클릭÷노출 · 높을수록 좋음"},{k:"CPC",t:"CPC",f:"won",help:"클릭당 비용 · 낮을수록 좋음"}];
@@ -2744,7 +2748,15 @@ $("#gloss").addEventListener("click",e=>{if(e.target.id==="gloss")$("#gloss").cl
 /* state */
 const DATASETS={};let active=null;
 function ingest(headers,data,fname){const k=detect(headers);if(!k){toast("형식을 알 수 없는 CSV: "+(fname||""));return null;}const L=LEVELS[k];
-  DATASETS[k]={key:k,L,dataAll:data,aggAll:aggregate(data,L),src:fname};return k;}
+  const agg=aggregate(data,L);
+  const byVe=new Map(),byFo=new Map(),bySize=new Map(),byFk=new Map(),byName=new Map();
+  const push=(m,k,v)=>{const arr=m.get(k);if(arr)arr.push(v);else m.set(k,[v]);};
+  for(const e of agg){e._fk=familyKey(e.name);byName.set(e.name,e);
+    if(e.tags.ve)push(byVe,e.tags.ve,e);
+    if(e.tags.fo)push(byFo,e.tags.fo,e);
+    if(e.tags.size)push(bySize,e.tags.size,e);
+    push(byFk,e._fk,e);}
+  DATASETS[k]={key:k,L,dataAll:data,aggAll:agg,src:fname,byVe,byFo,bySize,byFk,byName};return k;}
 function scope(ds){ds.data=ds.dataAll;ds.agg=ds.aggAll;
   ds.weekly=weeklyTotals(ds.data);ds.S=computeScores(ds);}
 function show(ds){scope(ds);
