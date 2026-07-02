@@ -268,8 +268,10 @@
   tbody tr.exp .caret{transform:rotate(90deg);color:var(--karrot)}
   .isle-row>td{padding:0!important;background:var(--surface-2);border-bottom:1px solid #E6E5DE}
   .isle{position:sticky;left:0;box-sizing:border-box;padding:18px 20px;display:grid;grid-template-columns:minmax(240px,1.05fr) minmax(220px,1.15fr) minmax(320px,1.35fr);gap:22px;min-width:0}
-  @media(max-width:1180px){.isle{grid-template-columns:minmax(220px,1fr) minmax(220px,1fr) minmax(300px,1.4fr);gap:18px}}
-  @media(max-width:900px){.isle{grid-template-columns:1fr;gap:18px}}
+  .isle.no-preview{grid-template-columns:minmax(260px,1fr) minmax(320px,1.35fr)}
+  @media(max-width:1180px){.isle{grid-template-columns:minmax(220px,1fr) minmax(220px,1fr) minmax(300px,1.4fr);gap:18px}
+    .isle.no-preview{grid-template-columns:minmax(240px,1fr) minmax(280px,1.4fr)}}
+  @media(max-width:900px){.isle,.isle.no-preview{grid-template-columns:1fr;gap:18px}}
   .isle>section{min-width:0}
   .isle-hd{grid-column:1/-1;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
   .isle-hd .nm{font-size:13.5px;font-weight:740;word-break:break-all}
@@ -3053,8 +3055,10 @@ function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>
   const assetUrl=e["_g_url"]||(/^https?:/.test(e.name)?e.name:"");
   const preview=assetPreview(assetUrl);
   const gExtra=e["_g_assetType"]?`<div class="g-extra"><span class="g-tag">${e["_g_assetType"]}</span>${e["_g_status"]?`<span class="g-tag g-status">${e["_g_status"]}</span>`:""}${e["_g_assetStatus"]?`<span class="g-tag">${e["_g_assetStatus"]}</span>`:""}</div>${e._g_campaignId||e._g_adGroupId||e._g_assetId?`<div class="g-ids"><span>${e._g_campaignId?`캠페인 <b>${e._g_campaignId}</b>`:""}</span><span>${e._g_adGroupId?`광고그룹 <b>${e._g_adGroupId}</b>`:""}</span><span>${e._g_assetId?`항목 <b>${e._g_assetId}</b>`:""}</span></div>`:""}`:"";
+  const hasPreview=!!preview;
+  inner.classList.toggle("no-preview",!hasPreview);
   inner.innerHTML=`<div class="isle-hd">${scoreTxt}<span class="nm">${trunc(e.name,80)}</span>${chipsHTML(e.tags)}</div>
-    <section>${preview?`<div class="isle-preview">${preview}${gExtra}</div>`:`<div class="isle-preview" style="font-size:11px;color:var(--faint);padding:22px 12px">미리보기 불가</div>`}</section>
+    ${hasPreview?`<section><div class="isle-preview">${preview}${gExtra}</div></section>`:""}
     <section><div class="ish">기준별 위치 <span class="n">${cur.good?cur.lab+" 기준":"광고비 규모"}</span></div><div class="mtog">${toggles}</div>${bars}</section>
     <section><div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}</section>`;
   inner.querySelectorAll(".mtog button").forEach(b=>b.addEventListener("click",ev=>{ev.stopPropagation();ISLE.metric=b.dataset.m;inner.querySelectorAll(".mtog button").forEach(x=>x.classList.toggle("on",x.dataset.m===ISLE.metric));requestAnimationFrame(()=>fillIsland(ds,e,inner));}));
