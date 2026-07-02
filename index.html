@@ -3287,9 +3287,10 @@ function renderFooter(){$("#ft").innerHTML=`
       크리에이티브 평가는 <b>규모 대비 효율(efficiency-at-scale)</b>이 핵심이며, 규모는 별도의 도달·인지 축으로 다루어야 합니다.</p>
     </div>
   </div>
+</details>
 
-  <h3>매체·레벨별 효율(E) 지표 가중치</h3>
-
+<details>
+  <summary>매체·레벨별 효율(E) 지표 가중치</summary>
   <h4>Google Ads (자산 리포트 · 반응형 디스플레이/영상)</h4>
   <table class="ft-tbl">
     <thead><tr><th>지표</th><th class="n">가중치</th><th>방향</th><th>근거</th></tr></thead>
@@ -3321,8 +3322,10 @@ function renderFooter(){$("#ft").innerHTML=`
   <h4>Campaign(캠페인) 레벨</h4>
   <p>캠페인은 목표·예산 배분 축이라 소재 품질 신호가 희석됩니다. 따라서 <b>노출 단가와 클릭 효율</b> 중심으로만 산정:
   CTR 50% · CPC 30% · CPM 20%.</p>
+</details>
 
-  <h3>규모(R)와 통계적 신뢰도(C)</h3>
+<details>
+  <summary>규모(R)와 통계적 신뢰도(C)</summary>
   <p><b>R = 노출 수의 계정 내 백분위</b>. 즉, 100번 노출된 소재와 100만번 노출된 소재를 같은 잣대로 세우지 않습니다.
   이는 도달(Reach)이 광고 효과의 필수 조건이라는 <i>Byron Sharp - How Brands Grow</i>의 물리적 가용성(Physical Availability) 논지와,
   Nielsen과 Analytic Partners 같은 MMM 벤더들이 iROAS 산정 시 <b>도달 규모 조정(reach adjustment)</b>을 수행하는 관행에 부합합니다.</p>
@@ -3330,8 +3333,10 @@ function renderFooter(){$("#ft").innerHTML=`
   경험적 베이지안(empirical Bayes) 축소 추정의 정신을 반영해 로그 스케일로 신뢰도를 부여했습니다 —
   <b>전환 30건에서 완전 신뢰(C=1)</b>, 그 이하는 <code>ln(1+n)/ln(1+30)</code>로 감쇠.
   30이라는 임계값은 통계학의 관습적 표본 최소치(central limit theorem의 실무적 기준)에서 취했습니다.</p>
+</details>
 
-  <h3>등급(Tier) — 매우 좋음 / 좋음 / 보통 / 나쁨 / 매우 나쁨</h3>
+<details>
+  <summary>등급(Tier) — 매우 좋음 / 좋음 / 보통 / 나쁨 / 매우 나쁨</summary>
   <p>계산된 점수를 자체 계정 내 <b>5분위(quintile)</b>로 자른 상대 등급입니다.</p>
   <ul>
     <li><b>매우 좋음</b> — 상위 20%</li>
@@ -3342,21 +3347,28 @@ function renderFooter(){$("#ft").innerHTML=`
   </ul>
   <p>절대 임계값이 아닌 상대 등급이므로, 계정 전체가 개선되면 같은 점수라도 등급이 하락할 수 있습니다.
   이것이 실제 계정 관리의 목적(계속되는 개선)에 맞는 신호입니다.</p>
+</details>
 
-  <h3>대상 산정에서 제외되는 항목</h3>
+<details>
+  <summary>대상 산정에서 제외되는 항목</summary>
   <ul>
     <li>광고비가 하위 15% 미만인 저광고비 소재 — 단발성 실험 노이즈 제거</li>
     <li>핵심 지표(가중치 15% 이상) 중 하나라도 결측인 소재</li>
     <li>노출/클릭이 극도로 적어 통계적 판단이 불가능한 소재는 C 감쇠로 점수 낮게 조정</li>
     <li>비활성(광고비 0)은 표에서 기본 숨김 · "비활성도 보기" 체크로 표시</li>
   </ul>
+</details>
 
-  <h3>독보적(dominant) 표기</h3>
-  <p>상위 점수 소재 중 <b>1순위 지표(예: Google이면 ROAS, Ad면 eCPI)에서 계정 중앙값 대비 1.8배 이상</b> 차이가 나면 왕관(👑) + "독보적" 태그를 부여합니다.
-  최하위도 마찬가지로 중앙값 대비 2배 이상 열위이면 "매우 나쁨" 강조 표기.
+<details>
+  <summary>독보적(dominant) 표기</summary>
+  <p>상위 점수 소재 중 <b>1순위 지표(예: Google이면 ROAS, Ad면 eCPI)에서 계정 중앙값 대비 1.8배 이상</b> 차이가 나고,
+  <b>2위와 점수 차이가 3점 이상</b> 벌어질 때만 왕관(👑) + "독보적" 태그를 부여합니다.
+  최하위도 마찬가지로 중앙값 대비 2배 이상 열위이고 위 아래와 점수 차이가 3점 이상일 때 "매우 나쁨" 강조 표기.
   단, 광고비가 계정 중앙값 이하인 소재는 규모 부족으로 판단하여 독보적 인정 대상에서 제외합니다.</p>
+</details>
 
-  <h3>주요 참고 문헌 · 자료</h3>
+<details>
+  <summary>주요 참고 문헌 · 자료</summary>
   <ul>
     <li><a href="https://support.google.com/google-ads/answer/6167118" target="_blank" rel="noopener">Google Ads Help — About Quality Score</a></li>
     <li><a href="https://support.google.com/google-ads/answer/2472725" target="_blank" rel="noopener">Google Ads Help — Value-based Bidding & ROAS</a></li>
@@ -3371,6 +3383,7 @@ function renderFooter(){$("#ft").innerHTML=`
     <li>AppsFlyer — <a href="https://www.appsflyer.com/glossary/ecpi/" target="_blank" rel="noopener">eCPI: Effective Cost per Install 정의</a></li>
   </ul>
 </details>
+
 <p class="ft-note">모든 계산은 브라우저 안에서 이뤄지며, CSV 데이터는 외부로 전송되지 않습니다 ·
 데이터 컬럼 가용도가 10% 미만인 지표는 자동으로 표·차트에서 숨김 처리됩니다 ·
 등급은 <b>업로드된 계정 내 상대 평가</b>이며, 다른 계정 간의 비교에는 적합하지 않습니다.</p>`;}
