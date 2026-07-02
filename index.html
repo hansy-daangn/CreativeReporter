@@ -230,6 +230,9 @@
   tbody tr:hover td{background:#FBF8F4} tbody tr:hover td.name,tbody tr:hover td.bdg{background:#FBF8F4}
   tbody td{border-bottom:1px solid #F0EFE9}
   tbody tr.row{content-visibility:auto;contain-intrinsic-size:auto 38px}
+  tbody tr.load-more td{background:var(--surface-2);padding:12px;text-align:center}
+  tbody tr.load-more button{background:var(--karrot);color:#fff;padding:8px 20px;border-radius:9px;font-size:12.5px;font-weight:650;cursor:pointer}
+  tbody tr.load-more button:hover{background:#ff7d24}
   td.bdg .thumbs{display:inline-flex;gap:1px;align-items:center}
   td.bdg svg{width:16px;height:16px;vertical-align:middle}
   .thumbs svg{width:14px;height:14px}
@@ -286,6 +289,8 @@
   .g-extra{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
   .g-tag{font-size:10.5px;font-weight:650;padding:3px 8px;border-radius:6px;background:var(--surface-3);color:var(--muted)}
   .g-tag.g-status{background:var(--g1-f);color:var(--g1)}
+  .g-ids{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:6px;font-size:10.5px;color:var(--faint)}
+  .g-ids b{color:var(--muted);font-weight:650;font-family:monospace;font-size:11px}
   .tf-kind{margin-left:5px;font-size:9.5px;color:var(--faint);font-weight:600}
 
   .ft{padding:18px 30px 26px;font-size:11px;color:var(--faint)}
@@ -308,12 +313,9 @@
   .drop-ov .dz{display:grid;place-items:center;font-weight:740;color:#fff;font-size:15px;letter-spacing:-.01em;text-align:center;padding:16px;transition:background .1s,border-color .1s}
   .drop-ov .dz b{font-size:19px}
   .drop-ov .dz span{font-size:12px;font-weight:600;opacity:.85;margin-top:6px}
-  .drop-ov .dz-top{flex:0 0 60vh;background:rgba(20,20,15,.5);border-bottom:3px dashed rgba(255,255,255,.35)}
-  .drop-ov .dz-top.hot{background:rgba(255,111,15,.65);border-bottom-color:#fff}
-  .drop-ov .dz-bot{flex:0 0 40vh;display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;background:rgba(20,20,15,.5)}
-  .drop-ov .dz-bot .dz{border-top:3px dashed rgba(255,255,255,.35);background:rgba(20,20,15,.55)}
-  .drop-ov .dz-bot .dz.hot{background:rgba(255,111,15,.7);border-top-color:#fff}
-  .drop-ov .dz-bot .dz+.dz{border-left:1px solid rgba(255,255,255,.12)}
+  .drop-ov .dz-top{flex:1;background:rgba(20,20,15,.62);border:3px dashed rgba(255,111,15,.6)}
+  .drop-ov .dz-top.hot{background:rgba(255,111,15,.72);border-color:#fff}
+  .drop-ov .dz .dz-sub{font-size:11px;opacity:.7;margin-top:12px;font-weight:500}
   .tooltip{position:fixed;pointer-events:none;background:var(--ink);color:#fff;padding:8px 11px;border-radius:9px;font-size:11.5px;line-height:1.45;box-shadow:0 8px 24px -8px rgba(0,0,0,.45);opacity:0;transition:opacity .1s;z-index:90;max-width:280px}
   .tooltip .t-k{color:rgba(255,255,255,.6)}
   .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:11px;font-size:13px;opacity:0;transition:.25s;z-index:95}
@@ -414,12 +416,7 @@
 
 <div class="ov" id="gloss"><div class="ov-card"><h2>지표 풀이</h2><p class="ov-sub">짧게 — 화살표는 좋은 방향입니다.</p><div class="gloss-grid" id="glossGrid"></div><div class="ov-close"><button id="glossClose">닫기</button></div></div></div>
 <div class="drop-ov" id="dropOv">
-  <div class="dz dz-top" id="dzTop"><div><b>매체 구분 없이 통합</b><span>여기에 놓으면 기존 데이터는 새 데이터로 교체됩니다</span></div></div>
-  <div class="dz-bot">
-    <div class="dz" id="dzGoogle"><div><b>Google</b><span>왼쪽 1/3</span></div></div>
-    <div class="dz" id="dzMoloco"><div><b>Moloco</b><span>가운데 1/3</span></div></div>
-    <div class="dz" id="dzMeta"><div><b>Meta</b><span>오른쪽 1/3</span></div></div>
-  </div>
+  <div class="dz dz-top" id="dzTop"><div><b>CSV 여기에 놓으세요</b><span>Google Ads / Meta / Moloco 는 파일 형식·이름으로 <b>자동 감지</b></span><span class="dz-sub">Google Ads 애셋 리포트(확장 소재/애셋 유형 헤더) → Google로 자동 분류</span></div></div>
 </div>
 <div class="tooltip" id="tip"></div>
 <div class="toast" id="toast"></div>
@@ -2523,7 +2520,12 @@ function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n")
       "_g_url":url,
       "_g_interactions":pn(r["상호작용 수"]),
       "_g_trueViews":pn(r["TrueView 조회수"]),
-      "_g_conversions":pn(r["전환수"])};}).filter(r=>r.ad_name);
+      "_g_conversions":pn(r["전환수"]),
+      "_g_assetId":(r["항목 ID"]||"").trim(),
+      "_g_adGroupId":(r["광고그룹 ID"]||"").trim(),
+      "_g_campaignId":(r["캠페인 ID"]||"").trim(),
+      "_g_allConv":pn(r["모든 전환(전환 시간별)"]),
+      "_g_convValue":pn(r["모든 전환 가치(전환 시간별)"])};}).filter(r=>r.ad_name);
   return{headers:["date","ad_name","비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수"],data:rows};}
 
 let WEEKS=["2026-06-01","2026-06-08","2026-06-15","2026-06-22"];
@@ -2534,15 +2536,17 @@ function aggregate(data,L){const map=new Map();
   for(const r of data){let nm=r[L.nameCol];if(nm==null||nm===""||nm==="nan")nm="(미지정)";
     if(!map.has(nm))map.set(nm,{name:nm,비용:0,"노출 수":0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0,weeks:Object.fromEntries(WEEKS.map(w=>[w,{비용:0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0}]))});
     const e=map.get(nm);for(const c of["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e[c]+=v;}
-    for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
-    for(const k of["_g_interactions","_g_trueViews","_g_conversions"]){const v=num(r[k]);if(v!=null)e[k]=(e[k]||0)+v;}
+    for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_adGroupId","_g_campaignId"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
+    for(const k of["_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue"]){const v=num(r[k]);if(v!=null)e[k]=(e[k]||0)+v;}
     const w=r.date;if(e.weeks[w])for(const c of["비용","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e.weeks[w][c]+=v;}}
   const arr=[...map.values()].map(e=>{e.CPC=e["클릭 수"]>0?e.비용/e["클릭 수"]:null;e.CTR=e["노출 수"]>0?e["클릭 수"]/e["노출 수"]:null;e.CPM=e["노출 수"]>0?e.비용/e["노출 수"]*1000:null;e.eCPI=e["어트리뷰션 수"]>0?e.비용/e["어트리뷰션 수"]:null;e["활성 유저 eCPA"]=e["활성 유저 수"]>0?e.비용/e["활성 유저 수"]:null;
     if(e._g_assetType){
       e["_g_interactionRate"]=(e["_g_interactions"]||0)>0&&e["노출 수"]>0?e["_g_interactions"]/e["노출 수"]:null;
       e["_g_trueViewRate"]=(e["_g_trueViews"]||0)>0&&e["노출 수"]>0?e["_g_trueViews"]/e["노출 수"]:null;
       e["_g_conversionRate"]=(e["_g_conversions"]||0)>0&&(e["_g_interactions"]||0)>0?e["_g_conversions"]/e["_g_interactions"]:null;
-      e["_g_costPerConv"]=(e["_g_conversions"]||0)>0?e.비용/e["_g_conversions"]:null;}
+      e["_g_costPerConv"]=(e["_g_conversions"]||0)>0?e.비용/e["_g_conversions"]:null;
+      e["_g_ROAS"]=(e["_g_convValue"]||0)>0&&e.비용>0?e["_g_convValue"]/e.비용:null;
+      e["_g_convValuePerConv"]=(e["_g_convValue"]||0)>0&&(e["_g_allConv"]||0)>0?e["_g_convValue"]/e["_g_allConv"]:null;}
     e.tags=tagEntity(e.name,e);return e;});
   arr.sort((a,b)=>b.비용-a.비용);return arr;}
 function weeklyTotals(data){const t=Object.fromEntries(WEEKS.map(w=>[w,{비용:0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0,"노출 수":0}]));
@@ -2553,15 +2557,28 @@ function minVol(L){return L.key==="ad"?60:L.key==="adset"?500:1000;}
 function pctRank(s,v){if(s.length<=1)return .5;let i=0;while(i<s.length&&s[i]<v)i++;return i/(s.length-1);}
 
 /* scoring + 5-tier badges */
-function computeScores(ds){const L=ds.L,a=ds.agg;
+function computeFieldAvail(a){
+  const numKeys=["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","CTR","CPC","CPM","eCPI","활성 유저 eCPA",
+    "_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue",
+    "_g_interactionRate","_g_trueViewRate","_g_conversionRate","_g_costPerConv","_g_ROAS","_g_convValuePerConv"];
+  const n=a.length||1,avail={};
+  for(const k of numKeys){
+    let miss=0;for(const e of a){const v=e[k];if(v==null||v===0||!isFinite(v))miss++;}
+    avail[k]=1-miss/n;
+  }
+  return avail;}
+function isGoogleDs(a){return a&&a.length&&a.some(e=>e._g_assetType);}
+function computeScores(ds){const L=ds.L,a=ds.agg,isG=isGoogleDs(a);
+  ds.fieldAvail=computeFieldAvail(a);
+  a.forEach(e=>{e.score=null;e.tier="na";e.dom=null;});
+  if(isG){return computeGoogleScores(ds);}
   let goodCol,goodDir,goodLabel,goodFmt,goodHelp;
   if(L.key==="cg"){goodCol="CTR";goodDir=1;goodLabel="CTR";goodFmt="pct";goodHelp="높을수록 좋음";}
   else{goodCol=L.effCol;goodDir=-1;goodLabel=L.effLabel;goodFmt="won";goodHelp="낮을수록 좋음";}
   const volCol=L.volCol,minV=minVol(L);
-  a.forEach(e=>{e.score=null;e.tier="na";e.dom=null;});
   const elig=a.filter(e=>e.비용>0&&e[goodCol]!=null&&(e[volCol]||0)>=minV);
-  const gv=elig.map(e=>e[goodCol]).sort((x,y)=>x-y),vv=elig.map(e=>e[volCol]).sort((x,y)=>x-y),med=quantile(gv,0.5);
-  elig.forEach(e=>{let gp=goodDir<0?1-pctRank(gv,e[goodCol]):pctRank(gv,e[goodCol]);let vp=pctRank(vv,e[volCol]);e.score=Math.round(100*(0.7*gp+0.3*vp));});
+  const gvArr=elig.map(e=>e[goodCol]).sort((x,y)=>x-y),vv=elig.map(e=>e[volCol]).sort((x,y)=>x-y),med=quantile(gvArr,0.5);
+  elig.forEach(e=>{let gp=goodDir<0?1-pctRank(gvArr,e[goodCol]):pctRank(gvArr,e[goodCol]);let vp=pctRank(vv,e[volCol]);e.score=Math.round(100*(0.7*gp+0.3*vp));});
   const sc=elig.map(e=>e.score).sort((x,y)=>x-y);
   elig.forEach(e=>{const p=pctRank(sc,e.score);e.tier=p>=0.8?"g2":p>=0.6?"g1":p>=0.4?"m":p>=0.2?"w1":"w2";});
   const best=elig.slice().sort((x,y)=>y.score-x.score);
@@ -2572,10 +2589,46 @@ function computeScores(ds){const L=ds.L,a=ds.agg;
   if(best[0]){const r=goodDir<0?med/best[0][goodCol]:best[0][goodCol]/med;best[0].dom=r>=1.8?"good":null;}
   if(worst[0]){const r=goodDir<0?worst[0][goodCol]/med:med/worst[0][goodCol];worst[0].dom=r>=2?"bad":null;}
   return{best,worst,med,goodCol,goodDir,goodLabel,goodFmt,goodHelp,volCol,eligCount:elig.length};}
+/* Google composite score — weighted percentile across perf-ad indicators (ROAS>전환당비용>전환율>CTR>CPM>TV 조회율) */
+function computeGoogleScores(ds){const a=ds.agg,av=ds.fieldAvail||{};
+  const isVideo=a.some(e=>e._g_assetType&&/동영상|video/i.test(e._g_assetType));
+  const specs=[
+    {k:"_g_ROAS",w:0.30,dir:1,minAvail:0.5,lab:"ROAS",fmt:v=>v.toFixed(2)+"×",help:"높을수록 좋음"},
+    {k:"_g_costPerConv",w:0.20,dir:-1,minAvail:0.5,lab:"전환당비용",fmt:v=>fmtWon(v),help:"낮을수록 좋음"},
+    {k:"_g_conversionRate",w:0.15,dir:1,minAvail:0.5,lab:"전환율",fmt:v=>fmtPct(v),help:"높을수록 좋음"},
+    {k:"CTR",w:0.15,dir:1,minAvail:0.5,lab:"CTR",fmt:v=>fmtPct(v),help:"높을수록 좋음"},
+    {k:"CPM",w:0.10,dir:-1,minAvail:0.5,lab:"CPM",fmt:v=>fmtWon(v),help:"낮을수록 좋음"},
+    {k:"_g_trueViewRate",w:isVideo?0.10:0,dir:1,minAvail:0.3,lab:"TV 조회율",fmt:v=>fmtPct(v),help:"높을수록 좋음"},
+  ].filter(s=>s.w>0&&(av[s.k]||0)>=s.minAvail);
+  const wSum=specs.reduce((s,x)=>s+x.w,0)||1;
+  specs.forEach(s=>s.wNorm=s.w/wSum);
+  const minSpend=quantile(a.map(x=>x.비용||0).sort((p,q)=>p-q),0.15);
+  const coreSpecs=specs.filter(s=>s.w>=0.15);
+  const elig=a.filter(e=>(e.비용||0)>=minSpend&&coreSpecs.every(s=>e[s.k]!=null));
+  if(elig.length<3){
+    return{best:[],worst:[],med:null,goodCol:"_g_ROAS",goodDir:1,goodLabel:"ROAS",goodFmt:"num",goodHelp:"높을수록 좋음",volCol:"비용",eligCount:0,gSpecs:specs};}
+  const sorted={};for(const s of specs){sorted[s.k]=a.filter(e=>e[s.k]!=null).map(e=>e[s.k]).sort((x,y)=>x-y);}
+  elig.forEach(e=>{let composite=0,wsum=0;
+    for(const s of specs){if(e[s.k]==null||!sorted[s.k].length)continue;
+      const p=pctRank(sorted[s.k],e[s.k]);const g=s.dir<0?1-p:p;composite+=g*s.w;wsum+=s.w;}
+    e.score=wsum>0?Math.round(100*composite/wsum):null;});
+  const sc=elig.map(e=>e.score).sort((x,y)=>x-y);
+  elig.forEach(e=>{const p=pctRank(sc,e.score);e.tier=p>=0.8?"g2":p>=0.6?"g1":p>=0.4?"m":p>=0.2?"w1":"w2";});
+  const best=elig.slice().sort((x,y)=>y.score-x.score);
+  best.forEach((e,i)=>{e.rank=i+1;});
+  const primary=specs[0],pkey=primary.k,pdir=primary.dir;
+  const pvals=elig.map(e=>e[pkey]).sort((x,y)=>x-y),med=quantile(pvals,0.5);
+  const medSpend=quantile(a.map(x=>x.비용||0).sort((p,q)=>p-q),0.5);
+  let pool=elig.filter(e=>(e.비용||0)>=medSpend);if(pool.length<2)pool=elig.slice();
+  const worst=pdir<0?pool.slice().sort((x,y)=>y[pkey]-x[pkey]):pool.slice().sort((x,y)=>x[pkey]-y[pkey]);
+  if(best[0]){const r=pdir<0?med/best[0][pkey]:best[0][pkey]/med;best[0].dom=r>=1.8?"good":null;}
+  if(worst[0]){const r=pdir<0?worst[0][pkey]/med:med/worst[0][pkey];worst[0].dom=r>=2?"bad":null;}
+  return{best,worst,med,goodCol:pkey,goodDir:pdir,goodLabel:primary.lab,goodFmt:pkey==="_g_ROAS"?"num":(primary.fmt(1).includes("%")?"pct":"won"),goodHelp:primary.help,volCol:"비용",eligCount:elig.length,gSpecs:specs};}
+function sFmt(v,f){return f==="pct"?fmtPct(v):f==="num"?(v.toFixed(2)+"×"):f==="int"?fmtInt(v):fmtWon(v);}
 function degText(e,S){const g=e[S.goodCol],med=S.med;if(g==null||med==null||med<=0)return"";
-  if(S.goodDir<0){const m=med/g;return m>=1.05?`평균(${fmtWon(med)})보다 <b>${m.toFixed(1)}배 효율적</b>`:`평균보다 <b>${(g/med).toFixed(1)}배 비쌈</b>`;}
-  const m=g/med;return m>=1.05?`평균(${fmtPct(med)})의 <b>${m.toFixed(1)}배</b>`:`평균보다 <b>낮음</b>`;}
-function gv(e,S){return S.goodFmt==="pct"?fmtPct(e[S.goodCol]):fmtWon(e[S.goodCol]);}
+  if(S.goodDir<0){const m=med/g;return m>=1.05?`평균(${sFmt(med,S.goodFmt)})보다 <b>${m.toFixed(1)}배 효율적</b>`:`평균보다 <b>${(g/med).toFixed(1)}배 비쌈</b>`;}
+  const m=g/med;return m>=1.05?`평균(${sFmt(med,S.goodFmt)})의 <b>${m.toFixed(1)}배</b>`:`평균보다 <b>낮음</b>`;}
+function gv(e,S){return sFmt(e[S.goodCol],S.goodFmt);}
 
 /* sidebar KPIs */
 function renderSideKpis(ds){const a=ds.data,L=ds.L,sum=c=>a.reduce((s,r)=>s+(num(r[c])||0),0);
@@ -2640,16 +2693,22 @@ const GOOGLE_QUAD_METRICS=[
   {k:"_g_trueViewRate",lab:"TV 조회율",dir:1,fmt:v=>fmtPct(v),google:true},
   {k:"_g_conversionRate",lab:"전환율",dir:1,fmt:v=>fmtPct(v),google:true},
   {k:"_g_costPerConv",lab:"전환당비용",dir:-1,fmt:v=>fmtWon(v),google:true},
+  {k:"_g_ROAS",lab:"ROAS",dir:1,fmt:v=>v.toFixed(2)+"×",google:true},
+  {k:"_g_convValuePerConv",lab:"전환당 가치",dir:1,fmt:v=>fmtWon(v),google:true},
 ];
-function quadMetricsFor(ds){const base=QUAD_METRICS.filter(m=>!m.conv||ds.L.hasConv);
-  if(ds.agg.some(e=>e._g_assetType))return base.concat(GOOGLE_QUAD_METRICS);
-  return base;}
+const AVAIL_MIN=0.10;
+function isAvail(ds,k){if(!ds||!ds.fieldAvail)return true;const v=ds.fieldAvail[k];return v==null||v>=AVAIL_MIN;}
+function quadMetricsFor(ds){let base=QUAD_METRICS.filter(m=>!m.conv||ds.L.hasConv);
+  if(ds.agg.some(e=>e._g_assetType))base=base.concat(GOOGLE_QUAD_METRICS);
+  return base.filter(m=>isAvail(ds,m.k));}
 let qX=null,qY=null;
 function renderQuad(ds){const L=ds.L,svg=$("#quad");
   const mets=quadMetricsFor(ds);
-  if(!qX||!mets.find(m=>m.k===qX))qX="CTR";
-  if(!qY||!mets.find(m=>m.k===qY))qY=L.hasConv?"eCPI":"CPC";
-  if(qX===qY){qY=mets.find(m=>m.k!==qX).k;}
+  if(!mets.length){svg.innerHTML=`<text x="200" y="200" text-anchor="middle" fill="var(--faint)">지도 지표 없음</text>`;return;}
+  const pick=(prefs)=>{for(const p of prefs){if(mets.find(m=>m.k===p))return p;}return mets[0].k;};
+  if(!qX||!mets.find(m=>m.k===qX))qX=pick(["CTR","_g_ROAS","CPC"]);
+  if(!qY||!mets.find(m=>m.k===qY))qY=pick(["_g_ROAS","eCPI","CPC","CPM"].filter(k=>k!==qX));
+  if(qX===qY){const other=mets.find(m=>m.k!==qX);if(other)qY=other.k;}
   $("#qxTog").innerHTML=mets.map(m=>`<button data-m="${m.k}" class="${m.k===qX?"on":""}">${m.lab}</button>`).join("");
   $("#qyTog").innerHTML=mets.map(m=>`<button data-m="${m.k}" class="${m.k===qY?"on":""}">${m.lab}</button>`).join("");
   $$("#qxTog button").forEach(b=>b.onclick=()=>{if(b.dataset.m===qY){qY=qX;}qX=b.dataset.m;qView={xlo:0,xhi:100,ylo:0,yhi:100};_qxRange&&_qxRange.paint();_qyRange&&_qyRange.paint();renderQuad(ds);});
@@ -2737,11 +2796,16 @@ function renderBreakdown(ds){const L=ds.L,a=ds.agg;
   let mets=BD_METRICS.filter(m=>!m.conv||L.hasConv);
   const isG=a.some(e=>e._g_assetType);
   if(isG)mets=mets.concat([
+    {k:"_g_ROAS",lab:"ROAS",dir:1,fmt:v=>v.toFixed(2)+"×",help:"높을수록 좋음"},
+    {k:"_g_costPerConv",lab:"전환당비용",dir:-1,fmt:fmtWon,help:"낮을수록 좋음"},
+    {k:"_g_conversionRate",lab:"전환율",dir:1,fmt:fmtPct,help:"높을수록 좋음"},
     {k:"_g_interactionRate",lab:"상호작용률",dir:1,fmt:fmtPct,help:"높을수록 좋음"},
     {k:"_g_trueViewRate",lab:"TV 조회율",dir:1,fmt:fmtPct,help:"높을수록 좋음"},
-    {k:"_g_conversionRate",lab:"전환율",dir:1,fmt:fmtPct,help:"높을수록 좋음"},
   ]);
-  if(!bdMet||!mets.find(m=>m.k===bdMet))bdMet=L.key==="cg"?"CTR":"eCPI";
+  mets=mets.filter(m=>isAvail(ds,m.k));
+  if(!mets.length){$("#bdWrap").style.display="none";return;}
+  const defBd=isG?"_g_ROAS":(L.key==="cg"?"CTR":"eCPI");
+  if(!bdMet||!mets.find(m=>m.k===bdMet))bdMet=mets.find(m=>m.k===defBd)?defBd:mets[0].k;
   const primary=mets.find(m=>m.k===bdMet)||mets[0];
   $("#mtogBd").innerHTML=mets.map(m=>`<button data-m="${m.k}" class="${m.k===bdMet?"on":""}">${m.lab}</button>`).join("");
   $$("#mtogBd button").forEach(b=>b.onclick=()=>{bdMet=b.dataset.m;renderBreakdown(ds);});
@@ -2890,7 +2954,7 @@ function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>
     `</tbody></table></div></div>`;
   const assetUrl=e["_g_url"]||(/^https?:/.test(e.name)?e.name:"");
   const preview=assetPreview(assetUrl);
-  const gExtra=e["_g_assetType"]?`<div class="g-extra"><span class="g-tag">${e["_g_assetType"]}</span>${e["_g_status"]?`<span class="g-tag g-status">${e["_g_status"]}</span>`:""}${e["_g_assetStatus"]?`<span class="g-tag">${e["_g_assetStatus"]}</span>`:""}</div>`:"";
+  const gExtra=e["_g_assetType"]?`<div class="g-extra"><span class="g-tag">${e["_g_assetType"]}</span>${e["_g_status"]?`<span class="g-tag g-status">${e["_g_status"]}</span>`:""}${e["_g_assetStatus"]?`<span class="g-tag">${e["_g_assetStatus"]}</span>`:""}</div>${e._g_campaignId||e._g_adGroupId||e._g_assetId?`<div class="g-ids"><span>${e._g_campaignId?`캠페인 <b>${e._g_campaignId}</b>`:""}</span><span>${e._g_adGroupId?`광고그룹 <b>${e._g_adGroupId}</b>`:""}</span><span>${e._g_assetId?`항목 <b>${e._g_assetId}</b>`:""}</span></div>`:""}`:"";
   inner.innerHTML=`<div class="isle-hd">${scoreTxt}<span class="nm">${trunc(e.name,80)}</span>${chipsHTML(e.tags)}</div>
     ${preview?`<div class="isle-preview">${preview}${gExtra}</div>`:""}
     <div><div class="ish">기준별 위치 <span class="n">${cur.good?cur.lab+" 기준 · 막대가 길수록 좋음":"광고비 규모"}</span></div><div class="mtog">${toggles}</div>${bars}</div>
@@ -2906,20 +2970,26 @@ function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-r
   const sc=document.querySelector(".tbl-scroll");inner.style.width=(sc?sc.clientWidth:1000)+"px";
   inner.innerHTML=`<div class="isle-load">불러오는 중…</div>`;
   requestAnimationFrame(()=>{if(ISLE.name===name)fillIsland(ds,e,inner);});}
-function tableCols(L,ds){const c=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score",t:"점수",help:"효율 70% + 규모 30%를 0~100점으로"},
-  {k:"비용",t:"광고비",f:"won",help:"쓴 광고비"},{k:"노출 수",t:"노출",f:"int",help:"보여진 횟수"},{k:"클릭 수",t:"클릭",f:"int",help:"눌린 횟수"},
-  {k:"CTR",t:"CTR",f:"pct",help:"클릭률 = 클릭÷노출 · 높을수록 좋음"},{k:"CPC",t:"CPC",f:"won",help:"클릭당 비용 · 낮을수록 좋음"}];
-  if(L.hasConv)c.push({k:"어트리뷰션 수",t:"설치",f:"int",help:"이 항목으로 생긴 앱 설치 수"},{k:"eCPI",t:"eCPI",f:"won",help:"설치 1건당 비용 · 낮을수록 좋음"},
+function tableCols(L,ds){const meta=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score",t:"점수",help:"복합 지표 가중 종합"}];
+  const nums=[{k:"비용",t:"광고비",f:"won",help:"쓴 광고비"},{k:"노출 수",t:"노출",f:"int",help:"보여진 횟수"},{k:"클릭 수",t:"클릭",f:"int",help:"눌린 횟수"},
+    {k:"CTR",t:"CTR",f:"pct",help:"클릭률 = 클릭÷노출 · 높을수록 좋음"},{k:"CPC",t:"CPC",f:"won",help:"클릭당 비용 · 낮을수록 좋음"}];
+  if(L.hasConv)nums.push({k:"어트리뷰션 수",t:"설치",f:"int",help:"이 항목으로 생긴 앱 설치 수"},{k:"eCPI",t:"eCPI",f:"won",help:"설치 1건당 비용 · 낮을수록 좋음"},
     {k:"활성 유저 수",t:"활성유저",f:"int",help:"설치 후 실제 사용자"},{k:"활성 유저 eCPA",t:"eCPA",f:"won",help:"활성유저당 비용 · 낮을수록 좋음"});
-  if(ds&&ds.agg&&ds.agg.some(e=>e._g_assetType))c.push(
-    {k:"_g_interactions",t:"상호작용",f:"int",help:"Google · 상호작용 총 수"},
+  if(ds&&ds.agg&&ds.agg.some(e=>e._g_assetType))nums.push(
+    {k:"_g_ROAS",t:"ROAS",f:"num",help:"전환 가치÷비용 · 높을수록 좋음"},
+    {k:"_g_costPerConv",t:"전환당비용",f:"won",help:"비용÷전환수 · 낮을수록 좋음"},
+    {k:"_g_conversionRate",t:"전환율",f:"pct",help:"전환÷상호작용 (Google 관례) · 높을수록 좋음"},
+    {k:"_g_interactions",t:"상호작용",f:"int",help:"상호작용 총 수"},
     {k:"_g_interactionRate",t:"상호작용률",f:"pct",help:"상호작용÷노출 · 높을수록 좋음"},
     {k:"_g_trueViews",t:"TV 조회",f:"int",help:"TrueView 조회수 (동영상)"},
     {k:"_g_trueViewRate",t:"TV 조회율",f:"pct",help:"조회÷노출 · 높을수록 좋음"},
     {k:"_g_conversions",t:"전환",f:"int",help:"Google 전환 수"},
-    {k:"_g_conversionRate",t:"전환율",f:"pct",help:"전환÷상호작용 (Google 관례) · 높을수록 좋음 · view-through 포함시 100% 초과 가능"},
+    {k:"_g_allConv",t:"모든 전환",f:"int",help:"모든 전환 (전환 시간별)"},
+    {k:"_g_convValue",t:"전환 가치",f:"won",help:"모든 전환 가치 (KRW)"},
+    {k:"_g_convValuePerConv",t:"전환당 가치",f:"won",help:"전환 가치÷모든 전환"}
   );
-  return c;}
+  const filtered=nums.filter(c=>isAvail(ds,c.k));
+  return meta.concat(filtered);}
 function fcell(v,f){return f==="won"?fmtWon(v):f==="int"?fmtInt(v):f==="pct"?fmtPct(v):v;}
 function tierBadge(e){if(e.dom==="good")return `<span class="dom-tag" title="독보적으로 잘 나옴">독보적</span>`;
   if(e.tier==="g2"&&e.rank&&e.rank<=7)return `<span class="b-gold" title="매우 좋음 · TOP ${e.rank}">${ICON.crown}</span>`;
@@ -2927,6 +2997,8 @@ function tierBadge(e){if(e.dom==="good")return `<span class="dom-tag" title="독
   if(e.tier==="w1")return `<span class="b-w1" title="나쁨">${thumbs("down",1)}</span>`;
   if(e.tier==="w2")return `<span class="b-w2" title="매우 나쁨">${thumbs("down",2)}</span>`;
   return "";}
+const PAGE_SIZE=60;
+let tPageCount=1;
 function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L,ds),thead=$("#table thead"),tbody=$("#table tbody");curDS=ds;ISLE.name=null;
   thead.innerHTML="<tr>"+cols.map(c=>{const sorted=tState.sort===c.k,arr=sorted?(tState.dir<0?"▼":"▲"):"";const cl=(c.k==="name"?"name ":c.k==="_b"?"bdg ":"")+(c.help?"help ":"")+(sorted?"sorted":"");return `<th class="${cl.trim()}" data-k="${c.k}" ${c.help?`title="${c.help}"`:""}>${c.t} <span class="arr">${arr}</span></th>`;}).join("")+"</tr>";
   let rows=ds.agg.slice();
@@ -2940,16 +3012,23 @@ function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L,ds),thead=$("#tabl
     let x=a[k],y=b[k];
     if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1;
     return tState.dir*((x>y?1:x<y?-1:0));});
-  $("#tblMeta").textContent=`${rows.length.toLocaleString()}개${tableShowAll?"":" · 비용>0만"}`;
+  const totalRows=rows.length;
+  const shownCount=Math.min(tPageCount*PAGE_SIZE,totalRows);
+  const visible=rows.slice(0,shownCount);
+  const hidden=totalRows-shownCount;
+  $("#tblMeta").textContent=`${totalRows.toLocaleString()}개 중 ${shownCount.toLocaleString()}개 표시${tableShowAll?"":" · 비활성 숨김"}${hidden>0?` · ${hidden.toLocaleString()}개 더 있음`:""}`;
   const gc=S.goodCol;
-  tbody.innerHTML=rows.map(r=>{const spCls=r.tier==="g2"?"sp-g2":r.tier==="g1"?"sp-g1":r.tier==="m"?"sp-mid":r.tier==="w1"?"sp-w1":r.tier==="w2"?"sp-w2":"sp-na";
+  const html=visible.map(r=>{const spCls=r.tier==="g2"?"sp-g2":r.tier==="g1"?"sp-g1":r.tier==="m"?"sp-mid":r.tier==="w1"?"sp-w1":r.tier==="w2"?"sp-w2":"sp-na";
     const score=r.score!=null?`<span class="sp ${spCls}">${r.score}</span>`:`<span class="sp sp-na">–</span>`;
     return `<tr class="row" data-name="${escAttr(r.name)}">`+cols.map(c=>{if(c.k==="_b")return `<td class="bdg">${tierBadge(r)}</td>`;
-      if(c.k==="name")return `<td class="name">${r.name}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags)}</div></td>`;
+      if(c.k==="name")return `<td class="name">${trunc(r.name,60)}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags)}</div></td>`;
       if(c.k==="score")return `<td>${score}</td>`;
       let cls="num";if(c.k===gc&&r.tier!=="na"){cls+=({g2:" tg2",g1:" tg1",w1:" tw1",w2:" tw2"})[r.tier]||"";}
       return `<td class="${cls}">${fcell(r[c.k],c.f)}</td>`;}).join("")+"</tr>";}).join("");
-  thead.querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(tState.sort===k)tState.dir*=-1;else{tState.sort=k;tState.dir=(k==="name")?1:-1;}renderTable(ds);});}
+  const moreRow=hidden>0?`<tr class="load-more"><td colspan="${cols.length}"><button id="loadMoreBtn" type="button">↓ ${Math.min(PAGE_SIZE,hidden)}개 더 보기 (남은 ${hidden.toLocaleString()}개)</button></td></tr>`:"";
+  tbody.innerHTML=html+moreRow;
+  const lm=$("#loadMoreBtn");if(lm)lm.onclick=()=>{tPageCount++;renderTable(ds);};
+  thead.querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(tState.sort===k)tState.dir*=-1;else{tState.sort=k;tState.dir=(k==="name")?1:-1;}tPageCount=1;renderTable(ds);});}
 function renderTlegend(){$("#tlegend").innerHTML=`<span><span class="dom-tag">독보적</span></span><span><span class="b-gold">${ICON.crown}</span>매우 좋음</span><span><span class="b-g1">${thumbs("up",1)}</span>좋음</span><span><span class="b-w1">${thumbs("down",1)}</span>나쁨</span><span><span class="b-w2">${thumbs("down",2)}</span>매우 나쁨</span>`;}
 
 /* glossary */
@@ -3023,7 +3102,7 @@ function show(ds){scope(ds);
   requestAnimationFrame(()=>{renderQuad(ds);renderTrend(ds);renderBreakdown(ds);
     requestAnimationFrame(()=>{renderTlegend();renderTable(ds);});});}
 function setActive(k){if(!DATASETS[k])return;active=k;
-  bdDim=null;bdMet=null;tableShowAll=false;tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};
+  bdDim=null;bdMet=null;tableShowAll=false;tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tPageCount=1;
   if($("#search"))$("#search").value="";if($("#showAll"))$("#showAll").checked=false;
   renderSeg();show(DATASETS[k]);}
 function renderSeg(){$("#seg").innerHTML=TAB_ORDER.filter(k=>DATASETS[k]).map(k=>{const L=LEVELS[k];return `<button role="tab" data-k="${k}" class="${k===active?"on":""}">${L.name}<span class="sc">${DATASETS[k].aggAll.length}</span></button>`;}).join("");$$("#seg button").forEach(b=>b.onclick=()=>setActive(b.dataset.k));}
@@ -3035,13 +3114,9 @@ function loadEmbedded(){const el=document.getElementById("csv-ad");if(!el)return
   const r=parseCSV(raw);setWeeksFromDatasets(r.data);
   ingest(r.headers,r.data,"내장 샘플");}
 function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;bdDim=null;bdMet=null;tableShowAll=false;
-  tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};ISLE.name=null;ISLE.metric=null;
+  tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tPageCount=1;ISLE.name=null;ISLE.metric=null;
   const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
-function dropZone(e){if(!e||e.clientY==null)return null;
-  const H=window.innerHeight||800,W=window.innerWidth||1200;
-  if(e.clientY/H<0.6)return{mode:"unified",channel:null};
-  const x=e.clientX/W;
-  return{mode:"channeled",channel:x<1/3?"Google":x<2/3?"Moloco":"Meta"};}
+function dropZone(e){return null;}
 function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(!pending)return;
   const parsed=[],failed=[];
   function done(){
@@ -3062,7 +3137,8 @@ function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(
       if(k)loaded.add(LEVELS[k].name);});
     refreshAll();
     const chTxt=channels.size?` · ${[...channels].join("/")}`:" · 통합";
-    toast(`교체됨: ${[...loaded].join(", ")}${chTxt}${failed.length?` · 건너뜀 ${failed.length}건`:""}`);
+    const gTxt=gForce?"✓ Google Ads Data 감지됨 · ":"";
+    toast(`${gTxt}교체됨: ${[...loaded].join(", ")}${chTxt}${failed.length?` · 건너뜀 ${failed.length}건`:""}`);
   }
   arr.forEach(f=>{const rd=new FileReader();
     rd.onload=()=>{const raw=rd.result;
@@ -3077,12 +3153,7 @@ const fileInput=$("#file"),dropOv=$("#dropOv");
 fileInput.addEventListener("change",e=>handleFiles(e.target.files));
 let _dragDepth=0;
 function _hasFiles(e){return e.dataTransfer&&[...e.dataTransfer.types||[]].includes("Files");}
-function _updateHot(e){const z=dropZone(e);if(!z)return;
-  const t=$("#dzTop"),g=$("#dzGoogle"),m=$("#dzMoloco"),me=$("#dzMeta");
-  if(!t)return;t.classList.toggle("hot",z.mode==="unified");
-  g.classList.toggle("hot",z.mode==="channeled"&&z.channel==="Google");
-  m.classList.toggle("hot",z.mode==="channeled"&&z.channel==="Moloco");
-  me.classList.toggle("hot",z.mode==="channeled"&&z.channel==="Meta");}
+function _updateHot(e){const t=$("#dzTop");if(t)t.classList.add("hot");}
 document.addEventListener("dragenter",e=>{if(!_hasFiles(e))return;e.preventDefault();_dragDepth++;if(dropOv)dropOv.classList.add("show");_updateHot(e);});
 document.addEventListener("dragover",e=>{if(!_hasFiles(e))return;e.preventDefault();_updateHot(e);});
 document.addEventListener("dragleave",e=>{if(!_hasFiles(e))return;_dragDepth--;if(_dragDepth<=0){_dragDepth=0;if(dropOv)dropOv.classList.remove("show");}});
