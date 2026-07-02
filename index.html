@@ -2714,7 +2714,7 @@ function renderBreakdown(ds){const L=ds.L,a=ds.agg;
     </div>`;}).join("")+`</div>`;}
 
 /* table — all rows, no pagination */
-let tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};
+let tState={sort:"score",dir:-1,q:""};
 let tFilter={ve:new Set(),fo:new Set(),size:new Set()};
 function tFilterCount(){return tFilter.ve.size+tFilter.fo.size+tFilter.size.size;}
 function renderTFilter(ds){
