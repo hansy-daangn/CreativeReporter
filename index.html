@@ -239,8 +239,11 @@
   .b-g2{color:var(--g2)} .b-g1{color:var(--g1)} .b-mid{color:var(--faint)} .b-w1{color:var(--w1)} .b-w2{color:var(--w2)} .b-gold{color:var(--gold)}
   .sp{display:inline-block;min-width:32px;padding:2px 8px;border-radius:7px;font-weight:740;font-size:12px}
   .sp-g2{background:var(--g2-f);color:var(--g2)} .sp-g1{background:var(--g1-f);color:var(--g1)} .sp-mid{background:var(--mid-f);color:var(--mid)} .sp-w1{background:var(--w1-f);color:var(--w1)} .sp-w2{background:var(--w2-f);color:var(--w2)} .sp-na{color:var(--faint)}
-  td.tg2{background:var(--g2-f)!important;color:var(--g2);font-weight:650} td.tg1{background:var(--g1-f)!important;color:var(--g1);font-weight:650}
-  td.tw1{background:var(--w1-f)!important;color:var(--w1);font-weight:650} td.tw2{background:var(--w2-f)!important;color:var(--w2);font-weight:650}
+  /* row-level soft text tinting by overall tier */
+  tbody tr.row.tr-g2 td.num{color:#0F7355}
+  tbody tr.row.tr-g1 td.num{color:#3AA483}
+  tbody tr.row.tr-w1 td.num{color:#B87F1E}
+  tbody tr.row.tr-w2 td.num{color:#BE3F53}
   td.name .chips{margin-top:4px}
   td.bdg .dom-tag{font-size:9px;font-weight:800;color:var(--gold);background:var(--gold-f);padding:2px 6px;border-radius:5px;letter-spacing:.02em}
   tbody tr.row{cursor:pointer}
@@ -313,9 +316,12 @@
   .drop-ov .dz{display:grid;place-items:center;font-weight:740;color:#fff;font-size:15px;letter-spacing:-.01em;text-align:center;padding:16px;transition:background .1s,border-color .1s}
   .drop-ov .dz b{font-size:19px}
   .drop-ov .dz span{font-size:12px;font-weight:600;opacity:.85;margin-top:6px}
-  .drop-ov .dz-top{flex:1;background:rgba(20,20,15,.62);border:3px dashed rgba(255,111,15,.6)}
-  .drop-ov .dz-top.hot{background:rgba(255,111,15,.72);border-color:#fff}
-  .drop-ov .dz .dz-sub{font-size:11px;opacity:.7;margin-top:12px;font-weight:500}
+  .drop-ov .dz-top{flex:0 0 80vh;background:transparent}
+  .drop-ov .dz-bot{flex:0 0 20vh;display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;background:rgba(20,20,15,.35);border-top:2px dashed rgba(255,255,255,.25)}
+  .drop-ov .dz-bot .dz{display:grid;place-items:center;background:rgba(20,20,15,.35);opacity:.35;transition:opacity .1s,background .1s}
+  .drop-ov .dz-bot .dz.hot{background:rgba(255,111,15,.72);opacity:1}
+  .drop-ov .dz-bot .dz+.dz{border-left:1px solid rgba(255,255,255,.12)}
+  .drop-ov .dz-lab{color:#fff;font-weight:740;font-size:16px;letter-spacing:.02em}
   .tooltip{position:fixed;pointer-events:none;background:var(--ink);color:#fff;padding:8px 11px;border-radius:9px;font-size:11.5px;line-height:1.45;box-shadow:0 8px 24px -8px rgba(0,0,0,.45);opacity:0;transition:opacity .1s;z-index:90;max-width:280px}
   .tooltip .t-k{color:rgba(255,255,255,.6)}
   .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:11px;font-size:13px;opacity:0;transition:.25s;z-index:95}
@@ -416,7 +422,12 @@
 
 <div class="ov" id="gloss"><div class="ov-card"><h2>지표 풀이</h2><p class="ov-sub">짧게 — 화살표는 좋은 방향입니다.</p><div class="gloss-grid" id="glossGrid"></div><div class="ov-close"><button id="glossClose">닫기</button></div></div></div>
 <div class="drop-ov" id="dropOv">
-  <div class="dz dz-top" id="dzTop"><div><b>CSV 여기에 놓으세요</b><span>Google Ads / Meta / Moloco 는 파일 형식·이름으로 <b>자동 감지</b></span><span class="dz-sub">Google Ads 애셋 리포트(확장 소재/애셋 유형 헤더) → Google로 자동 분류</span></div></div>
+  <div class="dz dz-top" id="dzTop"></div>
+  <div class="dz-bot">
+    <div class="dz" id="dzGoogle"><div class="dz-lab">Google</div></div>
+    <div class="dz" id="dzMoloco"><div class="dz-lab">Moloco</div></div>
+    <div class="dz" id="dzMeta"><div class="dz-lab">Meta</div></div>
+  </div>
 </div>
 <div class="tooltip" id="tip"></div>
 <div class="toast" id="toast"></div>
@@ -2593,7 +2604,7 @@ function computeScores(ds){const L=ds.L,a=ds.agg,isG=isGoogleDs(a);
 function computeGoogleScores(ds){const a=ds.agg,av=ds.fieldAvail||{};
   const isVideo=a.some(e=>e._g_assetType&&/동영상|video/i.test(e._g_assetType));
   const specs=[
-    {k:"_g_ROAS",w:0.30,dir:1,minAvail:0.5,lab:"ROAS",fmt:v=>v.toFixed(2)+"×",help:"높을수록 좋음"},
+    {k:"_g_ROAS",w:0.30,dir:1,minAvail:0.5,lab:"ROAS",fmt:v=>v.toFixed(1)+"×",help:"높을수록 좋음"},
     {k:"_g_costPerConv",w:0.20,dir:-1,minAvail:0.5,lab:"전환당비용",fmt:v=>fmtWon(v),help:"낮을수록 좋음"},
     {k:"_g_conversionRate",w:0.15,dir:1,minAvail:0.5,lab:"전환율",fmt:v=>fmtPct(v),help:"높을수록 좋음"},
     {k:"CTR",w:0.15,dir:1,minAvail:0.5,lab:"CTR",fmt:v=>fmtPct(v),help:"높을수록 좋음"},
@@ -2608,10 +2619,14 @@ function computeGoogleScores(ds){const a=ds.agg,av=ds.fieldAvail||{};
   if(elig.length<3){
     return{best:[],worst:[],med:null,goodCol:"_g_ROAS",goodDir:1,goodLabel:"ROAS",goodFmt:"num",goodHelp:"높을수록 좋음",volCol:"비용",eligCount:0,gSpecs:specs};}
   const sorted={};for(const s of specs){sorted[s.k]=a.filter(e=>e[s.k]!=null).map(e=>e[s.k]).sort((x,y)=>x-y);}
+  const spendSorted=elig.map(e=>e.비용||0).sort((x,y)=>x-y);
+  const EFFY_W=0.75,SCALE_W=0.25;
   elig.forEach(e=>{let composite=0,wsum=0;
     for(const s of specs){if(e[s.k]==null||!sorted[s.k].length)continue;
       const p=pctRank(sorted[s.k],e[s.k]);const g=s.dir<0?1-p:p;composite+=g*s.w;wsum+=s.w;}
-    e.score=wsum>0?Math.round(100*composite/wsum):null;});
+    const effy=wsum>0?composite/wsum:0;
+    const scale=pctRank(spendSorted,e.비용||0);
+    e.score=Math.round(100*(EFFY_W*effy+SCALE_W*scale));});
   const sc=elig.map(e=>e.score).sort((x,y)=>x-y);
   elig.forEach(e=>{const p=pctRank(sc,e.score);e.tier=p>=0.8?"g2":p>=0.6?"g1":p>=0.4?"m":p>=0.2?"w1":"w2";});
   const best=elig.slice().sort((x,y)=>y.score-x.score);
@@ -2619,12 +2634,13 @@ function computeGoogleScores(ds){const a=ds.agg,av=ds.fieldAvail||{};
   const primary=specs[0],pkey=primary.k,pdir=primary.dir;
   const pvals=elig.map(e=>e[pkey]).sort((x,y)=>x-y),med=quantile(pvals,0.5);
   const medSpend=quantile(a.map(x=>x.비용||0).sort((p,q)=>p-q),0.5);
-  let pool=elig.filter(e=>(e.비용||0)>=medSpend);if(pool.length<2)pool=elig.slice();
-  const worst=pdir<0?pool.slice().sort((x,y)=>y[pkey]-x[pkey]):pool.slice().sort((x,y)=>x[pkey]-y[pkey]);
-  if(best[0]){const r=pdir<0?med/best[0][pkey]:best[0][pkey]/med;best[0].dom=r>=1.8?"good":null;}
+  let scalePool=elig.filter(e=>(e.비용||0)>=medSpend);if(scalePool.length<2)scalePool=elig.slice();
+  const bestScaled=scalePool.slice().sort((x,y)=>y.score-x.score);
+  const worst=pdir<0?scalePool.slice().sort((x,y)=>y[pkey]-x[pkey]):scalePool.slice().sort((x,y)=>x[pkey]-y[pkey]);
+  if(bestScaled[0]){const r=pdir<0?med/bestScaled[0][pkey]:bestScaled[0][pkey]/med;bestScaled[0].dom=r>=1.8?"good":null;}
   if(worst[0]){const r=pdir<0?worst[0][pkey]/med:med/worst[0][pkey];worst[0].dom=r>=2?"bad":null;}
   return{best,worst,med,goodCol:pkey,goodDir:pdir,goodLabel:primary.lab,goodFmt:pkey==="_g_ROAS"?"num":(primary.fmt(1).includes("%")?"pct":"won"),goodHelp:primary.help,volCol:"비용",eligCount:elig.length,gSpecs:specs};}
-function sFmt(v,f){return f==="pct"?fmtPct(v):f==="num"?(v.toFixed(2)+"×"):f==="int"?fmtInt(v):fmtWon(v);}
+function sFmt(v,f){return f==="pct"?fmtPct(v):f==="num"?(v!=null&&isFinite(v)?v.toFixed(1)+"×":"–"):f==="int"?fmtInt(v):fmtWon(v);}
 function degText(e,S){const g=e[S.goodCol],med=S.med;if(g==null||med==null||med<=0)return"";
   if(S.goodDir<0){const m=med/g;return m>=1.05?`평균(${sFmt(med,S.goodFmt)})보다 <b>${m.toFixed(1)}배 효율적</b>`:`평균보다 <b>${(g/med).toFixed(1)}배 비쌈</b>`;}
   const m=g/med;return m>=1.05?`평균(${sFmt(med,S.goodFmt)})의 <b>${m.toFixed(1)}배</b>`:`평균보다 <b>낮음</b>`;}
@@ -2693,7 +2709,7 @@ const GOOGLE_QUAD_METRICS=[
   {k:"_g_trueViewRate",lab:"TV 조회율",dir:1,fmt:v=>fmtPct(v),google:true},
   {k:"_g_conversionRate",lab:"전환율",dir:1,fmt:v=>fmtPct(v),google:true},
   {k:"_g_costPerConv",lab:"전환당비용",dir:-1,fmt:v=>fmtWon(v),google:true},
-  {k:"_g_ROAS",lab:"ROAS",dir:1,fmt:v=>v.toFixed(2)+"×",google:true},
+  {k:"_g_ROAS",lab:"ROAS",dir:1,fmt:v=>v.toFixed(1)+"×",google:true},
   {k:"_g_convValuePerConv",lab:"전환당 가치",dir:1,fmt:v=>fmtWon(v),google:true},
 ];
 const AVAIL_MIN=0.10;
@@ -2796,7 +2812,7 @@ function renderBreakdown(ds){const L=ds.L,a=ds.agg;
   let mets=BD_METRICS.filter(m=>!m.conv||L.hasConv);
   const isG=a.some(e=>e._g_assetType);
   if(isG)mets=mets.concat([
-    {k:"_g_ROAS",lab:"ROAS",dir:1,fmt:v=>v.toFixed(2)+"×",help:"높을수록 좋음"},
+    {k:"_g_ROAS",lab:"ROAS",dir:1,fmt:v=>v.toFixed(1)+"×",help:"높을수록 좋음"},
     {k:"_g_costPerConv",lab:"전환당비용",dir:-1,fmt:fmtWon,help:"낮을수록 좋음"},
     {k:"_g_conversionRate",lab:"전환율",dir:1,fmt:fmtPct,help:"높을수록 좋음"},
     {k:"_g_interactionRate",lab:"상호작용률",dir:1,fmt:fmtPct,help:"높을수록 좋음"},
@@ -2990,7 +3006,7 @@ function tableCols(L,ds){const meta=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score
   );
   const filtered=nums.filter(c=>isAvail(ds,c.k));
   return meta.concat(filtered);}
-function fcell(v,f){return f==="won"?fmtWon(v):f==="int"?fmtInt(v):f==="pct"?fmtPct(v):v;}
+function fcell(v,f){return f==="won"?fmtWon(v):f==="int"?fmtInt(v):f==="pct"?fmtPct(v):f==="num"?(v!=null&&isFinite(v)?v.toFixed(1)+"×":"–"):(v??"–");}
 function tierBadge(e){if(e.dom==="good")return `<span class="dom-tag" title="독보적으로 잘 나옴">독보적</span>`;
   if(e.tier==="g2"&&e.rank&&e.rank<=7)return `<span class="b-gold" title="매우 좋음 · TOP ${e.rank}">${ICON.crown}</span>`;
   if(e.tier==="g2"||e.tier==="g1")return `<span class="b-g1" title="좋음">${thumbs("up",1)}</span>`;
@@ -3020,11 +3036,11 @@ function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L,ds),thead=$("#tabl
   const gc=S.goodCol;
   const html=visible.map(r=>{const spCls=r.tier==="g2"?"sp-g2":r.tier==="g1"?"sp-g1":r.tier==="m"?"sp-mid":r.tier==="w1"?"sp-w1":r.tier==="w2"?"sp-w2":"sp-na";
     const score=r.score!=null?`<span class="sp ${spCls}">${r.score}</span>`:`<span class="sp sp-na">–</span>`;
-    return `<tr class="row" data-name="${escAttr(r.name)}">`+cols.map(c=>{if(c.k==="_b")return `<td class="bdg">${tierBadge(r)}</td>`;
+    const rowTier=r.tier&&r.tier!=="na"&&r.tier!=="m"?` tr-${r.tier}`:"";
+    return `<tr class="row${rowTier}" data-name="${escAttr(r.name)}">`+cols.map(c=>{if(c.k==="_b")return `<td class="bdg">${tierBadge(r)}</td>`;
       if(c.k==="name")return `<td class="name">${trunc(r.name,60)}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags)}</div></td>`;
       if(c.k==="score")return `<td>${score}</td>`;
-      let cls="num";if(c.k===gc&&r.tier!=="na"){cls+=({g2:" tg2",g1:" tg1",w1:" tw1",w2:" tw2"})[r.tier]||"";}
-      return `<td class="${cls}">${fcell(r[c.k],c.f)}</td>`;}).join("")+"</tr>";}).join("");
+      return `<td class="num">${fcell(r[c.k],c.f)}</td>`;}).join("")+"</tr>";}).join("");
   const moreRow=hidden>0?`<tr class="load-more"><td colspan="${cols.length}"><button id="loadMoreBtn" type="button">↓ ${Math.min(PAGE_SIZE,hidden)}개 더 보기 (남은 ${hidden.toLocaleString()}개)</button></td></tr>`:"";
   tbody.innerHTML=html+moreRow;
   const lm=$("#loadMoreBtn");if(lm)lm.onclick=()=>{tPageCount++;renderTable(ds);};
@@ -3116,7 +3132,11 @@ function loadEmbedded(){const el=document.getElementById("csv-ad");if(!el)return
 function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;bdDim=null;bdMet=null;tableShowAll=false;
   tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tPageCount=1;ISLE.name=null;ISLE.metric=null;
   const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
-function dropZone(e){return null;}
+function dropZone(e){if(!e||e.clientY==null)return null;
+  const H=window.innerHeight||800,W=window.innerWidth||1200;
+  if(e.clientY/H<0.8)return null;
+  const x=e.clientX/W;
+  return{mode:"channeled",channel:x<1/3?"Google":x<2/3?"Moloco":"Meta"};}
 function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(!pending)return;
   const parsed=[],failed=[];
   function done(){
@@ -3153,7 +3173,10 @@ const fileInput=$("#file"),dropOv=$("#dropOv");
 fileInput.addEventListener("change",e=>handleFiles(e.target.files));
 let _dragDepth=0;
 function _hasFiles(e){return e.dataTransfer&&[...e.dataTransfer.types||[]].includes("Files");}
-function _updateHot(e){const t=$("#dzTop");if(t)t.classList.add("hot");}
+function _updateHot(e){const z=dropZone(e);const g=$("#dzGoogle"),m=$("#dzMoloco"),me=$("#dzMeta");if(!g)return;
+  g.classList.toggle("hot",!!z&&z.channel==="Google");
+  m.classList.toggle("hot",!!z&&z.channel==="Moloco");
+  me.classList.toggle("hot",!!z&&z.channel==="Meta");}
 document.addEventListener("dragenter",e=>{if(!_hasFiles(e))return;e.preventDefault();_dragDepth++;if(dropOv)dropOv.classList.add("show");_updateHot(e);});
 document.addEventListener("dragover",e=>{if(!_hasFiles(e))return;e.preventDefault();_updateHot(e);});
 document.addEventListener("dragleave",e=>{if(!_hasFiles(e))return;_dragDepth--;if(_dragDepth<=0){_dragDepth=0;if(dropOv)dropOv.classList.remove("show");}});
