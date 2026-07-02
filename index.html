@@ -2826,8 +2826,8 @@ function showTip(h,x,y,big){tip.innerHTML=h;tip.classList.toggle("big",!!big);ti
 function hideTip(){tip.style.opacity=0;tip.classList.remove("big");}
 function assetPreviewTipHTML(url,label){if(!url)return "";
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
-  if(yt)return `<img src="https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg" alt=""><div class="tp-cap">${label||"영상"}</div>`;
-  if(/simgad|googlesyndication\.com|\.(png|jpe?g|gif|webp)(\?|$)/i.test(url))return `<img src="${url}" alt=""><div class="tp-cap">${label||""}</div>`;
+  if(yt)return `<img src="https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg" alt="" referrerpolicy="no-referrer"><div class="tp-cap">${label||"영상"}</div>`;
+  if(/simgad|googlesyndication\.com|\.(png|jpe?g|gif|webp)(\?|$)/i.test(url))return `<img src="${url}" alt="" referrerpolicy="no-referrer"><div class="tp-cap">${label||""}</div>`;
   return `<div class="tp-cap">${label||"미리보기 없음"}</div>`;}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2600);}
 function fmtKRW(v){if(v==null||!isFinite(v))return"–";const a=Math.abs(v);if(a>=1e8)return(v/1e8).toFixed(2)+"억";if(a>=1e4)return(v/1e4).toFixed(1)+"만";return Math.round(v).toLocaleString("ko-KR");}
@@ -3313,7 +3313,7 @@ function posBar(label,st,m){if(!st)return `<div class="pos"><div class="pos-l">$
 function assetPreview(url){if(!url)return "";
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
   if(yt)return `<div class="asset-wrap"><iframe class="asset-vid" src="https://www.youtube.com/embed/${yt[1]}" frameborder="0" allow="encrypted-media" allowfullscreen></iframe><div class="asset-src"><a href="${url}" target="_blank" rel="noopener">${trunc(url,60)}</a></div></div>`;
-  if(/simgad|googlesyndication\.com|\.(png|jpe?g|gif|webp)(\?|$)/i.test(url))return `<div class="asset-wrap"><img class="asset-img" src="${url}" alt="asset" loading="lazy" onerror="this.parentNode.querySelector('.asset-err').hidden=false;this.hidden=true"><div class="asset-err" hidden>미리보기를 불러오지 못했습니다</div><div class="asset-src"><a href="${url}" target="_blank" rel="noopener">${trunc(url,60)}</a></div></div>`;
+  if(/simgad|googlesyndication\.com|\.(png|jpe?g|gif|webp)(\?|$)/i.test(url))return `<div class="asset-wrap"><img class="asset-img" src="${url}" alt="asset" referrerpolicy="no-referrer" loading="lazy" onerror="this.parentNode.querySelector('.asset-err').hidden=false;this.hidden=true"><div class="asset-err" hidden>미리보기를 불러오지 못했습니다</div><div class="asset-src"><a href="${url}" target="_blank" rel="noopener">${trunc(url,60)}</a></div></div>`;
   return "";}
 function assetShortType(t){if(!t)return "";const s=String(t);
   if(/동영상|video/i.test(s))return "영상";
