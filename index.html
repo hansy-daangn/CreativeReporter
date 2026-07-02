@@ -2495,6 +2495,10 @@ function tagEntity(name,extras){const t={ve:null,fo:null,size:null};if(!name)ret
   if(!t.fo){if(/\.mp4|(^|_)vid|youtube\.com|youtu\.be/i.test(name))t.fo="영상";else if(/\.png|\.jpe?g|(^|_)img|simgad|googlesyndication/i.test(name))t.fo="이미지";}
   const m=name.match(/(\d{3,4})\s*[x×]\s*(\d{3,4})/);if(m)t.size=m[1]+"×"+m[2];return t;}
 function isGoogleReport(text){return text&&text.includes("애셋 상태")&&text.includes("확장 소재")&&text.includes("애셋 유형");}
+function toWeekStart(dateStr){if(!dateStr||!/^\d{4}-\d{2}-\d{2}/.test(dateStr))return dateStr;
+  const[y,m,d]=dateStr.slice(0,10).split("-").map(Number);
+  const dt=new Date(Date.UTC(y,m-1,d));const day=dt.getUTCDay();const diff=(day+6)%7;
+  dt.setUTCDate(dt.getUTCDate()-diff);return dt.toISOString().slice(0,10);}
 function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n").split("\n");
   let hdrIdx=-1;for(let i=0;i<Math.min(20,lines.length);i++){if(lines[i].includes("애셋 상태")&&lines[i].includes("확장 소재")){hdrIdx=i;break;}}
   if(hdrIdx<0)return null;
@@ -2502,8 +2506,10 @@ function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n")
   start=start||"2026-01-01";
   const sub=lines.slice(hdrIdx).join("\n");const{data}=parseCSV(sub);
   const pn=v=>{const s=String(v??"").replace(/["\s,%]/g,"");if(!s||s==="--"||s==="-")return 0;const n=Number(s);return isFinite(n)?n:0;};
+  const hasDaily=data.length&&data[0]["일"]&&/^\d{4}-\d{2}-\d{2}/.test(String(data[0]["일"]));
   const rows=data.map(r=>{const url=String(r["확장 소재"]||"").trim();
-    return{date:start,ad_name:url,
+    const raw=hasDaily?String(r["일"]).trim():start;
+    return{date:toWeekStart(raw)||raw,ad_name:url,
       "비용":pn(r["비용"]),
       "노출 수":pn(r["노출수"]),
       "클릭 수":pn(r["클릭수"]),
