@@ -393,9 +393,28 @@
   @media(max-width:760px){.isle{grid-template-columns:1fr;gap:18px}}
   @media (prefers-reduced-motion: reduce){*{transition:none!important}}
   :focus-visible{outline:2px solid var(--karrot);outline-offset:2px;border-radius:4px}
+
+  /* landing (no data loaded) — Apple minimal, subtle-gray pills */
+  #landing{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 40px;z-index:60;font-family:"SF Pro Display","Pretendard","Apple SD Gothic Neo",-apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  #landing.hidden{display:none}
+  #landing h1{margin:0 0 32px;font-size:42px;font-weight:600;letter-spacing:-.035em;line-height:1.1;color:#1D1D1F}
+  #landing .btn-row{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  #landing .btn{display:inline-flex;align-items:center;justify-content:center;padding:11px 24px;border-radius:980px;font-size:14.5px;font-weight:520;letter-spacing:-.005em;background:#F5F5F7;color:#1D1D1F;text-decoration:none;transition:background .18s,transform .1s;min-width:132px}
+  #landing .btn:hover{background:#EBEBEE}
+  #landing .btn:active{transform:scale(.98)}
+  @media(max-width:600px){#landing h1{font-size:32px;margin-bottom:26px}#landing .btn{min-width:0;padding:11px 20px;font-size:14px}}
 </style>
 </head>
 <body>
+<div id="landing" class="hidden">
+  <div>
+    <h1>CSV 파일을<br>끌어다 놓아주세요.</h1>
+    <div class="btn-row">
+      <a class="btn" href="https://ads.google.com/aw/assetreport/associations?campaignId=22932296047&ocid=140474404&workspaceId=-1461371521&assetType=all&isLegacy=false&euid=6479159244&__u=5503618156&uscid=140474404&__c=5003988996&authuser=0&subid=kr-ko-ha-aw-bk-a-h00!o3-ahpm-0000000200-0000000002~EAIaIQobChMIyP2s4fj2kwMVuSZ7Bx2utAdNEAAYASAAEgLkSPD_BwE~147868729172~kwd-94527731~18654926781~629668488647" target="_blank" rel="noopener">Google Ads</a>
+      <a class="btn" href="https://superset.kr.wekarrot.net/superset/dashboard/1342/" target="_blank" rel="noopener">SuperSet</a>
+    </div>
+  </div>
+</div>
 <div class="app">
   <!-- SIDEBAR: identity + media + summary + actions -->
   <aside class="side">
@@ -3777,10 +3796,10 @@ function loadEmbedded(){
     if(raw&&!raw.startsWith("__CSV")&&isGoogleReport(raw)){
       const g=parseGoogleReport(raw);
       if(g){setWeeksFromDatasets(g.data);ingest(g.headers,g.data,"내장 샘플 · Google","Google");return;}}}
-  const el=document.getElementById("csv-ad");if(!el)return;
-  const raw=el.textContent.trim();if(!raw||raw.startsWith("__CSV"))return;
-  const r=parseCSV(raw);setWeeksFromDatasets(r.data);
-  ingest(r.headers,r.data,"내장 샘플");}
+  if(sample==="ad"){const el=document.getElementById("csv-ad");if(!el)return;
+    const raw=el.textContent.trim();if(!raw||raw.startsWith("__CSV"))return;
+    const r=parseCSV(raw);setWeeksFromDatasets(r.data);
+    ingest(r.headers,r.data,"내장 샘플");}}
 function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;bdDim=null;bdMet=null;tableShowAll=false;
   tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tPage=1;ISLE.name=null;ISLE.metric=null;
   const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
@@ -3868,7 +3887,10 @@ const _qyRange=setupDual("qyRange",true,()=>({lo:qView.ylo,hi:qView.yhi}),q=>{qV
 function _qResetRanges(){qView={xlo:0,xhi:100,ylo:0,yhi:100};_qxRange.paint();_qyRange.paint();}
 $("#qrst").addEventListener("click",()=>{_qResetRanges();_qRender();});
 const _origSetActive=setActive;setActive=function(k){_qResetRanges();_origSetActive(k);};
-renderGlossary();renderFooter();loadEmbedded();refreshAll();
+function updateLandingVisibility(){const el=document.getElementById("landing");if(!el)return;const hasData=active&&DATASETS[active]&&DATASETS[active].agg&&DATASETS[active].agg.length;el.classList.toggle("hidden",!!hasData);}
+renderGlossary();renderFooter();loadEmbedded();refreshAll();updateLandingVisibility();
+const _origSetActive2=setActive;setActive=function(k){_origSetActive2(k);updateLandingVisibility();};
+const _origResetAll=resetAll;resetAll=function(){_origResetAll();updateLandingVisibility();};
 _qxRange.paint();_qyRange.paint();
 </script>
 </body>
