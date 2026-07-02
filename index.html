@@ -2501,16 +2501,23 @@ function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n")
   let start=null;for(let i=0;i<hdrIdx;i++){const m=lines[i].match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);if(m){start=`${m[1]}-${String(+m[2]).padStart(2,"0")}-${String(+m[3]).padStart(2,"0")}`;break;}}
   start=start||"2026-01-01";
   const sub=lines.slice(hdrIdx).join("\n");const{data}=parseCSV(sub);
-  const pn=v=>{const s=String(v??"").replace(/["\s,]/g,"");if(!s||s==="--"||s==="-")return 0;const n=Number(s);return isFinite(n)?n:0;};
+  const pn=v=>{const s=String(v??"").replace(/["\s,%]/g,"");if(!s||s==="--"||s==="-")return 0;const n=Number(s);return isFinite(n)?n:0;};
   const rows=data.map(r=>{const url=String(r["확장 소재"]||"").trim();
     return{date:start,ad_name:url,
-      "비용":pn(r["비용"]),"노출 수":0,"클릭 수":0,
-      "어트리뷰션 수":pn(r["설치"]),"활성 유저 수":pn(r["인앱 액션"]),"신규+재활성 유저 수":pn(r["조회연결 전환"]),
+      "비용":pn(r["비용"]),
+      "노출 수":pn(r["노출수"]),
+      "클릭 수":pn(r["클릭수"]),
+      "어트리뷰션 수":pn(r["설치"]),
+      "활성 유저 수":pn(r["인앱 액션"]),
+      "신규+재활성 유저 수":pn(r["조회연결 전환"]),
       "_g_assetStatus":(r["애셋 상태"]||"").trim(),
       "_g_assetType":(r["애셋 유형"]||"").trim(),
       "_g_status":(r["상태"]||"").trim(),
       "_g_level":(r["수준"]||"").trim(),
-      "_g_url":url};}).filter(r=>r.ad_name);
+      "_g_url":url,
+      "_g_interactions":pn(r["상호작용 수"]),
+      "_g_trueViews":pn(r["TrueView 조회수"]),
+      "_g_conversions":pn(r["전환수"])};}).filter(r=>r.ad_name);
   return{headers:["date","ad_name","비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수"],data:rows};}
 
 let WEEKS=["2026-06-01","2026-06-08","2026-06-15","2026-06-22"];
@@ -2522,8 +2529,15 @@ function aggregate(data,L){const map=new Map();
     if(!map.has(nm))map.set(nm,{name:nm,비용:0,"노출 수":0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0,weeks:Object.fromEntries(WEEKS.map(w=>[w,{비용:0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0}]))});
     const e=map.get(nm);for(const c of["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e[c]+=v;}
     for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
+    for(const k of["_g_interactions","_g_trueViews","_g_conversions"]){const v=num(r[k]);if(v!=null)e[k]=(e[k]||0)+v;}
     const w=r.date;if(e.weeks[w])for(const c of["비용","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e.weeks[w][c]+=v;}}
-  const arr=[...map.values()].map(e=>{e.CPC=e["클릭 수"]>0?e.비용/e["클릭 수"]:null;e.CTR=e["노출 수"]>0?e["클릭 수"]/e["노출 수"]:null;e.CPM=e["노출 수"]>0?e.비용/e["노출 수"]*1000:null;e.eCPI=e["어트리뷰션 수"]>0?e.비용/e["어트리뷰션 수"]:null;e["활성 유저 eCPA"]=e["활성 유저 수"]>0?e.비용/e["활성 유저 수"]:null;e.tags=tagEntity(e.name,e);return e;});
+  const arr=[...map.values()].map(e=>{e.CPC=e["클릭 수"]>0?e.비용/e["클릭 수"]:null;e.CTR=e["노출 수"]>0?e["클릭 수"]/e["노출 수"]:null;e.CPM=e["노출 수"]>0?e.비용/e["노출 수"]*1000:null;e.eCPI=e["어트리뷰션 수"]>0?e.비용/e["어트리뷰션 수"]:null;e["활성 유저 eCPA"]=e["활성 유저 수"]>0?e.비용/e["활성 유저 수"]:null;
+    if(e._g_assetType){
+      e["_g_interactionRate"]=(e["_g_interactions"]||0)>0&&e["노출 수"]>0?e["_g_interactions"]/e["노출 수"]:null;
+      e["_g_trueViewRate"]=(e["_g_trueViews"]||0)>0&&e["노출 수"]>0?e["_g_trueViews"]/e["노출 수"]:null;
+      e["_g_conversionRate"]=(e["_g_conversions"]||0)>0&&(e["_g_interactions"]||0)>0?e["_g_conversions"]/e["_g_interactions"]:null;
+      e["_g_costPerConv"]=(e["_g_conversions"]||0)>0?e.비용/e["_g_conversions"]:null;}
+    e.tags=tagEntity(e.name,e);return e;});
   arr.sort((a,b)=>b.비용-a.비용);return arr;}
 function weeklyTotals(data){const t=Object.fromEntries(WEEKS.map(w=>[w,{비용:0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0,"노출 수":0}]));
   for(const r of data){const w=r.date;if(!t[w])continue;for(const c of["비용","클릭 수","어트리뷰션 수","활성 유저 수","노출 수"]){const v=num(r[c]);if(v!=null)t[w][c]+=v;}}
@@ -2615,9 +2629,18 @@ const QUAD_METRICS=[
   {k:"CPM",lab:"CPM",dir:-1,fmt:v=>fmtWon(v)},
   {k:"노출 수",lab:"노출",dir:1,fmt:v=>fmtInt(v)},
 ];
+const GOOGLE_QUAD_METRICS=[
+  {k:"_g_interactionRate",lab:"상호작용률",dir:1,fmt:v=>fmtPct(v),google:true},
+  {k:"_g_trueViewRate",lab:"TV 조회율",dir:1,fmt:v=>fmtPct(v),google:true},
+  {k:"_g_conversionRate",lab:"전환율",dir:1,fmt:v=>fmtPct(v),google:true},
+  {k:"_g_costPerConv",lab:"전환당비용",dir:-1,fmt:v=>fmtWon(v),google:true},
+];
+function quadMetricsFor(ds){const base=QUAD_METRICS.filter(m=>!m.conv||ds.L.hasConv);
+  if(ds.agg.some(e=>e._g_assetType))return base.concat(GOOGLE_QUAD_METRICS);
+  return base;}
 let qX=null,qY=null;
 function renderQuad(ds){const L=ds.L,svg=$("#quad");
-  const mets=QUAD_METRICS.filter(m=>!m.conv||L.hasConv);
+  const mets=quadMetricsFor(ds);
   if(!qX||!mets.find(m=>m.k===qX))qX="CTR";
   if(!qY||!mets.find(m=>m.k===qY))qY=L.hasConv?"eCPI":"CPC";
   if(qX===qY){qY=mets.find(m=>m.k!==qX).k;}
@@ -2705,7 +2728,13 @@ function renderBreakdown(ds){const L=ds.L,a=ds.agg;
   if(!bdDim||!cand.find(d=>d[1]===bdDim))bdDim=cand[0][1];
   $("#dtog").innerHTML=cand.map(([lab,k])=>`<button data-d="${k}" class="${k===bdDim?"on":""}">${lab}</button>`).join("");
   $$("#dtog button").forEach(b=>b.onclick=()=>{bdDim=b.dataset.d;renderBreakdown(ds);});
-  const mets=BD_METRICS.filter(m=>!m.conv||L.hasConv);
+  let mets=BD_METRICS.filter(m=>!m.conv||L.hasConv);
+  const isG=a.some(e=>e._g_assetType);
+  if(isG)mets=mets.concat([
+    {k:"_g_interactionRate",lab:"상호작용률",dir:1,fmt:fmtPct,help:"높을수록 좋음"},
+    {k:"_g_trueViewRate",lab:"TV 조회율",dir:1,fmt:fmtPct,help:"높을수록 좋음"},
+    {k:"_g_conversionRate",lab:"전환율",dir:1,fmt:fmtPct,help:"높을수록 좋음"},
+  ]);
   if(!bdMet||!mets.find(m=>m.k===bdMet))bdMet=L.key==="cg"?"CTR":"eCPI";
   const primary=mets.find(m=>m.k===bdMet)||mets[0];
   $("#mtogBd").innerHTML=mets.map(m=>`<button data-m="${m.k}" class="${m.k===bdMet?"on":""}">${m.lab}</button>`).join("");
@@ -2726,7 +2755,10 @@ function renderBreakdown(ds){const L=ds.L,a=ds.agg;
       CTR:trimMet(arr,e=>e.CTR,e=>e["클릭 수"],e=>e["노출 수"]),
       CPM:trimMet(arr,e=>e["노출 수"]>0?e.비용/e["노출 수"]*1000:null,e=>e.비용*1000,e=>e["노출 수"]),
       eCPI:trimMet(arr,e=>e.eCPI,e=>e.비용,e=>e["어트리뷰션 수"]),
-      eCPA:trimMet(arr,e=>e["활성 유저 eCPA"],e=>e.비용,e=>e["활성 유저 수"])};
+      eCPA:trimMet(arr,e=>e["활성 유저 eCPA"],e=>e.비용,e=>e["활성 유저 수"]),
+      _g_interactionRate:trimMet(arr,e=>e._g_interactionRate,e=>e._g_interactions||0,e=>e["노출 수"]),
+      _g_trueViewRate:trimMet(arr,e=>e._g_trueViewRate,e=>e._g_trueViews||0,e=>e["노출 수"]),
+      _g_conversionRate:trimMet(arr,e=>e._g_conversionRate,e=>e._g_conversions||0,e=>e._g_interactions||0)};
   }).filter(r=>r[primary.k]!=null&&r[primary.k]>0);
   rows.sort((x,y)=>primary.dir>0?y[primary.k]-x[primary.k]:x[primary.k]-y[primary.k]);
   if(bdDim==="size")rows=rows.slice(0,8);
@@ -2810,7 +2842,12 @@ function familyKey(name){let s=String(name);
   return s||String(name).toLowerCase();}
 function islandMetrics(L,e){const M=[];const add=(k,lab,dir,fmt,good)=>M.push({k,lab,dir,fmt,good});
   if(L.key==="cg"){add("CTR","클릭률",1,fmtPct,true);add("CPC","클릭당",-1,fmtWon,true);}
-  else{add("eCPI","설치당",-1,fmtWon,true);add("활성 유저 eCPA","유저당",-1,fmtWon,true);if(e.CTR!=null)add("CTR","클릭률",1,fmtPct,true);}
+  else{add("eCPI","설치당",-1,fmtWon,true);add("활성 유저 eCPA","유저당",-1,fmtWon,true);if(e.CTR!=null&&e.CTR>0)add("CTR","클릭률",1,fmtPct,true);}
+  if(e._g_assetType){
+    if(e._g_conversionRate!=null)add("_g_conversionRate","전환율",1,fmtPct,true);
+    if(e._g_trueViewRate!=null)add("_g_trueViewRate","TV 조회율",1,fmtPct,true);
+    if(e._g_interactionRate!=null)add("_g_interactionRate","상호작용률",1,fmtPct,true);
+    if(e._g_costPerConv!=null)add("_g_costPerConv","전환당비용",-1,fmtWon,true);}
   add("비용","규모",1,v=>fmtKRW(v)+"원",false);return M;}
 function defaultMetric(ds,e){const M=islandMetrics(ds.L,e);return (M.find(m=>m.good&&e[m.k]!=null)||M.find(m=>e[m.k]!=null)||M[M.length-1]).k;}
 function cohorts(ds,e){const a=ds.agg,out=[{label:"전체",mem:a}];
@@ -2858,16 +2895,24 @@ function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-r
   if(wasOpen){ISLE.name=null;return;}
   const e=(ds.byName&&ds.byName.get(name))||ds.agg.find(x=>x.name===name);if(!e)return;ISLE.name=name;ISLE.metric=defaultMetric(ds,e);
   tr.classList.add("exp");const row=document.createElement("tr");row.className="isle-row";
-  const td=document.createElement("td");td.colSpan=tableCols(ds.L).length;const inner=document.createElement("div");inner.className="isle";
+  const td=document.createElement("td");td.colSpan=tableCols(ds.L,ds).length;const inner=document.createElement("div");inner.className="isle";
   td.appendChild(inner);row.appendChild(td);tr.parentNode.insertBefore(row,tr.nextSibling);
   const sc=document.querySelector(".tbl-scroll");inner.style.width=(sc?sc.clientWidth:1000)+"px";
   inner.innerHTML=`<div class="isle-load">불러오는 중…</div>`;
   requestAnimationFrame(()=>{if(ISLE.name===name)fillIsland(ds,e,inner);});}
-function tableCols(L){const c=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score",t:"점수",help:"효율 70% + 규모 30%를 0~100점으로"},
+function tableCols(L,ds){const c=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score",t:"점수",help:"효율 70% + 규모 30%를 0~100점으로"},
   {k:"비용",t:"광고비",f:"won",help:"쓴 광고비"},{k:"노출 수",t:"노출",f:"int",help:"보여진 횟수"},{k:"클릭 수",t:"클릭",f:"int",help:"눌린 횟수"},
   {k:"CTR",t:"CTR",f:"pct",help:"클릭률 = 클릭÷노출 · 높을수록 좋음"},{k:"CPC",t:"CPC",f:"won",help:"클릭당 비용 · 낮을수록 좋음"}];
   if(L.hasConv)c.push({k:"어트리뷰션 수",t:"설치",f:"int",help:"이 항목으로 생긴 앱 설치 수"},{k:"eCPI",t:"eCPI",f:"won",help:"설치 1건당 비용 · 낮을수록 좋음"},
     {k:"활성 유저 수",t:"활성유저",f:"int",help:"설치 후 실제 사용자"},{k:"활성 유저 eCPA",t:"eCPA",f:"won",help:"활성유저당 비용 · 낮을수록 좋음"});
+  if(ds&&ds.agg&&ds.agg.some(e=>e._g_assetType))c.push(
+    {k:"_g_interactions",t:"상호작용",f:"int",help:"Google · 상호작용 총 수"},
+    {k:"_g_interactionRate",t:"상호작용률",f:"pct",help:"상호작용÷노출 · 높을수록 좋음"},
+    {k:"_g_trueViews",t:"TV 조회",f:"int",help:"TrueView 조회수 (동영상)"},
+    {k:"_g_trueViewRate",t:"TV 조회율",f:"pct",help:"조회÷노출 · 높을수록 좋음"},
+    {k:"_g_conversions",t:"전환",f:"int",help:"Google 전환 수"},
+    {k:"_g_conversionRate",t:"전환율",f:"pct",help:"전환÷상호작용 (Google 관례) · 높을수록 좋음 · view-through 포함시 100% 초과 가능"},
+  );
   return c;}
 function fcell(v,f){return f==="won"?fmtWon(v):f==="int"?fmtInt(v):f==="pct"?fmtPct(v):v;}
 function tierBadge(e){if(e.dom==="good")return `<span class="dom-tag" title="독보적으로 잘 나옴">독보적</span>`;
@@ -2876,7 +2921,7 @@ function tierBadge(e){if(e.dom==="good")return `<span class="dom-tag" title="독
   if(e.tier==="w1")return `<span class="b-w1" title="나쁨">${thumbs("down",1)}</span>`;
   if(e.tier==="w2")return `<span class="b-w2" title="매우 나쁨">${thumbs("down",2)}</span>`;
   return "";}
-function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L),thead=$("#table thead"),tbody=$("#table tbody");curDS=ds;ISLE.name=null;
+function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L,ds),thead=$("#table thead"),tbody=$("#table tbody");curDS=ds;ISLE.name=null;
   thead.innerHTML="<tr>"+cols.map(c=>{const sorted=tState.sort===c.k,arr=sorted?(tState.dir<0?"▼":"▲"):"";const cl=(c.k==="name"?"name ":c.k==="_b"?"bdg ":"")+(c.help?"help ":"")+(sorted?"sorted":"");return `<th class="${cl.trim()}" data-k="${c.k}" ${c.help?`title="${c.help}"`:""}>${c.t} <span class="arr">${arr}</span></th>`;}).join("")+"</tr>";
   let rows=ds.agg.slice();
   if(!tableShowAll)rows=rows.filter(r=>!isInactive(r));
