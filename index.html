@@ -401,7 +401,7 @@
         <div class="tbar">
           <input type="search" id="search" placeholder="이름으로 검색">
           <div class="tfilter"><button class="tfbtn" id="tfBtn" type="button">필터<span class="tfcnt" id="tfCnt" hidden></span></button><div class="tfpop" id="tfPop" hidden><div class="tfhead">태그 필터</div><div class="tfbody" id="tfBody"></div><div class="tffoot"><button id="tfClear" type="button">전체 해제</button></div></div></div>
-          <label class="chk"><input type="checkbox" id="showAll">비활성 소재도 보기</label>
+          <label class="chk"><input type="checkbox" id="showAll">비활성(광고비 0)도 보기</label>
           <div class="tlegend" id="tlegend"></div>
         </div>
         <div class="tbl-scroll"><table id="table"><thead></thead><tbody></tbody></table></div>
@@ -2755,9 +2755,7 @@ let tState={sort:"score",dir:-1,q:""};
 let tFilter={ve:new Set(),fo:new Set(),size:new Set()};
 function isInactive(e){if(!e)return true;
   if((e.비용||0)<=0)return true;
-  if(e["_g_assetType"]!==undefined){
-    if((e["어트리뷰션 수"]||0)<=0&&(e["활성 유저 수"]||0)<=0)return true;
-    if(e["_g_assetStatus"]==="삭제됨"||e["_g_status"]==="삭제됨"||e["_g_status"]==="사용 불가")return true;}
+  if(!("클릭 수" in e)||!("어트리뷰션 수" in e))return true;
   return false;}
 function tFilterCount(){let n=0;for(const k of Object.keys(tFilter))n+=tFilter[k].size;return n;}
 function tfDims(ds){const dims=[
