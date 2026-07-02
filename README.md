@@ -1,20 +1,7 @@
 # CreativeReporter
 
-퍼포먼스 마케팅 소재의 효율을 보고 싶을 때 CSV만 올리면 바로 리포트가 나오는 웹 대시보드입니다.
+퍼포먼스 소재 성과분석 대시보드입니다.
+CSV를 화면에 끌어다 놓으면 즉시 분석됩니다.
+<br/> <br/> <br/> 
 
-## 바로 열어보기
-
-- **Meta·몰로코 등 앱 광고 예시** → https://hansy-daangn.github.io/CreativeReporter/
-- **Google Ads 예시** → https://hansy-daangn.github.io/CreativeReporter/?sample=google
-
-두 링크 모두 별도 로그인 없이 바로 열립니다. 본인 CSV를 화면에 끌어다 놓으면 즉시 분석됩니다.
-
-## 지원 CSV
-
-- Google Ads 확장 소재 연결 보고서 (`.csv` 원본 그대로)
-- Meta / 몰로코 등 앱 광고 리포트 (`ad_name, 비용, 노출 수, CTR, eCPI …` 형식)
-
-## 참고
-
-- 점수 산정 방식은 사이트 하단 "점수 산정 방식" 섹션 참고
-- CSV 데이터는 브라우저 안에서만 처리되고 외부로 전송되지 않습니다
+### CSV를 다운로드 하세요: [Google Ads](https://ads.google.com/aw/assetreport/associations?campaignId=22932296047&ocid=140474404&workspaceId=-1461371521&assetType=all&isLegacy=false&euid=6479159244&__u=5503618156&uscid=140474404&__c=5003988996&authuser=0&subid=kr-ko-ha-aw-bk-a-h00!o3-ahpm-0000000200-0000000002~EAIaIQobChMIyP2s4fj2kwMVuSZ7Bx2utAdNEAAYASAAEgLkSPD_BwE~147868729172~kwd-94527731~18654926781~629668488647) | [SuperSet](https://superset.kr.wekarrot.net/superset/dashboard/1342/)
