@@ -43,7 +43,8 @@
   .srank{display:flex;flex-direction:column;gap:2px;padding:0 2px}
   .srank-h{font-size:9.5px;font-weight:800;letter-spacing:.08em;color:var(--side-faint);margin-top:8px;padding:0 4px 4px}
   .srank-h.good{color:#5FD0A8} .srank-h.bad{color:#F58AA0}
-  .srk-row{display:grid;grid-template-columns:20px 1fr;column-gap:8px;align-items:start;padding:6px 4px;border-radius:7px}
+  .srk-row{display:grid;grid-template-columns:20px 1fr;column-gap:8px;align-items:start;padding:6px 4px;border-radius:7px;cursor:pointer;transition:background .12s}
+  .srk-row:hover{background:rgba(255,255,255,.06)}
   .srk-row+.srk-row{border-top:1px solid rgba(255,255,255,.05)}
   .srk-rank{width:20px;height:20px;border-radius:5px;display:grid;place-items:center;font-size:10.5px;font-weight:800;background:rgba(255,255,255,.12);color:#fff;margin-top:1px}
   .srk-row.bad .srk-rank{background:rgba(245,138,160,.22);color:#F58AA0}
@@ -163,7 +164,7 @@
   /* quadrant + dual-thumb sliders pinned to plot area */
   .quad-wrap{position:relative;display:flex;flex-direction:column;gap:6px}
   /* svg wrap gets padding-left for y slider and padding-bottom for x slider */
-  .quad-svgwrap{position:relative;min-width:0;padding-left:28px;padding-bottom:26px;max-width:1208px;margin:0 auto;width:100%}
+  .quad-svgwrap{position:relative;min-width:0;padding-left:28px;padding-bottom:26px;width:100%}
   .quad-svgwrap svg.chart{display:block}
   .dual{position:absolute;user-select:none;touch-action:none}
   .dual .dtrk{position:absolute;background:var(--surface-2);border-radius:3px}
@@ -2753,12 +2754,13 @@ function renderLeaderboard(ds){const L=ds.L,S=ds.S;
   if(!best.length){top.innerHTML=`<div class="srk-empty">순위 데이터 부족 (최소 ${L.volLab} ${minVol(L)}건 필요)</div>`;bad.innerHTML="";if(badH)badH.style.display="none";return;}
   const row=(e,i,isBad)=>{const dom=isBad?e.dom==="bad":(i===0&&e.dom==="good");
     const tag=dom?(isBad?'<span class="dom-tag bad" style="font-size:8.5px;margin-left:5px">독보적</span>':'<span class="dom-tag" style="font-size:8.5px;margin-left:5px">독보적</span>'):"";
-    return `<div class="srk-row${isBad?" bad":""}"><div class="srk-rank">${i+1}</div>
+    return `<div class="srk-row${isBad?" bad":""}" data-name="${escAttr(e.name)}" title="클릭 → 전체 목록에서 자세히"><div class="srk-rank">${i+1}</div>
       <div class="srk-name" title="${escAttr(e.name)}">${e.name}${tag}</div>
       <div class="srk-meta"><span class="sp ${sp(e.tier)}">${e.score??"–"}</span>${S.goodLabel} <b>${gv(e,S)}</b> · ${degText(e,S)}</div></div>`;};
   top.innerHTML=best.map((e,i)=>row(e,i,false)).join("");
   if(badH)badH.style.display=worst.length?"":"none";
-  bad.innerHTML=worst.map((e,i)=>row(e,i,true)).join("");}
+  bad.innerHTML=worst.map((e,i)=>row(e,i,true)).join("");
+  [top,bad].forEach(el=>{if(!el)return;el.querySelectorAll(".srk-row").forEach(r=>{r.onclick=()=>{const nm=r.dataset.name;if(nm)goToIslandFromQuad(nm);};});});}
 
 /* key summary tiles */
 function renderKeyrow(ds){const L=ds.L,a=ds.agg,tiles=[];
@@ -2812,7 +2814,7 @@ function renderQuad(ds){const L=ds.L,svg=$("#quad");
   const xMet=mets.find(m=>m.k===qX),yMet=mets.find(m=>m.k===qY);
   const par=svg.parentElement,parW=par?par.clientWidth:760;
   const cs=par?getComputedStyle(par):null,padL=cs?parseFloat(cs.paddingLeft)||0:0;
-  const W=Math.max(360,Math.min(parW-padL,1180)),H=400,pad={l:66,r:38,t:16,b:44};
+  const W=Math.max(360,parW-padL),H=400,pad={l:66,r:38,t:16,b:44};
   svg.setAttribute("width",W);svg.setAttribute("height",H);svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   let pts=ds.agg.filter(e=>e.비용>0&&e[qX]!=null&&e[qX]>0&&e[qY]!=null&&e[qY]>0);
   pts.sort((a,b)=>b.비용-a.비용);const CAP=L.key==="ad"?70:160,capped=pts.length>CAP;pts=pts.slice(0,CAP);
@@ -3156,7 +3158,7 @@ function findRow(ds,name){
   if(ds.byName){const e=ds.byName.get(name);if(e)return e;}
   if(ds._aggGrpCache){const g=ds._aggGrpCache.find(x=>x.name===name);if(g)return g;}
   return ds.agg.find(x=>x.name===name);}
-const COL_DIR={"비용":-1,"CPC":-1,"CPM":-1,"eCPI":-1,"활성 유저 eCPA":-1,"_g_costPerConv":-1,
+const COL_DIR={"CPC":-1,"CPM":-1,"eCPI":-1,"활성 유저 eCPA":-1,"_g_costPerConv":-1,
   "노출 수":1,"클릭 수":1,"어트리뷰션 수":1,"활성 유저 수":1,"CTR":1,"_g_ROAS":1,"_g_conversionRate":1,"_g_interactionRate":1,"_g_conversions":1,"_g_interactions":1,"_g_convValue":1,"_g_convValuePerConv":1,"_g_allConv":1};
 function cellTier(v,sortedAll,dir){
   if(v==null||!sortedAll||sortedAll.length<5)return "m";
