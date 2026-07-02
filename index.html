@@ -9,7 +9,7 @@
     --canvas:#ECECE7; --surface:#FFFFFF; --surface-2:#F4F4F0; --surface-3:#EDEDE7;
     --ink:#1B1A16; --muted:#74726A; --faint:#A4A299;
     --side:#1F1E18; --side-2:#2A2922; --side-ink:#EDEBE3; --side-muted:#9B998E; --side-faint:#6F6D63;
-    --karrot:#FF6F0F; --karrot-2:#FF8A3D;
+    --karrot:#FF6F0F; --karrot-2:#FF8A3D; --karrot-f:#FFEDDF;
     /* tier fills (no borders, fill only) */
     --g2:#0F7355; --g2-f:#D3EEE3; --g1:#1C8A6E; --g1-f:#E0F1EA;
     --mid:#8A887E; --mid-f:#EBEBE4;
@@ -129,6 +129,11 @@
   .axis text{font-size:10px;fill:var(--faint)} .gl{stroke:#E6E5DE;stroke-dasharray:2 3}
   .qnote{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:12px;font-size:11px}
   .qnote div{padding:7px 10px;border-radius:8px;background:var(--surface-2)} .qnote b{font-weight:700}
+  .quad-tier-legend{display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px;padding:9px 12px;background:var(--surface-2);border-radius:9px;font-size:12px}
+  .quad-tier-legend .qtl-item{display:inline-flex;align-items:center;gap:5px}
+  .quad-tier-legend .qtl-dot{display:inline-block;width:11px;height:11px;border-radius:50%}
+  .quad-tier-legend .qtl-lab{color:var(--ink);font-weight:650}
+  .quad-tier-legend .qtl-sep{color:var(--faint);margin:0 2px}
   .qhint{font-size:11px;color:var(--faint);margin:0 0 6px}
   .qaxis{display:flex;align-items:center;gap:10px;margin-bottom:6px}
   .qaxis .qaxis-lab{font-size:10px;color:var(--faint);font-weight:700;letter-spacing:.06em;text-transform:uppercase;width:34px;flex:0 0 auto}
@@ -201,6 +206,10 @@
   .tfbtn:hover{color:var(--ink)}
   .tfbtn.on{background:var(--ink);color:#fff}
   .tfcnt{background:var(--karrot);color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:9px;min-width:18px;text-align:center}
+  .qfo{display:inline-flex;gap:5px;align-items:center}
+  .qfo-btn{background:var(--surface-2);border-radius:9px;padding:6px 10px;font-size:16px;line-height:1;cursor:pointer;border:1.5px solid transparent;filter:grayscale(.65) opacity(.7);transition:filter .15s,border-color .15s,background .15s}
+  .qfo-btn:hover{filter:grayscale(.2) opacity(.95)}
+  .qfo-btn.on{background:var(--karrot-f);border-color:var(--karrot);filter:none}
   .tfpop{position:absolute;top:calc(100% + 6px);left:0;z-index:40;background:var(--surface);border-radius:12px;box-shadow:0 12px 36px -8px rgba(0,0,0,.28);padding:12px;min-width:280px;max-width:380px}
   .tfhead{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--faint);text-transform:uppercase;padding:0 4px 8px}
   .tf-sec{margin-top:6px}
@@ -230,9 +239,13 @@
   tbody tr:hover td{background:#FBF8F4} tbody tr:hover td.name,tbody tr:hover td.bdg{background:#FBF8F4}
   tbody td{border-bottom:1px solid #F0EFE9}
   tbody tr.row{content-visibility:auto;contain-intrinsic-size:auto 38px}
-  tbody tr.load-more td{background:var(--surface-2);padding:12px;text-align:center}
-  tbody tr.load-more button{background:var(--karrot);color:#fff;padding:8px 20px;border-radius:9px;font-size:12.5px;font-weight:650;cursor:pointer}
-  tbody tr.load-more button:hover{background:#ff7d24}
+  tbody tr.pager td{background:var(--surface-2);padding:11px;text-align:center}
+  .pager-nav{display:inline-flex;align-items:center;gap:10px;font-size:12.5px}
+  .pager-nav button{background:var(--surface-1);border:1px solid #E6E4DC;color:var(--ink);padding:6px 14px;border-radius:8px;font-size:12.5px;font-weight:650;cursor:pointer;transition:background .12s}
+  .pager-nav button:hover:not(:disabled){background:var(--karrot);color:#fff;border-color:var(--karrot)}
+  .pager-nav button:disabled{opacity:.4;cursor:not-allowed}
+  .pager-nav .pnum{min-width:80px;color:var(--muted);font-weight:650}
+  .pager-nav .pnum b{color:var(--karrot);font-weight:800}
   td.bdg .thumbs{display:inline-flex;gap:1px;align-items:center}
   td.bdg svg{width:16px;height:16px;vertical-align:middle}
   .thumbs svg{width:14px;height:14px}
@@ -296,7 +309,27 @@
   .g-ids b{color:var(--muted);font-weight:650;font-family:monospace;font-size:11px}
   .tf-kind{margin-left:5px;font-size:9.5px;color:var(--faint);font-weight:600}
 
-  .ft{padding:18px 30px 26px;font-size:11px;color:var(--faint)}
+  .ft{padding:24px 30px 32px;font-size:12px;color:var(--muted);line-height:1.65;border-top:1px solid #E6E5DE;margin-top:22px}
+  .ft h3{margin:18px 0 8px;font-size:13px;color:var(--ink);font-weight:700}
+  .ft h4{margin:14px 0 4px;font-size:12px;color:var(--ink);font-weight:650}
+  .ft p,.ft ul{margin:4px 0 8px}
+  .ft ul{padding-left:18px}
+  .ft li{margin:3px 0}
+  .ft code{background:var(--surface-2);padding:1px 6px;border-radius:5px;font-family:"SFMono-Regular",Menlo,Consolas,monospace;font-size:11px;color:var(--ink)}
+  .ft a{color:var(--karrot);text-decoration:none;border-bottom:1px dotted var(--karrot-2)}
+  .ft a:hover{border-bottom-style:solid}
+  .ft .ft-note{color:var(--faint);font-size:11px;margin-top:14px;padding-top:12px;border-top:1px dashed #E6E5DE}
+  .ft .ft-formula{background:var(--surface-2);padding:11px 14px;border-radius:9px;font-size:12px;margin:6px 0 10px;font-family:"SFMono-Regular",Menlo,Consolas,monospace}
+  .ft .ft-tbl{width:100%;border-collapse:collapse;margin:6px 0 8px;font-size:11.5px}
+  .ft .ft-tbl th,.ft .ft-tbl td{padding:5px 9px;text-align:left;border-bottom:1px solid #E6E5DE}
+  .ft .ft-tbl th{color:var(--muted);font-weight:650;background:var(--surface-2)}
+  .ft .ft-tbl td.n{text-align:right;font-variant-numeric:tabular-nums}
+  .ft details{margin:8px 0}
+  .ft details summary{cursor:pointer;color:var(--ink);font-weight:650;font-size:12.5px;padding:6px 0;list-style:none;display:flex;align-items:center;gap:6px}
+  .ft details summary::before{content:"▸";color:var(--karrot);transition:transform .12s;display:inline-block}
+  .ft details[open] summary::before{transform:rotate(90deg)}
+  .ft .ft-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.ft .ft-grid{grid-template-columns:1fr}}
   /* glossary overlay */
   .ov{position:fixed;inset:0;background:rgba(20,20,15,.42);display:none;align-items:center;justify-content:center;z-index:80;padding:20px}
   .ov.show{display:flex}
@@ -394,9 +427,10 @@
           </div>
           <div class="quad-rangerow"><span class="qrv" id="qxv"></span><span class="qrv" id="qyv"></span><button class="quad-reset" id="qrst" type="button" title="전체 범위로">↻ 전체</button></div>
         </div>
+        <div class="quad-tier-legend" id="qTierLeg"></div>
         <div class="qnote" id="qnote"></div>
-        <div class="twocol" style="margin-top:22px">
-          <div><div class="sub-h" style="margin-top:0">주차별 추세</div><div style="position:relative"><svg class="chart" id="trend"></svg></div><div class="leg" id="trendLeg"></div></div>
+        <div class="twocol" style="margin-top:22px" id="twocolBd">
+          <div id="trendWrap"><div class="sub-h" style="margin-top:0">주차별 추세</div><div style="position:relative"><svg class="chart" id="trend"></svg></div><div class="leg" id="trendLeg"></div></div>
           <div id="bdWrap"><div class="sub-h" id="bdTitle" style="margin-top:0">분류별 비교</div>
             <div class="bd-tog-row"><span class="bd-tog-lab">유형</span><div class="dtog" id="dtog"></div></div>
             <div class="bd-tog-row"><span class="bd-tog-lab">지표</span><div class="dtog" id="mtogBd"></div></div>
@@ -409,6 +443,7 @@
         <div class="tbar">
           <input type="search" id="search" placeholder="이름으로 검색">
           <div class="tfilter"><button class="tfbtn" id="tfBtn" type="button">필터<span class="tfcnt" id="tfCnt" hidden></span></button><div class="tfpop" id="tfPop" hidden><div class="tfhead">태그 필터</div><div class="tfbody" id="tfBody"></div><div class="tffoot"><button id="tfClear" type="button">전체 해제</button></div></div></div>
+          <div class="qfo" id="qfoWrap" hidden><button class="qfo-btn" id="qfoVid" type="button" title="영상만 보기" aria-label="영상만">🎬</button><button class="qfo-btn" id="qfoImg" type="button" title="이미지만 보기" aria-label="이미지만">🖼️</button></div>
           <label class="chk"><input type="checkbox" id="showAll">비활성(광고비 0)도 보기</label>
           <div class="tlegend" id="tlegend"></div>
         </div>
@@ -2579,67 +2614,83 @@ function computeFieldAvail(a){
   }
   return avail;}
 function isGoogleDs(a){return a&&a.length&&a.some(e=>e._g_assetType);}
-function computeScores(ds){const L=ds.L,a=ds.agg,isG=isGoogleDs(a);
-  ds.fieldAvail=computeFieldAvail(a);
-  a.forEach(e=>{e.score=null;e.tier="na";e.dom=null;});
-  if(isG){return computeGoogleScores(ds);}
-  let goodCol,goodDir,goodLabel,goodFmt,goodHelp;
-  if(L.key==="cg"){goodCol="CTR";goodDir=1;goodLabel="CTR";goodFmt="pct";goodHelp="높을수록 좋음";}
-  else{goodCol=L.effCol;goodDir=-1;goodLabel=L.effLabel;goodFmt="won";goodHelp="낮을수록 좋음";}
-  const volCol=L.volCol,minV=minVol(L);
-  const elig=a.filter(e=>e.비용>0&&e[goodCol]!=null&&(e[volCol]||0)>=minV);
-  const gvArr=elig.map(e=>e[goodCol]).sort((x,y)=>x-y),vv=elig.map(e=>e[volCol]).sort((x,y)=>x-y),med=quantile(gvArr,0.5);
-  elig.forEach(e=>{let gp=goodDir<0?1-pctRank(gvArr,e[goodCol]):pctRank(gvArr,e[goodCol]);let vp=pctRank(vv,e[volCol]);e.score=Math.round(100*(0.7*gp+0.3*vp));});
-  const sc=elig.map(e=>e.score).sort((x,y)=>x-y);
-  elig.forEach(e=>{const p=pctRank(sc,e.score);e.tier=p>=0.8?"g2":p>=0.6?"g1":p>=0.4?"m":p>=0.2?"w1":"w2";});
-  const best=elig.slice().sort((x,y)=>y.score-x.score);
-  best.forEach((e,i)=>{e.rank=i+1;});
-  const medSpend=quantile(a.map(x=>x.비용).sort((p,q)=>p-q),0.5);
-  let pool=elig.filter(e=>e.비용>=medSpend);if(pool.length<2)pool=elig.slice();
-  const worst=goodDir<0?pool.slice().sort((x,y)=>y[goodCol]-x[goodCol]):pool.slice().sort((x,y)=>x[goodCol]-y[goodCol]);
-  if(best[0]){const r=goodDir<0?med/best[0][goodCol]:best[0][goodCol]/med;best[0].dom=r>=1.8?"good":null;}
-  if(worst[0]){const r=goodDir<0?worst[0][goodCol]/med:med/worst[0][goodCol];worst[0].dom=r>=2?"bad":null;}
-  return{best,worst,med,goodCol,goodDir,goodLabel,goodFmt,goodHelp,volCol,eligCount:elig.length};}
-/* Google composite score — weighted percentile across perf-ad indicators (ROAS>전환당비용>전환율>CTR>CPM>TV 조회율) */
-function computeGoogleScores(ds){const a=ds.agg,av=ds.fieldAvail||{};
+/* Unified perf-ad scoring — Effectiveness × Reach × StatisticalConfidence
+   Aligned with Google Ads Quality Score dimensions and Meta Ad Relevance Diagnostics */
+const SCORING={
+  EFF_W:0.75, REACH_W:0.20, CONF_W:0.05, MIN_CONV_FOR_FULL_CONF:30,
+  google:[
+    {k:"_g_ROAS",w:0.35,dir:1,lab:"ROAS"},
+    {k:"_g_costPerConv",w:0.20,dir:-1,lab:"전환당비용"},
+    {k:"_g_conversionRate",w:0.15,dir:1,lab:"전환율"},
+    {k:"CTR",w:0.15,dir:1,lab:"CTR"},
+    {k:"CPM",w:0.10,dir:-1,lab:"CPM"},
+    {k:"_g_trueViewRate",w:0.05,dir:1,lab:"TV 조회율",videoOnly:true},
+  ],
+  ad:[
+    {k:"eCPI",w:0.30,dir:-1,lab:"eCPI"},
+    {k:"활성 유저 eCPA",w:0.25,dir:-1,lab:"활성 eCPA"},
+    {k:"CTR",w:0.20,dir:1,lab:"CTR"},
+    {k:"CPM",w:0.15,dir:-1,lab:"CPM"},
+    {k:"CPC",w:0.10,dir:-1,lab:"CPC"},
+  ],
+  adset:[
+    {k:"활성 유저 eCPA",w:0.35,dir:-1,lab:"활성 eCPA"},
+    {k:"eCPI",w:0.25,dir:-1,lab:"eCPI"},
+    {k:"CTR",w:0.20,dir:1,lab:"CTR"},
+    {k:"CPM",w:0.15,dir:-1,lab:"CPM"},
+    {k:"CPC",w:0.05,dir:-1,lab:"CPC"},
+  ],
+  cg:[
+    {k:"CTR",w:0.50,dir:1,lab:"CTR"},
+    {k:"CPC",w:0.30,dir:-1,lab:"CPC"},
+    {k:"CPM",w:0.20,dir:-1,lab:"CPM"},
+  ],
+};
+function specsFor(ds){const a=ds.agg,isG=isGoogleDs(a);
+  const key=isG?"google":(ds.L.key||"ad");
   const isVideo=a.some(e=>e._g_assetType&&/동영상|video/i.test(e._g_assetType));
-  const specs=[
-    {k:"_g_ROAS",w:0.30,dir:1,minAvail:0.5,lab:"ROAS",fmt:v=>v.toFixed(1)+"×",help:"높을수록 좋음"},
-    {k:"_g_costPerConv",w:0.20,dir:-1,minAvail:0.5,lab:"전환당비용",fmt:v=>fmtWon(v),help:"낮을수록 좋음"},
-    {k:"_g_conversionRate",w:0.15,dir:1,minAvail:0.5,lab:"전환율",fmt:v=>fmtPct(v),help:"높을수록 좋음"},
-    {k:"CTR",w:0.15,dir:1,minAvail:0.5,lab:"CTR",fmt:v=>fmtPct(v),help:"높을수록 좋음"},
-    {k:"CPM",w:0.10,dir:-1,minAvail:0.5,lab:"CPM",fmt:v=>fmtWon(v),help:"낮을수록 좋음"},
-    {k:"_g_trueViewRate",w:isVideo?0.10:0,dir:1,minAvail:0.3,lab:"TV 조회율",fmt:v=>fmtPct(v),help:"높을수록 좋음"},
-  ].filter(s=>s.w>0&&(av[s.k]||0)>=s.minAvail);
+  return SCORING[key].filter(s=>!s.videoOnly||isVideo).map(s=>({...s}));}
+function computeScores(ds){const L=ds.L,a=ds.agg;
+  ds.fieldAvail=computeFieldAvail(a);
+  const av=ds.fieldAvail;
+  a.forEach(e=>{e.score=null;e.tier="na";e.dom=null;e._E=null;e._R=null;e._C=null;});
+  const allSpecs=specsFor(ds);
+  const specs=allSpecs.filter(s=>(av[s.k]||0)>=0.10);
+  if(!specs.length)return{best:[],worst:[],med:null,goodCol:"score",goodDir:1,goodLabel:"점수",goodFmt:"int",goodHelp:"복합 지표",volCol:"비용",eligCount:0,specs:[]};
   const wSum=specs.reduce((s,x)=>s+x.w,0)||1;
   specs.forEach(s=>s.wNorm=s.w/wSum);
-  const minSpend=quantile(a.map(x=>x.비용||0).sort((p,q)=>p-q),0.15);
+  const sorted={};for(const s of specs){sorted[s.k]=a.filter(e=>e[s.k]!=null).map(e=>e[s.k]).sort((x,y)=>x-y);}
+  const spendSorted=a.map(e=>e.비용||0).sort((x,y)=>x-y);
+  const impSorted=a.map(e=>e["노출 수"]||0).sort((x,y)=>x-y);
+  const minSpend=quantile(spendSorted,0.15);
   const coreSpecs=specs.filter(s=>s.w>=0.15);
   const elig=a.filter(e=>(e.비용||0)>=minSpend&&coreSpecs.every(s=>e[s.k]!=null));
-  if(elig.length<3){
-    return{best:[],worst:[],med:null,goodCol:"_g_ROAS",goodDir:1,goodLabel:"ROAS",goodFmt:"num",goodHelp:"높을수록 좋음",volCol:"비용",eligCount:0,gSpecs:specs};}
-  const sorted={};for(const s of specs){sorted[s.k]=a.filter(e=>e[s.k]!=null).map(e=>e[s.k]).sort((x,y)=>x-y);}
-  const spendSorted=elig.map(e=>e.비용||0).sort((x,y)=>x-y);
-  const EFFY_W=0.75,SCALE_W=0.25;
-  elig.forEach(e=>{let composite=0,wsum=0;
+  if(elig.length<3)return{best:[],worst:[],med:null,goodCol:specs[0]?.k||"score",goodDir:specs[0]?.dir||1,goodLabel:specs[0]?.lab||"점수",goodFmt:specs[0]?.k==="_g_ROAS"?"num":"int",goodHelp:"복합 지표",volCol:"비용",eligCount:0,specs};
+  const convOf=e=>e._g_conversions??e["어트리뷰션 수"]??e["활성 유저 수"]??e["클릭 수"]??0;
+  const denomLn=Math.log(1+SCORING.MIN_CONV_FOR_FULL_CONF);
+  elig.forEach(e=>{
+    let composite=0,wsum=0;
     for(const s of specs){if(e[s.k]==null||!sorted[s.k].length)continue;
       const p=pctRank(sorted[s.k],e[s.k]);const g=s.dir<0?1-p:p;composite+=g*s.w;wsum+=s.w;}
-    const effy=wsum>0?composite/wsum:0;
-    const scale=pctRank(spendSorted,e.비용||0);
-    e.score=Math.round(100*(EFFY_W*effy+SCALE_W*scale));});
+    const E=wsum>0?composite/wsum:0;
+    const R=impSorted.length?pctRank(impSorted,e["노출 수"]||0):0.5;
+    const C=Math.min(1,Math.log(1+convOf(e))/denomLn);
+    e._E=E;e._R=R;e._C=C;
+    e.score=Math.round(100*(SCORING.EFF_W*E+SCORING.REACH_W*R+SCORING.CONF_W*C));});
   const sc=elig.map(e=>e.score).sort((x,y)=>x-y);
   elig.forEach(e=>{const p=pctRank(sc,e.score);e.tier=p>=0.8?"g2":p>=0.6?"g1":p>=0.4?"m":p>=0.2?"w1":"w2";});
   const best=elig.slice().sort((x,y)=>y.score-x.score);
   best.forEach((e,i)=>{e.rank=i+1;});
   const primary=specs[0],pkey=primary.k,pdir=primary.dir;
-  const pvals=elig.map(e=>e[pkey]).sort((x,y)=>x-y),med=quantile(pvals,0.5);
-  const medSpend=quantile(a.map(x=>x.비용||0).sort((p,q)=>p-q),0.5);
+  const pvals=elig.map(e=>e[pkey]).filter(v=>v!=null).sort((x,y)=>x-y),med=quantile(pvals,0.5);
+  const medSpend=quantile(spendSorted,0.5);
   let scalePool=elig.filter(e=>(e.비용||0)>=medSpend);if(scalePool.length<2)scalePool=elig.slice();
   const bestScaled=scalePool.slice().sort((x,y)=>y.score-x.score);
   const worst=pdir<0?scalePool.slice().sort((x,y)=>y[pkey]-x[pkey]):scalePool.slice().sort((x,y)=>x[pkey]-y[pkey]);
-  if(bestScaled[0]){const r=pdir<0?med/bestScaled[0][pkey]:bestScaled[0][pkey]/med;bestScaled[0].dom=r>=1.8?"good":null;}
-  if(worst[0]){const r=pdir<0?worst[0][pkey]/med:med/worst[0][pkey];worst[0].dom=r>=2?"bad":null;}
-  return{best,worst,med,goodCol:pkey,goodDir:pdir,goodLabel:primary.lab,goodFmt:pkey==="_g_ROAS"?"num":(primary.fmt(1).includes("%")?"pct":"won"),goodHelp:primary.help,volCol:"비용",eligCount:elig.length,gSpecs:specs};}
+  if(bestScaled[0]&&med!=null){const r=pdir<0?med/bestScaled[0][pkey]:bestScaled[0][pkey]/med;bestScaled[0].dom=r>=1.8?"good":null;}
+  if(worst[0]&&med!=null){const r=pdir<0?worst[0][pkey]/med:med/worst[0][pkey];worst[0].dom=r>=2?"bad":null;}
+  const goodFmt=pkey==="_g_ROAS"?"num":(pkey==="CTR"||pkey==="CPM"||pkey.endsWith("Rate")?(pkey==="CPM"?"won":"pct"):"won");
+  return{best,worst,med,goodCol:pkey,goodDir:pdir,goodLabel:primary.lab,goodFmt,goodHelp:pdir<0?"낮을수록 좋음":"높을수록 좋음",volCol:"비용",eligCount:elig.length,specs,gSpecs:specs};}
 function sFmt(v,f){return f==="pct"?fmtPct(v):f==="num"?(v!=null&&isFinite(v)?v.toFixed(1)+"×":"–"):f==="int"?fmtInt(v):fmtWon(v);}
 function degText(e,S){const g=e[S.goodCol],med=S.med;if(g==null||med==null||med<=0)return"";
   if(S.goodDir<0){const m=med/g;return m>=1.05?`평균(${sFmt(med,S.goodFmt)})보다 <b>${m.toFixed(1)}배 효율적</b>`:`평균보다 <b>${(g/med).toFixed(1)}배 비쌈</b>`;}
@@ -2772,6 +2823,7 @@ function renderQuad(ds){const L=ds.L,svg=$("#quad");
   $("#qnote").innerHTML=`<div><b style="color:var(--g2)">● 매우 좋음</b> — ${xMet.lab}·${yMet.lab} 결합 상위 20%</div><div><b style="color:var(--g1)">● 좋음</b> — 상위 20–40%</div><div><b style="color:var(--mid)">● 보통</b></div><div><b style="color:var(--w1)">● 나쁨</b></div><div><b style="color:var(--w2)">● 매우 나쁨</b> — 하위 20%</div>`;}
 function goToIslandFromQuad(name){if(!curDS)return;
   tState.q="";tableShowAll=true;const sb=$("#search");if(sb)sb.value="";const sa=$("#showAll");if(sa)sa.checked=true;
+  const p=pageForName(curDS,name);if(p)tPage=p;
   renderTable(curDS);
   requestAnimationFrame(()=>{const tr=[...document.querySelectorAll("#table tbody tr.row")].find(t=>t.getAttribute("data-name")===name);
     if(!tr)return;if(ISLE.name!==name)toggleIsland(curDS,name,tr);
@@ -2868,9 +2920,10 @@ function renderBreakdown(ds){const L=ds.L,a=ds.agg;
       <div class="bd-metrics">${m.join(" · ")}</div>
     </div>`;}).join("")+`</div>`;}
 
-/* table — all rows, no pagination */
+/* table — paginated */
 let tState={sort:"score",dir:-1,q:""};
 let tFilter={ve:new Set(),fo:new Set(),size:new Set()};
+let tQuickFo=null; /* "영상" | "이미지" | null */
 function isInactive(e){if(!e)return true;
   if((e.비용||0)<=0)return true;
   if(!("클릭 수" in e)||!("어트리뷰션 수" in e))return true;
@@ -2882,6 +2935,9 @@ function tfDims(ds){const dims=[
   {key:"size",lab:"사이즈",valOf:e=>e.tags.size,kind:"multi"},
 ];
   if(ds.agg.some(e=>e["_g_assetType"]))dims.push({key:"gType",lab:"애셋 유형",valOf:e=>e["_g_assetType"],kind:"multi"});
+  if(ds.agg.some(e=>e["_g_campaignId"]))dims.push({key:"gCamp",lab:"캠페인 ID",valOf:e=>e["_g_campaignId"],kind:"multi"});
+  if(ds.agg.some(e=>e["_g_adGroupId"]))dims.push({key:"gAdgr",lab:"광고그룹 ID",valOf:e=>e["_g_adGroupId"],kind:"multi"});
+  if(ds.agg.some(e=>e["_g_assetId"]))dims.push({key:"gAsset",lab:"항목 ID",valOf:e=>e["_g_assetId"],kind:"multi"});
   if(ds.agg.some(e=>e["_g_status"]))dims.push({key:"gState",lab:"상태",valOf:e=>e["_g_status"],kind:"single"});
   if(ds.agg.some(e=>e["_g_assetStatus"]))dims.push({key:"gAssetStatus",lab:"애셋 상태",valOf:e=>e["_g_assetStatus"],kind:"single"});
   return dims;}
@@ -2889,6 +2945,7 @@ function ensureTFilterKeys(dims){for(const d of dims){if(!tFilter[d.key])tFilter
 function applyTFilter(rows,ds){const dims=tfDims(ds);
   for(const d of dims){const sel=tFilter[d.key];if(!sel||!sel.size)continue;
     rows=rows.filter(e=>{const v=d.valOf(e);return v!=null&&sel.has(v);});}
+  if(tQuickFo)rows=rows.filter(e=>e.tags.fo===tQuickFo);
   return rows;}
 function renderTFilter(ds){
   const pop=$("#tfPop"),body=$("#tfBody"),cnt=$("#tfCnt");
@@ -2906,7 +2963,7 @@ function renderTFilter(ds){
     else{if(tFilter[k].has(v))tFilter[k].delete(v);else tFilter[k].add(v);c.classList.toggle("on");}
     const n=tFilterCount();cnt.hidden=!n;if(n)cnt.textContent=n;
     $("#tfBtn").classList.toggle("on",n>0);
-    if(active)renderTable(DATASETS[active]);
+    tPage=1;if(active)renderTable(DATASETS[active]);
   });
   const n=tFilterCount();cnt.hidden=!n;if(n)cnt.textContent=n;
   $("#tfBtn").classList.toggle("on",n>0);}
@@ -3014,7 +3071,7 @@ function tierBadge(e){if(e.dom==="good")return `<span class="dom-tag" title="독
   if(e.tier==="w2")return `<span class="b-w2" title="매우 나쁨">${thumbs("down",2)}</span>`;
   return "";}
 const PAGE_SIZE=60;
-let tPageCount=1;
+let tPage=1;
 function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L,ds),thead=$("#table thead"),tbody=$("#table tbody");curDS=ds;ISLE.name=null;
   thead.innerHTML="<tr>"+cols.map(c=>{const sorted=tState.sort===c.k,arr=sorted?(tState.dir<0?"▼":"▲"):"";const cl=(c.k==="name"?"name ":c.k==="_b"?"bdg ":"")+(c.help?"help ":"")+(sorted?"sorted":"");return `<th class="${cl.trim()}" data-k="${c.k}" ${c.help?`title="${c.help}"`:""}>${c.t} <span class="arr">${arr}</span></th>`;}).join("")+"</tr>";
   let rows=ds.agg.slice();
@@ -3029,10 +3086,12 @@ function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L,ds),thead=$("#tabl
     if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1;
     return tState.dir*((x>y?1:x<y?-1:0));});
   const totalRows=rows.length;
-  const shownCount=Math.min(tPageCount*PAGE_SIZE,totalRows);
-  const visible=rows.slice(0,shownCount);
-  const hidden=totalRows-shownCount;
-  $("#tblMeta").textContent=`${totalRows.toLocaleString()}개 중 ${shownCount.toLocaleString()}개 표시${tableShowAll?"":" · 비활성 숨김"}${hidden>0?` · ${hidden.toLocaleString()}개 더 있음`:""}`;
+  const totalPages=Math.max(1,Math.ceil(totalRows/PAGE_SIZE));
+  if(tPage>totalPages)tPage=totalPages;if(tPage<1)tPage=1;
+  const startIdx=(tPage-1)*PAGE_SIZE;
+  const endIdx=Math.min(startIdx+PAGE_SIZE,totalRows);
+  const visible=rows.slice(startIdx,endIdx);
+  $("#tblMeta").textContent=`${totalRows.toLocaleString()}개 중 ${(startIdx+1).toLocaleString()}–${endIdx.toLocaleString()}번 · ${tPage}/${totalPages} 페이지${tableShowAll?"":" · 비활성 숨김"}`;
   const gc=S.goodCol;
   const html=visible.map(r=>{const spCls=r.tier==="g2"?"sp-g2":r.tier==="g1"?"sp-g1":r.tier==="m"?"sp-mid":r.tier==="w1"?"sp-w1":r.tier==="w2"?"sp-w2":"sp-na";
     const score=r.score!=null?`<span class="sp ${spCls}">${r.score}</span>`:`<span class="sp sp-na">–</span>`;
@@ -3041,19 +3100,53 @@ function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L,ds),thead=$("#tabl
       if(c.k==="name")return `<td class="name">${trunc(r.name,60)}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags)}</div></td>`;
       if(c.k==="score")return `<td>${score}</td>`;
       return `<td class="num">${fcell(r[c.k],c.f)}</td>`;}).join("")+"</tr>";}).join("");
-  const moreRow=hidden>0?`<tr class="load-more"><td colspan="${cols.length}"><button id="loadMoreBtn" type="button">↓ ${Math.min(PAGE_SIZE,hidden)}개 더 보기 (남은 ${hidden.toLocaleString()}개)</button></td></tr>`:"";
-  tbody.innerHTML=html+moreRow;
-  const lm=$("#loadMoreBtn");if(lm)lm.onclick=()=>{tPageCount++;renderTable(ds);};
-  thead.querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(tState.sort===k)tState.dir*=-1;else{tState.sort=k;tState.dir=(k==="name")?1:-1;}tPageCount=1;renderTable(ds);});}
+  const pagerRow=totalPages>1?`<tr class="pager"><td colspan="${cols.length}"><div class="pager-nav"><button id="pgPrev" type="button" ${tPage<=1?"disabled":""}>◄ 이전 60개</button><span class="pnum"><b>${tPage}</b> / ${totalPages} 페이지</span><button id="pgNext" type="button" ${tPage>=totalPages?"disabled":""}>다음 60개 ►</button></div></td></tr>`:"";
+  tbody.innerHTML=html+pagerRow;
+  const pp=$("#pgPrev");if(pp)pp.onclick=()=>{if(tPage>1){tPage--;renderTable(ds);document.querySelector("#table")?.scrollIntoView({behavior:"smooth",block:"start"});}};
+  const pn=$("#pgNext");if(pn)pn.onclick=()=>{if(tPage<totalPages){tPage++;renderTable(ds);document.querySelector("#table")?.scrollIntoView({behavior:"smooth",block:"start"});}};
+  thead.querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(tState.sort===k)tState.dir*=-1;else{tState.sort=k;tState.dir=(k==="name")?1:-1;}tPage=1;renderTable(ds);});}
+/* Compute what page contains the entity name in current sort/filter state */
+function pageForName(ds,name){let rows=ds.agg.slice();
+  if(!tableShowAll)rows=rows.filter(r=>!isInactive(r));
+  rows=applyTFilter(rows,ds);
+  if(tState.q){const q=tState.q.toLowerCase();rows=rows.filter(r=>r.name.toLowerCase().includes(q));}
+  rows.sort((a,b)=>{
+    if(tState.sort==="name")return tState.dir*a.name.localeCompare(b.name);
+    const k=(tState.sort==="_b")?"score":tState.sort;
+    let x=a[k],y=b[k];
+    if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1;
+    return tState.dir*((x>y?1:x<y?-1:0));});
+  const idx=rows.findIndex(r=>r.name===name);if(idx<0)return null;
+  return Math.floor(idx/PAGE_SIZE)+1;}
 function renderTlegend(){$("#tlegend").innerHTML=`<span><span class="dom-tag">독보적</span></span><span><span class="b-gold">${ICON.crown}</span>매우 좋음</span><span><span class="b-g1">${thumbs("up",1)}</span>좋음</span><span><span class="b-w1">${thumbs("down",1)}</span>나쁨</span><span><span class="b-w2">${thumbs("down",2)}</span>매우 나쁨</span>`;}
+function renderQuadTierLegend(){const el=$("#qTierLeg");if(!el)return;
+  const tiers=[
+    {c:"var(--g2)",lab:"매우 좋음"},
+    {c:"var(--g1)",lab:"좋음"},
+    {c:"var(--mid)",lab:"보통"},
+    {c:"var(--w1)",lab:"나쁨"},
+    {c:"var(--w2)",lab:"매우 나쁨"},
+  ];
+  el.innerHTML=tiers.map((t,i)=>`<span class="qtl-item"><span class="qtl-dot" style="background:${t.c}"></span><span class="qtl-lab">${t.lab}</span></span>${i<tiers.length-1?'<span class="qtl-sep">·</span>':''}`).join("");}
+function renderQuickFo(){const wrap=$("#qfoWrap"),ds=curDS;
+  if(!wrap)return;
+  const hasFo=ds&&ds.agg&&ds.agg.some(e=>e.tags&&(e.tags.fo==="영상"||e.tags.fo==="이미지"));
+  wrap.hidden=!hasFo;
+  if(!hasFo)return;
+  const v=$("#qfoVid"),i=$("#qfoImg");
+  if(v)v.classList.toggle("on",tQuickFo==="영상");
+  if(i)i.classList.toggle("on",tQuickFo==="이미지");}
+function toggleQuickFo(val){tQuickFo=tQuickFo===val?null:val;renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);}
 
 /* glossary */
-const GLOSSARY=[["광고비","이 소재에 쓴 돈"],["노출","사용자에게 보여진 횟수"],["클릭","눌린 횟수"],["CTR","클릭률 = 클릭÷노출",1,"높을수록 좋음"],["CPC","클릭 1번당 비용",1,"낮을수록 좋음"],["설치","이 소재로 생긴 앱 설치 수(어트리뷰션)"],["eCPI","설치 1건당 비용 — 소재 효율의 핵심",1,"낮을수록 좋음"],["활성 유저","설치 후 실제로 앱을 쓴 사람"],["eCPA","활성 유저 1명당 비용",1,"낮을수록 좋음"],["점수","효율(70%)+규모(30%)를 0~100으로"]];
+const GLOSSARY=[["광고비","이 소재에 쓴 돈"],["노출","사용자에게 보여진 횟수"],["클릭","눌린 횟수"],["CTR","클릭률 = 클릭÷노출",1,"높을수록 좋음"],["CPC","클릭 1번당 비용",1,"낮을수록 좋음"],["설치","이 소재로 생긴 앱 설치 수(어트리뷰션)"],["eCPI","설치 1건당 비용 — 소재 효율의 핵심",1,"낮을수록 좋음"],["활성 유저","설치 후 실제로 앱을 쓴 사람"],["eCPA","활성 유저 1명당 비용",1,"낮을수록 좋음"],["점수","효율(75%)+규모(20%)+통계신뢰(5%) 종합, 0~100"]];
 function renderGlossary(){$("#glossGrid").innerHTML=GLOSSARY.map(g=>`<div><b>${g[0]}</b> — ${g[1]}${g[2]?`<span class="dir">${g[3]}</span>`:""}</div>`).join("");}
 $("#glossBtn").onclick=()=>$("#gloss").classList.add("show");
 $("#glossClose").onclick=()=>$("#gloss").classList.remove("show");
 $("#tfBtn").onclick=e=>{e.stopPropagation();const p=$("#tfPop");p.hidden=!p.hidden;};
-$("#tfClear").onclick=()=>{tFilter={ve:new Set(),fo:new Set(),size:new Set()};$("#tfCnt").hidden=true;$("#tfBtn").classList.remove("on");if(active)renderTable(DATASETS[active]);};
+$("#qfoVid").onclick=()=>toggleQuickFo("영상");
+$("#qfoImg").onclick=()=>toggleQuickFo("이미지");
+$("#tfClear").onclick=()=>{tFilter={ve:new Set(),fo:new Set(),size:new Set()};$("#tfCnt").hidden=true;$("#tfBtn").classList.remove("on");tQuickFo=null;renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);};
 document.addEventListener("click",e=>{const p=$("#tfPop");if(p.hidden)return;if(e.target.closest("#tfPop")||e.target.closest("#tfBtn"))return;p.hidden=true;});
 $("#gloss").addEventListener("click",e=>{if(e.target.id==="gloss")$("#gloss").classList.remove("show");});
 
@@ -3115,14 +3208,139 @@ function show(ds){scope(ds);
   const ch=dsMode==="channeled"&&ds.media?` · ${ds.media}`:"";
   $("#src").innerHTML=`데이터 <b>${ds.src||"내장 샘플"}</b> · ${ds.L.name} ${ds.agg.length.toLocaleString()}개${wk?" · "+wk:""}${ch}`;
   renderMediaSeg(ds);renderSideKpis(ds);renderLeaderboard(ds);renderKeyrow(ds);
-  requestAnimationFrame(()=>{renderQuad(ds);renderTrend(ds);renderBreakdown(ds);
-    requestAnimationFrame(()=>{renderTlegend();renderTable(ds);});});}
+  const isG=isGoogleDs(ds.agg);
+  const trendWrap=$("#trendWrap"),bdWrap=$("#bdWrap"),twocolBd=$("#twocolBd");
+  if(trendWrap)trendWrap.style.display=isG?"none":"";
+  if(bdWrap)bdWrap.style.display=isG?"none":"";
+  if(twocolBd)twocolBd.style.display=isG?"none":"";
+  requestAnimationFrame(()=>{renderQuad(ds);renderQuadTierLegend();
+    if(!isG){renderTrend(ds);renderBreakdown(ds);}
+    requestAnimationFrame(()=>{renderTlegend();curDS=ds;renderQuickFo();renderTable(ds);});});}
 function setActive(k){if(!DATASETS[k])return;active=k;
-  bdDim=null;bdMet=null;tableShowAll=false;tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tPageCount=1;
+  bdDim=null;bdMet=null;tableShowAll=false;tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tPage=1;
   if($("#search"))$("#search").value="";if($("#showAll"))$("#showAll").checked=false;
   renderSeg();show(DATASETS[k]);}
 function renderSeg(){$("#seg").innerHTML=TAB_ORDER.filter(k=>DATASETS[k]).map(k=>{const L=LEVELS[k];return `<button role="tab" data-k="${k}" class="${k===active?"on":""}">${L.name}<span class="sc">${DATASETS[k].aggAll.length}</span></button>`;}).join("");$$("#seg button").forEach(b=>b.onclick=()=>setActive(b.dataset.k));}
-function renderFooter(){$("#ft").textContent="모든 계산은 브라우저 안에서 수행 · 효율 = 총비용÷총전환 가중 집계 · 비용 0(미집행)은 표에서 기본 숨김";}
+function renderFooter(){$("#ft").innerHTML=`
+<details open>
+  <summary>점수 산정 방식 (Scoring Methodology)</summary>
+  <p>본 대시보드의 소재 점수는 <b>효율(Effectiveness) × 규모(Reach) × 통계적 신뢰도(Statistical Confidence)</b>의 세 축을
+  가중 결합한 <b>0~100 복합 지표</b>입니다. 이는 Google Ads의 <a href="https://support.google.com/google-ads/answer/6167118" target="_blank" rel="noopener">Quality Score</a>가
+  기대 CTR·광고 관련성·랜딩페이지 경험을 결합하는 방식, Meta의 <a href="https://www.facebook.com/business/help/635337992940913" target="_blank" rel="noopener">Ad Relevance Diagnostics</a>가
+  품질·참여율·전환율의 세 진단축으로 소재를 평가하는 방식,
+  그리고 학계의 <i>Marketing Metrics: The Manager's Guide to Measuring Marketing Performance</i>(Farris et al., 4th ed.)에서
+  다차원 지표를 <b>정규화 후 가중합</b>하는 표준 절차와 궤를 같이합니다.</p>
+
+  <div class="ft-formula">
+    <b>Score</b> = 100 × (0.75·<b>E</b> + 0.20·<b>R</b> + 0.05·<b>C</b>)<br>
+    &nbsp;&nbsp;<b>E</b> = Σ (w<sub>i</sub> · pctRank(m<sub>i</sub>))&nbsp;&nbsp;→ 지표별 백분위(percentile rank) 가중 평균<br>
+    &nbsp;&nbsp;<b>R</b> = pctRank(노출 수)&nbsp;&nbsp;→ 도달 규모 백분위<br>
+    &nbsp;&nbsp;<b>C</b> = min(1, ln(1+전환)/ln(1+30))&nbsp;&nbsp;→ 표본이 적을수록 감쇠
+  </div>
+
+  <div class="ft-grid">
+    <div>
+      <h4>왜 백분위(percentile rank)인가</h4>
+      <p>ROAS 30배와 CPM 800원은 스케일이 다르므로 절대값을 그대로 더할 수 없습니다.
+      백분위 정규화는 <b>계정 내 상대 위치</b>로 환산해 비교 가능하게 합니다 —
+      Google Ads Quality Score가 자기 계정·자기 카테고리 내에서 상대 평가되는 것과 같은 원리입니다.
+      이상치(outlier)에 강하고, 지표의 단위·분포 왜곡에 둔감합니다.</p>
+    </div>
+    <div>
+      <h4>왜 효율에 75%를 배정했나</h4>
+      <p>퍼포먼스 마케팅의 목표는 <b>효율의 개선</b>입니다. 규모는 이미 매체 알고리즘이 학습된 후 확대되는 결과이자
+      제약 조건입니다. iROAS·MMM 문헌(Chen & Google 2018; Meta &amp; Nielsen Robyn 2021)이 공통적으로 강조하듯,
+      크리에이티브 평가는 <b>규모 대비 효율(efficiency-at-scale)</b>이 핵심이며, 규모는 별도의 도달·인지 축으로 다루어야 합니다.</p>
+    </div>
+  </div>
+
+  <h3>매체·레벨별 효율(E) 지표 가중치</h3>
+
+  <h4>Google Ads (자산 리포트 · 반응형 디스플레이/영상)</h4>
+  <table class="ft-tbl">
+    <thead><tr><th>지표</th><th class="n">가중치</th><th>방향</th><th>근거</th></tr></thead>
+    <tbody>
+      <tr><td>ROAS (전환값 ÷ 비용)</td><td class="n">35%</td><td>↑ 높을수록</td><td>매출 기반 광고의 최상위 KPI (Google Ads Value-based Bidding)</td></tr>
+      <tr><td>전환당비용 (Cost/Conv)</td><td class="n">20%</td><td>↓ 낮을수록</td><td>Target CPA 자동입찰의 최적화 대상</td></tr>
+      <tr><td>전환율 (Conv Rate)</td><td class="n">15%</td><td>↑ 높을수록</td><td>Ad Relevance Diagnostics의 <i>Conversion Rate Ranking</i></td></tr>
+      <tr><td>CTR</td><td class="n">15%</td><td>↑ 높을수록</td><td>Quality Score의 <i>Expected CTR</i> 구성요소</td></tr>
+      <tr><td>CPM</td><td class="n">10%</td><td>↓ 낮을수록</td><td>노출 도달 효율 — 소재 품질이 낮으면 CPM 상승</td></tr>
+      <tr><td>TrueView 조회율</td><td class="n">5% (영상만)</td><td>↑ 높을수록</td><td>YouTube 영상 자산의 참여 지표</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Ad(광고) 레벨 · MMP/앱 광고 (예: 몰로코, 메타 앱 인스톨)</h4>
+  <table class="ft-tbl">
+    <thead><tr><th>지표</th><th class="n">가중치</th><th>방향</th><th>근거</th></tr></thead>
+    <tbody>
+      <tr><td>eCPI (Cost per Install)</td><td class="n">30%</td><td>↓ 낮을수록</td><td>UA(User Acquisition) 표준 KPI</td></tr>
+      <tr><td>활성 유저 eCPA</td><td class="n">25%</td><td>↓ 낮을수록</td><td>Active user 기준 CPA — 진성 유입 지표</td></tr>
+      <tr><td>CTR</td><td class="n">20%</td><td>↑ 높을수록</td><td>Meta Ad Relevance의 <i>Engagement Rate Ranking</i></td></tr>
+      <tr><td>CPM</td><td class="n">15%</td><td>↓ 낮을수록</td><td>Meta의 <i>Quality Ranking</i>과 상관 — 저품질 시 CPM 상승</td></tr>
+      <tr><td>CPC</td><td class="n">10%</td><td>↓ 낮을수록</td><td>클릭 단가 — 클릭 유도 효율</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Adset(광고세트) 레벨</h4>
+  <p>세트 단위는 개별 소재 CTR보다 <b>후속 전환 효율</b>(활성 eCPA)이 훨씬 안정적으로 관측되므로 가중치를 재조정했습니다:
+  활성 eCPA 35% · eCPI 25% · CTR 20% · CPM 15% · CPC 5%.</p>
+
+  <h4>Campaign(캠페인) 레벨</h4>
+  <p>캠페인은 목표·예산 배분 축이라 소재 품질 신호가 희석됩니다. 따라서 <b>노출 단가와 클릭 효율</b> 중심으로만 산정:
+  CTR 50% · CPC 30% · CPM 20%.</p>
+
+  <h3>규모(R)와 통계적 신뢰도(C)</h3>
+  <p><b>R = 노출 수의 계정 내 백분위</b>. 즉, 100번 노출된 소재와 100만번 노출된 소재를 같은 잣대로 세우지 않습니다.
+  이는 도달(Reach)이 광고 효과의 필수 조건이라는 <i>Byron Sharp - How Brands Grow</i>의 물리적 가용성(Physical Availability) 논지와,
+  Nielsen과 Analytic Partners 같은 MMM 벤더들이 iROAS 산정 시 <b>도달 규모 조정(reach adjustment)</b>을 수행하는 관행에 부합합니다.</p>
+  <p><b>C = 표본 크기에 따른 감쇠(shrinkage)</b>. 전환 3건짜리 소재의 ROAS가 30이 나와도 우연일 수 있습니다.
+  경험적 베이지안(empirical Bayes) 축소 추정의 정신을 반영해 로그 스케일로 신뢰도를 부여했습니다 —
+  <b>전환 30건에서 완전 신뢰(C=1)</b>, 그 이하는 <code>ln(1+n)/ln(1+30)</code>로 감쇠.
+  30이라는 임계값은 통계학의 관습적 표본 최소치(central limit theorem의 실무적 기준)에서 취했습니다.</p>
+
+  <h3>등급(Tier) — 매우 좋음 / 좋음 / 보통 / 나쁨 / 매우 나쁨</h3>
+  <p>계산된 점수를 자체 계정 내 <b>5분위(quintile)</b>로 자른 상대 등급입니다.</p>
+  <ul>
+    <li><b>매우 좋음</b> — 상위 20%</li>
+    <li><b>좋음</b> — 상위 20–40%</li>
+    <li><b>보통</b> — 40–60% (기준선)</li>
+    <li><b>나쁨</b> — 하위 20–40%</li>
+    <li><b>매우 나쁨</b> — 하위 20%</li>
+  </ul>
+  <p>절대 임계값이 아닌 상대 등급이므로, 계정 전체가 개선되면 같은 점수라도 등급이 하락할 수 있습니다.
+  이것이 실제 계정 관리의 목적(계속되는 개선)에 맞는 신호입니다.</p>
+
+  <h3>대상 산정에서 제외되는 항목</h3>
+  <ul>
+    <li>광고비가 하위 15% 미만인 저광고비 소재 — 단발성 실험 노이즈 제거</li>
+    <li>핵심 지표(가중치 15% 이상) 중 하나라도 결측인 소재</li>
+    <li>노출/클릭이 극도로 적어 통계적 판단이 불가능한 소재는 C 감쇠로 점수 낮게 조정</li>
+    <li>비활성(광고비 0)은 표에서 기본 숨김 · "비활성도 보기" 체크로 표시</li>
+  </ul>
+
+  <h3>독보적(dominant) 표기</h3>
+  <p>상위 점수 소재 중 <b>1순위 지표(예: Google이면 ROAS, Ad면 eCPI)에서 계정 중앙값 대비 1.8배 이상</b> 차이가 나면 왕관(👑) + "독보적" 태그를 부여합니다.
+  최하위도 마찬가지로 중앙값 대비 2배 이상 열위이면 "매우 나쁨" 강조 표기.
+  단, 광고비가 계정 중앙값 이하인 소재는 규모 부족으로 판단하여 독보적 인정 대상에서 제외합니다.</p>
+
+  <h3>주요 참고 문헌 · 자료</h3>
+  <ul>
+    <li><a href="https://support.google.com/google-ads/answer/6167118" target="_blank" rel="noopener">Google Ads Help — About Quality Score</a></li>
+    <li><a href="https://support.google.com/google-ads/answer/2472725" target="_blank" rel="noopener">Google Ads Help — Value-based Bidding & ROAS</a></li>
+    <li><a href="https://www.facebook.com/business/help/635337992940913" target="_blank" rel="noopener">Meta Business — Ad Relevance Diagnostics</a></li>
+    <li><a href="https://facebookresearch.github.io/Robyn/" target="_blank" rel="noopener">Meta Robyn — Open-source MMM Framework</a></li>
+    <li>Farris, Bendle, Pfeifer, Reibstein — <i>Marketing Metrics: The Manager's Guide to Measuring Marketing Performance</i> (4th ed., 2015)</li>
+    <li>Byron Sharp — <i>How Brands Grow: What Marketers Don't Know</i> (Oxford Univ. Press, 2010)</li>
+    <li>Chen, Y. & Google Research (2018) — <i>Bias Correction For Paid Search In Media Mix Modeling</i></li>
+    <li>Nielsen Marketing Cloud — <a href="https://www.nielsen.com/insights/2021/take-your-media-mix-modeling-up-a-notch-with-these-approaches/" target="_blank" rel="noopener">Media Mix Modeling Best Practices</a></li>
+    <li>Analytic Partners — <i>ROI Genome</i> (2023 annual report)</li>
+    <li>Efron, B. & Morris, C. (1977) — <i>Stein's Paradox in Statistics</i> (empirical Bayes shrinkage 원리)</li>
+    <li>AppsFlyer — <a href="https://www.appsflyer.com/glossary/ecpi/" target="_blank" rel="noopener">eCPI: Effective Cost per Install 정의</a></li>
+  </ul>
+</details>
+<p class="ft-note">모든 계산은 브라우저 안에서 이뤄지며, CSV 데이터는 외부로 전송되지 않습니다 ·
+데이터 컬럼 가용도가 10% 미만인 지표는 자동으로 표·차트에서 숨김 처리됩니다 ·
+등급은 <b>업로드된 계정 내 상대 평가</b>이며, 다른 계정 간의 비교에는 적합하지 않습니다.</p>`;}
 function refreshAll(){if(!active||!DATASETS[active])active=TAB_ORDER.find(k=>DATASETS[k])||Object.keys(DATASETS)[0];renderSeg();if(active)setActive(active);}
 
 function loadEmbedded(){const el=document.getElementById("csv-ad");if(!el)return;
@@ -3130,7 +3348,7 @@ function loadEmbedded(){const el=document.getElementById("csv-ad");if(!el)return
   const r=parseCSV(raw);setWeeksFromDatasets(r.data);
   ingest(r.headers,r.data,"내장 샘플");}
 function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;bdDim=null;bdMet=null;tableShowAll=false;
-  tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tPageCount=1;ISLE.name=null;ISLE.metric=null;
+  tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tPage=1;ISLE.name=null;ISLE.metric=null;
   const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
 function dropZone(e){if(!e||e.clientY==null)return null;
   const H=window.innerHeight||800,W=window.innerWidth||1200;
@@ -3181,8 +3399,8 @@ document.addEventListener("dragenter",e=>{if(!_hasFiles(e))return;e.preventDefau
 document.addEventListener("dragover",e=>{if(!_hasFiles(e))return;e.preventDefault();_updateHot(e);});
 document.addEventListener("dragleave",e=>{if(!_hasFiles(e))return;_dragDepth--;if(_dragDepth<=0){_dragDepth=0;if(dropOv)dropOv.classList.remove("show");}});
 document.addEventListener("drop",e=>{e.preventDefault();_dragDepth=0;if(dropOv)dropOv.classList.remove("show");if(e.dataTransfer&&e.dataTransfer.files.length){const z=dropZone(e);handleFiles(e.dataTransfer.files,z);}});
-let _sq;$("#search").addEventListener("input",e=>{const v=e.target.value;clearTimeout(_sq);_sq=setTimeout(()=>{tState.q=v;if(active)renderTable(DATASETS[active]);},120);});
-$("#showAll").addEventListener("change",e=>{tableShowAll=e.target.checked;if(active)renderTable(DATASETS[active]);});
+let _sq;$("#search").addEventListener("input",e=>{const v=e.target.value;clearTimeout(_sq);_sq=setTimeout(()=>{tState.q=v;tPage=1;if(active)renderTable(DATASETS[active]);},120);});
+$("#showAll").addEventListener("change",e=>{tableShowAll=e.target.checked;tPage=1;if(active)renderTable(DATASETS[active]);});
 $("#table tbody").addEventListener("click",e=>{const tr=e.target.closest("tr");if(!tr||tr.classList.contains("isle-row"))return;const nm=tr.getAttribute("data-name");if(nm==null||!curDS)return;toggleIsland(curDS,nm,tr);});
 let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{if(active&&DATASETS[active]){renderQuad(DATASETS[active]);renderTrend(DATASETS[active]);}const inner=document.querySelector(".isle"),sc=document.querySelector(".tbl-scroll");if(inner&&sc)inner.style.width=sc.clientWidth+"px";},140);});
 
