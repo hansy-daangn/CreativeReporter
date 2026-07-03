@@ -270,6 +270,45 @@
   .tthumb .vb{position:absolute;right:3px;bottom:3px;width:15px;height:15px;border-radius:4px;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;font-size:8.5px;pointer-events:none}
   .tthumb.err img{display:none}
   .tthumb.err::before{content:"✕";font-size:10px}
+  /* 메인 탭 */
+  .mtabs{display:flex;gap:8px}
+  .mtabs button{padding:10px 22px;border-radius:12px;background:#E4E3DC;color:var(--muted);font-size:13.5px;font-weight:700;transition:.12s}
+  .mtabs button:hover{color:var(--ink)}
+  .mtabs button.on{background:var(--surface);color:var(--ink);box-shadow:var(--sh)}
+  .mtabs button .tc{font-size:10.5px;color:var(--karrot);margin-left:5px;font-weight:800}
+  /* AB테스트 */
+  .abf{background:var(--surface-2);border-radius:12px;padding:15px 18px 8px;margin-bottom:14px}
+  .abf-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .abf-name{font-size:13.5px;font-weight:740;word-break:break-all}
+  .abf-meta{font-size:11px;color:var(--muted)}
+  .abv{display:grid;grid-template-columns:30px 40px 46px 1fr;gap:11px;align-items:center;padding:9px 2px;border-top:1px solid #E9E8E0;cursor:pointer;border-radius:8px;transition:background .12s}
+  .abv:hover{background:rgba(255,255,255,.75)}
+  .abv-medal{font-size:19px;text-align:center;line-height:1}
+  .abv-rank{display:inline-block;width:21px;height:21px;border-radius:50%;background:var(--surface-3);color:var(--muted);font-size:11px;font-weight:800;text-align:center;line-height:21px}
+  .abv-tag{display:inline-block;text-align:center;font-size:13px;font-weight:800;color:var(--ink);background:var(--surface);border-radius:8px;padding:6px 0;box-shadow:0 1px 2px rgba(20,20,15,.08)}
+  .abv-th .tthumb{width:44px;height:44px}
+  .abv-main{min-width:0}
+  .abv-l1{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12px;margin-bottom:4px}
+  .abv-pv{font-weight:740;font-size:13px}
+  .abv-sc{font-size:10.5px;color:var(--muted);background:var(--surface);padding:1px 7px;border-radius:6px;font-weight:700}
+  .abv-n{font-size:10.5px;color:var(--faint)}
+  .abv-bar{height:9px;border-radius:5px;background:var(--surface-3);overflow:hidden;margin-bottom:4px}
+  .abv-bar i{display:block;height:100%;border-radius:5px;background:var(--g1)}
+  .abv.worst .abv-bar i{background:var(--w2)}
+  .abv-l2{font-size:10.5px;color:var(--muted)} .abv-l2 b{color:var(--ink);font-weight:650}
+  /* 학습중 뱃지 */
+  .lrn{display:inline-block;font-size:9px;font-weight:800;color:#3D6BB3;background:#E1EBF8;padding:1.5px 6px;border-radius:5px;vertical-align:1.5px;letter-spacing:.02em;cursor:help;margin-left:6px}
+  /* 기간 직접 설정 (사이드바) */
+  .pcustom{display:flex;align-items:center;gap:5px;padding:7px 2px 0;flex-wrap:wrap}
+  .pcustom input[type=date]{background:var(--side-2);border:1px solid rgba(255,255,255,.14);color:var(--side-ink);border-radius:7px;padding:5px 6px;font-size:10.5px;font-family:inherit;width:112px;color-scheme:dark}
+  .pcustom span{color:var(--side-faint);font-size:11px}
+  .pcustom button{background:var(--karrot);color:#fff;border-radius:7px;padding:5px 11px;font-size:11px;font-weight:700}
+  /* 소재 주차별 추이 (상세) */
+  .ispark{width:100%;margin-top:4px}
+  .ispark-h{font-size:10.5px;font-weight:700;color:var(--muted);margin-bottom:2px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .ispark-h span{font-weight:500;color:var(--faint)}
+  .ispark-svg{width:100%;height:auto;display:block}
+  .ispk-b{cursor:pointer}.ispk-b:hover{fill-opacity:.85}
   /* island score breakdown */
   .sb{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:7px 26px}
   .sb-row{display:flex;align-items:center;gap:8px;font-size:11.5px;min-width:0}
@@ -318,7 +357,7 @@
   .fam tr.me td{background:var(--gold-f);font-weight:650}
   .fam .mb svg{width:13px;height:13px;vertical-align:middle}
   .fam-wrap{max-height:360px;overflow:auto;border-radius:10px}
-  .fam table{table-layout:auto} .fam td.l{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fam table{table-layout:auto} .fam td.l{white-space:normal;word-break:break-all;line-height:1.4}
   .fam tr.hoverable{cursor:help}
   .fam tr.hoverable:hover td{background:var(--surface-3)!important}
   .fam .g-type-emoji{font-size:12px;margin-right:2px}
@@ -494,7 +533,13 @@
     <div id="fmtBar" hidden><span id="fmtBarMsg"></span><button id="fmtBarBack" type="button">☁️ 저장소로 돌아가기</button></div>
     <div class="content">
 
-      <section class="card">
+      <div class="mtabs" id="mtabs">
+        <button data-t="analysis" class="on" type="button">분석</button>
+        <button data-t="table" type="button">전체 목록</button>
+        <button data-t="ab" type="button">AB테스트<span class="tc" id="abCnt"></span></button>
+      </div>
+
+      <section class="card" id="tabAnalysis">
         <div class="card-h"><h2>분석</h2></div>
         <div class="keyrow" id="keyrow"></div>
         <p class="qhint" id="qhint"></p>
@@ -518,7 +563,7 @@
         </div>
       </section>
 
-      <section class="card">
+      <section class="card" id="tabTable" hidden>
         <div class="card-h"><h2>전체 목록</h2><span class="meta" id="tblMeta"></span></div>
         <div class="tbar">
           <input type="search" id="search" placeholder="이름으로 검색">
@@ -531,6 +576,11 @@
           <div class="tlegend" id="tlegend"></div>
         </div>
         <div class="tbl-scroll"><table id="table"><thead></thead><tbody></tbody></table></div>
+      </section>
+
+      <section class="card" id="tabAB" hidden>
+        <div class="card-h"><h2>AB테스트</h2><span class="meta" id="abMeta"></span></div>
+        <div id="abBody"></div>
       </section>
 
     </div>
@@ -717,6 +767,7 @@ function aggregate(data,L){const map=new Map();
   for(const r of data){let nm=r[L.nameCol];if(nm==null||nm===""||nm==="nan")nm="(미지정)";
     if(!map.has(nm))map.set(nm,{name:nm,비용:0,"노출 수":0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0,weeks:Object.fromEntries(WEEKS.map(w=>[w,{비용:0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0}]))});
     const e=map.get(nm);for(const c of["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e[c]+=v;}
+    const _cv=num(r["비용"]);if(_cv!=null&&_cv>0){if(!e._wkSet)e._wkSet=new Set();e._wkSet.add(r.date);}
     for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_adGroupId","_g_campaignId","_m_url","_m_ctype","_m_res","_m_group"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
     for(const k of["_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue","_m_installs","신규+재활성 유저 수","_vcrNum","_vcrDen"]){const v=num(r[k]);if(v!=null)e[k]=(e[k]||0)+v;}
     const w=r.date;if(e.weeks[w])for(const c of["비용","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e.weeks[w][c]+=v;}}
@@ -730,8 +781,14 @@ function aggregate(data,L){const map=new Map();
       e["_g_costPerConv"]=(e["_g_conversions"]||0)>0?e.비용/e["_g_conversions"]:null;
       e["_g_ROAS"]=(e["_g_convValue"]||0)>0&&e.비용>0?e["_g_convValue"]/e.비용:null;
       e["_g_convValuePerConv"]=(e["_g_convValue"]||0)>0&&(e["_g_allConv"]||0)>0?e["_g_convValue"]/e["_g_allConv"]:null;}
+    e._wkCnt=e._wkSet?e._wkSet.size:0;e._wkSet=null;
     e.tags=tagEntity(e.name,e);return e;});
   arr.sort((a,b)=>b.비용-a.비용);return arr;}
+/* '학습중' — 집행 2주 미만이거나 전환 표본 30건 미만: 지표 변동성이 커서 점수·티어가 아직 흔들리는 소재 */
+function isLearning(e){if(!e||e._isGroup||(e.비용||0)<=0)return false;
+  const conv=e._g_conversions??e["어트리뷰션 수"]??e["클릭 수"]??0;
+  return (e._wkCnt||0)<2||conv<30;}
+function lrnBadge(e){return isLearning(e)?`<span class="lrn" title="학습중 — 집행 2주 미만 또는 전환 30건 미만. 표본이 쌓이는 중이라 점수가 크게 변할 수 있습니다. 볼륨 확대 판단은 보류 권장">학습중</span>`:"";}
 function weeklyTotals(data,weeks){const list=weeks&&weeks.length?weeks:WEEKS;
   const t=Object.fromEntries(list.map(w=>[w,{비용:0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0,"노출 수":0}]));
   for(const r of data){const w=r.date;if(!t[w])continue;for(const c of["비용","클릭 수","어트리뷰션 수","활성 유저 수","노출 수"]){const v=num(r[c]);if(v!=null)t[w][c]+=v;}}
@@ -1023,6 +1080,8 @@ function renderQuad(ds){const L=ds.L,svg=$("#quad");
     c.addEventListener("mouseleave",hideTip);
     c.addEventListener("click",()=>{hideTip();goToIslandFromQuad(p.name);});});}
 function goToIslandFromQuad(name){if(!curDS)return;
+  switchTab("table");
+  tGroupBy=false;tQuickFo=null;renderQuickFo();
   tState.q="";tableShowAll=true;const sb=$("#search");if(sb)sb.value="";const sa=$("#showAll");if(sa)sa.checked=true;
   const p=pageForName(curDS,name);if(p)tPage=p;
   renderTable(curDS);
@@ -1237,9 +1296,38 @@ function scoreBreakdownHTML(ds,e){const S=ds.S;
     return `<div class="sb-row"><span class="sb-k">${s.lab}</span><span class="sb-raw num">${fmtSpecVal(s.k,e[s.k])}</span><div class="sb-bar"><i style="width:${pctv}%;background:${col}"></i></div><span class="sb-p num" style="color:${col}">${pctv}</span><span class="sb-w num">×${Math.round(s.w*100)}%</span>${shr}</div>`;}).join("");
   if(!rows)return"";
   return `<section style="grid-column:1/-1"><div class="ish">점수 구성 <span class="n">점수 ${e.score} = 효율 ${(e._E*100).toFixed(0)}×0.75 + 규모 ${(e._R*100).toFixed(0)}×0.20 + 신뢰 ${(e._C*100).toFixed(0)}×0.05 · 막대 = 광고비 가중 백분위(50=계정 평균, 높을수록 좋음)</span></div><div class="sb">${rows}</div></section>`;}
+/* 소재(또는 그룹)의 주차별 광고비·효율 미니 차트 — 상세 뷰 미리보기 아래 표시 */
+function creativeTrendHTML(ds,e){
+  const nameCol=ds.L.nameCol;
+  let rows;
+  if(e._isGroup){const gid=e._m_group||e._g_adGroupId;rows=ds.data.filter(r=>r._m_group===gid||r._g_adGroupId===gid);}
+  else rows=ds.data.filter(r=>r[nameCol]===e.name);
+  const wkMap=new Map();
+  for(const r of rows){const d=String(r.date||"").slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;
+    let o=wkMap.get(d);if(!o){o={c:0,v:0};wkMap.set(d,o);}
+    o.c+=num(r["비용"])||0;o.v+=num(r["어트리뷰션 수"])||0;}
+  const ws=[...wkMap.keys()].sort().slice(-13);
+  if(ws.length<2)return "";
+  const W=260,H=100,pl=5,pr=5,pt=12,pb=15,iw=W-pl-pr;
+  const cmax=Math.max(...ws.map(w=>wkMap.get(w).c))||1;
+  const effs=ws.map(w=>{const o=wkMap.get(w);return o.v>0?o.c/o.v:null;});
+  const evs=effs.filter(v=>v!=null),emax=evs.length?Math.max(...evs)*1.15:0;
+  const bw=Math.min(20,(iw/ws.length)*0.6);
+  const effLab=ds.L.effLabel||"eCPI";
+  let s="";
+  ws.forEach((w,i)=>{const o=wkMap.get(w);const x=pl+(ws.length<=1?iw/2:i/(ws.length-1)*iw);
+    const h=Math.max(2,(o.c/cmax)*(H-pt-pb));
+    const tipTxt=`<b>${w.slice(5).replace("-","/")} 주</b><br>광고비 ${fmtWon(o.c)}${effs[i]!=null?`<br>${effLab} ${fmtWon(effs[i])}`:""}`;
+    s+=`<rect class="ispk-b" data-tip="${escAttr(tipTxt)}" x="${(x-bw/2).toFixed(1)}" y="${(H-pb-h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2.5" fill="var(--karrot)" fill-opacity="0.5"/>`;});
+  if(emax>0){let p="",st=false;
+    ws.forEach((w,i)=>{const v=effs[i];if(v==null)return;
+      const x=pl+(ws.length<=1?iw/2:i/(ws.length-1)*iw),y=pt+(1-v/emax)*(H-pt-pb);
+      p+=st?` L ${x.toFixed(1)} ${y.toFixed(1)}`:`M ${x.toFixed(1)} ${y.toFixed(1)}`;st=true;});
+    s+=`<path d="${p}" fill="none" stroke="var(--c2)" stroke-width="1.8"/>`;}
+  s+=`<text x="${pl}" y="${H-3}" font-size="8.5" fill="var(--faint)">${ws[0].slice(5).replace("-","/")}</text><text x="${W-pr}" y="${H-3}" font-size="8.5" fill="var(--faint)" text-anchor="end">${ws[ws.length-1].slice(5).replace("-","/")}</text>`;
+  return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · 막대 광고비${emax>0?` · 선 ${effLab}`:""}</span></div><svg class="ispark-svg" viewBox="0 0 ${W} ${H}">${s}</svg></div>`;}
 function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>m.k===ISLE.metric)||M[0];
   const sp=t=>t==="g2"?"sp-g2":t==="g1"?"sp-g1":t==="m"?"sp-mid":t==="w1"?"sp-w1":t==="w2"?"sp-w2":"sp-na";
-  const scoreTxt=e.score!=null?`<span class="sp ${sp(e.tier)}">${e.score}점</span>`:`<span class="sp sp-na">점수 –</span>`;
   const bars=cohorts(ds,e).map(c=>posBar(c.label,cohortStat(c.mem,cur,e),cur)).join("");
   const toggles=M.map(m=>`<button data-m="${m.k}" class="${m.k===cur.k?"on":""}">${m.lab}</button>`).join("");
   const isG=!!e._g_assetType;
@@ -1255,8 +1343,8 @@ function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>
       grp.map(x=>{const url=previewUrlOf(x);
         const typeShort=entTypeShort(x);
         const emoji=entTypeEmoji(x);
-        return `<tr class="${x.name===e.name?"me":""} hoverable" data-preview="${escAttr(url)}" data-label="${escAttr(typeShort+' · '+trunc(x.name,40))}">
-        <td class="l"><span class="g-type-emoji" title="${escAttr(x._g_assetType||x._m_ctype||'')}">${emoji}</span> <span class="g-type-lab">${typeShort}</span> <span class="g-name">${trunc(x.name,26)}</span></td>
+        return `<tr class="${x.name===e.name?"me":""} hoverable" data-nm="${escAttr(x.name)}" data-preview="${escAttr(url)}" data-label="${escAttr(typeShort+' · '+trunc(x.name,40))}" title="클릭 → 이 소재 상세로 이동">
+        <td class="l"><span class="g-type-emoji">${emoji}</span> <span class="g-type-lab">${typeShort}</span> <span class="g-name">${x.name}</span></td>
         <td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td>
         <td><span class="sp ${sp(x.tier)}">${x.score??"–"}</span></td></tr>`;}).join("")+
       `</tbody></table></div></div>`;
@@ -1265,22 +1353,24 @@ function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>
     listTitle="유사 이름 시리즈";listMetaN=`${fam.length}개`;
     listHTML=fam.length<=1?`<div class="fam-note">유사 이름 시리즈가 없습니다.</div>`:
       `<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">이름</th><th>광고비</th><th>${effLab}</th><th>점수</th></tr></thead><tbody>`+
-      fam.map(x=>`<tr class="${x.name===e.name?"me":""}"><td class="l"><span class="mb b-${x.dom==="good"?"gold":x.tier}">${tierBadge(x)}</span> ${trunc(x.name,32)}</td><td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td><td><span class="sp ${sp(x.tier)}">${x.score??"–"}</span></td></tr>`).join("")+
+      fam.map(x=>`<tr class="${x.name===e.name?"me":""}" data-nm="${escAttr(x.name)}" title="클릭 → 이 소재 상세로 이동"><td class="l"><span class="mb b-${x.dom==="good"?"gold":x.tier}">${tierBadge(x)}</span> ${x.name}</td><td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td><td><span class="sp ${sp(x.tier)}">${x.score??"–"}</span></td></tr>`).join("")+
       `</tbody></table></div></div>`;}
-  const assetUrl=previewUrlOf(e);
-  const preview=assetPreview(assetUrl,e);
-  const gExtra=e["_g_assetType"]?`<div class="g-extra"><span class="g-tag">${e["_g_assetType"]}</span>${e["_g_status"]?`<span class="g-tag g-status">${e["_g_status"]}</span>`:""}${e["_g_assetStatus"]?`<span class="g-tag">${e["_g_assetStatus"]}</span>`:""}</div>${e._g_campaignId||e._g_adGroupId||e._g_assetId?`<div class="g-ids"><span>${e._g_campaignId?`캠페인 <b>${e._g_campaignId}</b>`:""}</span><span>${e._g_adGroupId?`광고그룹 <b>${e._g_adGroupId}</b>`:""}</span><span>${e._g_assetId?`항목 <b>${e._g_assetId}</b>`:""}</span></div>`:""}`:"";
-  const mExtra=e._m_ctype?`<div class="g-extra"><span class="g-tag">${mCtypeLabel(e._m_ctype)}</span>${e._m_res?`<span class="g-tag">${e._m_res.replace("x","×")}</span>`:""}${e["영상 완주율"]!=null?`<span class="g-tag g-status">완주율 ${fmtPct(e["영상 완주율"])}</span>`:""}${(e._m_installs||0)>0?`<span class="g-tag">설치(몰로코) ${fmtInt(e._m_installs)}</span>`:""}</div>${e._m_group?`<div class="g-ids"><span>그룹 <b>${trunc(e._m_group,36)}</b></span></div>`:""}`:"";
-  const hasPreview=!!preview;
-  inner.classList.toggle("no-preview",!hasPreview);
-  inner.innerHTML=`<div class="isle-hd">${scoreTxt}<span class="nm">${trunc(e.name,80)}</span>${chipsHTML(e.tags)}</div>
-    ${hasPreview?`<section><div class="isle-preview">${preview}${gExtra}${mExtra}</div></section>`:""}
+  const preview=assetPreview(previewUrlOf(e),e);
+  const spark=creativeTrendHTML(ds,e);
+  const leftCol=(preview||spark)?`<section><div class="isle-preview">${preview}${spark}</div></section>`:"";
+  inner.classList.toggle("no-preview",!leftCol);
+  inner.innerHTML=`${leftCol}
     <section><div class="ish">기준별 위치 <span class="n">${cur.good?cur.lab+" 기준":"광고비 규모"}</span></div><div class="mtog">${toggles}</div>${bars}</section>
     <section><div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}</section>
     ${scoreBreakdownHTML(ds,e)}`;
   inner.querySelectorAll(".mtog button").forEach(b=>b.addEventListener("click",ev=>{ev.stopPropagation();ISLE.metric=b.dataset.m;inner.querySelectorAll(".mtog button").forEach(x=>x.classList.toggle("on",x.dataset.m===ISLE.metric));requestAnimationFrame(()=>fillIsland(ds,e,inner));}));
-  inner.querySelectorAll(".fam tr.hoverable").forEach(tr=>{
-    const url=tr.dataset.preview,lab=tr.dataset.label||"";
+  inner.querySelectorAll(".ispk-b").forEach(rc=>{
+    rc.addEventListener("mousemove",ev=>showTip(rc.dataset.tip||"",ev.clientX,ev.clientY));
+    rc.addEventListener("mouseleave",hideTip);});
+  inner.querySelectorAll(".fam tr[data-nm]").forEach(tr=>{
+    const nm=tr.dataset.nm,url=tr.dataset.preview,lab=tr.dataset.label||"";
+    tr.style.cursor="pointer";
+    tr.addEventListener("click",ev=>{ev.stopPropagation();if(nm&&nm!==e.name){hideTip();goToIslandFromQuad(nm);}});
     if(!url)return;
     tr.addEventListener("mouseenter",ev=>{const h=assetPreviewTipHTML(url,lab);if(h)showTip(h,ev.clientX,ev.clientY,true);});
     tr.addEventListener("mousemove",ev=>{if(tip.style.opacity!=="0")placeTip(ev.clientX,ev.clientY);});
@@ -1411,7 +1501,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L,ds),thead=$("#tabl
     const score=r.score!=null?`<span class="sp ${spCls}">${r.score}</span>`:`<span class="sp sp-na">–</span>`;
     return `<tr class="row" data-name="${escAttr(r.name)}">`+cols.map(c=>{if(c.k==="_b")return `<td class="bdg">${tierBadge(r)}</td>`;
       if(c.k==="name"){const th=thumbHTML(r);
-        return `<td class="name"><div class="nwrap">${th}<div class="ntxt">${trunc(r.name,60)}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags)}</div></div></div></td>`;}
+        return `<td class="name"><div class="nwrap">${th}<div class="ntxt">${trunc(r.name,60)}${lrnBadge(r)}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags)}</div></div></div></td>`;}
       if(c.k==="score")return `<td>${score}</td>`;
       const dir=COL_DIR[c.k]||0;
       const t=dir?cellTier(r[c.k],colSorted[c.k],dir):"m";
@@ -1462,8 +1552,100 @@ function renderQuickFo(){const wrap=$("#qfoWrap"),ds=curDS;
 function toggleQuickFo(val){tQuickFo=tQuickFo===val?null:val;renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);}
 function toggleGroupBy(){tGroupBy=!tGroupBy;renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);}
 
+/* ===== 메인 탭 (분석 / 전체 목록 / AB테스트) ===== */
+let mainTab="analysis";
+function switchTab(t){mainTab=t;
+  $$("#mtabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+  const secs={analysis:$("#tabAnalysis"),table:$("#tabTable"),ab:$("#tabAB")};
+  for(const k in secs){if(secs[k])secs[k].hidden=(k!==t);}
+  const ds=active&&DATASETS[active];
+  if(ds&&t==="analysis")requestAnimationFrame(()=>{renderQuad(ds);renderTrend(ds);});}
+
+/* ===== AB테스트 — 변형 네이밍 자동 인식 =====
+   인식 규칙 (오인 방지를 위해 전부 '구분자 뒤 접미' 형태만):
+   1) 확장자·해상도(1080x1920 등)·화면비(16x9)·꼬리 구분자를 먼저 제거
+   2) 문자 변형: 구분자(_,-,공백,.) + (v|ver|version|시안)? + 대문자 한 글자 A~F 로 끝 → "_A", " B", "_ver_C"
+   3) 숫자 변형: 구분자 뒤 또는 문자에 바로 붙은 1~12 (v1, _2, cafe3, kkak01) — 13 이상·연도/코드류(4자리)는 제외
+   단어 자체가 A로 시작/끝나는 경우(구분자 없음)는 매치되지 않음 */
+function abVariantOf(name){let s=String(name||"");
+  s=s.replace(/\.(mp4|png|jpe?g|gif|webp|mov|webm)$/i,"");
+  s=s.replace(/\d{3,4}\s*[xX×]\s*\d{3,4}/g," ");
+  s=s.replace(/(?<!\d)\d{1,2}\s*[xX×:\-]\s*\d{1,2}(?!\d)/g," ");
+  s=s.replace(/[_\-\s.]*(mp4|mov|webm|jpe?g|png|gif)\s*$/i," ");
+  s=s.replace(/[_\-\s.]+$/,"").trim();
+  let m=s.match(/^(.{4,}?)[_\-\s.]+(?:[Vv](?:er|ersion)?|시안)?[_\-\s.]*([A-F])$/);
+  if(m)return{base:m[1],variant:m[2],kind:"L"};
+  m=s.match(/^(.{4,}?)(?:[_\-\s.]+|(?<=[A-Za-z가-힣]))(?:[Vv](?:er|ersion)?)?(\d{1,2})$/);
+  if(m){const n=parseInt(m[2],10);
+    if(n>=1&&n<=12)return{base:m[1].replace(/[_\-\s.]+$/,""),variant:String(n),kind:"N"};}
+  return null;}
+function abNormBase(b){return String(b).replace(/[_\-\s.]+/g," ").trim().toLowerCase();}
+function buildABFamilies(ds){
+  const fams=new Map();
+  for(const e of ds.agg){if((e.비용||0)<=0||e._isGroup)continue;
+    const v=abVariantOf(e.name);if(!v)continue;
+    const key=v.kind+"|"+abNormBase(v.base);
+    let f=fams.get(key);if(!f){f={base:v.base,kind:v.kind,vars:new Map()};fams.set(key,f);}
+    let arr=f.vars.get(v.variant);if(!arr){arr=[];f.vars.set(v.variant,arr);}
+    arr.push(e);}
+  return[...fams.values()].filter(f=>f.vars.size>=2);}
+function renderAB(ds){const el=$("#abBody"),meta=$("#abMeta"),cnt=$("#abCnt");
+  if(!el)return;
+  if(!ds||!ds.agg){el.innerHTML="";if(cnt)cnt.textContent="";return;}
+  const S=ds.S;
+  const primary=(S&&S.specs&&S.specs[0])||{k:"eCPI",dir:-1,lab:"eCPI"};
+  const pFmt=S&&S.goodFmt?S.goodFmt:"won";
+  const fams=buildABFamilies(ds);
+  fams.forEach(f=>{
+    f.rows=[...f.vars.entries()].map(([variant,mem])=>{
+      const sum=k=>mem.reduce((s,e)=>s+(+e[k]||0),0);
+      const cost=sum("비용"),imp=sum("노출 수"),clk=sum("클릭 수"),attr=sum("어트리뷰션 수"),act=sum("활성 유저 수"),gv=sum("_g_convValue"),gc=sum("_g_conversions");
+      const r={variant,mem,cost,imp,clk,attr,
+        eCPI:attr>0?cost/attr:null,"활성 유저 eCPA":act>0?cost/act:null,CTR:imp>0?clk/imp:null,CPM:imp>0?cost/imp*1000:null,CPC:clk>0?cost/clk:null,
+        _g_ROAS:cost>0&&gv>0?gv/cost:null,_g_costPerConv:gc>0?cost/gc:null,
+        learning:mem.every(isLearning)};
+      const sc=mem.filter(e=>e.score!=null);
+      r.score=sc.length?Math.round(sc.reduce((s,e)=>s+e.score*(e.비용||1),0)/sc.reduce((s,e)=>s+(e.비용||1),0)):null;
+      r.pv=r[primary.k];
+      return r;});
+    f.cost=f.rows.reduce((s,r)=>s+r.cost,0);
+    f.rows.sort((a,b)=>{
+      if(a.pv==null&&b.pv==null)return(b.score??-1)-(a.score??-1);
+      if(a.pv==null)return 1;if(b.pv==null)return -1;
+      return primary.dir<0?a.pv-b.pv:b.pv-a.pv;});});
+  fams.sort((a,b)=>b.cost-a.cost);
+  if(cnt)cnt.textContent=fams.length?String(fams.length):"";
+  if(meta)meta.innerHTML=fams.length?`<b>${fams.length}</b>개 테스트 그룹 · 판정 기준 <b>${primary.lab}</b> · 변형 접미(_A·_B, 끝 숫자 1~12, v1·v2 등) 자동 인식`:"";
+  if(!fams.length){el.innerHTML=`<div class="bd-empty">변형 네이밍(_A·_B·_C, 이름 끝 숫자 1~12, v1·v2 등)으로 묶이는 소재가 없습니다. 소재명 끝에 "_A", "_B"처럼 변형 표기를 붙이면 자동으로 여기에 모입니다.</div>`;return;}
+  const medal=i=>i===0?"🥇":i===1?"🥈":i===2?"🥉":`<span class="abv-rank">${i+1}</span>`;
+  el.innerHTML=fams.map(f=>{
+    const vals=f.rows.map(r=>r.pv).filter(v=>v!=null);
+    const best=vals.length?(primary.dir<0?Math.min(...vals):Math.max(...vals)):null;
+    const dispBase=f.base.replace(/[_\-\s.]{2,}/g,"_").replace(/^[_\s]+|[_\s]+$/g,"");
+    return `<div class="abf"><div class="abf-h"><span class="abf-name">${dispBase}</span><span class="abf-meta">변형 ${f.rows.length}개 · 광고비 ${fmtKRW(f.cost)}원</span></div>`+
+      f.rows.map((r,i)=>{
+        const good=(r.pv==null||best==null)?0:(primary.dir<0?best/r.pv:r.pv/best);
+        const top=r.mem.slice().sort((x,y)=>(y.비용||0)-(x.비용||0))[0];
+        const m=[];
+        if(primary.k!=="eCPI"&&r.eCPI!=null)m.push(`eCPI <b>${fmtWon(r.eCPI)}</b>`);
+        if(r["활성 유저 eCPA"]!=null)m.push(`eCPA <b>${fmtWon(r["활성 유저 eCPA"])}</b>`);
+        if(primary.k!=="_g_ROAS"&&r._g_ROAS!=null)m.push(`ROAS <b>${r._g_ROAS.toFixed(1)}×</b>`);
+        if(r.CTR!=null)m.push(`CTR <b>${fmtPct(r.CTR)}</b>`);
+        m.push(`광고비 ${fmtKRW(r.cost)}원`);
+        if(r.attr>0)m.push(`설치 ${fmtInt(r.attr)}`);
+        return `<div class="abv${i===f.rows.length-1&&f.rows.length>=3?" worst":""}" data-nm="${escAttr(top?top.name:"")}" title="클릭 → 소재 상세로 이동">
+          <span class="abv-medal">${medal(i)}</span>
+          <span class="abv-tag">${r.variant}</span>
+          <span class="abv-th">${top?thumbHTML(top):""}</span>
+          <div class="abv-main">
+            <div class="abv-l1"><span class="abv-pv num">${primary.lab} ${r.pv!=null?sFmt(r.pv,pFmt):"–"}</span>${r.score!=null?`<span class="abv-sc num">점수 ${r.score}</span>`:""}${r.learning?lrnBadge(r.mem[0]):""}<span class="abv-n">${r.mem.length>1?`소재 ${r.mem.length}개 합산`:""}</span></div>
+            <div class="abv-bar"><i style="width:${Math.max(4,good*100).toFixed(0)}%"></i></div>
+            <div class="abv-l2">${m.join(" · ")}</div>
+          </div></div>`;}).join("")+`</div>`;}).join("");
+  el.querySelectorAll(".abv").forEach(d=>{d.onclick=()=>{const nm=d.dataset.nm;if(nm)goToIslandFromQuad(nm);};});}
+
 /* glossary */
-const GLOSSARY=[["광고비","이 소재에 쓴 돈"],["노출","사용자에게 보여진 횟수"],["클릭","눌린 횟수"],["CTR","클릭률 = 클릭÷노출",1,"높을수록 좋음"],["CPC","클릭 1번당 비용",1,"낮을수록 좋음"],["설치","이 소재로 생긴 앱 설치 수(어트리뷰션)"],["eCPI","설치 1건당 비용 — 소재 효율의 핵심",1,"낮을수록 좋음"],["활성 유저","설치 후 실제로 앱을 쓴 사람"],["eCPA","활성 유저 1명당 비용",1,"낮을수록 좋음"],["완주율","영상을 끝까지 본 비율 (노출 가중 평균)",1,"높을수록 좋음"],["신규+재활성","신규 유저 + 휴면에서 돌아온 유저 수"],["설치(몰로코)","몰로코 리포트 자체 집계 설치 수 — MMP 어트리뷰션과 다를 수 있음"],["점수","효율(75%)+규모(20%)+통계신뢰(5%) 종합, 0~100 · 백분위는 광고비 가중, 표본 적은 지표는 중앙으로 축소"]];
+const GLOSSARY=[["광고비","이 소재에 쓴 돈"],["노출","사용자에게 보여진 횟수"],["클릭","눌린 횟수"],["CTR","클릭률 = 클릭÷노출",1,"높을수록 좋음"],["CPC","클릭 1번당 비용",1,"낮을수록 좋음"],["설치","이 소재로 생긴 앱 설치 수(어트리뷰션)"],["eCPI","설치 1건당 비용 — 소재 효율의 핵심",1,"낮을수록 좋음"],["활성 유저","설치 후 실제로 앱을 쓴 사람"],["eCPA","활성 유저 1명당 비용",1,"낮을수록 좋음"],["완주율","영상을 끝까지 본 비율 (노출 가중 평균)",1,"높을수록 좋음"],["신규+재활성","신규 유저 + 휴면에서 돌아온 유저 수"],["설치(몰로코)","몰로코 리포트 자체 집계 설치 수 — MMP 어트리뷰션과 다를 수 있음"],["점수","효율(75%)+규모(20%)+통계신뢰(5%) 종합, 0~100 · 백분위는 광고비 가중, 표본 적은 지표는 중앙으로 축소 · 만점 구조상 최상위도 80점대가 정상"],["학습중","집행 2주 미만 또는 전환 30건 미만 — 표본 축적 중이라 점수 변동 가능, 볼륨 확대 판단 보류 권장"]];
 function renderGlossary(){$("#glossGrid").innerHTML=GLOSSARY.map(g=>`<div><b>${g[0]}</b> — ${g[1]}${g[2]?`<span class="dir">${g[3]}</span>`:""}</div>`).join("");}
 $("#glossBtn").onclick=()=>$("#gloss").classList.add("show");
 $("#glossClose").onclick=()=>$("#gloss").classList.remove("show");
@@ -1478,6 +1660,17 @@ $("#gloss").addEventListener("click",e=>{if(e.target.id==="gloss")$("#gloss").cl
 const SB_URL="https://newoydegfbnnqujgiips.supabase.co";
 const SB_KEY="sb_publishable_6remFFz9oGKffdlRakvdfg_OOLp6zYL";
 let cloudPw=sessionStorage.getItem("crpw")||null;
+/* 업로더 서명 — 사이트 아무 곳에서나 "/hansy" 타이핑 시 이 기기를 hansy로 인증(localStorage 영구),
+   "/logout" 으로 해제. 인증 안 된 업로드는 저장소에 uploaded_by='unknown'으로 기록됨 */
+let uploaderId=localStorage.getItem("cr_uploader")||null;
+(function(){let buf="";
+  addEventListener("keydown",e=>{
+    if(e.key==="Enter"){
+      if(buf.endsWith("/hansy")){uploaderId="hansy";localStorage.setItem("cr_uploader","hansy");toast("✍️ hansy로 인증됨 — 이 기기의 업로드에 서명됩니다");refreshCloudLine();}
+      else if(buf.endsWith("/logout")){uploaderId=null;localStorage.removeItem("cr_uploader");toast("서명 해제됨");refreshCloudLine();}
+      buf="";return;}
+    if(e.key&&e.key.length===1){buf=(buf+e.key).slice(-24);}
+    else if(e.key==="Backspace")buf=buf.slice(0,-1);});})();
 async function sbRpc(fn,body){
   const res=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:"POST",
     headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,"Content-Type":"application/json"},
@@ -1504,7 +1697,7 @@ async function cloudSaveAll(jobs,skips,opts){
     else for(const j of jobs){try{
       const rows=buildSaveRows(j.data,j.ch);
       let ins=0,tot=0;
-      for(let i=0;i<rows.length;i+=800){const res=await sbRpc("cr_save",{pw:cloudPw,rows:rows.slice(i,i+800)});ins+=res.inserted||0;tot+=res.total||0;}
+      for(let i=0;i<rows.length;i+=800){const res=await sbRpc("cr_save",{pw:cloudPw,rows:rows.slice(i,i+800),uploader:uploaderId||"unknown"});ins+=res.inserted||0;tot+=res.total||0;}
       notes.push(`${j.ch}: 신규 ${ins.toLocaleString()}건 저장${tot-ins>0?` · 중복 ${(tot-ins).toLocaleString()}건 제외`:""}`);
     }catch(err){notes.push(`${j.ch}: 저장 실패 (${err.message})`);}}}
   if(cloudPw)refreshCloudLine();
@@ -1541,9 +1734,11 @@ async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
     if(!silent)toast(/password/i.test(err.message||"")?"비밀번호가 틀렸습니다":"클라우드 연결 실패: "+err.message);
     return false;}}
 async function refreshCloudLine(){const el=$("#cloudLine");if(!el)return;
-  if(!cloudPw){el.innerHTML="☁️ 저장소 미연결 — <b>클릭해 비밀번호 입력</b>";return;}
+  const sig=uploaderId?` · ✍️${uploaderId}`:"";
+  if(!cloudPw){el.innerHTML=`☁️ 저장소 미연결 — <b>클릭해 비밀번호 입력</b>${sig}`;return;}
   try{const st=await sbRpc("cr_status",{pw:cloudPw});
-    el.innerHTML=(st&&st.rows>0)?`☁️ <b>${(st.channels||[]).join("·")}</b> · ${st.weeks}주(${String(st.first_week).slice(5)}~${String(st.last_week).slice(5)}) · ${Number(st.rows).toLocaleString()}행 · 클릭=새로고침`:"☁️ 연결됨 · 저장된 데이터 없음";
+    const warn=(st&&+st.unsigned_rows>0)?` · <b style="color:#F5B36B">서명없는 업로드 ${Number(st.unsigned_rows).toLocaleString()}행</b>`:"";
+    el.innerHTML=(st&&st.rows>0)?`☁️ <b>${(st.channels||[]).join("·")}</b> · ${st.weeks}주(${String(st.first_week).slice(5)}~${String(st.last_week).slice(5)}) · ${Number(st.rows).toLocaleString()}행${warn}${sig} · 클릭=새로고침`:`☁️ 연결됨 · 저장된 데이터 없음${sig}`;
   }catch(e){el.textContent="☁️ 저장소 상태 확인 실패";}}
 
 /* state */
@@ -1610,8 +1805,8 @@ function rebuildAllDatasets(){
         ds.aggByChannel.set(ch,{aggAll:chAgg,...buildIndex(chAgg)});}
       if(!ds.media||!chs.includes(ds.media))ds.media=chs[0]||null;
     }else{ds.channels=[];ds.aggByChannel=null;ds.media=null;}}}
-/* 분석 기간 윈도우 — "4"|"8"|"13"|"all" (해당 매체 데이터의 최근 N주만 집계·채점) */
-let periodN="all";
+/* 분석 기간 윈도우 — 최근 N주("4"|"9"|"26"|"52") | "all" | "custom"(직접 설정) */
+let periodN="all",customRange={from:null,to:null};
 function scope(ds){
   let rows,chIdx=null;
   if(dsMode==="channeled"&&ds.aggByChannel&&ds.media&&ds.aggByChannel.has(ds.media)){
@@ -1620,7 +1815,11 @@ function scope(ds){
   }else{rows=ds.dataAll;}
   const dates=[...new Set(rows.map(r=>r.date).filter(d=>/^\d{4}-\d{2}-\d{2}/.test(String(d))))].sort();
   let winDates=dates;
-  if(periodN!=="all"&&dates.length>+periodN){
+  if(periodN==="custom"&&(customRange.from||customRange.to)){
+    const f=customRange.from||"0000-01-01",t=customRange.to||"9999-12-31";
+    rows=rows.filter(r=>r.date>=f&&r.date<=t);
+    winDates=dates.filter(d=>d>=f&&d<=t);
+  }else if(periodN!=="all"&&periodN!=="custom"&&dates.length>+periodN){
     const cut=dates[dates.length-+periodN];
     rows=rows.filter(r=>r.date>=cut);
     winDates=dates.slice(-+periodN);}
@@ -1640,11 +1839,20 @@ function scope(ds){
   ds.S=computeScores(ds);}
 function renderPeriodSeg(){const el=$("#pseg"),sec=$("#periodSec");if(!el||!sec)return;
   /* 임시 분석(비규격 파일)에서는 날짜가 주 단위가 아닐 수 있어 기간 필터 숨김 */
-  const hasData=active&&DATASETS[active]&&DATASETS[active].dataAll.length&&!standaloneMode;
+  const ds=active&&DATASETS[active];
+  const hasData=ds&&ds.dataAll.length&&!standaloneMode;
   sec.hidden=!hasData;if(!hasData)return;
-  const opts=[["4","최근 4주"],["8","최근 8주"],["13","최근 13주"],["all","전체"]];
-  el.innerHTML=opts.map(([v,lab])=>`<button data-p="${v}" class="${v===periodN?"on":""}">${lab}</button>`).join("");
-  $$("#pseg button").forEach(b=>b.onclick=()=>{if(periodN===b.dataset.p)return;periodN=b.dataset.p;bdDim=null;bdMet=null;tPage=1;if(active)show(DATASETS[active]);});}
+  const opts=[["4","최근 1달"],["9","최근 2달"],["26","최근 반년"],["52","최근 1년"],["all","전체"],["custom","직접 설정"]];
+  const rg=ds.range||{};
+  el.innerHTML=opts.map(([v,lab])=>`<button data-p="${v}" class="${v===periodN?"on":""}">${lab}</button>`).join("")
+    +(periodN==="custom"?`<div class="pcustom"><input type="date" id="pFrom" value="${customRange.from||rg.first||""}"><span>~</span><input type="date" id="pTo" value="${customRange.to||rg.last||""}"><button id="pGo" type="button">적용</button></div>`:"");
+  $$("#pseg > button").forEach(b=>b.onclick=()=>{const v=b.dataset.p;
+    if(periodN===v&&v!=="custom")return;
+    periodN=v;bdDim=null;bdMet=null;tPage=1;if(active)show(DATASETS[active]);});
+  const go=$("#pGo");
+  if(go)go.onclick=()=>{const f=$("#pFrom").value||null,t=$("#pTo").value||null;
+    if(f&&t&&f>t){toast("시작일이 종료일보다 늦습니다");return;}
+    customRange={from:f,to:t};bdDim=null;bdMet=null;tPage=1;if(active)show(DATASETS[active]);};}
 function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)return;
   if(dsMode!=="channeled"||!ds.channels||!ds.channels.length){sec.hidden=true;el.innerHTML="";return;}
   sec.hidden=false;
@@ -1659,7 +1867,7 @@ function show(ds){scope(ds);
   renderMediaSeg(ds);renderPeriodSeg();renderSideKpis(ds);renderLeaderboard(ds);renderKeyrow(ds);
   requestAnimationFrame(()=>{renderQuad(ds);renderQuadTierLegend();
     renderTrend(ds);renderBreakdown(ds);
-    requestAnimationFrame(()=>{renderTlegend();curDS=ds;renderQuickFo();renderTable(ds);});});}
+    requestAnimationFrame(()=>{renderTlegend();curDS=ds;renderQuickFo();renderTable(ds);renderAB(ds);});});}
 function setActive(k){if(!DATASETS[k])return;active=k;
   bdDim=null;bdMet=null;tableShowAll=false;tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tPage=1;
   if($("#search"))$("#search").value="";if($("#showAll"))$("#showAll").checked=false;
@@ -1949,6 +2157,7 @@ function _qResetRanges(){qView={xlo:0,xhi:100,ylo:0,yhi:100};_qxRange.paint();_q
 $("#qrst").addEventListener("click",()=>{_qResetRanges();_qRender();});
 const _origSetActive=setActive;setActive=function(k){_qResetRanges();_origSetActive(k);};
 function updateLandingVisibility(){const el=document.getElementById("landing");if(!el)return;const hasData=active&&DATASETS[active]&&DATASETS[active].agg&&DATASETS[active].agg.length;el.classList.toggle("hidden",!!hasData);}
+$$("#mtabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.t));
 renderGlossary();renderFooter();refreshAll();updateLandingVisibility();
 /* 클라우드 저장소 UI 배선 */
 const _pwForm=$("#pwForm");
