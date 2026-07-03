@@ -270,6 +270,16 @@
   .tthumb .vb{position:absolute;right:3px;bottom:3px;width:15px;height:15px;border-radius:4px;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;font-size:8.5px;pointer-events:none}
   .tthumb.err img{display:none}
   .tthumb.err::before{content:"✕";font-size:10px}
+  /* island score breakdown */
+  .sb{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:7px 26px}
+  .sb-row{display:flex;align-items:center;gap:8px;font-size:11.5px;min-width:0}
+  .sb-k{width:62px;color:var(--muted);font-weight:650;flex:0 0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sb-raw{width:66px;text-align:right;flex:0 0 auto;font-weight:650}
+  .sb-bar{flex:1;height:8px;border-radius:4px;background:var(--surface-3);overflow:hidden;min-width:40px}
+  .sb-bar i{display:block;height:100%;border-radius:4px}
+  .sb-p{width:26px;text-align:right;font-weight:740;flex:0 0 auto}
+  .sb-w{color:var(--faint);font-size:10px;width:36px;flex:0 0 auto}
+  .sb-shr{font-size:9px;color:var(--w1);background:var(--w1-f);padding:1px 5px;border-radius:4px;font-weight:700;flex:0 0 auto;cursor:help}
   td.bdg .dom-tag{font-size:9px;font-weight:800;color:var(--gold);background:var(--gold-f);padding:2px 6px;border-radius:5px;letter-spacing:.02em}
   tbody tr.row{cursor:pointer}
   tbody tr.exp>td{background:var(--gold-f)!important}
@@ -678,6 +688,17 @@ function weeklyTotals(data){const t=Object.fromEntries(WEEKS.map(w=>[w,{비용:0
 function quantile(s,q){if(!s.length)return null;const p=(s.length-1)*q,b=Math.floor(p),r=p-b;return s[b+1]!==undefined?s[b]+r*(s[b+1]-s[b]):s[b];}
 function minVol(L){return L.key==="ad"?60:L.key==="adset"?500:1000;}
 function pctRank(s,v){if(s.length<=1)return .5;let i=0;while(i<s.length&&s[i]<v)i++;return i/(s.length-1);}
+/* 광고비 가중 백분위 — "계정의 돈이 실제로 흐르는 곳" 대비 상대 위치.
+   저광고비 소재 수백 개가 분포를 왜곡하지 못하게 각 비교 대상을 광고비만큼의 질량으로 취급 */
+function buildWDist(items){items.sort((a,b)=>a[0]-b[0]);
+  const n=items.length,vals=new Array(n),cum=new Array(n);let t=0;
+  for(let i=0;i<n;i++){vals[i]=items[i][0];t+=items[i][1];cum[i]=t;}
+  return{vals,cum,total:t};}
+function wPctRank(d,v){if(!d||d.vals.length<2||d.total<=0)return .5;
+  let lo=0,hi=d.vals.length;while(lo<hi){const m=(lo+hi)>>1;if(d.vals[m]<v)lo=m+1;else hi=m;}
+  const below=lo>0?d.cum[lo-1]:0;let j=lo,eq=0;
+  while(j<d.vals.length&&d.vals[j]===v){eq+=d.cum[j]-(j>0?d.cum[j-1]:0);j++;}
+  return(below+0.5*eq)/d.total;}
 
 /* scoring + 5-tier badges */
 function computeFieldAvail(a){
@@ -729,35 +750,68 @@ function specsFor(ds){const a=ds.agg,isG=isGoogleDs(a);
   const key=isG?"google":(ds.L.key||"ad");
   const isVideo=a.some(e=>(e._g_assetType&&/동영상|video/i.test(e._g_assetType))||(e._m_ctype&&e._m_ctype.includes("VIDEO")));
   return SCORING[key].filter(s=>!s.videoOnly||isVideo).map(s=>({...s}));}
-function computeScores(ds){const L=ds.L,a=ds.agg;
-  ds.fieldAvail=computeFieldAvail(a);
-  const av=ds.fieldAvail;
-  a.forEach(e=>{e.score=null;e.tier="na";e.dom=null;e._E=null;e._R=null;e._C=null;});
-  const allSpecs=specsFor(ds);
-  const specs=allSpecs.filter(s=>(av[s.k]||0)>=0.10);
-  if(!specs.length)return{best:[],worst:[],med:null,goodCol:"score",goodDir:1,goodLabel:"점수",goodFmt:"int",goodHelp:"복합 지표",volCol:"비용",eligCount:0,specs:[]};
-  const wSum=specs.reduce((s,x)=>s+x.w,0)||1;
-  specs.forEach(s=>s.wNorm=s.w/wSum);
-  const sorted={};for(const s of specs){sorted[s.k]=a.filter(e=>e[s.k]!=null).map(e=>e[s.k]).sort((x,y)=>x-y);}
-  const spendSorted=a.map(e=>e.비용||0).sort((x,y)=>x-y);
-  const impSorted=a.map(e=>e["노출 수"]||0).sort((x,y)=>x-y);
-  const minSpend=quantile(spendSorted,0.15);
-  const coreSpecs=specs.filter(s=>s.w>=0.15);
-  const elig=a.filter(e=>(e.비용||0)>=minSpend&&coreSpecs.every(s=>e[s.k]!=null));
-  if(elig.length<3)return{best:[],worst:[],med:null,goodCol:specs[0]?.k||"score",goodDir:specs[0]?.dir||1,goodLabel:specs[0]?.lab||"점수",goodFmt:specs[0]?.k==="_g_ROAS"?"num":"int",goodHelp:"복합 지표",volCol:"비용",eligCount:0,specs};
-  const convOf=e=>e._g_conversions??e["어트리뷰션 수"]??e["활성 유저 수"]??e["클릭 수"]??0;
+/* 지표별 증거량(표본) — 백분위를 g'=0.5+(g−0.5)·n/(n+n₀)로 축소해
+   전환 몇 건짜리 소재가 순전히 운으로 최상·최하위를 차지하는 winner's curse를 막는다 (경험적 베이지안 축소) */
+const SPEC_EVIDENCE={
+  "eCPI":{den:e=>e["어트리뷰션 수"],n0:50},
+  "활성 유저 eCPA":{den:e=>e["활성 유저 수"],n0:50},
+  "신규+재활성 eCPA":{den:e=>e["신규+재활성 유저 수"],n0:50},
+  "CPC":{den:e=>e["클릭 수"],n0:100},
+  "CTR":{den:e=>e["노출 수"],n0:2000},
+  "CPM":{den:e=>e["노출 수"],n0:2000},
+  "영상 완주율":{den:e=>e._vcrDen,n0:2000},
+  "_g_ROAS":{den:e=>e._g_allConv||e._g_conversions,n0:30},
+  "_g_costPerConv":{den:e=>e._g_conversions,n0:30},
+  "_g_conversionRate":{den:e=>e._g_interactions,n0:300},
+};
+function evidenceW(e,k){const s=SPEC_EVIDENCE[k];if(!s)return 1;const d=s.den(e)||0;return d>0?d/(d+s.n0):0;}
+/* 미디어 단가 지표는 인벤토리 특성(네이티브 영상 vs 배너)이 달라 같은 포맷 안에서만 상대 평가 */
+const MEDIA_COHORT_KEYS=new Set(["CTR","CPM","CPC","영상 완주율","_g_interactionRate","_g_trueViewRate"]);
+/* 공용 점수 코어 — computeScores(소재)와 scoreGroupAgg(그룹 집계)가 같은 규칙을 쓴다 */
+function runScoring(pop,elig,specs){
+  const dists={},foDists={};
+  for(const s of specs){
+    dists[s.k]=buildWDist(pop.filter(e=>e[s.k]!=null).map(e=>[e[s.k],Math.max(e.비용||0,1)]));
+    if(MEDIA_COHORT_KEYS.has(s.k)){
+      const byFo=new Map();
+      for(const e of pop){if(e[s.k]==null)continue;const fo=(e.tags&&e.tags.fo)||"기타";
+        let arr=byFo.get(fo);if(!arr){arr=[];byFo.set(fo,arr);}arr.push([e[s.k],Math.max(e.비용||0,1)]);}
+      const m=new Map();for(const[fo,arr]of byFo){if(arr.length>=8)m.set(fo,buildWDist(arr));}
+      if(m.size)foDists[s.k]=m;}}
+  const impSorted=pop.map(e=>e["노출 수"]||0).sort((x,y)=>x-y);
   const denomLn=Math.log(1+SCORING.MIN_CONV_FOR_FULL_CONF);
+  const convOf=e=>e._g_conversions??e["어트리뷰션 수"]??e["활성 유저 수"]??e["클릭 수"]??0;
   elig.forEach(e=>{
-    let composite=0,wsum=0;
-    for(const s of specs){if(e[s.k]==null||!sorted[s.k].length)continue;
-      const p=pctRank(sorted[s.k],e[s.k]);const g=s.dir<0?1-p:p;composite+=g*s.w;wsum+=s.w;}
+    let composite=0,wsum=0;e._specPct={};
+    for(const s of specs){if(e[s.k]==null||!dists[s.k].vals.length)continue;
+      let d=dists[s.k];
+      const fm=foDists[s.k];if(fm){const fo=(e.tags&&e.tags.fo)||"기타";if(fm.has(fo))d=fm.get(fo);}
+      const p=wPctRank(d,e[s.k]);let g=s.dir<0?1-p:p;
+      const w=evidenceW(e,s.k);g=0.5+(g-0.5)*w;
+      e._specPct[s.k]={g,w};
+      composite+=g*s.w;wsum+=s.w;}
     const E=wsum>0?composite/wsum:0;
     const R=impSorted.length?pctRank(impSorted,e["노출 수"]||0):0.5;
     const C=Math.min(1,Math.log(1+convOf(e))/denomLn);
     e._E=E;e._R=R;e._C=C;
     e.score=Math.round(100*(SCORING.EFF_W*E+SCORING.REACH_W*R+SCORING.CONF_W*C));});
   const sc=elig.map(e=>e.score).sort((x,y)=>x-y);
-  elig.forEach(e=>{const p=pctRank(sc,e.score);e.tier=p>=0.8?"g2":p>=0.6?"g1":p>=0.4?"m":p>=0.2?"w1":"w2";});
+  elig.forEach(e=>{const p=pctRank(sc,e.score);e.tier=p>=0.8?"g2":p>=0.6?"g1":p>=0.4?"m":p>=0.2?"w1":"w2";});}
+function computeScores(ds){const L=ds.L,a=ds.agg;
+  ds.fieldAvail=computeFieldAvail(a);
+  const av=ds.fieldAvail;
+  a.forEach(e=>{e.score=null;e.tier="na";e.dom=null;e._E=null;e._R=null;e._C=null;e._specPct=null;});
+  const allSpecs=specsFor(ds);
+  const specs=allSpecs.filter(s=>(av[s.k]||0)>=0.10);
+  if(!specs.length)return{best:[],worst:[],med:null,goodCol:"score",goodDir:1,goodLabel:"점수",goodFmt:"int",goodHelp:"복합 지표",volCol:"비용",eligCount:0,specs:[]};
+  const wSum=specs.reduce((s,x)=>s+x.w,0)||1;
+  specs.forEach(s=>s.wNorm=s.w/wSum);
+  const spendSorted=a.map(e=>e.비용||0).sort((x,y)=>x-y);
+  const minSpend=quantile(spendSorted,0.15);
+  const coreSpecs=specs.filter(s=>s.w>=0.15);
+  const elig=a.filter(e=>(e.비용||0)>=minSpend&&coreSpecs.every(s=>e[s.k]!=null));
+  if(elig.length<3)return{best:[],worst:[],med:null,goodCol:specs[0]?.k||"score",goodDir:specs[0]?.dir||1,goodLabel:specs[0]?.lab||"점수",goodFmt:specs[0]?.k==="_g_ROAS"?"num":"int",goodHelp:"복합 지표",volCol:"비용",eligCount:0,specs};
+  runScoring(a,elig,specs);
   const best=elig.slice().sort((x,y)=>y.score-x.score);
   best.forEach((e,i)=>{e.rank=i+1;});
   const primary=specs[0],pkey=primary.k,pdir=primary.dir;
@@ -1110,6 +1164,19 @@ function assetTypeEmoji(t){const s=assetShortType(t);
   if(s==="세로 이미지")return "📱";
   if(s==="정사각 이미지")return "⏹️";
   return "🖼️";}
+function fmtSpecVal(k,v){if(v==null)return"–";
+  if(k==="_g_ROAS")return v.toFixed(1)+"×";
+  if(k==="CTR"||k==="영상 완주율"||k.endsWith("Rate"))return fmtPct(v);
+  return fmtWon(v);}
+function scoreBreakdownHTML(ds,e){const S=ds.S;
+  if(e.score==null||!S||!S.specs||!e._specPct)return"";
+  const rows=S.specs.filter(s=>e._specPct[s.k]).map(s=>{const sp=e._specPct[s.k];
+    const pctv=Math.round(sp.g*100);
+    const col=pctv>=60?"var(--g1)":pctv>=40?"var(--mid)":"var(--w2)";
+    const shr=sp.w<0.8?`<span class="sb-shr" title="표본이 적어 백분위를 중앙(50) 방향으로 축소 반영 · 데이터 신뢰 ${(sp.w*100).toFixed(0)}%">표본보정</span>`:"";
+    return `<div class="sb-row"><span class="sb-k">${s.lab}</span><span class="sb-raw num">${fmtSpecVal(s.k,e[s.k])}</span><div class="sb-bar"><i style="width:${pctv}%;background:${col}"></i></div><span class="sb-p num" style="color:${col}">${pctv}</span><span class="sb-w num">×${Math.round(s.w*100)}%</span>${shr}</div>`;}).join("");
+  if(!rows)return"";
+  return `<section style="grid-column:1/-1"><div class="ish">점수 구성 <span class="n">점수 ${e.score} = 효율 ${(e._E*100).toFixed(0)}×0.75 + 규모 ${(e._R*100).toFixed(0)}×0.20 + 신뢰 ${(e._C*100).toFixed(0)}×0.05 · 막대 = 광고비 가중 백분위(50=계정 평균, 높을수록 좋음)</span></div><div class="sb">${rows}</div></section>`;}
 function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>m.k===ISLE.metric)||M[0];
   const sp=t=>t==="g2"?"sp-g2":t==="g1"?"sp-g1":t==="m"?"sp-mid":t==="w1"?"sp-w1":t==="w2"?"sp-w2":"sp-na";
   const scoreTxt=e.score!=null?`<span class="sp ${sp(e.tier)}">${e.score}점</span>`:`<span class="sp sp-na">점수 –</span>`;
@@ -1149,7 +1216,8 @@ function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>
   inner.innerHTML=`<div class="isle-hd">${scoreTxt}<span class="nm">${trunc(e.name,80)}</span>${chipsHTML(e.tags)}</div>
     ${hasPreview?`<section><div class="isle-preview">${preview}${gExtra}${mExtra}</div></section>`:""}
     <section><div class="ish">기준별 위치 <span class="n">${cur.good?cur.lab+" 기준":"광고비 규모"}</span></div><div class="mtog">${toggles}</div>${bars}</section>
-    <section><div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}</section>`;
+    <section><div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}</section>
+    ${scoreBreakdownHTML(ds,e)}`;
   inner.querySelectorAll(".mtog button").forEach(b=>b.addEventListener("click",ev=>{ev.stopPropagation();ISLE.metric=b.dataset.m;inner.querySelectorAll(".mtog button").forEach(x=>x.classList.toggle("on",x.dataset.m===ISLE.metric));requestAnimationFrame(()=>fillIsland(ds,e,inner));}));
   inner.querySelectorAll(".fam tr.hoverable").forEach(tr=>{
     const url=tr.dataset.preview,lab=tr.dataset.label||"";
@@ -1230,26 +1298,13 @@ function buildAdGroupAgg(ds){
   return rows;}
 function scoreGroupAgg(ds,rows){
   const specs=(ds.S&&ds.S.specs)?ds.S.specs.slice():[];if(!specs.length){rows.forEach(g=>{g.score=null;g.tier="na";g.dom=null;});return;}
-  const wSum=specs.reduce((s,x)=>s+x.w,0)||1;specs.forEach(s=>s.wNorm=s.w/wSum);
-  const sorted={};for(const s of specs){sorted[s.k]=rows.filter(e=>e[s.k]!=null).map(e=>e[s.k]).sort((x,y)=>x-y);}
-  const impSorted=rows.map(e=>e["노출 수"]||0).sort((x,y)=>x-y);
-  const denomLn=Math.log(1+SCORING.MIN_CONV_FOR_FULL_CONF);
-  const convOf=e=>e._g_conversions??e["어트리뷰션 수"]??e["활성 유저 수"]??e["클릭 수"]??0;
   const coreSpecs=specs.filter(s=>s.w>=0.15);
   const spendSorted=rows.map(e=>e.비용||0).sort((x,y)=>x-y);
   const minSpend=quantile(spendSorted,0.15);
   const elig=rows.filter(e=>(e.비용||0)>=minSpend&&coreSpecs.every(s=>e[s.k]!=null));
   rows.forEach(g=>{g.score=null;g.tier="na";g.dom=null;});
   if(elig.length<3)return;
-  elig.forEach(e=>{let composite=0,wsum=0;
-    for(const s of specs){if(e[s.k]==null||!sorted[s.k].length)continue;
-      const p=pctRank(sorted[s.k],e[s.k]);const g=s.dir<0?1-p:p;composite+=g*s.w;wsum+=s.w;}
-    const E=wsum>0?composite/wsum:0;
-    const R=impSorted.length?pctRank(impSorted,e["노출 수"]||0):0.5;
-    const C=Math.min(1,Math.log(1+convOf(e))/denomLn);
-    e.score=Math.round(100*(SCORING.EFF_W*E+SCORING.REACH_W*R+SCORING.CONF_W*C));});
-  const sc=elig.map(e=>e.score).sort((x,y)=>x-y);
-  elig.forEach(e=>{const p=pctRank(sc,e.score);e.tier=p>=0.8?"g2":p>=0.6?"g1":p>=0.4?"m":p>=0.2?"w1":"w2";});
+  runScoring(rows,elig,specs);
   const best=elig.slice().sort((x,y)=>y.score-x.score);best.forEach((e,i)=>{e.rank=i+1;});
 }
 function getRowsForTable(ds){
@@ -1348,7 +1403,7 @@ function toggleQuickFo(val){tQuickFo=tQuickFo===val?null:val;renderQuickFo();tPa
 function toggleGroupBy(){tGroupBy=!tGroupBy;renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);}
 
 /* glossary */
-const GLOSSARY=[["광고비","이 소재에 쓴 돈"],["노출","사용자에게 보여진 횟수"],["클릭","눌린 횟수"],["CTR","클릭률 = 클릭÷노출",1,"높을수록 좋음"],["CPC","클릭 1번당 비용",1,"낮을수록 좋음"],["설치","이 소재로 생긴 앱 설치 수(어트리뷰션)"],["eCPI","설치 1건당 비용 — 소재 효율의 핵심",1,"낮을수록 좋음"],["활성 유저","설치 후 실제로 앱을 쓴 사람"],["eCPA","활성 유저 1명당 비용",1,"낮을수록 좋음"],["완주율","영상을 끝까지 본 비율 (노출 가중 평균)",1,"높을수록 좋음"],["신규+재활성","신규 유저 + 휴면에서 돌아온 유저 수"],["설치(몰로코)","몰로코 리포트 자체 집계 설치 수 — MMP 어트리뷰션과 다를 수 있음"],["점수","효율(75%)+규모(20%)+통계신뢰(5%) 종합, 0~100"]];
+const GLOSSARY=[["광고비","이 소재에 쓴 돈"],["노출","사용자에게 보여진 횟수"],["클릭","눌린 횟수"],["CTR","클릭률 = 클릭÷노출",1,"높을수록 좋음"],["CPC","클릭 1번당 비용",1,"낮을수록 좋음"],["설치","이 소재로 생긴 앱 설치 수(어트리뷰션)"],["eCPI","설치 1건당 비용 — 소재 효율의 핵심",1,"낮을수록 좋음"],["활성 유저","설치 후 실제로 앱을 쓴 사람"],["eCPA","활성 유저 1명당 비용",1,"낮을수록 좋음"],["완주율","영상을 끝까지 본 비율 (노출 가중 평균)",1,"높을수록 좋음"],["신규+재활성","신규 유저 + 휴면에서 돌아온 유저 수"],["설치(몰로코)","몰로코 리포트 자체 집계 설치 수 — MMP 어트리뷰션과 다를 수 있음"],["점수","효율(75%)+규모(20%)+통계신뢰(5%) 종합, 0~100 · 백분위는 광고비 가중, 표본 적은 지표는 중앙으로 축소"]];
 function renderGlossary(){$("#glossGrid").innerHTML=GLOSSARY.map(g=>`<div><b>${g[0]}</b> — ${g[1]}${g[2]?`<span class="dir">${g[3]}</span>`:""}</div>`).join("");}
 $("#glossBtn").onclick=()=>$("#gloss").classList.add("show");
 $("#glossClose").onclick=()=>$("#gloss").classList.remove("show");
@@ -1441,24 +1496,30 @@ function renderFooter(){$("#ft").innerHTML=`
 
   <div class="ft-formula">
     <b>Score</b> = 100 × (0.75·<b>E</b> + 0.20·<b>R</b> + 0.05·<b>C</b>)<br>
-    &nbsp;&nbsp;<b>E</b> = Σ (w<sub>i</sub> · pctRank(m<sub>i</sub>))&nbsp;&nbsp;→ 지표별 백분위(percentile rank) 가중 평균<br>
+    &nbsp;&nbsp;<b>E</b> = Σ (w<sub>i</sub> · g′<sub>i</sub>)&nbsp;&nbsp;→ 지표별 <b>광고비 가중 백분위</b>의 축소 추정치 가중 평균<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;g′ = 0.5 + (g − 0.5) · n/(n+n₀)&nbsp;&nbsp;→ 표본(n)이 적으면 중앙(50)으로 축소 · n₀: 전환류 50, 클릭 100, 노출 2,000<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;CTR·CPM·CPC·완주율은 <b>같은 포맷(영상/이미지) 안에서만</b> 상대 평가<br>
     &nbsp;&nbsp;<b>R</b> = pctRank(노출 수)&nbsp;&nbsp;→ 도달 규모 백분위<br>
-    &nbsp;&nbsp;<b>C</b> = min(1, ln(1+전환)/ln(1+30))&nbsp;&nbsp;→ 표본이 적을수록 감쇠
+    &nbsp;&nbsp;<b>C</b> = min(1, ln(1+전환)/ln(1+30))&nbsp;&nbsp;→ 전체 표본 신뢰 감쇠
   </div>
 
   <div class="ft-grid">
     <div>
-      <h4>왜 백분위(percentile rank)인가</h4>
-      <p>ROAS 30배와 CPM 800원은 스케일이 다르므로 절대값을 그대로 더할 수 없습니다.
-      백분위 정규화는 <b>계정 내 상대 위치</b>로 환산해 비교 가능하게 합니다 —
-      Google Ads Quality Score가 자기 계정·자기 카테고리 내에서 상대 평가되는 것과 같은 원리입니다.
-      이상치(outlier)에 강하고, 지표의 단위·분포 왜곡에 둔감합니다.</p>
+      <h4>왜 광고비 가중 백분위인가</h4>
+      <p>ROAS 30배와 CPM 800원은 스케일이 다르므로 절대값을 그대로 더할 수 없고, 백분위 정규화로
+      <b>계정 내 상대 위치</b>로 환산합니다. 이때 비교 분포를 <b>광고비로 가중</b>하여
+      "지금 돈이 실제로 흐르는 곳 대비 얼마나 효율적인가"를 측정합니다 — 저광고비 실험 소재 수백 개가
+      분포를 왜곡해 대형 검증 소재의 순위를 흐리는 것을 막고, 예산 재배분 판단에 직결되는 신호를 만듭니다.
+      또한 CTR·CPM 같은 매체 단가 지표는 인벤토리 특성(네이티브 영상 vs 배너)이 구조적으로 달라
+      <b>같은 포맷끼리만</b> 비교합니다.</p>
     </div>
     <div>
       <h4>왜 효율에 75%를 배정했나</h4>
       <p>퍼포먼스 마케팅의 목표는 <b>효율의 개선</b>입니다. 규모는 이미 매체 알고리즘이 학습된 후 확대되는 결과이자
       제약 조건입니다. iROAS·MMM 문헌(Chen & Google 2018; Meta &amp; Nielsen Robyn 2021)이 공통적으로 강조하듯,
-      크리에이티브 평가는 <b>규모 대비 효율(efficiency-at-scale)</b>이 핵심이며, 규모는 별도의 도달·인지 축으로 다루어야 합니다.</p>
+      크리에이티브 평가는 <b>규모 대비 효율(efficiency-at-scale)</b>이 핵심이며, 규모는 별도의 도달·인지 축으로 다루어야 합니다.
+      대신 전환 수십 건짜리 소재가 운으로 상·하위를 차지하지 못하도록, 지표별 백분위를
+      표본 크기에 따라 <b>경험적 베이지안 방식으로 축소(shrinkage)</b>합니다 (Efron &amp; Morris 1977).</p>
     </div>
   </div>
 </details>
@@ -1506,10 +1567,15 @@ function renderFooter(){$("#ft").innerHTML=`
   <p><b>R = 노출 수의 계정 내 백분위</b>. 즉, 100번 노출된 소재와 100만번 노출된 소재를 같은 잣대로 세우지 않습니다.
   이는 도달(Reach)이 광고 효과의 필수 조건이라는 <i>Byron Sharp - How Brands Grow</i>의 물리적 가용성(Physical Availability) 논지와,
   Nielsen과 Analytic Partners 같은 MMM 벤더들이 iROAS 산정 시 <b>도달 규모 조정(reach adjustment)</b>을 수행하는 관행에 부합합니다.</p>
-  <p><b>C = 표본 크기에 따른 감쇠(shrinkage)</b>. 전환 3건짜리 소재의 ROAS가 30이 나와도 우연일 수 있습니다.
-  경험적 베이지안(empirical Bayes) 축소 추정의 정신을 반영해 로그 스케일로 신뢰도를 부여했습니다 —
+  <p><b>C = 표본 크기에 따른 감쇠</b>. 전환 3건짜리 소재의 ROAS가 30이 나와도 우연일 수 있습니다.
   <b>전환 30건에서 완전 신뢰(C=1)</b>, 그 이하는 <code>ln(1+n)/ln(1+30)</code>로 감쇠.
   30이라는 임계값은 통계학의 관습적 표본 최소치(central limit theorem의 실무적 기준)에서 취했습니다.</p>
+  <p><b>지표별 축소(shrinkage)는 E 안에서도 별도로 적용</b>됩니다. 각 지표의 백분위 g를
+  <code>g′ = 0.5 + (g − 0.5)·n/(n+n₀)</code>로 해당 지표의 표본 n(설치·활성 유저 수, 클릭, 노출)에 비례해
+  중앙으로 당깁니다 — 설치 20~30건짜리 소재가 순전히 운으로 최상위/최하위 등급을 차지하는
+  <i>승자의 저주(winner's curse)</i>를 막는 경험적 베이지안 축소(Efron &amp; Morris 1977)입니다.
+  표본이 충분한 소재(예: 설치 수백 건 이상)는 사실상 영향을 받지 않습니다.
+  소재 상세(행 클릭)의 <b>점수 구성</b> 패널에서 지표별 백분위·가중치·표본보정 여부를 그대로 확인할 수 있습니다.</p>
 </details>
 
 <details>
