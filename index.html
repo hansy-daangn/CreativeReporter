@@ -567,7 +567,9 @@ const LEVELS={
   adset:{key:"adset",name:"광고세트",sub:"매체·예산",nameCol:"adset_name",hasConv:true,effCol:"활성 유저 eCPA",effLabel:"활성 eCPA",volCol:"활성 유저 수",volLab:"활성유저",scope:"매체·예산 단위 · 활성 eCPA로 효율 판단"},
 };
 const TAB_ORDER=["ad","cg","adset"];
-function detect(h){const s=new Set(h);if(s.has("adset_name"))return"adset";if(s.has("creative_group_name"))return"cg";if(s.has("ad_name"))return"ad";return null;}
+/* ad_name이 있으면 소재 레벨 우선 — 몰로코 신규 리포트처럼 creative_group_name이 소재의 속성으로 같이 오는 파일을
+   그룹 레벨로 오인하지 않도록 한다 (그룹 전용 파일은 ad_name이 없으므로 기존과 동일하게 cg로 감지) */
+function detect(h){const s=new Set(h);if(s.has("adset_name"))return"adset";if(s.has("ad_name"))return"ad";if(s.has("creative_group_name"))return"cg";return null;}
 
 const VERTICALS=[[/fleamarket|flemarket|중고|sellitems|declutter|nocommission|simbatdan/i,"중고거래"],[/realty|부동산|rentkarrot|lifedaangn/i,"부동산"],[/localbiz|biz_|동네|realdaangn/i,"동네업체"],[/jobs|알바|baro_running/i,"알바"],[/branding|brand/i,"브랜딩"]];
 function tagEntity(name,extras){const t={ve:null,fo:null,size:null,nat:null,shape:null};if(!name)return t;
