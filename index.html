@@ -240,7 +240,7 @@
   thead th .arr{opacity:.55;font-size:10px}
   tbody tr:hover td{background:#FBF8F4} tbody tr:hover td.name,tbody tr:hover td.bdg{background:#FBF8F4}
   tbody td{border-bottom:1px solid #F0EFE9}
-  tbody tr.row{content-visibility:auto;contain-intrinsic-size:auto 38px}
+  tbody tr.row{content-visibility:auto;contain-intrinsic-size:auto 56px}
   tbody tr.pager td{background:var(--surface-2);padding:11px;text-align:center}
   .pager-nav{display:inline-flex;align-items:center;gap:10px;font-size:12.5px}
   .pager-nav button{background:var(--surface-1);border:1px solid #E6E4DC;color:var(--ink);padding:6px 14px;border-radius:8px;font-size:12.5px;font-weight:650;cursor:pointer;transition:background .12s}
@@ -261,6 +261,15 @@
   tbody td.num.c-w2{color:#BE3F53;font-weight:650}
   tbody td.num.c-m{color:var(--ink)}
   td.name .chips{margin-top:4px}
+  /* table thumbnails (creative preview) */
+  td.name .nwrap{display:flex;gap:9px;align-items:flex-start;min-width:0}
+  td.name .ntxt{min-width:0;flex:1}
+  .tthumb{position:relative;width:46px;height:46px;flex:0 0 auto;border-radius:8px;overflow:hidden;background:#E9E8E1;display:grid;place-items:center;color:var(--faint);cursor:zoom-in;user-select:none}
+  .tthumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .tthumb.ph{background:#26251F;color:#fff;font-size:12px}
+  .tthumb .vb{position:absolute;right:3px;bottom:3px;width:15px;height:15px;border-radius:4px;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;font-size:8.5px;pointer-events:none}
+  .tthumb.err img{display:none}
+  .tthumb.err::before{content:"✕";font-size:10px}
   td.bdg .dom-tag{font-size:9px;font-weight:800;color:var(--gold);background:var(--gold-f);padding:2px 6px;border-radius:5px;letter-spacing:.02em}
   tbody tr.row{cursor:pointer}
   tbody tr.exp>td{background:var(--gold-f)!important}
@@ -411,6 +420,7 @@
     <h1>CSV 파일을<br>끌어다 놓아주세요.</h1>
     <div class="btn-row">
       <a class="btn" href="https://ads.google.com/aw/assetreport/associations?campaignId=22932296047&ocid=140474404&workspaceId=-1461371521&assetType=all&isLegacy=false&euid=6479159244&__u=5503618156&uscid=140474404&__c=5003988996&authuser=0&subid=kr-ko-ha-aw-bk-a-h00!o3-ahpm-0000000200-0000000002~EAIaIQobChMIyP2s4fj2kwMVuSZ7Bx2utAdNEAAYASAAEgLkSPD_BwE~147868729172~kwd-94527731~18654926781~629668488647" target="_blank" rel="noopener">Google Ads</a>
+      <a class="btn" href="https://app.moloco.cloud/" target="_blank" rel="noopener">Moloco</a>
       <a class="btn" href="https://superset.kr.wekarrot.net/superset/dashboard/1342/" target="_blank" rel="noopener">SuperSet</a>
     </div>
   </div>
@@ -514,12 +524,16 @@
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const tip=$("#tip");
-function showTip(h,x,y,big){tip.innerHTML=h;tip.classList.toggle("big",!!big);tip.style.opacity=1;const w=tip.offsetWidth,ht=tip.offsetHeight;let nx=x+14,ny=y+14;if(nx+w>innerWidth-8)nx=x-w-14;if(ny+ht>innerHeight-8)ny=y-ht-14;tip.style.left=Math.max(6,nx)+"px";tip.style.top=Math.max(6,ny)+"px";}
-function hideTip(){tip.style.opacity=0;tip.classList.remove("big");}
+function placeTip(x,y){const w=tip.offsetWidth,ht=tip.offsetHeight;let nx=x+14,ny=y+14;if(nx+w>innerWidth-8)nx=x-w-14;if(ny+ht>innerHeight-8)ny=y-ht-14;tip.style.left=Math.max(6,nx)+"px";tip.style.top=Math.max(6,ny)+"px";}
+function showTip(h,x,y,big){tip.innerHTML=h;tip.classList.toggle("big",!!big);tip.style.opacity=1;placeTip(x,y);}
+function hideTip(){tip.style.opacity=0;tip.classList.remove("big");tip.innerHTML="";}
+function isVideoUrl(u){return /\.(mp4|webm|mov)(\?|$)/i.test(String(u||""));}
+function isImageUrl(u){return /simgad|googlesyndication\.com|\.(png|jpe?g|gif|webp)(\?|$)/i.test(String(u||""));}
 function assetPreviewTipHTML(url,label){if(!url)return "";
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
   if(yt)return `<img src="https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg" alt="" referrerpolicy="no-referrer"><div class="tp-cap">${label||"영상"}</div>`;
-  if(/simgad|googlesyndication\.com|\.(png|jpe?g|gif|webp)(\?|$)/i.test(url))return `<img src="${url}" alt="" referrerpolicy="no-referrer"><div class="tp-cap">${label||""}</div>`;
+  if(isVideoUrl(url))return `<video src="${url}" autoplay muted loop playsinline preload="metadata"></video><div class="tp-cap">▶ ${label||"영상"}</div>`;
+  if(isImageUrl(url))return `<img src="${url}" alt="" referrerpolicy="no-referrer"><div class="tp-cap">${label||""}</div>`;
   return `<div class="tp-cap">${label||"미리보기 없음"}</div>`;}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2600);}
 function fmtKRW(v){if(v==null||!isFinite(v))return"–";const a=Math.abs(v);if(a>=1e8)return(v/1e8).toFixed(2)+"억";if(a>=1e4)return(v/1e4).toFixed(1)+"만";return Math.round(v).toLocaleString("ko-KR");}
@@ -556,12 +570,17 @@ const TAB_ORDER=["ad","cg","adset"];
 function detect(h){const s=new Set(h);if(s.has("adset_name"))return"adset";if(s.has("creative_group_name"))return"cg";if(s.has("ad_name"))return"ad";return null;}
 
 const VERTICALS=[[/fleamarket|flemarket|중고|sellitems|declutter|nocommission|simbatdan/i,"중고거래"],[/realty|부동산|rentkarrot|lifedaangn/i,"부동산"],[/localbiz|biz_|동네|realdaangn/i,"동네업체"],[/jobs|알바|baro_running/i,"알바"],[/branding|brand/i,"브랜딩"]];
-function tagEntity(name,extras){const t={ve:null,fo:null,size:null};if(!name)return t;
+function tagEntity(name,extras){const t={ve:null,fo:null,size:null,nat:null,shape:null};if(!name)return t;
   for(const[re,l]of VERTICALS){if(re.test(name)){t.ve=l;break;}}
-  if(extras&&extras["_g_assetType"]){const at=extras["_g_assetType"];
+  if(extras&&extras["_m_ctype"]){t.fo=/VIDEO/.test(extras["_m_ctype"])?"영상":"이미지";
+    t.nat=/^NATIVE/.test(extras["_m_ctype"])?"네이티브":"일반";}
+  if(!t.fo&&extras&&extras["_g_assetType"]){const at=extras["_g_assetType"];
     if(/동영상|video/i.test(at))t.fo="영상";else if(/이미지|image/i.test(at))t.fo="이미지";}
   if(!t.fo){if(/\.mp4|(^|_)vid|youtube\.com|youtu\.be/i.test(name))t.fo="영상";else if(/\.png|\.jpe?g|(^|_)img|simgad|googlesyndication/i.test(name))t.fo="이미지";}
-  const m=name.match(/(\d{3,4})\s*[x×]\s*(\d{3,4})/);if(m)t.size=m[1]+"×"+m[2];return t;}
+  const m=name.match(/(\d{3,4})\s*[x×]\s*(\d{3,4})/);if(m)t.size=m[1]+"×"+m[2];
+  if(extras&&extras["_m_res"]){const[w,h]=extras["_m_res"].split("x");t.size=w+"×"+h;}
+  if(t.size){const[w,h]=t.size.split("×").map(Number);if(w&&h)t.shape=w>h?"가로":w<h?"세로":"정사각";}
+  return t;}
 function isGoogleReport(text){return text&&text.includes("애셋 상태")&&text.includes("확장 소재")&&text.includes("애셋 유형");}
 function toWeekStart(dateStr){if(!dateStr||!/^\d{4}-\d{2}-\d{2}/.test(dateStr))return dateStr;
   const[y,m,d]=dateStr.slice(0,10).split("-").map(Number);
@@ -599,6 +618,36 @@ function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n")
       "_g_convValue":pn(r["모든 전환 가치(전환 시간별)"])};}).filter(r=>r.ad_name);
   return{headers:["date","ad_name","비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수"],data:rows};}
 
+/* Moloco creative report — ad_name + creative_type/resolution/creative_preview(CDN 링크) 형식 자동 감지.
+   creative_group_name은 레벨 컬럼이 아니라 소재의 소속 그룹 속성으로 취급해 소재(ad) 레벨로 분석한다. */
+function isMolocoReport(h){const s=new Set(h);
+  return s.has("creative_preview")||s.has("설치 수(몰로코)")||(s.has("ad_name")&&s.has("creative_type"));}
+function prepMoloco(r){
+  const data=r.data.map(o=>{
+    const p=String(o.creative_preview||"");
+    let m=p.match(/href="([^"]+)"/);if(!m)m=p.match(/https?:\/\/[^\s"'<>]+/);
+    if(m)o._m_url=(m[1]!==undefined?m[1]:m[0]);
+    const ct=String(o.creative_type||"").trim().toUpperCase();if(ct)o._m_ctype=ct;
+    const rs=String(o.resolution||"").replace(/\s+/g,"").match(/^(\d{2,4})[x×](\d{2,4})$/i);if(rs)o._m_res=rs[1]+"x"+rs[2];
+    const grp=String(o.creative_group_name||"").trim();if(grp&&grp!=="nan")o._m_group=grp;
+    const inst=num(o["설치 수(몰로코)"]);if(inst!=null)o._m_installs=inst;
+    const vcr=num(o["영상 완주율"]),imp=num(o["노출 수"]);
+    if(vcr!=null&&vcr>0&&imp!=null&&imp>0){o._vcrNum=vcr*imp;o._vcrDen=imp;}
+    if(o.date)o.date=toWeekStart(String(o.date).slice(0,10));
+    return o;});
+  const headers=r.headers.filter(h=>h!=="creative_group_name");
+  return{headers,data};}
+function mCtypeLabel(t){if(!t)return"";const s=String(t).toUpperCase();
+  if(s==="NATIVE_VIDEO")return"네이티브 영상";if(s==="VIDEO")return"영상";
+  if(s==="NATIVE_IMAGE")return"네이티브 이미지";if(s==="IMAGE")return"이미지";
+  if(s==="BANNER")return"배너";return t;}
+function entTypeShort(x){if(x._g_assetType)return assetShortType(x._g_assetType);
+  if(x._m_ctype)return mCtypeLabel(x._m_ctype);
+  return (x.tags&&x.tags.fo)||"";}
+function entTypeEmoji(x){const s=entTypeShort(x);
+  if(/영상/.test(s))return "🎬";if(/세로/.test(s))return "📱";return "🖼️";}
+function previewUrlOf(e){return e._m_url||e._g_url||(/^https?:/.test(e.name||"")?e.name:"")||"";}
+
 let WEEKS=["2026-06-01","2026-06-08","2026-06-15","2026-06-22"];
 function setWeeksFromDatasets(){const s=new Set();
   for(const arr of arguments){for(const r of arr){if(r&&r.date)s.add(r.date);}}
@@ -607,10 +656,12 @@ function aggregate(data,L){const map=new Map();
   for(const r of data){let nm=r[L.nameCol];if(nm==null||nm===""||nm==="nan")nm="(미지정)";
     if(!map.has(nm))map.set(nm,{name:nm,비용:0,"노출 수":0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0,weeks:Object.fromEntries(WEEKS.map(w=>[w,{비용:0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0}]))});
     const e=map.get(nm);for(const c of["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e[c]+=v;}
-    for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_adGroupId","_g_campaignId"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
-    for(const k of["_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue"]){const v=num(r[k]);if(v!=null)e[k]=(e[k]||0)+v;}
+    for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_adGroupId","_g_campaignId","_m_url","_m_ctype","_m_res","_m_group"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
+    for(const k of["_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue","_m_installs","신규+재활성 유저 수","_vcrNum","_vcrDen"]){const v=num(r[k]);if(v!=null)e[k]=(e[k]||0)+v;}
     const w=r.date;if(e.weeks[w])for(const c of["비용","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e.weeks[w][c]+=v;}}
   const arr=[...map.values()].map(e=>{e.CPC=e["클릭 수"]>0?e.비용/e["클릭 수"]:null;e.CTR=e["노출 수"]>0?e["클릭 수"]/e["노출 수"]:null;e.CPM=e["노출 수"]>0?e.비용/e["노출 수"]*1000:null;e.eCPI=e["어트리뷰션 수"]>0?e.비용/e["어트리뷰션 수"]:null;e["활성 유저 eCPA"]=e["활성 유저 수"]>0?e.비용/e["활성 유저 수"]:null;
+    if((e._vcrDen||0)>0)e["영상 완주율"]=e._vcrNum/e._vcrDen;
+    if((e["신규+재활성 유저 수"]||0)>0)e["신규+재활성 eCPA"]=e.비용/e["신규+재활성 유저 수"];
     if(e._g_assetType){
       e["_g_interactionRate"]=(e["_g_interactions"]||0)>0&&e["노출 수"]>0?e["_g_interactions"]/e["노출 수"]:null;
       e["_g_trueViewRate"]=(e["_g_trueViews"]||0)>0&&e["노출 수"]>0?e["_g_trueViews"]/e["노출 수"]:null;
@@ -630,6 +681,7 @@ function pctRank(s,v){if(s.length<=1)return .5;let i=0;while(i<s.length&&s[i]<v)
 /* scoring + 5-tier badges */
 function computeFieldAvail(a){
   const numKeys=["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","CTR","CPC","CPM","eCPI","활성 유저 eCPA",
+    "영상 완주율","신규+재활성 유저 수","신규+재활성 eCPA","_m_installs",
     "_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue",
     "_g_interactionRate","_g_trueViewRate","_g_conversionRate","_g_costPerConv","_g_ROAS","_g_convValuePerConv"];
   const n=a.length||1,avail={};
@@ -651,11 +703,13 @@ const SCORING={
     {k:"CPM",w:0.15,dir:-1,lab:"CPM"},
   ],
   ad:[
-    {k:"eCPI",w:0.30,dir:-1,lab:"eCPI"},
-    {k:"활성 유저 eCPA",w:0.25,dir:-1,lab:"활성 eCPA"},
-    {k:"CTR",w:0.20,dir:1,lab:"CTR"},
-    {k:"CPM",w:0.15,dir:-1,lab:"CPM"},
-    {k:"CPC",w:0.10,dir:-1,lab:"CPC"},
+    {k:"eCPI",w:0.26,dir:-1,lab:"eCPI"},
+    {k:"활성 유저 eCPA",w:0.20,dir:-1,lab:"활성 eCPA"},
+    {k:"CTR",w:0.16,dir:1,lab:"CTR"},
+    {k:"신규+재활성 eCPA",w:0.12,dir:-1,lab:"신규 eCPA"},
+    {k:"CPM",w:0.10,dir:-1,lab:"CPM"},
+    {k:"영상 완주율",w:0.08,dir:1,lab:"완주율",videoOnly:true},
+    {k:"CPC",w:0.08,dir:-1,lab:"CPC"},
   ],
   adset:[
     {k:"활성 유저 eCPA",w:0.35,dir:-1,lab:"활성 eCPA"},
@@ -672,7 +726,7 @@ const SCORING={
 };
 function specsFor(ds){const a=ds.agg,isG=isGoogleDs(a);
   const key=isG?"google":(ds.L.key||"ad");
-  const isVideo=a.some(e=>e._g_assetType&&/동영상|video/i.test(e._g_assetType));
+  const isVideo=a.some(e=>(e._g_assetType&&/동영상|video/i.test(e._g_assetType))||(e._m_ctype&&e._m_ctype.includes("VIDEO")));
   return SCORING[key].filter(s=>!s.videoOnly||isVideo).map(s=>({...s}));}
 function computeScores(ds){const L=ds.L,a=ds.agg;
   ds.fieldAvail=computeFieldAvail(a);
@@ -736,6 +790,8 @@ function renderSideKpis(ds){const a=ds.data,L=ds.L,sum=c=>a.reduce((s,r)=>s+(num
     {k:"평균 eCPI",v:fmtWon(tAttr>0?tC/tAttr:null),s:`<span class="sgood">설치당 · 낮을수록 ↓</span>`},
     {k:"총 활성 유저",v:fmtInt(tAct),s:sdelta(d("활성 유저 수"))},
     {k:"활성 eCPA",v:fmtWon(tAct>0?tC/tAct:null),s:`<span class="sgood">유저당 · 낮을수록 ↓</span>`});
+    const tNu=sum("신규+재활성 유저 수");
+    if(tNu>0)rows.push({k:"신규+재활성 유저",v:fmtInt(tNu),s:`<span class="sgood">eCPA ${fmtWon(tC/tNu)} · 낮을수록 ↓</span>`});
   }else{const cov=a.filter(r=>(num(r["노출 수"])||0)>0),ci=cov.reduce((s,r)=>s+(num(r["노출 수"])||0),0),cc=cov.reduce((s,r)=>s+(num(r["클릭 수"])||0),0);
     rows.push({k:"총 클릭",v:fmtInt(tClk),s:sdelta(d("클릭 수"))},
     {k:"평균 CTR",v:fmtPct(ci>0?cc/ci:null),s:`<span class="sgood">클릭률 · 높을수록 ↑</span>`},
@@ -744,7 +800,7 @@ function renderSideKpis(ds){const a=ds.data,L=ds.L,sum=c=>a.reduce((s,r)=>s+(num
 function sdelta(dd){if(dd==null)return"<span>지난주 –</span>";const c=Math.abs(dd)<0.005?"flat":dd>0?"up":"down";return `<span class="sdelta ${c}">${dd>0?"+":""}${(dd*100).toFixed(1)}%</span><span>지난주</span>`;}
 
 /* leaderboard */
-function chipsHTML(t){return [t.ve&&`<span class="chip">${t.ve}</span>`,t.fo&&`<span class="chip fo">${t.fo}</span>`,t.size&&`<span class="chip">${t.size}</span>`].filter(Boolean).join("");}
+function chipsHTML(t){return [t.ve&&`<span class="chip">${t.ve}</span>`,t.fo&&`<span class="chip fo">${t.fo}</span>`,t.nat==="네이티브"&&`<span class="chip">네이티브</span>`,t.size&&`<span class="chip">${t.size}</span>`].filter(Boolean).join("");}
 function renderLeaderboard(ds){const L=ds.L,S=ds.S;
   const sub=$("#srankSub");if(sub)sub.innerHTML=`· ${S.goodLabel}`;
   const best=S.best.slice(0,3),worst=S.worst.slice(0,3).filter(w=>!best.includes(w));
@@ -793,10 +849,15 @@ const GOOGLE_QUAD_METRICS=[
   {k:"_g_ROAS",lab:"ROAS",dir:1,fmt:v=>v.toFixed(1)+"×",google:true},
   {k:"_g_convValuePerConv",lab:"전환당 가치",dir:1,fmt:v=>fmtWon(v),google:true},
 ];
+const MOLOCO_QUAD_METRICS=[
+  {k:"영상 완주율",lab:"완주율",dir:1,fmt:v=>fmtPct(v)},
+  {k:"신규+재활성 eCPA",lab:"신규 eCPA",dir:-1,fmt:v=>fmtWon(v)},
+];
 const AVAIL_MIN=0.10;
 function isAvail(ds,k){if(!ds||!ds.fieldAvail)return true;const v=ds.fieldAvail[k];return v==null||v>=AVAIL_MIN;}
 function quadMetricsFor(ds){let base=QUAD_METRICS.filter(m=>!m.conv||ds.L.hasConv);
   if(ds.agg.some(e=>e._g_assetType))base=base.concat(GOOGLE_QUAD_METRICS);
+  if(ds.agg.some(e=>e._m_ctype))base=base.concat(MOLOCO_QUAD_METRICS);
   return base.filter(m=>isAvail(ds,m.k));}
 let qX=null,qY=null;
 function renderQuad(ds){const L=ds.L,svg=$("#quad");
@@ -885,7 +946,7 @@ const BD_METRICS=[
   {k:"CPM",lab:"CPM",dir:-1,fmt:fmtWon,help:"낮을수록 좋음"},
 ];
 function renderBreakdown(ds){const L=ds.L,a=ds.agg;
-  const cand=[["포맷","fo"],["사이즈","size"],["서비스","ve"]].filter(([,k])=>new Set(a.filter(e=>e.tags[k]).map(e=>e.tags[k])).size>=2);
+  const cand=[["포맷","fo"],["사이즈","size"],["형태","shape"],["지면","nat"],["서비스","ve"]].filter(([,k])=>new Set(a.filter(e=>e.tags[k]).map(e=>e.tags[k])).size>=2);
   if(!cand.length){$("#bdWrap").style.display="none";return;}$("#bdWrap").style.display="";
   if(!bdDim||!cand.find(d=>d[1]===bdDim))bdDim=cand[0][1];
   $("#dtog").innerHTML=cand.map(([lab,k])=>`<button data-d="${k}" class="${k===bdDim?"on":""}">${lab}</button>`).join("");
@@ -897,6 +958,11 @@ function renderBreakdown(ds){const L=ds.L,a=ds.agg;
     {k:"_g_costPerConv",lab:"전환당비용",dir:-1,fmt:fmtWon,help:"낮을수록 좋음"},
     {k:"_g_conversionRate",lab:"전환율",dir:1,fmt:fmtPct,help:"높을수록 좋음"},
     {k:"_g_interactionRate",lab:"상호작용률",dir:1,fmt:fmtPct,help:"높을수록 좋음"},
+  ]);
+  const isM=a.some(e=>e._m_ctype);
+  if(isM)mets=mets.concat([
+    {k:"영상 완주율",lab:"완주율",dir:1,fmt:fmtPct,help:"높을수록 좋음"},
+    {k:"신규+재활성 eCPA",lab:"신규 eCPA",dir:-1,fmt:fmtWon,help:"낮을수록 좋음"},
   ]);
   mets=mets.filter(m=>isAvail(ds,m.k));
   if(!mets.length){$("#bdWrap").style.display="none";return;}
@@ -923,7 +989,9 @@ function renderBreakdown(ds){const L=ds.L,a=ds.agg;
       eCPI:trimMet(arr,e=>e.eCPI,e=>e.비용,e=>e["어트리뷰션 수"]),
       eCPA:trimMet(arr,e=>e["활성 유저 eCPA"],e=>e.비용,e=>e["활성 유저 수"]),
       _g_interactionRate:trimMet(arr,e=>e._g_interactionRate,e=>e._g_interactions||0,e=>e["노출 수"]),
-      _g_conversionRate:trimMet(arr,e=>e._g_conversionRate,e=>e._g_conversions||0,e=>e._g_interactions||0)};
+      _g_conversionRate:trimMet(arr,e=>e._g_conversionRate,e=>e._g_conversions||0,e=>e._g_interactions||0),
+      "영상 완주율":trimMet(arr,e=>e["영상 완주율"],e=>e._vcrNum||0,e=>e._vcrDen||0),
+      "신규+재활성 eCPA":trimMet(arr,e=>e["신규+재활성 eCPA"],e=>e.비용,e=>e["신규+재활성 유저 수"]||0)};
   }).filter(r=>r[primary.k]!=null&&r[primary.k]>0);
   rows.sort((x,y)=>primary.dir>0?y[primary.k]-x[primary.k]:x[primary.k]-y[primary.k]);
   if(bdDim==="size")rows=rows.slice(0,8);
@@ -939,6 +1007,7 @@ function renderBreakdown(ds){const L=ds.L,a=ds.agg;
     if(r.CPC!=null&&r.CPC>0)m.push(`CPC <b>${fmtWon(r.CPC)}</b>`);
     if(r.CTR!=null&&r.CTR>0)m.push(`CTR <b>${fmtPct(r.CTR)}</b>`);
     if(r.CPM!=null&&r.CPM>0)m.push(`CPM <b>${fmtWon(r.CPM)}</b>`);
+    if(r["영상 완주율"]!=null&&r["영상 완주율"]>0)m.push(`완주율 <b>${fmtPct(r["영상 완주율"])}</b>`);
     m.push(`<span class="bd-cost">광고비 ${fmtKRW(r.비용)}원</span>`);
     return `<div class="bd-row">
       <div class="lab">${r.k}<span class="bd-n">${r.n}</span>${tag}</div>
@@ -983,6 +1052,8 @@ function islandMetrics(L,e){const M=[];const add=(k,lab,dir,fmt,good)=>M.push({k
     if(e._g_conversionRate!=null)add("_g_conversionRate","전환율",1,fmtPct,true);
     if(e._g_interactionRate!=null)add("_g_interactionRate","상호작용률",1,fmtPct,true);
     if(e._g_costPerConv!=null)add("_g_costPerConv","전환당비용",-1,fmtWon,true);}
+  if(e["영상 완주율"]!=null)add("영상 완주율","완주율",1,fmtPct,true);
+  if(e["신규+재활성 eCPA"]!=null)add("신규+재활성 eCPA","신규 eCPA",-1,fmtWon,true);
   add("비용","규모",1,v=>fmtKRW(v)+"원",false);return M;}
 function defaultMetric(ds,e){const M=islandMetrics(ds.L,e);return (M.find(m=>m.good&&e[m.k]!=null)||M.find(m=>e[m.k]!=null)||M[M.length-1]).k;}
 function cohorts(ds,e){const a=ds.agg,out=[{label:"전체",mem:a}];
@@ -990,6 +1061,8 @@ function cohorts(ds,e){const a=ds.agg,out=[{label:"전체",mem:a}];
   if(e.tags.ve)out.push({label:"같은 서비스 · "+e.tags.ve,mem:ds.byVe.get(e.tags.ve)||[]});
   if(e.tags.fo)out.push({label:"같은 포맷 · "+e.tags.fo,mem:ds.byFo.get(e.tags.fo)||[]});
   if(e.tags.size)out.push({label:"같은 사이즈 · "+e.tags.size,mem:ds.bySize.get(e.tags.size)||[]});
+  const gid=e._g_adGroupId||e._m_group;
+  if(gid&&ds.byAdGr&&(ds.byAdGr.get(gid)||[]).length>1)out.push({label:"같은 그룹 · "+trunc(gid,22),mem:ds.byAdGr.get(gid)});
   if(!isG){const fam=ds.byFk.get(e._fk||familyKey(e.name))||[];
     if(fam.length>1)out.push({label:"같은 시리즈 (이름·해상도·변형)",mem:fam});}
   return out;}
@@ -1002,10 +1075,26 @@ function posBar(label,st,m){if(!st)return `<div class="pos"><div class="pos-l">$
   return `<div class="pos"><div class="pos-l">${label} <span class="pn">${st.N}개</span><span class="me" style="color:${col}">상위 ${st.topPct}%${m.good?"":" 규모"}</span></div>
     <div class="pos-track"><div class="pos-fill" style="width:${pct}%;background:${col}"></div><div class="pos-mark" style="left:${pct}%;background:${col}"></div></div>
     <div class="pos-meta">${st.N}개 중 <b>${st.rank}위</b> · 이 소재 <b>${m.fmt(st.val)}</b> · 중앙값 ${m.fmt(st.med)}</div></div>`;}
-function assetPreview(url){if(!url)return "";
+function assetPreview(url,ent){if(!url)return "";
+  const srcLine=(note)=>`<div class="asset-src">${note?note+" · ":""}<a href="${url}" target="_blank" rel="noopener">${trunc(url,60)}</a></div>`;
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
-  if(yt)return `<div class="asset-wrap"><iframe class="asset-vid" src="https://www.youtube.com/embed/${yt[1]}" frameborder="0" allow="encrypted-media" allowfullscreen></iframe><div class="asset-src"><a href="${url}" target="_blank" rel="noopener">${trunc(url,60)}</a></div></div>`;
-  if(/simgad|googlesyndication\.com|\.(png|jpe?g|gif|webp)(\?|$)/i.test(url))return `<div class="asset-wrap"><img class="asset-img" src="${url}" alt="asset" referrerpolicy="no-referrer" loading="lazy" onerror="this.parentNode.querySelector('.asset-err').hidden=false;this.hidden=true"><div class="asset-err" hidden>미리보기를 불러오지 못했습니다</div><div class="asset-src"><a href="${url}" target="_blank" rel="noopener">${trunc(url,60)}</a></div></div>`;
+  if(yt)return `<div class="asset-wrap"><iframe class="asset-vid" src="https://www.youtube.com/embed/${yt[1]}" frameborder="0" allow="encrypted-media" allowfullscreen></iframe>${srcLine()}</div>`;
+  if(isVideoUrl(url)){
+    let style="width:100%;height:auto;max-height:340px";
+    const res=ent&&ent._m_res;
+    if(res){const[w,h]=res.split("x").map(Number);
+      if(w&&h)style=h>w?`aspect-ratio:${w}/${h};height:340px;width:auto;max-width:100%`:`aspect-ratio:${w}/${h};width:100%;height:auto;max-height:340px`;}
+    return `<div class="asset-wrap"><video class="asset-vid" src="${url}" controls muted playsinline preload="metadata" style="${style}"></video>${srcLine()}</div>`;}
+  if(isImageUrl(url)){
+    const note=(ent&&ent.tags&&ent.tags.fo==="영상")?"영상 소재의 썸네일":"";
+    return `<div class="asset-wrap"><img class="asset-img" src="${url}" alt="asset" referrerpolicy="no-referrer" loading="lazy" onerror="this.parentNode.querySelector('.asset-err').hidden=false;this.hidden=true"><div class="asset-err" hidden>미리보기를 불러오지 못했습니다</div>${srcLine(note)}</div>`;}
+  return "";}
+function thumbHTML(e){const url=previewUrlOf(e);if(!url)return "";
+  const vidMark=e.tags&&e.tags.fo==="영상";
+  const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
+  if(yt)return `<span class="tthumb" data-purl="${escAttr(url)}"><img src="https://img.youtube.com/vi/${yt[1]}/default.jpg" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add('err')"><span class="vb">▶</span></span>`;
+  if(isImageUrl(url))return `<span class="tthumb" data-purl="${escAttr(url)}"><img src="${url}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add('err')">${vidMark?'<span class="vb">▶</span>':""}</span>`;
+  if(isVideoUrl(url))return `<span class="tthumb ph" data-purl="${escAttr(url)}" title="올려서 미리보기 · 행 클릭 → 재생">▶</span>`;
   return "";}
 function assetShortType(t){if(!t)return "";const s=String(t);
   if(/동영상|video/i.test(s))return "영상";
@@ -1028,17 +1117,18 @@ function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>
   const isG=!!e._g_assetType;
   const effK=L.key==="cg"?"CTR":L.effCol,effFmt=L.key==="cg"?fmtPct:fmtWon,effLab=L.key==="cg"?"CTR":L.effLabel;
   let listHTML,listTitle,listMetaN;
-  if(isG&&e._g_adGroupId&&ds.byAdGr){
-    const grp=(ds.byAdGr.get(e._g_adGroupId)||[e]).slice().sort((a,b)=>(b.score??-1)-(a.score??-1));
-    listTitle="같은 광고 그룹 내 비교";
-    listMetaN=`그룹 ${e._g_adGroupId} · ${grp.length}개`;
-    listHTML=grp.length<=1?`<div class="fam-note">이 광고그룹에 다른 소재가 없습니다.</div>`:
+  const grpId=e._g_adGroupId||e._m_group;
+  if(grpId&&ds.byAdGr&&(ds.byAdGr.get(grpId)||[]).length){
+    const grp=(ds.byAdGr.get(grpId)||[e]).slice().sort((a,b)=>(b.score??-1)-(a.score??-1));
+    listTitle=e._m_group?"같은 크리에이티브 그룹 내 비교":"같은 광고 그룹 내 비교";
+    listMetaN=`${e._m_group?trunc(grpId,30):"그룹 "+grpId} · ${grp.length}개`;
+    listHTML=grp.length<=1?`<div class="fam-note">이 그룹에 다른 소재가 없습니다.</div>`:
       `<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">유형 / 이름</th><th>광고비</th><th>${effLab}</th><th>점수</th></tr></thead><tbody>`+
-      grp.map(x=>{const url=x._g_url||(/^https?:/.test(x.name)?x.name:"");
-        const typeShort=assetShortType(x._g_assetType);
-        const emoji=assetTypeEmoji(x._g_assetType);
+      grp.map(x=>{const url=previewUrlOf(x);
+        const typeShort=entTypeShort(x);
+        const emoji=entTypeEmoji(x);
         return `<tr class="${x.name===e.name?"me":""} hoverable" data-preview="${escAttr(url)}" data-label="${escAttr(typeShort+' · '+trunc(x.name,40))}">
-        <td class="l"><span class="g-type-emoji" title="${escAttr(x._g_assetType||'')}">${emoji}</span> <span class="g-type-lab">${typeShort}</span> <span class="g-name">${trunc(x.name,26)}</span></td>
+        <td class="l"><span class="g-type-emoji" title="${escAttr(x._g_assetType||x._m_ctype||'')}">${emoji}</span> <span class="g-type-lab">${typeShort}</span> <span class="g-name">${trunc(x.name,26)}</span></td>
         <td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td>
         <td><span class="sp ${sp(x.tier)}">${x.score??"–"}</span></td></tr>`;}).join("")+
       `</tbody></table></div></div>`;
@@ -1049,13 +1139,14 @@ function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>
       `<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">이름</th><th>광고비</th><th>${effLab}</th><th>점수</th></tr></thead><tbody>`+
       fam.map(x=>`<tr class="${x.name===e.name?"me":""}"><td class="l"><span class="mb b-${x.dom==="good"?"gold":x.tier}">${tierBadge(x)}</span> ${trunc(x.name,32)}</td><td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td><td><span class="sp ${sp(x.tier)}">${x.score??"–"}</span></td></tr>`).join("")+
       `</tbody></table></div></div>`;}
-  const assetUrl=e["_g_url"]||(/^https?:/.test(e.name)?e.name:"");
-  const preview=assetPreview(assetUrl);
+  const assetUrl=previewUrlOf(e);
+  const preview=assetPreview(assetUrl,e);
   const gExtra=e["_g_assetType"]?`<div class="g-extra"><span class="g-tag">${e["_g_assetType"]}</span>${e["_g_status"]?`<span class="g-tag g-status">${e["_g_status"]}</span>`:""}${e["_g_assetStatus"]?`<span class="g-tag">${e["_g_assetStatus"]}</span>`:""}</div>${e._g_campaignId||e._g_adGroupId||e._g_assetId?`<div class="g-ids"><span>${e._g_campaignId?`캠페인 <b>${e._g_campaignId}</b>`:""}</span><span>${e._g_adGroupId?`광고그룹 <b>${e._g_adGroupId}</b>`:""}</span><span>${e._g_assetId?`항목 <b>${e._g_assetId}</b>`:""}</span></div>`:""}`:"";
+  const mExtra=e._m_ctype?`<div class="g-extra"><span class="g-tag">${mCtypeLabel(e._m_ctype)}</span>${e._m_res?`<span class="g-tag">${e._m_res.replace("x","×")}</span>`:""}${e["영상 완주율"]!=null?`<span class="g-tag g-status">완주율 ${fmtPct(e["영상 완주율"])}</span>`:""}${(e._m_installs||0)>0?`<span class="g-tag">설치(몰로코) ${fmtInt(e._m_installs)}</span>`:""}</div>${e._m_group?`<div class="g-ids"><span>그룹 <b>${trunc(e._m_group,36)}</b></span></div>`:""}`:"";
   const hasPreview=!!preview;
   inner.classList.toggle("no-preview",!hasPreview);
   inner.innerHTML=`<div class="isle-hd">${scoreTxt}<span class="nm">${trunc(e.name,80)}</span>${chipsHTML(e.tags)}</div>
-    ${hasPreview?`<section><div class="isle-preview">${preview}${gExtra}</div></section>`:""}
+    ${hasPreview?`<section><div class="isle-preview">${preview}${gExtra}${mExtra}</div></section>`:""}
     <section><div class="ish">기준별 위치 <span class="n">${cur.good?cur.lab+" 기준":"광고비 규모"}</span></div><div class="mtog">${toggles}</div>${bars}</section>
     <section><div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}</section>`;
   inner.querySelectorAll(".mtog button").forEach(b=>b.addEventListener("click",ev=>{ev.stopPropagation();ISLE.metric=b.dataset.m;inner.querySelectorAll(".mtog button").forEach(x=>x.classList.toggle("on",x.dataset.m===ISLE.metric));requestAnimationFrame(()=>fillIsland(ds,e,inner));}));
@@ -1063,7 +1154,7 @@ function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>
     const url=tr.dataset.preview,lab=tr.dataset.label||"";
     if(!url)return;
     tr.addEventListener("mouseenter",ev=>{const h=assetPreviewTipHTML(url,lab);if(h)showTip(h,ev.clientX,ev.clientY,true);});
-    tr.addEventListener("mousemove",ev=>{if(tip.style.opacity!=="0")showTip(tip.innerHTML,ev.clientX,ev.clientY,tip.classList.contains("big"));});
+    tr.addEventListener("mousemove",ev=>{if(tip.style.opacity!=="0")placeTip(ev.clientX,ev.clientY);});
     tr.addEventListener("mouseleave",hideTip);});}
 function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-row");const wasOpen=ISLE.name===name;
   if(existing)existing.remove();$$("#table tbody tr.exp").forEach(t=>t.classList.remove("exp"));
@@ -1080,6 +1171,12 @@ function tableCols(L,ds){const meta=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score
     {k:"CTR",t:"CTR",f:"pct",help:"클릭률 = 클릭÷노출 · 높을수록 좋음"},{k:"CPC",t:"CPC",f:"won",help:"클릭당 비용 · 낮을수록 좋음"}];
   if(L.hasConv)nums.push({k:"어트리뷰션 수",t:"설치",f:"int",help:"이 항목으로 생긴 앱 설치 수"},{k:"eCPI",t:"eCPI",f:"won",help:"설치 1건당 비용 · 낮을수록 좋음"},
     {k:"활성 유저 수",t:"활성유저",f:"int",help:"설치 후 실제 사용자"},{k:"활성 유저 eCPA",t:"eCPA",f:"won",help:"활성유저당 비용 · 낮을수록 좋음"});
+  if(ds&&ds.agg&&ds.agg.some(e=>e._m_ctype))nums.push(
+    {k:"영상 완주율",t:"완주율",f:"pct",help:"영상을 끝까지 본 비율 (노출 가중 평균) · 높을수록 좋음"},
+    {k:"신규+재활성 유저 수",t:"신규+재활성",f:"int",help:"신규 + 휴면 복귀 유저 수"},
+    {k:"신규+재활성 eCPA",t:"신규 eCPA",f:"won",help:"신규+재활성 유저 1명당 비용 · 낮을수록 좋음"},
+    {k:"_m_installs",t:"설치(몰로코)",f:"int",help:"몰로코 리포트 기준 설치 수 — MMP 어트리뷰션과 다를 수 있음"}
+  );
   if(ds&&ds.agg&&ds.agg.some(e=>e._g_assetType))nums.push(
     {k:"_g_ROAS",t:"ROAS",f:"num",help:"전환 가치÷비용 · 높을수록 좋음"},
     {k:"_g_costPerConv",t:"전환당비용",f:"won",help:"비용÷전환수 · 낮을수록 좋음"},
@@ -1102,13 +1199,13 @@ function tierBadge(e){if(e.dom==="good")return `<span class="dom-tag" title="독
   return "";}
 const PAGE_SIZE=60;
 let tPage=1;
-/* Aggregate ds.agg by _g_adGroupId → pseudo-entities for group view */
+/* Aggregate ds.agg by 광고그룹(_g_adGroupId) 또는 크리에이티브 그룹(_m_group) → pseudo-entities for group view */
 function buildAdGroupAgg(ds){
   const grp=new Map();
-  for(const e of ds.agg){const id=e._g_adGroupId;if(!id)continue;
-    let g=grp.get(id);if(!g){g={_g_adGroupId:id,_g_campaignId:e._g_campaignId,name:"광고그룹 "+id,tags:{},_isGroup:true,_members:[]};grp.set(id,g);}
+  for(const e of ds.agg){const id=e._g_adGroupId||e._m_group;if(!id)continue;
+    let g=grp.get(id);if(!g){g={_g_adGroupId:e._g_adGroupId||null,_m_group:e._m_group||null,_g_campaignId:e._g_campaignId,name:e._m_group?id:("광고그룹 "+id),tags:{},_isGroup:true,_members:[]};grp.set(id,g);}
     g._members.push(e);
-    for(const k of ["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue"]){
+    for(const k of ["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue","_m_installs","신규+재활성 유저 수","_vcrNum","_vcrDen"]){
       if(e[k]!=null){g[k]=(g[k]||0)+(+e[k]||0);}}}
   const rows=[...grp.values()].filter(g=>g._members.length>0);
   rows.forEach(g=>{
@@ -1118,6 +1215,8 @@ function buildAdGroupAgg(ds){
     g.CPM=imp>0?cost/imp*1000:null;
     g.eCPI=(g["어트리뷰션 수"]||0)>0?cost/g["어트리뷰션 수"]:null;
     g["활성 유저 eCPA"]=(g["활성 유저 수"]||0)>0?cost/g["활성 유저 수"]:null;
+    if((g._vcrDen||0)>0)g["영상 완주율"]=g._vcrNum/g._vcrDen;
+    if((g["신규+재활성 유저 수"]||0)>0)g["신규+재활성 eCPA"]=cost/g["신규+재활성 유저 수"];
     g._g_interactionRate=imp>0&&g._g_interactions>0?g._g_interactions/imp:null;
     g._g_conversionRate=g._g_interactions>0&&g._g_conversions>0?g._g_conversions/g._g_interactions:null;
     g._g_costPerConv=g._g_conversions>0?cost/g._g_conversions:null;
@@ -1153,14 +1252,14 @@ function scoreGroupAgg(ds,rows){
   const best=elig.slice().sort((x,y)=>y.score-x.score);best.forEach((e,i)=>{e.rank=i+1;});
 }
 function getRowsForTable(ds){
-  if(tGroupBy&&ds.agg.some(e=>e._g_adGroupId)){ds._aggGrpCache=buildAdGroupAgg(ds);return ds._aggGrpCache.slice();}
+  if(tGroupBy&&ds.agg.some(e=>e._g_adGroupId||e._m_group)){ds._aggGrpCache=buildAdGroupAgg(ds);return ds._aggGrpCache.slice();}
   ds._aggGrpCache=null;return ds.agg.slice();}
 function findRow(ds,name){
   if(ds.byName){const e=ds.byName.get(name);if(e)return e;}
   if(ds._aggGrpCache){const g=ds._aggGrpCache.find(x=>x.name===name);if(g)return g;}
   return ds.agg.find(x=>x.name===name);}
-const COL_DIR={"CPC":-1,"CPM":-1,"eCPI":-1,"활성 유저 eCPA":-1,"_g_costPerConv":-1,
-  "노출 수":1,"클릭 수":1,"어트리뷰션 수":1,"활성 유저 수":1,"CTR":1,"_g_ROAS":1,"_g_conversionRate":1,"_g_interactionRate":1,"_g_conversions":1,"_g_interactions":1,"_g_convValue":1,"_g_convValuePerConv":1,"_g_allConv":1};
+const COL_DIR={"CPC":-1,"CPM":-1,"eCPI":-1,"활성 유저 eCPA":-1,"_g_costPerConv":-1,"신규+재활성 eCPA":-1,
+  "노출 수":1,"클릭 수":1,"어트리뷰션 수":1,"활성 유저 수":1,"CTR":1,"영상 완주율":1,"신규+재활성 유저 수":1,"_m_installs":1,"_g_ROAS":1,"_g_conversionRate":1,"_g_interactionRate":1,"_g_conversions":1,"_g_interactions":1,"_g_convValue":1,"_g_convValuePerConv":1,"_g_allConv":1};
 function cellTier(v,sortedAll,dir){
   if(v==null||!sortedAll||sortedAll.length<5)return "m";
   const p=pctRank(sortedAll,v),g=dir<0?1-p:p;
@@ -1195,7 +1294,8 @@ function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L,ds),thead=$("#tabl
   const html=visible.map(r=>{const spCls=r.tier==="g2"?"sp-g2":r.tier==="g1"?"sp-g1":r.tier==="m"?"sp-mid":r.tier==="w1"?"sp-w1":r.tier==="w2"?"sp-w2":"sp-na";
     const score=r.score!=null?`<span class="sp ${spCls}">${r.score}</span>`:`<span class="sp sp-na">–</span>`;
     return `<tr class="row" data-name="${escAttr(r.name)}">`+cols.map(c=>{if(c.k==="_b")return `<td class="bdg">${tierBadge(r)}</td>`;
-      if(c.k==="name")return `<td class="name">${trunc(r.name,60)}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags)}</div></td>`;
+      if(c.k==="name"){const th=thumbHTML(r);
+        return `<td class="name"><div class="nwrap">${th}<div class="ntxt">${trunc(r.name,60)}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags)}</div></div></div></td>`;}
       if(c.k==="score")return `<td>${score}</td>`;
       const dir=COL_DIR[c.k]||0;
       const t=dir?cellTier(r[c.k],colSorted[c.k],dir):"m";
@@ -1204,6 +1304,11 @@ function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L,ds),thead=$("#tabl
   tbody.innerHTML=html+pagerRow;
   const pp=$("#pgPrev");if(pp)pp.onclick=()=>{if(tPage>1){tPage--;renderTable(ds);document.querySelector("#table")?.scrollIntoView({behavior:"smooth",block:"start"});}};
   const pn=$("#pgNext");if(pn)pn.onclick=()=>{if(tPage<totalPages){tPage++;renderTable(ds);document.querySelector("#table")?.scrollIntoView({behavior:"smooth",block:"start"});}};
+  tbody.querySelectorAll(".tthumb[data-purl]").forEach(t=>{const url=t.dataset.purl;
+    const tr=t.closest("tr"),lab=tr?tr.getAttribute("data-name"):"";
+    t.addEventListener("mouseenter",ev=>{const h=assetPreviewTipHTML(url,lab);if(h)showTip(h,ev.clientX,ev.clientY,true);});
+    t.addEventListener("mousemove",ev=>{if(tip.style.opacity!=="0")placeTip(ev.clientX,ev.clientY);});
+    t.addEventListener("mouseleave",hideTip);});
   thead.querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(tState.sort===k)tState.dir*=-1;else{tState.sort=k;tState.dir=(k==="name")?1:-1;}tPage=1;renderTable(ds);});}
 /* Compute what page contains the entity name in current sort/filter state */
 function pageForName(ds,name){let rows=getRowsForTable(ds);
@@ -1231,7 +1336,7 @@ function renderQuadTierLegend(){const el=$("#qTierLeg");if(!el)return;
 function renderQuickFo(){const wrap=$("#qfoWrap"),ds=curDS;
   if(!wrap)return;
   const hasFo=ds&&ds.agg&&ds.agg.some(e=>e.tags&&(e.tags.fo==="영상"||e.tags.fo==="이미지"));
-  const hasAdGr=ds&&ds.agg&&ds.agg.some(e=>e._g_adGroupId);
+  const hasAdGr=ds&&ds.agg&&ds.agg.some(e=>e._g_adGroupId||e._m_group);
   wrap.hidden=!(hasFo||hasAdGr);
   if(wrap.hidden)return;
   const v=$("#qfoVid"),i=$("#qfoImg"),g=$("#qfoGrp");
@@ -1242,7 +1347,7 @@ function toggleQuickFo(val){tQuickFo=tQuickFo===val?null:val;renderQuickFo();tPa
 function toggleGroupBy(){tGroupBy=!tGroupBy;renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);}
 
 /* glossary */
-const GLOSSARY=[["광고비","이 소재에 쓴 돈"],["노출","사용자에게 보여진 횟수"],["클릭","눌린 횟수"],["CTR","클릭률 = 클릭÷노출",1,"높을수록 좋음"],["CPC","클릭 1번당 비용",1,"낮을수록 좋음"],["설치","이 소재로 생긴 앱 설치 수(어트리뷰션)"],["eCPI","설치 1건당 비용 — 소재 효율의 핵심",1,"낮을수록 좋음"],["활성 유저","설치 후 실제로 앱을 쓴 사람"],["eCPA","활성 유저 1명당 비용",1,"낮을수록 좋음"],["점수","효율(75%)+규모(20%)+통계신뢰(5%) 종합, 0~100"]];
+const GLOSSARY=[["광고비","이 소재에 쓴 돈"],["노출","사용자에게 보여진 횟수"],["클릭","눌린 횟수"],["CTR","클릭률 = 클릭÷노출",1,"높을수록 좋음"],["CPC","클릭 1번당 비용",1,"낮을수록 좋음"],["설치","이 소재로 생긴 앱 설치 수(어트리뷰션)"],["eCPI","설치 1건당 비용 — 소재 효율의 핵심",1,"낮을수록 좋음"],["활성 유저","설치 후 실제로 앱을 쓴 사람"],["eCPA","활성 유저 1명당 비용",1,"낮을수록 좋음"],["완주율","영상을 끝까지 본 비율 (노출 가중 평균)",1,"높을수록 좋음"],["신규+재활성","신규 유저 + 휴면에서 돌아온 유저 수"],["설치(몰로코)","몰로코 리포트 자체 집계 설치 수 — MMP 어트리뷰션과 다를 수 있음"],["점수","효율(75%)+규모(20%)+통계신뢰(5%) 종합, 0~100"]];
 function renderGlossary(){$("#glossGrid").innerHTML=GLOSSARY.map(g=>`<div><b>${g[0]}</b> — ${g[1]}${g[2]?`<span class="dir">${g[3]}</span>`:""}</div>`).join("");}
 $("#glossBtn").onclick=()=>$("#gloss").classList.add("show");
 $("#glossClose").onclick=()=>$("#gloss").classList.remove("show");
@@ -1259,7 +1364,7 @@ function buildIndex(arr){const byVe=new Map(),byFo=new Map(),bySize=new Map(),by
     if(e.tags.ve)push(byVe,e.tags.ve,e);
     if(e.tags.fo)push(byFo,e.tags.fo,e);
     if(e.tags.size)push(bySize,e.tags.size,e);
-    if(e._g_adGroupId)push(byAdGr,e._g_adGroupId,e);
+    const gid=e._g_adGroupId||e._m_group;if(gid)push(byAdGr,gid,e);
     push(byFk,e._fk,e);}
   return{byVe,byFo,bySize,byFk,byName,byAdGr};}
 function fileChannel(fname){if(!fname)return null;const f=String(fname).toLowerCase(),kr=String(fname);
@@ -1375,13 +1480,16 @@ function renderFooter(){$("#ft").innerHTML=`
   <table class="ft-tbl">
     <thead><tr><th>지표</th><th class="n">가중치</th><th>방향</th><th>근거</th></tr></thead>
     <tbody>
-      <tr><td>eCPI (Cost per Install)</td><td class="n">30%</td><td>↓ 낮을수록</td><td>UA(User Acquisition) 표준 KPI</td></tr>
-      <tr><td>활성 유저 eCPA</td><td class="n">25%</td><td>↓ 낮을수록</td><td>Active user 기준 CPA — 진성 유입 지표</td></tr>
-      <tr><td>CTR</td><td class="n">20%</td><td>↑ 높을수록</td><td>Meta Ad Relevance의 <i>Engagement Rate Ranking</i></td></tr>
-      <tr><td>CPM</td><td class="n">15%</td><td>↓ 낮을수록</td><td>Meta의 <i>Quality Ranking</i>과 상관 — 저품질 시 CPM 상승</td></tr>
-      <tr><td>CPC</td><td class="n">10%</td><td>↓ 낮을수록</td><td>클릭 단가 — 클릭 유도 효율</td></tr>
+      <tr><td>eCPI (Cost per Install)</td><td class="n">26%</td><td>↓ 낮을수록</td><td>UA(User Acquisition) 표준 KPI</td></tr>
+      <tr><td>활성 유저 eCPA</td><td class="n">20%</td><td>↓ 낮을수록</td><td>Active user 기준 CPA — 진성 유입 지표</td></tr>
+      <tr><td>CTR</td><td class="n">16%</td><td>↑ 높을수록</td><td>Meta Ad Relevance의 <i>Engagement Rate Ranking</i></td></tr>
+      <tr><td>신규+재활성 eCPA</td><td class="n">12%</td><td>↓ 낮을수록</td><td>신규·복귀 유저당 비용 — 몰로코 리포트 제공 시</td></tr>
+      <tr><td>CPM</td><td class="n">10%</td><td>↓ 낮을수록</td><td>Meta의 <i>Quality Ranking</i>과 상관 — 저품질 시 CPM 상승</td></tr>
+      <tr><td>영상 완주율 (VCR)</td><td class="n">8%</td><td>↑ 높을수록</td><td>영상 소재 한정 — 크리에이티브 주목도 신호 (몰로코 제공 시)</td></tr>
+      <tr><td>CPC</td><td class="n">8%</td><td>↓ 낮을수록</td><td>클릭 단가 — 클릭 유도 효율</td></tr>
     </tbody>
   </table>
+  <p>리포트에 없는 지표(예: 완주율·신규 eCPA가 없는 매체)는 자동 제외되며, 남은 지표의 가중치가 재정규화됩니다.</p>
 
   <h4>Adset(광고세트) 레벨</h4>
   <p>세트 단위는 개별 소재 CTR보다 <b>후속 전환 효율</b>(활성 eCPA)이 훨씬 안정적으로 관측되므로 가중치를 재조정했습니다:
@@ -1454,7 +1562,9 @@ function renderFooter(){$("#ft").innerHTML=`
 
 <p class="ft-note">모든 계산은 브라우저 안에서 이뤄지며, CSV 데이터는 외부로 전송되지 않습니다 ·
 데이터 컬럼 가용도가 10% 미만인 지표는 자동으로 표·차트에서 숨김 처리됩니다 ·
-등급은 <b>업로드된 계정 내 상대 평가</b>이며, 다른 계정 간의 비교에는 적합하지 않습니다.</p>`;}
+등급은 <b>업로드된 계정 내 상대 평가</b>이며, 다른 계정 간의 비교에는 적합하지 않습니다 ·
+몰로코 크리에이티브 리포트(<code>creative_preview</code>·<code>creative_type</code> 포함)는 자동 감지되어 <b>소재 단위</b>로 분석되며,
+이미지·영상 미리보기는 몰로코 CDN에서 브라우저가 직접 불러옵니다(외부 업로드 없음).</p>`;}
 function refreshAll(){if(!active||!DATASETS[active])active=TAB_ORDER.find(k=>DATASETS[k])||Object.keys(DATASETS)[0];renderSeg();if(active)setActive(active);}
 
 function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;bdDim=null;bdMet=null;tableShowAll=false;
@@ -1470,8 +1580,8 @@ function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(
   function done(){
     if(!parsed.length){toast("CSV 형식을 알 수 없음 — ad_name/creative_group_name/adset_name 컬럼이 필요");return;}
     let newMode,chanFor;
-    const gForce=parsed.some(p=>p.forceCh==="Google");
-    if(gForce){newMode="channeled";chanFor=(p)=>p.forceCh||fileChannel(p.fname)||null;}
+    const forceTags=[...new Set(parsed.map(p=>p.forceCh).filter(Boolean))];
+    if(forceTags.length){newMode="channeled";chanFor=(p)=>p.forceCh||fileChannel(p.fname)||"기타";}
     else if(opts&&opts.mode){newMode=opts.mode;chanFor=(_)=>opts.channel||null;}
     else{const hints=parsed.map(p=>fileChannel(p.fname)).filter(Boolean);
       if(hints.length){newMode="channeled";chanFor=(p)=>fileChannel(p.fname)||"기타";}
@@ -1485,15 +1595,17 @@ function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(
       if(k)loaded.add(LEVELS[k].name);});
     refreshAll();
     const chTxt=channels.size?` · ${[...channels].join("/")}`:" · 통합";
-    const gTxt=gForce?"✓ Google Ads Data 감지됨 · ":"";
+    const gTxt=forceTags.length?`✓ ${forceTags.map(t=>t==="Google"?"Google Ads":t).join(" · ")} 리포트 감지 · `:"";
     toast(`${gTxt}교체됨: ${[...loaded].join(", ")}${chTxt}${failed.length?` · 건너뜀 ${failed.length}건`:""}`);
   }
   arr.forEach(f=>{const rd=new FileReader();
     rd.onload=()=>{const raw=rd.result;
       if(isGoogleReport(raw)){const g=parseGoogleReport(raw);
         if(g)parsed.push({headers:g.headers,data:g.data,fname:f.name,forceCh:"Google"});else failed.push(f.name);
-      }else{const r=parseCSV(raw);const k=detect(r.headers);
-        if(k)parsed.push({headers:r.headers,data:r.data,fname:f.name});else failed.push(f.name);}
+      }else{const r=parseCSV(raw);
+        if(isMolocoReport(r.headers)){const m=prepMoloco(r);parsed.push({headers:m.headers,data:m.data,fname:f.name,forceCh:"Moloco"});}
+        else{const k=detect(r.headers);
+        if(k)parsed.push({headers:r.headers,data:r.data,fname:f.name});else failed.push(f.name);}}
       if(--pending===0)done();};
     rd.onerror=()=>{failed.push(f.name);if(--pending===0)done();};
     rd.readAsText(f,"utf-8");});}
