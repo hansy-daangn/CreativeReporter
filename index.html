@@ -700,9 +700,6 @@ function entTypeEmoji(x){const s=entTypeShort(x);
 function previewUrlOf(e){return e._m_url||e._g_url||(/^https?:/.test(e.name||"")?e.name:"")||"";}
 
 let WEEKS=["2026-06-01","2026-06-08","2026-06-15","2026-06-22"];
-function setWeeksFromDatasets(){const s=new Set();
-  for(const arr of arguments){for(const r of arr){if(r&&r.date)s.add(r.date);}}
-  const a=[...s].sort();if(a.length>=4)WEEKS=a.slice(-4);else if(a.length)WEEKS=a;}
 function aggregate(data,L){const map=new Map();
   for(const r of data){let nm=r[L.nameCol];if(nm==null||nm===""||nm==="nan")nm="(미지정)";
     if(!map.has(nm))map.set(nm,{name:nm,비용:0,"노출 수":0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0,weeks:Object.fromEntries(WEEKS.map(w=>[w,{비용:0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0}]))});
@@ -1491,12 +1488,11 @@ async function cloudSaveAll(jobs,skips){
   if(notes.length)setTimeout(()=>toast("☁️ "+notes.join(" · ")),1400);}
 function loadCloudRows(rows){
   resetAll();dsMode="channeled";
-  const ws=[...new Set(rows.map(r=>String(r.week_start).slice(0,10)))].sort();
-  WEEKS=ws.slice(-8);
   const byCh=new Map();
   for(const r of rows){const d={date:String(r.week_start).slice(0,10),ad_name:r.ad_name,...(r.payload||{})};
     let a=byCh.get(r.channel);if(!a){a=[];byCh.set(r.channel,a);}a.push(d);}
-  for(const[ch,arr]of byCh)ingest(["date","ad_name","비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"],arr,"Supabase 저장소",ch);
+  for(const[ch,arr]of byCh)ingest(["date","ad_name","비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"],arr,"Supabase 저장소",ch,"replace");
+  rebuildAllDatasets();
   refreshAll();}
 async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
   try{const rows=await sbRpc("cr_load",{pw});
@@ -1531,29 +1527,51 @@ function fileChannel(fname){if(!fname)return null;const f=String(fname).toLowerC
   if(/(^|[_\-.\s])(tiktok|tik|tk)([_\-.\s]|$)/i.test(f)||/틱톡/.test(kr))return "TikTok";
   return null;}
 let dsMode="unified";
-function ingest(headers,data,fname,forceCh){const k=detect(headers);if(!k){toast("형식을 알 수 없는 CSV: "+(fname||""));return null;}const L=LEVELS[k];
-  for(const r of data)r._ch=forceCh||null;
+/* 채널 단위 병합 — 뷰도 DB와 같은 규칙을 쓴다:
+   accumulate = 같은 (주차, 소재)가 이미 있으면 기존 행 유지·새 행은 건너뜀 (재업로드해도 절대 이중 집계 없음)
+   replace    = 그 채널의 화면 데이터를 이 파일로 통째 교체 (월간·일간 등 누적 불가 파일용, 다른 채널은 그대로) */
+function mergeChannelRows(ds,ch,data,mode){
+  data.forEach(r=>{r._ch=ch;});
+  const hadRows=ds.dataAll.some(r=>r._ch===ch);
+  if(mode!=="accumulate"||!hadRows){
+    const kept=ds.dataAll.filter(r=>r._ch!==ch);
+    ds.dataAll=kept.concat(data);
+    return{added:data.length,skipped:0,replaced:hadRows};}
+  const nameCol=ds.L.nameCol;
+  const seen=new Set(ds.dataAll.filter(r=>r._ch===ch).map(r=>`${r.date}|${r[nameCol]}`));
+  const fresh=[];let skipped=0;
+  for(const r of data){
+    if(seen.has(`${r.date}|${r[nameCol]}`)){skipped++;continue;}
+    fresh.push(r);}
+  ds.dataAll=ds.dataAll.concat(fresh);
+  return{added:fresh.length,skipped,replaced:false};}
+function ingest(headers,data,fname,forceCh,mergeMode){const k=detect(headers);if(!k){toast("형식을 알 수 없는 CSV: "+(fname||""));return null;}const L=LEVELS[k];
   let ds=DATASETS[k];
   if(!ds){ds={key:k,L,dataAll:[],src:fname};DATASETS[k]=ds;}
-  if(forceCh){ds.dataAll=ds.dataAll.filter(r=>r._ch!==forceCh).concat(data);}
-  else{ds.dataAll=data;}
-  ds.src=fname;
-  ds.aggAll=aggregate(ds.dataAll,L);
-  ds.aggAll.forEach(e=>{if(forceCh)e.tags.ch=forceCh;});
-  Object.assign(ds,buildIndex(ds.aggAll));
-  if(dsMode==="channeled"){
-    const chs=[...new Set(ds.dataAll.map(r=>r._ch).filter(Boolean))];
-    ds.channels=chs;
-    ds.aggByChannel=new Map();
-    for(const ch of chs){
-      const chData=ds.dataAll.filter(r=>r._ch===ch);
-      const chAgg=aggregate(chData,L);
-      chAgg.forEach(e=>{e.tags.ch=ch;});
-      const idx=buildIndex(chAgg);
-      ds.aggByChannel.set(ch,{aggAll:chAgg,...idx});}
-    if(!ds.media||!chs.includes(ds.media))ds.media=chs[0]||null;
-  }else{ds.channels=[];ds.aggByChannel=null;ds.media=null;}
+  if(forceCh){
+    const res=mergeChannelRows(ds,forceCh,data,mergeMode||"replace");
+    ds._mergeRes=res;
+    ds.src=(mergeMode==="accumulate"&&(res.skipped>0||ds.dataAll.length>data.length))?"누적 (저장소+업로드)":fname;
+  }else{data.forEach(r=>{r._ch=null;});ds.dataAll=data;ds.src=fname;ds._mergeRes={added:data.length,skipped:0};}
   return k;}
+/* 전 데이터셋의 주차(WEEKS)·집계·채널 스코프를 한 번에 재계산 — 병합 후 반드시 호출 */
+function rebuildAllDatasets(){
+  const s=new Set();
+  for(const k in DATASETS){for(const r of DATASETS[k].dataAll){if(r&&r.date&&/^\d{4}-\d{2}-\d{2}/.test(r.date))s.add(r.date);}}
+  const a=[...s].sort();if(a.length)WEEKS=a.slice(-8);
+  for(const k in DATASETS){const ds=DATASETS[k],L=ds.L;
+    ds.aggAll=aggregate(ds.dataAll,L);
+    Object.assign(ds,buildIndex(ds.aggAll));
+    if(dsMode==="channeled"){
+      const chs=[...new Set(ds.dataAll.map(r=>r._ch).filter(Boolean))];
+      ds.channels=chs;ds.aggByChannel=new Map();
+      for(const ch of chs){
+        const chData=ds.dataAll.filter(r=>r._ch===ch);
+        const chAgg=aggregate(chData,L);
+        chAgg.forEach(e=>{e.tags.ch=ch;});
+        ds.aggByChannel.set(ch,{aggAll:chAgg,...buildIndex(chAgg)});}
+      if(!ds.media||!chs.includes(ds.media))ds.media=chs[0]||null;
+    }else{ds.channels=[];ds.aggByChannel=null;ds.media=null;}}}
 function scope(ds){
   if(dsMode==="channeled"&&ds.aggByChannel&&ds.media&&ds.aggByChannel.has(ds.media)){
     const ch=ds.aggByChannel.get(ds.media);
@@ -1748,29 +1766,42 @@ function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(
   const parsed=[],failed=[];
   function done(){
     if(!parsed.length){toast("CSV 형식을 알 수 없음 — ad_name/creative_group_name/adset_name 컬럼이 필요");return;}
-    let newMode,chanFor;
     const forceTags=[...new Set(parsed.map(p=>p.forceCh).filter(Boolean))];
-    if(forceTags.length){newMode="channeled";chanFor=(p)=>p.forceCh||fileChannel(p.fname)||"기타";}
-    else if(opts&&opts.mode){newMode=opts.mode;chanFor=(_)=>opts.channel||null;}
-    else{const hints=parsed.map(p=>fileChannel(p.fname)).filter(Boolean);
-      if(hints.length){newMode="channeled";chanFor=(p)=>fileChannel(p.fname)||"기타";}
-      else{newMode="unified";chanFor=(_)=>null;}}
-    if(newMode!==dsMode)resetAll();
-    else if(newMode==="unified")resetAll();
-    dsMode=newMode;
-    setWeeksFromDatasets(...parsed.map(p=>p.data));const loaded=new Set(),channels=new Set();
-    const saveJobs=[],saveSkips=[];
-    parsed.forEach(p=>{const ch=chanFor(p);if(ch)channels.add(ch);
-      const k=ingest(p.headers,p.data,p.fname,ch);
-      if(k)loaded.add(LEVELS[k].name);
-      if(k==="ad"){ /* 클라우드 저장은 소재(ad) 레벨 · 매체 확정 · 주간 파일만 */
-        if(!ch)saveSkips.push(`${trunc(p.fname||"파일",18)}: 매체 미상 → 저장 안 함`);
-        else if(p.kind!=="weekly")saveSkips.push(`${ch}: ${KIND_LABEL[p.kind]||p.kind||"기간 미상"} 파일 → 저장 안 함`);
-        else saveJobs.push({ch,data:p.data});}});
+    const zoneCh=(opts&&opts.channel)||null;
+    const chOf=(p)=>p.forceCh||zoneCh||fileChannel(p.fname)||null;
+    const hasData=Object.keys(DATASETS).length>0;
+    const anyCh=parsed.some(p=>chOf(p));
+    const loaded=new Set(),notes=[],saveJobs=[],saveSkips=[];
+    if(anyCh||(dsMode==="channeled"&&hasData)){
+      /* 매체(채널) 단위 누적 — 한 파일 = 한 매체. 기존 화면(저장소 로드분 포함)은 유지되고
+         주간 파일은 (주차,소재) 키로 병합, 월간/일간 등은 그 매체 화면만 교체 */
+      if(dsMode!=="channeled"){if(hasData)resetAll();dsMode="channeled";}
+      for(const p of parsed){
+        const ch=chOf(p)||"기타";
+        const mode=p.kind==="weekly"?"accumulate":"replace";
+        const k=ingest(p.headers,p.data,p.fname,ch,mode);
+        if(!k)continue;loaded.add(LEVELS[k].name);
+        const r=DATASETS[k]._mergeRes||{added:0,skipped:0};
+        if(r.replaced)notes.push(`${ch}: ${KIND_LABEL[p.kind]||"기간 미상"} 파일 → 화면만 교체 (누적 안 함)`);
+        else if(r.skipped>0)notes.push(`${ch}: +${r.added.toLocaleString()}행 누적 · 기존 ${r.skipped.toLocaleString()}행 유지`);
+        else notes.push(`${ch}: +${r.added.toLocaleString()}행 누적`);
+        if(k==="ad"){ /* 클라우드 저장은 소재(ad) 레벨 · 매체 확정 · 주간 파일만 */
+          if(!chOf(p))saveSkips.push(`${trunc(p.fname||"파일",18)}: 매체 미상 → ☁️ 저장 안 함`);
+          else if(p.kind!=="weekly")saveSkips.push(`${ch}: ${KIND_LABEL[p.kind]||p.kind||"기간 미상"} 파일 → ☁️ 저장 안 함`);
+          else saveJobs.push({ch,data:p.data});}}
+    }else{
+      /* 매체 단서가 전혀 없는 파일만 있을 때의 기존(통합 교체) 동작 */
+      resetAll();dsMode="unified";
+      for(const p of parsed){
+        const k=ingest(p.headers,p.data,p.fname,null,"replace");
+        if(k)loaded.add(LEVELS[k].name);
+        if(k==="ad")saveSkips.push(`${trunc(p.fname||"파일",18)}: 매체 미상 → ☁️ 저장 안 함`);}
+      notes.push(`교체됨: ${[...loaded].join(", ")} · 통합`);
+    }
+    rebuildAllDatasets();
     refreshAll();
-    const chTxt=channels.size?` · ${[...channels].join("/")}`:" · 통합";
     const gTxt=forceTags.length?`✓ ${forceTags.map(t=>t==="Google"?"Google Ads":t).join(" · ")} 리포트 감지 · `:"";
-    toast(`${gTxt}교체됨: ${[...loaded].join(", ")}${chTxt}${failed.length?` · 건너뜀 ${failed.length}건`:""}`);
+    toast(`${gTxt}${notes.join(" · ")}${failed.length?` · 건너뜀 ${failed.length}건`:""}`);
     cloudSaveAll(saveJobs,saveSkips);
   }
   arr.forEach(f=>{const rd=new FileReader();
