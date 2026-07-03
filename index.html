@@ -422,6 +422,14 @@
   #landing .btn:hover{background:#EBEBEE}
   #landing .btn:active{transform:scale(.98)}
   @media(max-width:600px){#landing h1{font-size:32px;margin-bottom:26px}#landing .btn{min-width:0;padding:11px 20px;font-size:14px}}
+  #landing .pw-row{margin-top:30px;display:flex;gap:8px;justify-content:center;align-items:center}
+  #landing .pw-row input{padding:11px 18px;border:1.5px solid #E2E2E7;border-radius:980px;font-size:14.5px;width:238px;text-align:center;outline:none;background:#F5F5F7;font:inherit;letter-spacing:.12em}
+  #landing .pw-row input:focus{border-color:var(--karrot);background:#fff}
+  #landing .pw-row input.err{border-color:#C73F54;animation:pwshake .3s}
+  @keyframes pwshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  #landing .pw-row button{border:0;background:#1D1D1F;color:#fff}
+  #landing .pw-row button:hover{background:#000}
+  #landing .pw-hint{margin-top:12px;font-size:12px;color:#86868B}
 </style>
 </head>
 <body>
@@ -432,6 +440,8 @@
       <a class="btn" href="https://ads.google.com/aw/assetreport/associations?campaignId=22932296047&ocid=140474404&workspaceId=-1461371521&assetType=all&isLegacy=false&euid=6479159244&__u=5503618156&uscid=140474404&__c=5003988996&authuser=0&subid=kr-ko-ha-aw-bk-a-h00!o3-ahpm-0000000200-0000000002~EAIaIQobChMIyP2s4fj2kwMVuSZ7Bx2utAdNEAAYASAAEgLkSPD_BwE~147868729172~kwd-94527731~18654926781~629668488647" target="_blank" rel="noopener">Google Ads</a>
       <a class="btn" href="https://superset.kr.wekarrot.net/superset/dashboard/1342/" target="_blank" rel="noopener">SuperSet</a>
     </div>
+    <form class="pw-row" id="pwForm"><input type="password" id="pwIn" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="비밀번호"><button class="btn" type="submit">저장된 데이터 열기</button></form>
+    <div class="pw-hint">비밀번호를 입력하면 클라우드에 쌓인 주간 성과를 바로 불러옵니다</div>
   </div>
 </div>
 <div class="app">
@@ -459,12 +469,13 @@
       </div>
     </div>
     <div class="side-foot">
+      <div class="src" id="cloudLine" style="cursor:pointer" title="클릭 — 비밀번호 입력 또는 저장소 새로고침">☁️ 저장소 미연결</div>
       <div class="src" id="src"></div>
       <div class="sbtns">
         <button class="sbtn" id="glossBtn"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>용어</button>
         <label class="sbtn pri" id="drop"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15V4m0 0L8 8m4-4l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>CSV 넣기<input type="file" id="file" accept=".csv,text/csv" multiple hidden></label>
       </div>
-      <div class="snote">오프라인 · 외부 전송 없음</div>
+      <div class="snote">분석은 브라우저에서 · 주간 CSV만 ☁️ 자동 저장</div>
     </div>
   </aside>
 
@@ -597,10 +608,32 @@ function toWeekStart(dateStr){if(!dateStr||!/^\d{4}-\d{2}-\d{2}/.test(dateStr))r
   const[y,m,d]=dateStr.slice(0,10).split("-").map(Number);
   const dt=new Date(Date.UTC(y,m-1,d));const day=dt.getUTCDay();const diff=(day+6)%7;
   dt.setUTCDate(dt.getUTCDate()-diff);return dt.toISOString().slice(0,10);}
+/* 리포트 기간 단위 판별 — 클라우드 저장은 '주간(weekly)'만 허용 (월간/일간/불명확은 섞임 방지 위해 차단)
+   weekly: 모든 날짜가 월요일 (2개 이상이면 간격이 7의 배수)
+   monthly: 모든 날짜가 1일 / ambiguous: 날짜 1개가 '월요일이면서 1일' (주간·월간 구분 불가) */
+function dateKindOf(dateList){
+  const uniq=[...new Set((dateList||[]).map(d=>String(d||"").slice(0,10)).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)))].sort();
+  if(!uniq.length)return{kind:"none",dates:uniq};
+  const isMon=d=>{const[y,m,dd]=d.split("-").map(Number);return new Date(Date.UTC(y,m-1,dd)).getUTCDay()===1;};
+  const isFirst=d=>d.slice(8)==="01";
+  if(uniq.length===1){const d=uniq[0];
+    if(isMon(d)&&isFirst(d))return{kind:"ambiguous",dates:uniq};
+    if(isMon(d))return{kind:"weekly",dates:uniq};
+    if(isFirst(d))return{kind:"monthly",dates:uniq};
+    return{kind:"daily",dates:uniq};}
+  if(uniq.every(isFirst))return{kind:"monthly",dates:uniq};
+  if(uniq.every(isMon)){
+    for(let i=1;i<uniq.length;i++){const gap=(Date.parse(uniq[i])-Date.parse(uniq[i-1]))/864e5;if(gap%7!==0)return{kind:"daily",dates:uniq};}
+    return{kind:"weekly",dates:uniq};}
+  return{kind:"daily",dates:uniq};}
+const KIND_LABEL={weekly:"주간",monthly:"월간",daily:"일간/불규칙",ambiguous:"주간·월간 구분 불가",none:"날짜 없음",range:"기간 합산"};
 function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n").split("\n");
   let hdrIdx=-1;for(let i=0;i<Math.min(20,lines.length);i++){if(lines[i].includes("애셋 상태")&&lines[i].includes("확장 소재")){hdrIdx=i;break;}}
   if(hdrIdx<0)return null;
-  let start=null;for(let i=0;i<hdrIdx;i++){const m=lines[i].match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);if(m){start=`${m[1]}-${String(+m[2]).padStart(2,"0")}-${String(+m[3]).padStart(2,"0")}`;break;}}
+  let start=null,rangeEnd=null;
+  for(let i=0;i<hdrIdx;i++){const ms=[...lines[i].matchAll(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/g)];
+    if(ms.length){const f=m=>`${m[1]}-${String(+m[2]).padStart(2,"0")}-${String(+m[3]).padStart(2,"0")}`;
+      start=f(ms[0]);if(ms[1])rangeEnd=f(ms[1]);break;}}
   start=start||"2026-01-01";
   const sub=lines.slice(hdrIdx).join("\n");const{data}=parseCSV(sub);
   const pn=v=>{const s=String(v??"").replace(/["\s,%]/g,"");if(!s||s==="--"||s==="-")return 0;const n=Number(s);return isFinite(n)?n:0;};
@@ -627,13 +660,20 @@ function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n")
       "_g_campaignId":(r["캠페인 ID"]||"").trim(),
       "_g_allConv":pn(r["모든 전환(전환 시간별)"]),
       "_g_convValue":pn(r["모든 전환 가치(전환 시간별)"])};}).filter(r=>r.ad_name);
-  return{headers:["date","ad_name","비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수"],data:rows};}
+  /* 저장 허용 여부용 기간 판별: 일별 데이터면 원본 날짜로, 기간 합산이면 헤더의 시작~끝 범위로 */
+  let kind;
+  if(hasDaily)kind=dateKindOf(data.map(r=>String(r["일"]||"").slice(0,10))).kind;
+  else if(rangeEnd){const span=(Date.parse(rangeEnd)-Date.parse(start))/864e5+1;
+    kind=span===7?"weekly":(span>=28&&span<=31?"monthly":"range");}
+  else kind=dateKindOf([start]).kind;
+  return{headers:["date","ad_name","비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수"],data:rows,kind};}
 
 /* Moloco creative report — ad_name + creative_type/resolution/creative_preview(CDN 링크) 형식 자동 감지.
    creative_group_name은 레벨 컬럼이 아니라 소재의 소속 그룹 속성으로 취급해 소재(ad) 레벨로 분석한다. */
 function isMolocoReport(h){const s=new Set(h);
   return s.has("creative_preview")||s.has("설치 수(몰로코)")||(s.has("ad_name")&&s.has("creative_type"));}
 function prepMoloco(r){
+  const kind=dateKindOf(r.data.map(o=>o.date)).kind;
   const data=r.data.map(o=>{
     const p=String(o.creative_preview||"");
     let m=p.match(/href="([^"]+)"/);if(!m)m=p.match(/https?:\/\/[^\s"'<>]+/);
@@ -647,7 +687,7 @@ function prepMoloco(r){
     if(o.date)o.date=toWeekStart(String(o.date).slice(0,10));
     return o;});
   const headers=r.headers.filter(h=>h!=="creative_group_name");
-  return{headers,data};}
+  return{headers,data,kind};}
 function mCtypeLabel(t){if(!t)return"";const s=String(t).toUpperCase();
   if(s==="NATIVE_VIDEO")return"네이티브 영상";if(s==="VIDEO")return"영상";
   if(s==="NATIVE_IMAGE")return"네이티브 이미지";if(s==="IMAGE")return"이미지";
@@ -984,7 +1024,7 @@ function renderTrend(ds){const svg=$("#trend"),L=ds.L,S=ds.S;
   let s=`<g class="axis">`;for(let i=0;i<=4;i++){const gy=H-pad.b-i/4*(H-pad.t-pad.b);s+=`<line class="gl" x1="${pad.l}" y1="${gy}" x2="${W-pad.r}" y2="${gy}"/><text x="${pad.l-7}" y="${gy+3}" text-anchor="end">${fmtKRW(i/4*cmax)}</text><text x="${W-pad.r+7}" y="${gy+3}" text-anchor="start" fill="var(--c2)">${fmtWon(i/4*emax)}</text>`;}
   WEEKS.forEach((w,i)=>{s+=`<text x="${xat(i)}" y="${H-pad.b+18}" text-anchor="middle">${w.slice(5).replace("-","/")}</text>`;});s+=`</g>`;
   let area=`M ${xat(0)} ${yC(costs[0])}`;costs.forEach((c,i)=>{if(i)area+=` L ${xat(i)} ${yC(c)}`;});
-  s+=`<path d="${area} L ${xat(3)} ${H-pad.b} L ${pad.l} ${H-pad.b} Z" fill="var(--karrot)" fill-opacity="0.1"/><path d="${area}" fill="none" stroke="var(--karrot)" stroke-width="2.2"/>`;
+  s+=`<path d="${area} L ${xat(costs.length-1)} ${H-pad.b} L ${pad.l} ${H-pad.b} Z" fill="var(--karrot)" fill-opacity="0.1"/><path d="${area}" fill="none" stroke="var(--karrot)" stroke-width="2.2"/>`;
   costs.forEach((c,i)=>{s+=`<circle class="tp" data-i="${i}" cx="${xat(i)}" cy="${yC(c)}" r="3.8" fill="var(--karrot)" stroke="#fff" stroke-width="1.5"/>`;});
   let st=false,ep="";eff.forEach((v,i)=>{if(v==null)return;ep+=(st?" L":"M")+` ${xat(i)} ${yE(v)}`;st=true;});
   if(st){s+=`<path d="${ep}" fill="none" stroke="var(--c2)" stroke-width="2"/>`;eff.forEach((v,i)=>{if(v==null)return;s+=`<circle class="tp" data-i="${i}" cx="${xat(i)}" cy="${yE(v)}" r="3.4" fill="#fff" stroke="var(--c2)" stroke-width="2"/>`;});}
@@ -1412,6 +1452,67 @@ $("#qfoImg").onclick=()=>toggleQuickFo("이미지");
 $("#qfoGrp").onclick=()=>toggleGroupBy();
 $("#gloss").addEventListener("click",e=>{if(e.target.id==="gloss")$("#gloss").classList.remove("show");});
 
+/* ===== Supabase 클라우드 저장소 =====
+   publishable 키는 공개용(브라우저 노출 전제). 테이블은 RLS로 직접 접근이 막혀 있고,
+   모든 읽기/쓰기는 서버측에서 비밀번호를 검증하는 RPC(cr_load/cr_save/cr_status)로만 가능. */
+const SB_URL="https://newoydegfbnnqujgiips.supabase.co";
+const SB_KEY="sb_publishable_6remFFz9oGKffdlRakvdfg_OOLp6zYL";
+let cloudPw=sessionStorage.getItem("crpw")||null;
+async function sbRpc(fn,body){
+  const res=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:"POST",
+    headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,"Content-Type":"application/json"},
+    body:JSON.stringify(body)});
+  if(!res.ok){let msg="";try{const j=await res.json();msg=j.message||j.hint||JSON.stringify(j);}catch(e){msg="HTTP "+res.status;}
+    const err=new Error(msg);err.status=res.status;throw err;}
+  return res.json();}
+/* 저장 페이로드: (매체, 주 시작일, 소재) 그레인으로 원본 수치 합산 — 파생 지표는 로드시 재계산 */
+const SAVE_NUM_KEYS=["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수","_m_installs","_vcrNum","_vcrDen","_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue"];
+const SAVE_STR_KEYS=["_m_url","_m_ctype","_m_res","_m_group","_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_adGroupId","_g_campaignId"];
+function buildSaveRows(data,channel){const map=new Map();
+  for(const r of data){const nm=String(r.ad_name||"").trim(),wk=String(r.date||"").slice(0,10);
+    if(!nm||!/^\d{4}-\d{2}-\d{2}$/.test(wk))continue;
+    const key=wk+"|"+nm;let e=map.get(key);
+    if(!e){e={channel,week_start:wk,ad_name:nm,payload:{}};map.set(key,e);}
+    const p=e.payload;
+    for(const k of SAVE_NUM_KEYS){const v=num(r[k]);if(v!=null)p[k]=(p[k]||0)+v;}
+    for(const k of SAVE_STR_KEYS){if(r[k]!==undefined&&r[k]!==""&&p[k]==null)p[k]=r[k];}}
+  return[...map.values()];}
+async function cloudSaveAll(jobs,skips){
+  const notes=[...(skips||[])];
+  if(jobs&&jobs.length){
+    if(!cloudPw)notes.push("비밀번호 미입력 → 저장 안 함 (사이드바 ☁️ 클릭)");
+    else for(const j of jobs){try{
+      const rows=buildSaveRows(j.data,j.ch);
+      let ins=0,tot=0;
+      for(let i=0;i<rows.length;i+=800){const res=await sbRpc("cr_save",{pw:cloudPw,rows:rows.slice(i,i+800)});ins+=res.inserted||0;tot+=res.total||0;}
+      notes.push(`${j.ch}: 신규 ${ins.toLocaleString()}건 저장${tot-ins>0?` · 중복 ${(tot-ins).toLocaleString()}건 제외`:""}`);
+    }catch(err){notes.push(`${j.ch}: 저장 실패 (${err.message})`);}}}
+  if(cloudPw)refreshCloudLine();
+  if(notes.length)setTimeout(()=>toast("☁️ "+notes.join(" · ")),1400);}
+function loadCloudRows(rows){
+  resetAll();dsMode="channeled";
+  const ws=[...new Set(rows.map(r=>String(r.week_start).slice(0,10)))].sort();
+  WEEKS=ws.slice(-8);
+  const byCh=new Map();
+  for(const r of rows){const d={date:String(r.week_start).slice(0,10),ad_name:r.ad_name,...(r.payload||{})};
+    let a=byCh.get(r.channel);if(!a){a=[];byCh.set(r.channel,a);}a.push(d);}
+  for(const[ch,arr]of byCh)ingest(["date","ad_name","비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"],arr,"Supabase 저장소",ch);
+  refreshAll();}
+async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
+  try{const rows=await sbRpc("cr_load",{pw});
+    cloudPw=pw;sessionStorage.setItem("crpw",pw);
+    if(rows.length){loadCloudRows(rows);toast(`☁️ 저장소 열림 — ${rows.length.toLocaleString()}행 · ${[...new Set(rows.map(r=>r.channel))].join("·")}`);}
+    else if(!silent)toast("☁️ 연결됨 — 저장된 데이터가 아직 없습니다. 주간 CSV를 드롭하면 쌓입니다.");
+    refreshCloudLine();return true;
+  }catch(err){
+    if(!silent)toast(/password/i.test(err.message||"")?"비밀번호가 틀렸습니다":"클라우드 연결 실패: "+err.message);
+    return false;}}
+async function refreshCloudLine(){const el=$("#cloudLine");if(!el)return;
+  if(!cloudPw){el.innerHTML="☁️ 저장소 미연결 — <b>클릭해 비밀번호 입력</b>";return;}
+  try{const st=await sbRpc("cr_status",{pw:cloudPw});
+    el.innerHTML=(st&&st.rows>0)?`☁️ <b>${(st.channels||[]).join("·")}</b> · ${st.weeks}주(${String(st.first_week).slice(5)}~${String(st.last_week).slice(5)}) · ${Number(st.rows).toLocaleString()}행 · 클릭=새로고침`:"☁️ 연결됨 · 저장된 데이터 없음";
+  }catch(e){el.textContent="☁️ 저장소 상태 확인 실패";}}
+
 /* state */
 const DATASETS={};let active=null;
 function buildIndex(arr){const byVe=new Map(),byFo=new Map(),bySize=new Map(),byFk=new Map(),byName=new Map(),byAdGr=new Map();
@@ -1627,7 +1728,8 @@ function renderFooter(){$("#ft").innerHTML=`
   </ul>
 </details>
 
-<p class="ft-note">모든 계산은 브라우저 안에서 이뤄지며, CSV 데이터는 외부로 전송되지 않습니다 ·
+<p class="ft-note">모든 계산은 브라우저 안에서 이뤄지며, <b>주간(weekly) 소재 CSV의 원본 수치만</b> 비밀번호 인증 후 Supabase 저장소에 매체별로 보관됩니다
+(월간·일간·기간 미상 파일과 매체 미상 파일은 저장하지 않음 · 같은 매체·주차·소재의 중복 행은 DB 유니크 제약으로 자동 제외) ·
 데이터 컬럼 가용도가 10% 미만인 지표는 자동으로 표·차트에서 숨김 처리됩니다 ·
 등급은 <b>업로드된 계정 내 상대 평가</b>이며, 다른 계정 간의 비교에는 적합하지 않습니다 ·
 몰로코 크리에이티브 리포트(<code>creative_preview</code>·<code>creative_type</code> 포함)는 자동 감지되어 <b>소재 단위</b>로 분석되며,
@@ -1657,22 +1759,28 @@ function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(
     else if(newMode==="unified")resetAll();
     dsMode=newMode;
     setWeeksFromDatasets(...parsed.map(p=>p.data));const loaded=new Set(),channels=new Set();
+    const saveJobs=[],saveSkips=[];
     parsed.forEach(p=>{const ch=chanFor(p);if(ch)channels.add(ch);
       const k=ingest(p.headers,p.data,p.fname,ch);
-      if(k)loaded.add(LEVELS[k].name);});
+      if(k)loaded.add(LEVELS[k].name);
+      if(k==="ad"){ /* 클라우드 저장은 소재(ad) 레벨 · 매체 확정 · 주간 파일만 */
+        if(!ch)saveSkips.push(`${trunc(p.fname||"파일",18)}: 매체 미상 → 저장 안 함`);
+        else if(p.kind!=="weekly")saveSkips.push(`${ch}: ${KIND_LABEL[p.kind]||p.kind||"기간 미상"} 파일 → 저장 안 함`);
+        else saveJobs.push({ch,data:p.data});}});
     refreshAll();
     const chTxt=channels.size?` · ${[...channels].join("/")}`:" · 통합";
     const gTxt=forceTags.length?`✓ ${forceTags.map(t=>t==="Google"?"Google Ads":t).join(" · ")} 리포트 감지 · `:"";
     toast(`${gTxt}교체됨: ${[...loaded].join(", ")}${chTxt}${failed.length?` · 건너뜀 ${failed.length}건`:""}`);
+    cloudSaveAll(saveJobs,saveSkips);
   }
   arr.forEach(f=>{const rd=new FileReader();
     rd.onload=()=>{const raw=rd.result;
       if(isGoogleReport(raw)){const g=parseGoogleReport(raw);
-        if(g)parsed.push({headers:g.headers,data:g.data,fname:f.name,forceCh:"Google"});else failed.push(f.name);
+        if(g)parsed.push({headers:g.headers,data:g.data,fname:f.name,forceCh:"Google",kind:g.kind});else failed.push(f.name);
       }else{const r=parseCSV(raw);
-        if(isMolocoReport(r.headers)){const m=prepMoloco(r);parsed.push({headers:m.headers,data:m.data,fname:f.name,forceCh:"Moloco"});}
+        if(isMolocoReport(r.headers)){const m=prepMoloco(r);parsed.push({headers:m.headers,data:m.data,fname:f.name,forceCh:"Moloco",kind:m.kind});}
         else{const k=detect(r.headers);
-        if(k)parsed.push({headers:r.headers,data:r.data,fname:f.name});else failed.push(f.name);}}
+        if(k)parsed.push({headers:r.headers,data:r.data,fname:f.name,kind:dateKindOf(r.data.map(x=>x.date)).kind});else failed.push(f.name);}}
       if(--pending===0)done();};
     rd.onerror=()=>{failed.push(f.name);if(--pending===0)done();};
     rd.readAsText(f,"utf-8");});}
@@ -1725,6 +1833,23 @@ $("#qrst").addEventListener("click",()=>{_qResetRanges();_qRender();});
 const _origSetActive=setActive;setActive=function(k){_qResetRanges();_origSetActive(k);};
 function updateLandingVisibility(){const el=document.getElementById("landing");if(!el)return;const hasData=active&&DATASETS[active]&&DATASETS[active].agg&&DATASETS[active].agg.length;el.classList.toggle("hidden",!!hasData);}
 renderGlossary();renderFooter();refreshAll();updateLandingVisibility();
+/* 클라우드 저장소 UI 배선 */
+const _pwForm=$("#pwForm");
+if(_pwForm)_pwForm.addEventListener("submit",async e=>{e.preventDefault();
+  const inp=$("#pwIn"),v=(inp.value||"").trim();if(!v)return;
+  const ok=await cloudUnlock(v);
+  if(!ok){inp.classList.remove("err");void inp.offsetWidth;inp.classList.add("err");inp.select();}
+  else{updateLandingVisibility();}});
+const _cloudLine=$("#cloudLine");
+if(_cloudLine)_cloudLine.addEventListener("click",async()=>{
+  if(!cloudPw){const v=prompt("저장소 비밀번호");if(v&&v.trim())await cloudUnlock(v.trim());updateLandingVisibility();return;}
+  try{const rows=await sbRpc("cr_load",{pw:cloudPw});
+    if(rows.length){loadCloudRows(rows);updateLandingVisibility();toast(`☁️ 새로고침 — ${rows.length.toLocaleString()}행`);}
+    else toast("☁️ 저장된 데이터 없음");
+  }catch(e){toast("☁️ 새로고침 실패: "+e.message);}
+  refreshCloudLine();});
+refreshCloudLine();
+if(cloudPw)cloudUnlock(cloudPw,{silent:true}).then(()=>updateLandingVisibility());
 const _origSetActive2=setActive;setActive=function(k){_origSetActive2(k);updateLandingVisibility();};
 const _origResetAll=resetAll;resetAll=function(){_origResetAll();updateLandingVisibility();};
 _qxRange.paint();_qyRange.paint();
