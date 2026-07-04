@@ -280,10 +280,13 @@
   .tthumb.err img{display:none}
   .tthumb.err::before{content:"✕";font-size:10px}
   /* 메인 탭 */
-  .mtabs{display:flex;gap:8px;position:sticky;top:0;z-index:40;background:var(--surface);padding:10px 0;margin-top:-10px}
-  .mtabs button{padding:10px 22px;border-radius:12px;background:#E4E3DC;color:var(--muted);font-size:13.5px;font-weight:700;transition:.12s}
+  .mtabs{display:flex;position:sticky;top:0;z-index:40;background:var(--surface);padding:10px 0;margin-top:-10px}
+  /* 세그먼트 컨트롤 — 하나의 트랙 안에 버튼들이 묶인 형태 */
+  .mtabs .mtabs-in{display:inline-flex;gap:3px;background:#E7E6DF;border-radius:12px;padding:3px}
+  .mtabs button{padding:8px 20px;border-radius:9px;background:transparent;color:var(--muted);font-size:13.5px;font-weight:700;transition:.12s}
   .mtabs button:hover{color:var(--ink)}
-  .mtabs button.on{background:var(--ink);color:#fff;box-shadow:none}
+  .mtabs button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(20,20,15,.14)}
+  .mtabs button[hidden]{display:none}
   .mtabs button .tc{font-size:10.5px;color:var(--karrot);margin-left:5px;font-weight:800}
   /* AB테스트 */
   .abf{background:var(--surface-2);border-radius:12px;padding:15px 18px 8px;margin-bottom:14px}
@@ -597,9 +600,11 @@
     <div class="content">
 
       <div class="mtabs" id="mtabs">
-        <button data-t="analysis" class="on" type="button">분석</button>
-        <button data-t="table" type="button">전체 목록</button>
-        <button data-t="ab" type="button">AB테스트<span class="tc" id="abCnt"></span></button>
+        <div class="mtabs-in">
+          <button data-t="analysis" class="on" type="button">분석</button>
+          <button data-t="table" type="button">전체 목록</button>
+          <button data-t="ab" type="button">AB테스트<span class="tc" id="abCnt"></span></button>
+        </div>
       </div>
 
       <section class="card" id="tabAnalysis">
@@ -950,7 +955,25 @@ async function loadNameMap(pw){
   try{const gi=await sbRpc("cr_kv_get",{pw,key:"ginfo"});
     if(gi&&typeof gi==="object")gInfoMap=gi;}catch(e){}
   try{const oc=await sbRpc("cr_kv_get",{pw,key:"ocr"});
-    if(oc&&typeof oc==="object")gOcrMap=oc;}catch(e){}}
+    if(oc&&typeof oc==="object")gOcrMap=oc;}catch(e){}
+  try{const yt=await sbRpc("cr_kv_get",{pw,key:"ytt"});
+    if(yt&&typeof yt==="object")for(const id in yt){if(typeof yt[id]==="string"&&yt[id]&&_ytTitles[id]===undefined)_ytTitles[id]=yt[id];}}catch(e){}}
+/* 모든 유튜브 소재 제목을 로드 직후 백그라운드 일괄 조회(동시 4) — 클릭 없이 자동 표시, kv(ytt)로 기기 간 공유 */
+let _yttRan=false;
+async function hydrateAllYtTitles(){
+  if(_yttRan)return;_yttRan=true;
+  const ids=new Set();
+  for(const k in DATASETS){const ds=DATASETS[k];
+    for(const r of ds.dataAll){const id=ytIdOf(r._g_url||r[ds.L.nameCol]);if(id&&_ytTitles[id]===undefined)ids.add(id);}}
+  const list=[...ids];if(!list.length)return;
+  const fresh={};
+  for(let i=0;i<list.length;i+=4){
+    const part=list.slice(i,i+4);
+    const rs=await Promise.all(part.map(fetchYtTitle));
+    rs.forEach((t,j)=>{if(t)fresh[part[j]]=t;});}
+  if(Object.keys(fresh).length){
+    refreshDisplayNames();
+    if(cloudPw)sbRpc("cr_kv_merge",{pw:cloudPw,key:"ytt",val:fresh,uploader:uploaderId||"unknown"}).catch(()=>{});}}
 /* 유튜브 소재 제목 — noembed(CORS 허용)로 상세 열람 시에만 조회, 로컬 캐시.
    시작 시 캐시를 미리 올려 표·순위의 유튜브 URL 이름도 아는 제목으로 바로 표시 */
 const _ytTitles={};
@@ -1916,11 +1939,15 @@ function buildABFamilies(ds){
   return[...fams.values()].filter(f=>f.vars.size>=2&&(f.kind!=="N"||f.vars.has("1")));}
 function renderAB(ds){const el=$("#abBody"),meta=$("#abMeta"),cnt=$("#abCnt");
   if(!el)return;
-  if(!ds||!ds.agg){el.innerHTML="";if(cnt)cnt.textContent="";return;}
+  const abTabBtn=$('#mtabs button[data-t="ab"]');
+  if(!ds||!ds.agg){el.innerHTML="";if(cnt)cnt.textContent="";if(abTabBtn)abTabBtn.hidden=true;return;}
   const S=ds.S;
   const primary=(S&&S.specs&&S.specs[0])||{k:"eCPI",dir:-1,lab:"eCPI"};
   const pFmt=S&&S.goodFmt?S.goodFmt:"won";
   const fams=buildABFamilies(ds);
+  /* 인식된 테스트 그룹이 없으면 탭 자체를 숨긴다 (빈 화면 진입 방지) */
+  if(abTabBtn)abTabBtn.hidden=!fams.length;
+  if(!fams.length&&mainTab==="ab")switchTab("analysis");
   fams.forEach(f=>{
     f.rows=[...f.vars.entries()].map(([variant,mem])=>{
       const sum=k=>mem.reduce((s,e)=>s+(+e[k]||0),0);
@@ -2103,7 +2130,8 @@ function loadCloudRows(rows){
     let a=byCh.get(r.channel);if(!a){a=[];byCh.set(r.channel,a);}a.push(d);}
   for(const[ch,arr]of byCh)ingest(["date","ad_name","비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"],arr,"Supabase 저장소",ch,"replace");
   rebuildAllDatasets();
-  refreshAll();}
+  refreshAll();
+  setTimeout(()=>{hydrateAllYtTitles().catch(()=>{});},1200);}
 async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
   try{const rows=await sbRpc("cr_load",{pw});
     cloudPw=pw;sessionStorage.setItem("crpw",pw);
