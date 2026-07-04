@@ -34,6 +34,14 @@
   .side *{min-width:0}
   .side-duo{display:contents}
   .side-duo .side-sec:first-child{margin-top:2px}
+  /* 요약 토글 — 데스크톱은 항상 펼침(display:contents로 flex 유지), 모바일은 기본 접힘.
+     display:contents는 닫힘 상태 숨김을 깨뜨리므로 데스크톱(항상 open)에만 사용 */
+  .side-more{display:contents}
+  @media(max-width:900px){.side-more{display:block;margin-top:4px}}
+  .side-more>summary{cursor:pointer;list-style:none;margin-top:22px}
+  .side-more>summary::-webkit-details-marker{display:none}
+  .side-more>summary::after{content:" ▸";color:var(--side-faint)}
+  .side-more[open]>summary::after{content:" ▾"}
   .mseg{display:flex;flex-direction:column;gap:3px}
   .mseg button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:8px 11px;border-radius:8px;background:transparent;color:var(--side-muted);font-size:12px;font-weight:650;transition:.12s}
   .mseg button:hover{background:var(--side-2);color:var(--side-ink)}
@@ -65,7 +73,9 @@
   .main{min-width:0; display:flex; flex-direction:column}
   .content{padding:28px 30px 8px; display:flex; flex-direction:column; gap:20px}
 
-  .card{background:var(--surface); border-radius:var(--r); box-shadow:var(--sh); padding:22px 24px}
+  /* 본문 블록(카드) 제거 — 본문 전체가 블록 배경색(흰색)을 그대로 사용 */
+  .card{background:transparent; border-radius:0; box-shadow:none; padding:0}
+  .main{background:var(--surface)}
   .card-h{display:flex; align-items:baseline; gap:10px; margin:0 0 16px}
   .card-h h2{font-size:16px; font-weight:740; margin:0; letter-spacing:-.01em}
   .card-h .meta{font-size:12px; color:var(--muted)} .card-h .meta b{color:var(--ink);font-weight:650}
@@ -270,10 +280,10 @@
   .tthumb.err img{display:none}
   .tthumb.err::before{content:"✕";font-size:10px}
   /* 메인 탭 */
-  .mtabs{display:flex;gap:8px;position:sticky;top:0;z-index:40;background:var(--canvas);padding:10px 0;margin-top:-10px}
+  .mtabs{display:flex;gap:8px;position:sticky;top:0;z-index:40;background:var(--surface);padding:10px 0;margin-top:-10px}
   .mtabs button{padding:10px 22px;border-radius:12px;background:#E4E3DC;color:var(--muted);font-size:13.5px;font-weight:700;transition:.12s}
   .mtabs button:hover{color:var(--ink)}
-  .mtabs button.on{background:var(--surface);color:var(--ink);box-shadow:var(--sh)}
+  .mtabs button.on{background:var(--ink);color:#fff;box-shadow:none}
   .mtabs button .tc{font-size:10.5px;color:var(--karrot);margin-left:5px;font-weight:800}
   /* AB테스트 */
   .abf{background:var(--surface-2);border-radius:12px;padding:15px 18px 8px;margin-bottom:14px}
@@ -438,7 +448,7 @@
   .g-ids b{color:var(--muted);font-weight:650;font-family:monospace;font-size:11px}
   .tf-kind{margin-left:5px;font-size:9.5px;color:var(--faint);font-weight:600}
 
-  .ft{padding:24px 30px 32px;font-size:12px;color:var(--muted);line-height:1.65;border-top:1px solid #E6E5DE;margin-top:22px}
+  .ft{padding:30px 30px 40px;font-size:12px;color:var(--muted);line-height:1.65;border-top:1px solid #E1DFD7;margin-top:64px;background:var(--canvas)}
   .ft h3{margin:18px 0 8px;font-size:13px;color:var(--ink);font-weight:700}
   .ft h4{margin:14px 0 4px;font-size:12px;color:var(--ink);font-weight:650}
   .ft p,.ft ul{margin:4px 0 8px}
@@ -505,11 +515,13 @@
     .side-sec{margin-top:16px}
     .skpi{flex-direction:row;flex-wrap:wrap;gap:18px}
     .side-foot{margin-top:16px}
-    .content{padding:18px 18px 4px}.card{padding:18px}
+    .content{padding:18px 18px 4px}.card{padding:0}
     /* 세로 화면: 매체·기간은 좌우 2분할 (전체 너비 낭비 방지) */
     .side-duo{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:start}
     .side-duo .side-sec,.side-duo .side-sec:first-child{margin-top:16px}
-    th.name,td.name{min-width:150px;max-width:210px}
+    /* 세로 화면: 소재 이름 숨김 — 미리보기·점수 중심으로 */
+    td.name .ntxt{display:none}
+    th.name,td.name{min-width:64px;max-width:80px}
   }
   @media(max-width:760px){.isle{grid-template-columns:1fr;gap:18px}}
   @media (prefers-reduced-motion: reduce){*{transition:none!important}}
@@ -517,10 +529,10 @@
 
   /* landing (no data loaded) — Apple minimal, subtle-gray pills */
   #landing{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 40px;z-index:60;font-family:"SF Pro Display","Pretendard","Apple SD Gothic Neo",-apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-  #bootOv{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:61}
+  #bootOv{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:61;font-family:"SF Pro Display","Pretendard","Apple SD Gothic Neo",-apple-system,BlinkMacSystemFont,system-ui,sans-serif}
   #bootOv[hidden]{display:none}
-  #bootOv .boot-in{font-size:17px;font-weight:600;color:#86868B;text-align:center;line-height:1.9;letter-spacing:-.01em;animation:bootPulse 1.6s ease-in-out infinite}
-  @keyframes bootPulse{0%,100%{opacity:.45}50%{opacity:1}}
+  #bootOv .boot-in{font-size:30px;font-weight:600;color:#1D1D1F;letter-spacing:-.03em;animation:bootPulse 1.8s ease-in-out infinite}
+  @keyframes bootPulse{0%,100%{opacity:.35}50%{opacity:1}}
   #landing.hidden{display:none}
   #landing h1{margin:0 0 32px;font-size:42px;font-weight:600;letter-spacing:-.035em;line-height:1.1;color:#1D1D1F}
   #landing .btn-row{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center}
@@ -539,7 +551,7 @@
 </style>
 </head>
 <body>
-<div id="bootOv" hidden><div class="boot-in">☁️<br>저장소 불러오는 중…</div></div>
+<div id="bootOv" hidden><div class="boot-in">저장소 불러오는 중</div></div>
 <div id="landing" class="hidden">
   <div>
     <h1>CSV 파일을<br>끌어다 놓아주세요.</h1>
@@ -564,17 +576,19 @@
         <div class="mseg" id="pseg"></div>
       </div>
     </div>
-    <div class="side-sec">
-      <div class="side-h">요약</div>
-      <div class="skpi" id="skpi"></div>
-    </div>
-    <div class="side-foot">
-      <div class="src" id="cloudLine" style="cursor:pointer" title="클릭 — 비밀번호 입력 또는 저장소 새로고침">☁️ 저장소 미연결</div>
-      <div class="sbtns">
-        <button class="sbtn" id="glossBtn"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>용어</button>
-        <label class="sbtn pri" id="drop"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15V4m0 0L8 8m4-4l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>CSV 넣기<input type="file" id="file" accept=".csv,text/csv" multiple hidden></label>
+    <details class="side-more" id="sideMore" open>
+      <summary class="side-h">요약</summary>
+      <div class="side-sec" style="margin-top:4px">
+        <div class="skpi" id="skpi"></div>
       </div>
-    </div>
+      <div class="side-foot">
+        <div class="src" id="cloudLine" style="cursor:pointer" title="클릭 — 비밀번호 입력 또는 저장소 새로고침">☁️ 저장소 미연결</div>
+        <div class="sbtns">
+          <button class="sbtn" id="glossBtn"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>용어</button>
+          <label class="sbtn pri" id="drop"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15V4m0 0L8 8m4-4l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>CSV 넣기<input type="file" id="file" accept=".csv,text/csv" multiple hidden></label>
+        </div>
+      </div>
+    </details>
   </aside>
 
   <!-- MAIN -->
@@ -1416,16 +1430,17 @@ function familyKey(name){let s=String(name);
   }while(s!==prev&&s.length>0);
   s=s.replace(/[_\-\s.]+/g," ").trim().toLowerCase();
   return s||String(name).toLowerCase();}
+/* 상세 지표 토글 — 표의 상위 카테고리와 동일한 대표 지표만, 같은 순서 (노출 → eCPI → 활성 eCPA → CTR → 완주율 → ROAS) */
 function islandMetrics(L,e){const M=[];const add=(k,lab,dir,fmt,good)=>M.push({k,lab,dir,fmt,good});
-  if(L.key==="cg"){add("CTR","CTR",1,fmtPct,true);add("CPC","CPC",-1,fmtWon,true);}
-  else{add("eCPI","eCPI",-1,fmtWon,true);add("활성 유저 eCPA","활성 eCPA",-1,fmtWon,true);if(e.CTR!=null&&e.CTR>0)add("CTR","CTR",1,fmtPct,true);}
-  if(e._g_assetType){
-    if(e._g_conversionRate!=null)add("_g_conversionRate","전환율",1,fmtPct,true);
-    if(e._g_interactionRate!=null)add("_g_interactionRate","상호작용률",1,fmtPct,true);
-    if(e._g_costPerConv!=null)add("_g_costPerConv","전환당 비용",-1,fmtWon,true);}
-  if(e["영상 완주율"]!=null)add("영상 완주율","완주율",1,fmtPct,true);
-  if(e["신규+재활성 eCPA"]!=null)add("신규+재활성 eCPA","신규 eCPA",-1,fmtWon,true);
-  add("비용","광고비",1,v=>fmtKRW(v)+"원",false);return M;}
+  add("노출 수","노출",1,fmtInt,false);
+  if(L.key==="cg"){add("CTR","CTR",1,fmtPct,true);}
+  else{
+    if(e.eCPI!=null)add("eCPI","eCPI",-1,fmtWon,true);
+    if(e["활성 유저 eCPA"]!=null)add("활성 유저 eCPA","활성 eCPA",-1,fmtWon,true);
+    if(e.CTR!=null&&e.CTR>0)add("CTR","CTR",1,fmtPct,true);
+    if(e["영상 완주율"]!=null)add("영상 완주율","완주율",1,fmtPct,true);
+    if(e._g_assetType&&e._g_ROAS!=null)add("_g_ROAS","ROAS",1,v=>(v!=null&&isFinite(v)?v.toFixed(1)+"×":"–"),true);}
+  return M;}
 function defaultMetric(ds,e){const M=islandMetrics(ds.L,e);return (M.find(m=>m.good&&e[m.k]!=null)||M.find(m=>e[m.k]!=null)||M[M.length-1]).k;}
 function cohorts(ds,e){const a=ds.agg,out=[{label:"전체",mem:a}];
   const isG=!!e._g_assetType;
@@ -2256,8 +2271,10 @@ function windowCount(ds,ch){
 function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)return;
   if(dsMode!=="channeled"||!ds.channels||!ds.channels.length){sec.hidden=true;el.innerHTML="";return;}
   sec.hidden=false;
-  const cnt=ch=>windowCount(ds,ch);
-  el.innerHTML=ds.channels.map(ch=>`<button data-m="${ch}" class="${ch===ds.media?"on":""}">${ch}<span class="c">${cnt(ch)}</span></button>`).join("");
+  /* 매체는 소재 수 많은 순으로 정렬 */
+  const counts=new Map(ds.channels.map(ch=>[ch,windowCount(ds,ch)]));
+  const chans=ds.channels.slice().sort((a,b)=>counts.get(b)-counts.get(a));
+  el.innerHTML=chans.map(ch=>`<button data-m="${ch}" class="${ch===ds.media?"on":""}">${ch}<span class="c">${counts.get(ch).toLocaleString()}</span></button>`).join("");
   $$("#mseg button").forEach(b=>b.onclick=()=>{const m=b.dataset.m;if(ds.media===m)return;ds.media=m;bdDim=null;bdMet=null;show(ds);});}
 function show(ds){scope(ds);
   renderMediaSeg(ds);renderPeriodSeg();renderSideKpis(ds);renderKeyrow(ds);
@@ -2620,8 +2637,6 @@ function updateLandingVisibility(){const el=document.getElementById("landing");i
   if(!hasData&&!cloudPw&&!cloudBooting){const p=$("#pwIn");if(p&&(document.activeElement===document.body||document.activeElement==null))try{p.focus({preventScroll:true});}catch(e){}}}
 $$("#mtabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.t));
 renderGlossary();renderFooter();refreshAll();updateLandingVisibility();
-/* 서명된 기기라면 첫 화면 인사 개인화 (서명: 아무 데서나 /hansy 입력) */
-if(uploaderId){const _lh=$("#landing h1");if(_lh)_lh.innerHTML=`Hi ${uploaderId.toUpperCase()}! 👋<br>CSV를 끌어다 놓아주세요.`;}
 /* 클라우드 저장소 UI 배선 */
 const _pwForm=$("#pwForm");
 if(_pwForm)_pwForm.addEventListener("submit",async e=>{e.preventDefault();
@@ -2639,6 +2654,8 @@ if(_fmtBack)_fmtBack.addEventListener("click",cloudRestore);
 refreshCloudLine();
 if(cloudPw)cloudUnlock(cloudPw,{silent:true}).catch(()=>false).then(()=>{cloudBooting=false;updateLandingVisibility();});
 else cloudBooting=false;
+/* 좁은 화면에서는 요약 토글 기본 접힘 */
+try{if(matchMedia("(max-width:900px)").matches){const sm=$("#sideMore");if(sm)sm.removeAttribute("open");}}catch(e){}
 const _origSetActive2=setActive;setActive=function(k){_origSetActive2(k);updateLandingVisibility();};
 const _origResetAll=resetAll;resetAll=function(){_origResetAll();updateLandingVisibility();};
 _qxRange.paint();_qyRange.paint();
