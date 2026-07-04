@@ -678,18 +678,24 @@ function showTip(h,x,y,big){tip.innerHTML=h;tip.classList.toggle("big",!!big);ti
 function hideTip(){tip.style.opacity=0;tip.classList.remove("big");tip.innerHTML="";}
 function isVideoUrl(u){return /\.(mp4|webm|mov)(\?|$)/i.test(String(u||""));}
 function isImageUrl(u){return /simgad|googlesyndication\.com|\.(png|jpe?g|gif|webp)(\?|$)/i.test(String(u||""));}
-/* 같은 URL이어도 CDN 순단·일시 네트워크 오류로 이미지 로딩이 간헐 실패할 수 있다.
-   자동 재시도 2회(0.5초 재요청 → 1.8초 캐시 우회) 후에도 실패할 때만 실패 UI 표시 */
+/* 이미지 로딩 실패 자동 복구 3단계:
+   ① 0.5초 재요청 (일시 네트워크 오류)  ② 1.8초 캐시 우회 (CDN 순단)
+   ③ 이미지 프록시(wsrv.nl) 경유 — 광고차단 DNS/확장이 광고 CDN(googlesyndication·adsmoloco)을
+      통째로 막아 '연결 거부'가 나는 환경에서도 프록시 도메인으로 우회해 표시 */
 function imgRetry(img){
   const n=(+img.dataset.rt||0)+1;
-  if(n>2){
+  if(n>3){
     const t=img.closest(".tthumb");if(t)t.classList.add("err");
     const w=img.closest(".asset-wrap");if(w){const e=w.querySelector(".asset-err");if(e)e.hidden=false;img.hidden=true;}
     return;}
   img.dataset.rt=n;
   if(!img.dataset.osrc)img.dataset.osrc=img.getAttribute("src");
   const src=img.dataset.osrc;
-  setTimeout(()=>{if(!img.isConnected)return;img.src=n===1?src:src+(src.includes("?")?"&":"?")+"rt="+Date.now();},n===1?500:1800);}
+  setTimeout(()=>{if(!img.isConnected)return;
+    if(n===1)img.src=src;
+    else if(n===2)img.src=src+(src.includes("?")?"&":"?")+"rt="+Date.now();
+    else img.src="https://wsrv.nl/?url="+encodeURIComponent(src);
+  },n===1?500:n===2?1500:1200);}
 function assetPreviewTipHTML(url,label){if(!url)return "";
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
   if(yt)return `<img src="https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg" alt="" referrerpolicy="no-referrer" onerror="imgRetry(this)"><div class="tp-cap">${label||"영상"}</div>`;

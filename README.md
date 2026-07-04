@@ -4,6 +4,9 @@
 CSV를 화면에 끌어다 놓으면 즉시 분석됩니다.<br/><br/>
 https://hansy-daangn.github.io/CreativeReporter/
 
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — 사이트 구조와 매커니즘 상세 설명
+- **[docs/REBUILD_PROMPT.md](docs/REBUILD_PROMPT.md)** — 무에서 동일 시스템을 재구축하는 완전제작 프롬프트
+
 ## 사용법
 
 - 첫 화면에서 비밀번호 입력 → 클라우드(Supabase)에 쌓인 주간 성과 로드
