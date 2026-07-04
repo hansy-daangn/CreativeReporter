@@ -80,7 +80,6 @@
   .sbtn:hover{background:rgba(255,255,255,.13)}
   .sbtn.pri{background:var(--karrot); color:#fff}.sbtn.pri:hover{background:#ff7d24}
   .sbtn svg{width:14px;height:14px}
-  .snote{font-size:10px;color:var(--side-faint);padding:2px 6px 0;text-align:center}
 
   /* ===== main ===== */
   .main{min-width:0; display:flex; flex-direction:column}
@@ -110,6 +109,9 @@
   .dom-pill.bad{color:var(--w2);background:rgba(199,63,84,.14)} .lcard.bad .dom-pill.bad{background:rgba(255,255,255,.5)}
   .chips{display:flex;gap:5px;flex-wrap:wrap}
   .chip{font-size:10px;padding:2px 8px;border-radius:6px;background:var(--surface-3);color:var(--muted);font-weight:500}
+  #table .chip[data-ck]{cursor:pointer;transition:.1s}
+  #table .chip[data-ck]:hover{background:var(--karrot-f);color:var(--karrot)}
+  .chip.grp{background:#E9E4F2;color:#6B5B95;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .lcard.gold .chip,.lcard.bad .chip{background:rgba(255,255,255,.55)}
   .chip.fo{background:var(--g1-f);color:var(--g1)} .lcard.gold .chip.fo,.lcard.bad .chip.fo{background:rgba(255,255,255,.6)}
   .lfoot{display:flex;align-items:center;gap:9px;margin-top:1px}
@@ -360,7 +362,6 @@
   .ispark-h span{font-weight:500;color:var(--faint)}
   .ispark-svg{width:100%;height:auto;max-height:86px;display:block;margin:0 auto}
   .ispk-b{cursor:pointer}.ispk-b:hover{fill-opacity:.85}
-  .yt-title{font-size:12px;font-weight:700;text-align:center;word-break:break-word;color:var(--ink);max-width:100%}
   /* island score breakdown */
   .sb{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:7px 26px}
   .sb-row{display:flex;align-items:center;gap:8px;font-size:11.5px;min-width:0}
@@ -515,6 +516,10 @@
 
   /* landing (no data loaded) — Apple minimal, subtle-gray pills */
   #landing{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 40px;z-index:60;font-family:"SF Pro Display","Pretendard","Apple SD Gothic Neo",-apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  #bootOv{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:61}
+  #bootOv[hidden]{display:none}
+  #bootOv .boot-in{font-size:17px;font-weight:600;color:#86868B;text-align:center;line-height:1.9;letter-spacing:-.01em;animation:bootPulse 1.6s ease-in-out infinite}
+  @keyframes bootPulse{0%,100%{opacity:.45}50%{opacity:1}}
   #landing.hidden{display:none}
   #landing h1{margin:0 0 32px;font-size:42px;font-weight:600;letter-spacing:-.035em;line-height:1.1;color:#1D1D1F}
   #landing .btn-row{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center}
@@ -533,6 +538,7 @@
 </style>
 </head>
 <body>
+<div id="bootOv" hidden><div class="boot-in">☁️<br>저장소 불러오는 중…</div></div>
 <div id="landing" class="hidden">
   <div>
     <h1>CSV 파일을<br>끌어다 놓아주세요.</h1>
@@ -574,12 +580,10 @@
     </div>
     <div class="side-foot">
       <div class="src" id="cloudLine" style="cursor:pointer" title="클릭 — 비밀번호 입력 또는 저장소 새로고침">☁️ 저장소 미연결</div>
-      <div class="src" id="src"></div>
       <div class="sbtns">
         <button class="sbtn" id="glossBtn"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>용어</button>
         <label class="sbtn pri" id="drop"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15V4m0 0L8 8m4-4l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>CSV 넣기<input type="file" id="file" accept=".csv,text/csv" multiple hidden></label>
       </div>
-      <div class="snote">분석은 브라우저에서 · 주간 CSV만 ☁️ 자동 저장</div>
     </div>
   </aside>
 
@@ -595,7 +599,7 @@
       </div>
 
       <section class="card" id="tabAnalysis">
-        <div class="card-h"><h2>분석</h2><span class="meta" id="anaMeta"></span></div>
+        <div class="card-h"><h2>분석</h2></div>
         <div class="keyrow" id="keyrow"></div>
         <p class="qhint" id="qhint"></p>
         <div class="qaxis"><span class="qaxis-lab">가로</span><div class="dtog" id="qxTog"></div></div>
@@ -619,10 +623,11 @@
       </section>
 
       <section class="card" id="tabTable" hidden>
-        <div class="card-h"><h2>전체 목록</h2><span class="meta" id="tblMeta"></span></div>
+        <div class="card-h"><h2>전체 목록</h2></div>
         <div class="tbar">
           <input type="search" id="search" placeholder="이름으로 검색">
           <div class="qfo" id="qfoWrap" hidden>
+            <button class="qfo-btn qfo-txt" id="chipFil" type="button" title="칩 필터 해제" hidden></button>
             <button class="qfo-btn qfo-txt" id="qfoLive" type="button" title="최신 집행 주에 광고비가 나간 소재만" aria-label="라이브만 보기">🟢 라이브만</button>
             <button class="qfo-btn qfo-txt" id="qfoGrp" type="button" title="광고그룹 단위로 집계해서 보기" aria-label="그룹별 보기">그룹별 보기</button>
             <button class="qfo-btn" id="qfoVid" type="button" title="영상만 보기" aria-label="영상만">🎬 VDO</button>
@@ -950,7 +955,7 @@ const SCORING={
   EFF_W:0.75, REACH_W:0.20, CONF_W:0.05, MIN_CONV_FOR_FULL_CONF:30,
   google:[
     {k:"_g_ROAS",w:0.35,dir:1,lab:"ROAS"},
-    {k:"_g_costPerConv",w:0.20,dir:-1,lab:"전환당비용"},
+    {k:"_g_costPerConv",w:0.20,dir:-1,lab:"전환당 비용"},
     {k:"_g_conversionRate",w:0.15,dir:1,lab:"전환율"},
     {k:"CTR",w:0.15,dir:1,lab:"CTR"},
     {k:"CPM",w:0.15,dir:-1,lab:"CPM"},
@@ -1091,7 +1096,14 @@ function renderSideKpis(ds){const a=ds.data,L=ds.L,sum=c=>a.reduce((s,r)=>s+(num
 function sdelta(dd){if(dd==null)return"<span>지난주 –</span>";const c=Math.abs(dd)<0.005?"flat":dd>0?"up":"down";return `<span class="sdelta ${c}">${dd>0?"+":""}${(dd*100).toFixed(1)}%</span><span>지난주</span>`;}
 
 /* leaderboard */
-function chipsHTML(t){return [t.ve&&`<span class="chip">${t.ve}</span>`,t.fo&&`<span class="chip fo">${t.fo}</span>`,t.nat==="네이티브"&&`<span class="chip">네이티브</span>`,t.size&&`<span class="chip">${t.size}</span>`].filter(Boolean).join("");}
+/* 이름 아래 태그 칩 — 표에서는 클릭하면 그 값으로 필터 (data-ck 있는 칩만) */
+function chipsHTML(t,e){
+  const mk=(k,v,cls,lab)=>`<span class="chip${cls?" "+cls:""}" data-ck="${k}" data-cv="${escAttr(v)}" title="클릭 = ${escAttr(lab||v)}만 보기">${lab||v}</span>`;
+  const arr=[t.ve&&mk("ve",t.ve),t.fo&&mk("fo",t.fo,"fo"),t.nat==="네이티브"&&mk("nat","네이티브"),t.size&&mk("size",t.size)];
+  if(e){const gid=e._m_group||e._g_adGroupId;
+    if(gid){const glab=e._m_group?gid:(adGroupLabel(gid)||"그룹 …"+String(gid).slice(-4));
+      arr.push(mk("grp",gid,"grp",trunc(glab,20)));}}
+  return arr.filter(Boolean).join("");}
 function renderLeaderboard(ds){const L=ds.L,S=ds.S;
   const sub=$("#srankSub");if(sub)sub.innerHTML=`· ${S.goodLabel}`;
   const best=S.best.slice(0,3),worst=S.worst.slice(0,3).filter(w=>!best.includes(w));
@@ -1204,7 +1216,7 @@ function renderQuad(ds){const L=ds.L,svg=$("#quad");
     c.addEventListener("click",()=>{hideTip();goToIslandFromQuad(p.name);});});}
 function goToIslandFromQuad(name){if(!curDS)return;
   switchTab("table");
-  tGroupBy=false;tQuickFo=null;tLiveOnly=false;renderQuickFo();
+  tGroupBy=false;tQuickFo=null;tLiveOnly=false;tChip=null;renderQuickFo();
   tState.q="";tableShowAll=true;const sb=$("#search");if(sb)sb.value="";const sa=$("#showAll");if(sa)sa.checked=true;
   const p=pageForName(curDS,name);if(p)tPage=p;
   renderTable(curDS);
@@ -1222,12 +1234,18 @@ function renderTrend(ds){const svg=$("#trend"),L=ds.L,S=ds.S;
   const cmax=Math.max(...costs)*1.12||1,ev=eff.filter(v=>v!=null),emax=(ev.length?Math.max(...ev):1)*1.2||1;
   const den=Math.max(1,wk.length-1),xat=i=>pad.l+(wk.length<=1?(W-pad.l-pad.r)/2:i/den*(W-pad.l-pad.r)),yC=v=>H-pad.b-(v/cmax)*(H-pad.t-pad.b),yE=v=>H-pad.b-(v/emax)*(H-pad.t-pad.b);
   let s=`<g class="axis">`;for(let i=0;i<=4;i++){const gy=H-pad.b-i/4*(H-pad.t-pad.b);s+=`<line class="gl" x1="${pad.l}" y1="${gy}" x2="${W-pad.r}" y2="${gy}"/><text x="${pad.l-7}" y="${gy+3}" text-anchor="end">${fmtKRW(i/4*cmax)}</text>${hasEff?`<text x="${W-pad.r+7}" y="${gy+3}" text-anchor="start" fill="var(--c2)">${fmtWon(i/4*emax)}</text>`:""}`;}
-  wk.forEach((o,i)=>{s+=`<text x="${xat(i)}" y="${H-pad.b+18}" text-anchor="middle">${String(o.week).slice(5).replace("-","/")}</text>`;});s+=`</g>`;
+  /* 주가 많으면(1년·전체) 라벨을 솎아내되 첫·끝 주는 항상 표시 */
+  const lstep=Math.max(1,Math.ceil(wk.length/13));
+  wk.forEach((o,i)=>{const last=i===wk.length-1;
+    if(!last&&i%lstep)return;
+    if(!last&&wk.length>1&&(wk.length-1-i)<Math.ceil(lstep/2))return; /* 끝 라벨과 겹침 방지 */
+    s+=`<text x="${xat(i)}" y="${H-pad.b+18}" text-anchor="middle">${String(o.week).slice(5).replace("-","/")}</text>`;});s+=`</g>`;
+  const pr=wk.length>26?2.6:wk.length>16?3.2:3.8; /* 포인트 밀도 대응 */
   let area=`M ${xat(0)} ${yC(costs[0])}`;costs.forEach((c,i)=>{if(i)area+=` L ${xat(i)} ${yC(c)}`;});
   s+=`<path d="${area} L ${xat(costs.length-1)} ${H-pad.b} L ${pad.l} ${H-pad.b} Z" fill="var(--karrot)" fill-opacity="0.1"/><path d="${area}" fill="none" stroke="var(--karrot)" stroke-width="2.2"/>`;
-  costs.forEach((c,i)=>{s+=`<circle class="tp" data-i="${i}" cx="${xat(i)}" cy="${yC(c)}" r="3.8" fill="var(--karrot)" stroke="#fff" stroke-width="1.5"/>`;});
+  costs.forEach((c,i)=>{s+=`<circle class="tp" data-i="${i}" cx="${xat(i)}" cy="${yC(c)}" r="${pr}" fill="var(--karrot)" stroke="#fff" stroke-width="1.5"/>`;});
   let st=false,ep="";eff.forEach((v,i)=>{if(v==null)return;ep+=(st?" L":"M")+` ${xat(i)} ${yE(v)}`;st=true;});
-  if(st){s+=`<path d="${ep}" fill="none" stroke="var(--c2)" stroke-width="2"/>`;eff.forEach((v,i)=>{if(v==null)return;s+=`<circle class="tp" data-i="${i}" cx="${xat(i)}" cy="${yE(v)}" r="3.4" fill="#fff" stroke="var(--c2)" stroke-width="2"/>`;});}
+  if(st){s+=`<path d="${ep}" fill="none" stroke="var(--c2)" stroke-width="2"/>`;eff.forEach((v,i)=>{if(v==null)return;s+=`<circle class="tp" data-i="${i}" cx="${xat(i)}" cy="${yE(v)}" r="${Math.max(2.4,pr-0.4)}" fill="#fff" stroke="var(--c2)" stroke-width="2"/>`;});}
   svg.innerHTML=s;$("#trendLeg").innerHTML=`<span><i style="background:var(--karrot)"></i>광고비</span>${hasEff?`<span><i style="background:var(--c2)"></i>${effLab} (낮을수록 좋음)</span>`:""}`;
   svg.querySelectorAll(".tp").forEach(c=>{c.addEventListener("mousemove",e=>{const i=+c.dataset.i,w=wk[i];showTip(`<b>${String(w.week).slice(5).replace("-","/")} 주</b><br><span class="t-k">광고비</span> ${fmtWon(w.비용)}${hasEff?`<br><span class="t-k">${effLab}</span> ${eff[i]!=null?fmtWon(eff[i]):"–"}`:""}`,e.clientX,e.clientY);});c.addEventListener("mouseleave",hideTip);});}
 
@@ -1250,7 +1268,7 @@ function renderBreakdown(ds){const L=ds.L,a=ds.agg;
   const isG=a.some(e=>e._g_assetType);
   if(isG)mets=mets.concat([
     {k:"_g_ROAS",lab:"ROAS",dir:1,fmt:v=>v.toFixed(1)+"×",help:"높을수록 좋음"},
-    {k:"_g_costPerConv",lab:"전환당비용",dir:-1,fmt:fmtWon,help:"낮을수록 좋음"},
+    {k:"_g_costPerConv",lab:"전환당 비용",dir:-1,fmt:fmtWon,help:"낮을수록 좋음"},
     {k:"_g_conversionRate",lab:"전환율",dir:1,fmt:fmtPct,help:"높을수록 좋음"},
     {k:"_g_interactionRate",lab:"상호작용률",dir:1,fmt:fmtPct,help:"높을수록 좋음"},
   ]);
@@ -1319,6 +1337,7 @@ let tFilter={ve:new Set(),fo:new Set(),size:new Set()};
 let tQuickFo=null; /* "영상" | "이미지" | null */
 let tGroupBy=false; /* true → aggregate table rows by 광고그룹 ID */
 let tLiveOnly=true; /* 기본 ON — 스코프 최신 집행 주에 광고비>0인 소재만 (전체 목록 한정) */
+let tChip=null; /* 칩 클릭 필터 {k:"ve|fo|nat|size|grp", v, lab} — 한 번에 하나, 다시 클릭·✕로 해제 */
 function isInactive(e){if(!e)return true;
   if((e.비용||0)<=0)return true;
   if(!("클릭 수" in e)||!("어트리뷰션 수" in e))return true;
@@ -1326,6 +1345,7 @@ function isInactive(e){if(!e)return true;
 function applyTFilter(rows,ds){
   if(tLiveOnly&&!standaloneMode&&ds&&ds.liveWeek)rows=rows.filter(e=>e._isGroup?(e._members||[]).some(m=>m._live):e._live);
   if(tQuickFo)rows=rows.filter(e=>e.tags&&e.tags.fo===tQuickFo);
+  if(tChip)rows=rows.filter(e=>tChip.k==="grp"?String(e._m_group||e._g_adGroupId||"")===tChip.v:(e.tags&&e.tags[tChip.k]===tChip.v));
   return rows;}
 function renderTFilter(ds){/* filter popup removed */}
 let tableShowAll=false;
@@ -1422,7 +1442,7 @@ function scoreBreakdownHTML(ds,e){const S=ds.S;
   if(!rows)return"";
   return `<section style="grid-column:1/-1"><div class="ish">점수 구성 <span class="n">점수 ${e.score} = 효율 ${(e._E*100).toFixed(0)}×0.75 + 규모 ${(e._R*100).toFixed(0)}×0.20 + 신뢰 ${(e._C*100).toFixed(0)}×0.05 · 막대 = 광고비 가중 백분위(50=계정 평균, 높을수록 좋음)</span></div><div class="sb">${rows}</div></section>`;}
 /* 소재(또는 그룹)의 주차별 광고비·효율 미니 차트 — 상세 뷰 미리보기 아래 표시.
-   효율선: 설치 있으면 eCPI, 없으면(구글 확장 소재) 전환당비용, 그것도 없으면 CPC */
+   효율선: 설치 있으면 eCPI, 없으면(구글 확장 소재) 전환당 비용, 그것도 없으면 CPC */
 function creativeTrendHTML(ds,e){
   const nameCol=ds.L.nameCol;
   let rows;
@@ -1439,7 +1459,7 @@ function creativeTrendHTML(ds,e){
   const tAttr=os.reduce((s,o)=>s+o.attr,0),tConv=os.reduce((s,o)=>s+o.conv,0),tClk=os.reduce((s,o)=>s+o.clk,0);
   let effOf=null,effLab="";
   if(tAttr>0){effOf=o=>o.attr>0?o.c/o.attr:null;effLab=ds.L.effLabel||"eCPI";}
-  else if(tConv>0){effOf=o=>o.conv>0?o.c/o.conv:null;effLab="전환당비용";}
+  else if(tConv>0){effOf=o=>o.conv>0?o.c/o.conv:null;effLab="전환당 비용";}
   else if(tClk>0){effOf=o=>o.clk>0?o.c/o.clk:null;effLab="CPC";}
   const W=300,H=74,pl=4,pr=4,pt=7,pb=12,iw=W-pl-pr;
   const cmax=Math.max(...os.map(o=>o.c))||1;
@@ -1500,13 +1520,9 @@ function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>
     <section><div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}</section>
     ${scoreBreakdownHTML(ds,e)}`;
   inner.querySelectorAll(".mtog button").forEach(b=>b.addEventListener("click",ev=>{ev.stopPropagation();ISLE.metric=b.dataset.m;inner.querySelectorAll(".mtog button").forEach(x=>x.classList.toggle("on",x.dataset.m===ISLE.metric));requestAnimationFrame(()=>fillIsland(ds,e,inner));}));
-  /* 유튜브 소재면 제목을 미리보기 위에 표시 (noembed 조회, 캐시) */
+  /* 유튜브 소재면 제목을 조회해 화면 곳곳의 URL 이름을 실제 제목으로 교체 (미디어 위 중복 배너 없음) */
   const _ytid=ytIdOf(previewUrlOf(e));
-  if(_ytid)fetchYtTitle(_ytid).then(t=>{
-    if(!t)return;const pv=inner.querySelector(".isle-preview");
-    if(!pv||pv.querySelector(".yt-title"))return;
-    const d=document.createElement("div");d.className="yt-title";d.textContent=t;
-    pv.insertBefore(d,pv.firstChild);});
+  if(_ytid&&_ytTitles[_ytid]===undefined)fetchYtTitle(_ytid).then(t=>{if(t)refreshDisplayNames();});
   inner.querySelectorAll(".ispk-b").forEach(rc=>{
     rc.addEventListener("mousemove",ev=>showTip(rc.dataset.tip||"",ev.clientX,ev.clientY));
     rc.addEventListener("mouseleave",hideTip);});
@@ -1541,7 +1557,7 @@ function tableCols(L,ds){const meta=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score
   );
   if(ds&&ds.agg&&ds.agg.some(e=>e._g_assetType))nums.push(
     {k:"_g_ROAS",t:"ROAS",f:"num",help:"전환 가치÷비용 · 높을수록 좋음"},
-    {k:"_g_costPerConv",t:"전환당비용",f:"won",help:"비용÷전환수 · 낮을수록 좋음"},
+    {k:"_g_costPerConv",t:"전환당 비용",f:"won",help:"비용÷전환수 · 낮을수록 좋음"},
     {k:"_g_conversionRate",t:"전환율",f:"pct",help:"전환÷상호작용 (Google 관례) · 높을수록 좋음"},
     {k:"_g_interactions",t:"상호작용",f:"int",help:"상호작용 총 수"},
     {k:"_g_interactionRate",t:"상호작용률",f:"pct",help:"상호작용÷노출 · 높을수록 좋음"},
@@ -1641,12 +1657,11 @@ function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L,ds),thead=$("#tabl
   const endIdx=Math.min(startIdx+PAGE_SIZE,totalRows);
   const visible=rows.slice(startIdx,endIdx);
   const liveOn=tLiveOnly&&!standaloneMode&&ds.liveWeek;
-  $("#tblMeta").textContent=`${totalRows.toLocaleString()}개 중 ${(startIdx+1).toLocaleString()}–${endIdx.toLocaleString()}번 · ${tPage}/${totalPages} 페이지${liveOn?` · 🟢 라이브만(${String(ds.liveWeek).slice(5).replace("-","/")} 주)`:""}${tableShowAll?"":" · 비활성 숨김"}`;
   const html=visible.map(r=>{const spCls=r.tier==="g2"?"sp-g2":r.tier==="g1"?"sp-g1":r.tier==="m"?"sp-mid":r.tier==="w1"?"sp-w1":r.tier==="w2"?"sp-w2":"sp-na";
     const score=r.score!=null?`<span class="sp ${spCls}">${r.score}</span>`:`<span class="sp sp-na">–</span>`;
     return `<tr class="row" data-name="${escAttr(r.name)}">`+cols.map(c=>{if(c.k==="_b")return `<td class="bdg">${tierBadge(r)}</td>`;
       if(c.k==="name"){const th=thumbHTML(r);const dn=displayNameOf(r);
-        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}>${trunc(dn,60)}${lrnBadge(r)}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags)}</div></div></div></td>`;}
+        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}>${trunc(dn,60)}${lrnBadge(r)}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
       if(c.k==="score")return `<td>${score}</td>`;
       const dir=COL_DIR[c.k]||0;
       const t=dir?cellTier(r[c.k],colSorted[c.k],dir):"m";
@@ -1661,7 +1676,30 @@ function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L,ds),thead=$("#tabl
     t.addEventListener("mouseenter",ev=>{const h=assetPreviewTipHTML(url,lab);if(h)showTip(h,ev.clientX,ev.clientY,true);});
     t.addEventListener("mousemove",ev=>{if(tip.style.opacity!=="0")placeTip(ev.clientX,ev.clientY);});
     t.addEventListener("mouseleave",hideTip);});
-  thead.querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(tState.sort===k)tState.dir*=-1;else{tState.sort=k;tState.dir=(k==="name")?1:-1;}tPage=1;renderTable(ds);});}
+  thead.querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(tState.sort===k)tState.dir*=-1;else{tState.sort=k;tState.dir=(k==="name")?1:-1;}tPage=1;renderTable(ds);});
+  hydrateYtNames();}
+/* 유튜브 제목이 캐시에 도착하면 다시 그리지 않고 화면의 URL 이름만 제자리 갱신 */
+function refreshDisplayNames(){
+  if(!curDS)return;
+  $$("#table tbody tr.row").forEach(tr=>{const nm=tr.getAttribute("data-name");const ent=findRow(curDS,nm);if(!ent)return;
+    const dn=trunc(displayNameOf(ent),60),tx=tr.querySelector(".ntxt");
+    if(tx&&tx.childNodes[0]&&tx.childNodes[0].nodeType===3&&tx.childNodes[0].textContent!==dn){tx.childNodes[0].textContent=dn;if(dn!==nm)tx.title=nm;}});
+  $$("#srTop .srk-row,#srBad .srk-row").forEach(r=>{const nm=r.dataset.name;const ent=findRow(curDS,nm);if(!ent)return;
+    const el=r.querySelector(".srk-name"),dn=displayNameOf(ent);
+    if(el&&el.childNodes[0]&&el.childNodes[0].nodeType===3&&el.childNodes[0].textContent!==dn)el.childNodes[0].textContent=dn;});}
+/* 표에 보이는 유튜브 URL 이름은 영상 제목을 자동 조회해 교체 (동시 4개, 캐시는 영구) */
+let _hydSeq=0;
+async function hydrateYtNames(){
+  if(!curDS)return;const seq=++_hydSeq;
+  const ids=[];
+  $$("#table tbody tr.row").forEach(tr=>{const nm=tr.getAttribute("data-name")||"";const ent=findRow(curDS,nm);if(!ent)return;
+    const id=ytIdOf(ent._g_url||nm);
+    if(id&&_ytTitles[id]===undefined&&ids.indexOf(id)<0)ids.push(id);});
+  let got=false;
+  for(let i=0;i<ids.length&&seq===_hydSeq;i+=4){
+    const part=await Promise.all(ids.slice(i,i+4).map(fetchYtTitle));
+    if(part.some(Boolean))got=true;}
+  if(got&&seq===_hydSeq)refreshDisplayNames();}
 /* Compute what page contains the entity name in current sort/filter state */
 function pageForName(ds,name){let rows=getRowsForTable(ds);
   if(!tableShowAll)rows=rows.filter(r=>!isInactive(r));
@@ -1690,8 +1728,10 @@ function renderQuickFo(){const wrap=$("#qfoWrap"),ds=curDS;
   const hasFo=ds&&ds.agg&&ds.agg.some(e=>e.tags&&(e.tags.fo==="영상"||e.tags.fo==="이미지"));
   const hasAdGr=ds&&ds.agg&&ds.agg.some(e=>e._g_adGroupId||e._m_group);
   const hasLive=!!(ds&&!standaloneMode&&ds.liveWeek);
-  wrap.hidden=!(hasFo||hasAdGr||hasLive);
+  wrap.hidden=!(hasFo||hasAdGr||hasLive||tChip);
   if(wrap.hidden)return;
+  const cf=$("#chipFil");
+  if(cf){cf.hidden=!tChip;if(tChip){cf.textContent=`${tChip.k==="grp"?"그룹: ":""}${tChip.lab||tChip.v} ✕`;cf.classList.add("on");cf.title="이 칩 필터 해제";}}
   const v=$("#qfoVid"),i=$("#qfoImg"),g=$("#qfoGrp"),lv=$("#qfoLive");
   if(v){v.hidden=!hasFo;v.classList.toggle("on",tQuickFo==="영상");}
   if(i){i.hidden=!hasFo;i.classList.toggle("on",tQuickFo==="이미지");}
@@ -1822,7 +1862,7 @@ function buildABSplit(f){
     primary.k!=="eCPI"?{lab:"eCPI",get:r=>r.eCPI,fmt:fmtWon,dir:-1}:null,
     {lab:"활성 eCPA",get:r=>r["활성 유저 eCPA"],fmt:fmtWon,dir:-1},
     primary.k!=="_g_ROAS"?{lab:"ROAS",get:r=>r._g_ROAS,fmt:v=>v.toFixed(1)+"×",dir:1}:null,
-    primary.k!=="_g_costPerConv"?{lab:"전환당비용",get:r=>r._g_costPerConv,fmt:fmtWon,dir:-1}:null,
+    primary.k!=="_g_costPerConv"?{lab:"전환당 비용",get:r=>r._g_costPerConv,fmt:fmtWon,dir:-1}:null,
     {lab:"CTR",get:r=>r.CTR,fmt:fmtPct,dir:1},
     {lab:"CPM",get:r=>r.CPM,fmt:fmtWon,dir:-1},
     {lab:"완주율",get:r=>r.vcr,fmt:fmtPct,dir:1},
@@ -1875,6 +1915,7 @@ $("#gloss").addEventListener("click",e=>{if(e.target.id==="gloss")$("#gloss").cl
 const SB_URL="https://newoydegfbnnqujgiips.supabase.co";
 const SB_KEY="sb_publishable_6remFFz9oGKffdlRakvdfg_OOLp6zYL";
 let cloudPw=sessionStorage.getItem("crpw")||null;
+let cloudBooting=!!cloudPw; /* 자동 재접속 중 — 랜딩(비밀번호 화면) 대신 로딩 화면을 보여 깜빡임 방지 */
 /* 업로더 서명 — 사이트 아무 곳에서나 "/hansy" 타이핑 시 이 기기를 hansy로 인증(localStorage 영구),
    "/logout" 으로 해제. 인증 안 된 업로드는 저장소에 uploaded_by='unknown'으로 기록됨 */
 let uploaderId=localStorage.getItem("cr_uploader")||null;
@@ -1945,12 +1986,14 @@ async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
   try{const rows=await sbRpc("cr_load",{pw});
     cloudPw=pw;sessionStorage.setItem("crpw",pw);
     await loadNameMap(pw);
-    if(rows.length){loadCloudRows(rows);toast(`☁️ 저장소 열림 — 소재 ${new Set(rows.map(r=>r.ad_name)).size.toLocaleString()}개 · 주간 기록 ${rows.length.toLocaleString()}건 · ${[...new Set(rows.map(r=>r.channel))].join("·")}`);}
+    if(rows.length){loadCloudRows(rows);toast(`☁️ 저장소 열림 — 소재 ${new Set(rows.map(r=>r.ad_name)).size.toLocaleString()}개 · 주간 기록 ${rows.length.toLocaleString()}건`);}
     else if(!silent)toast("☁️ 연결됨 — 저장된 데이터가 아직 없습니다. 주간 CSV를 드롭하면 쌓입니다.");
     /* 서명된 기기(/hansy)는 탭 세션당 1회 인사 — localStorage 서명은 재부팅·네트워크 변경과 무관하게 유지 */
     if(uploaderId&&!sessionStorage.getItem("crHi")){sessionStorage.setItem("crHi","1");setTimeout(()=>toast(`👋 Hi ${uploaderId.toUpperCase()}!`),2800);}
     refreshCloudLine();return true;
   }catch(err){
+    /* 저장된 비밀번호가 더는 안 맞으면 지워서 다음 새로고침에 바로 입력 화면이 뜨게 */
+    if(/password/i.test(err.message||"")){cloudPw=null;sessionStorage.removeItem("crpw");}
     if(!silent)toast(/password/i.test(err.message||"")?"비밀번호가 틀렸습니다":"클라우드 연결 실패: "+err.message);
     return false;}}
 async function refreshCloudLine(){const el=$("#cloudLine");if(!el)return;
@@ -1958,8 +2001,8 @@ async function refreshCloudLine(){const el=$("#cloudLine");if(!el)return;
   if(!cloudPw){el.innerHTML=`☁️ 저장소 미연결 — <b>클릭해 비밀번호 입력</b>${sig}`;return;}
   try{const st=await sbRpc("cr_status",{pw:cloudPw});
     const warn=(st&&+st.unsigned_rows>0)?` · <b style="color:#F5B36B">서명없는 업로드 ${Number(st.unsigned_rows).toLocaleString()}건</b>`:"";
-    const ads=st&&+st.ads>0?`소재 ${Number(st.ads).toLocaleString()}개 · `:"";
-    el.innerHTML=(st&&st.rows>0)?`☁️ <b>${(st.channels||[]).join("·")}</b> · ${ads}${st.weeks}주(${String(st.first_week).slice(5)}~${String(st.last_week).slice(5)}) · 주간 기록 ${Number(st.rows).toLocaleString()}건${warn}${sig} · 클릭=새로고침`:`☁️ 연결됨 · 저장된 데이터 없음${sig}`;
+    const ads=st&&+st.ads>0?`소재 <b>${Number(st.ads).toLocaleString()}</b>개 · `:"";
+    el.innerHTML=(st&&st.rows>0)?`☁️ ${ads}주간 기록 ${Number(st.rows).toLocaleString()}건 · ${st.weeks}주${warn}${sig} · 클릭=새로고침`:`☁️ 연결됨 · 저장된 데이터 없음${sig}`;
   }catch(e){el.textContent="☁️ 저장소 상태 확인 실패";}}
 
 /* state */
@@ -2061,8 +2104,8 @@ function scope(ds){
   const liveSet=new Set();
   if(lastSpend)for(const r of rows){if(r.date===lastSpend&&(num(r["비용"])||0)>0){let nm=r[ds.L.nameCol];if(nm==null||nm===""||nm==="nan")nm="(미지정)";liveSet.add(nm);}}
   for(const e of ds.agg)e._live=liveSet.has(e.name);
-  /* 추세는 윈도우의 최근 13주까지만 (라벨 가독성) */
-  ds.weekly=weeklyTotals(rows,winDates.slice(-13));
+  /* 추세는 선택한 기간 전체를 그대로 반영 (라벨은 renderTrend가 밀도에 맞춰 솎아냄) */
+  ds.weekly=weeklyTotals(rows,winDates);
   /* 이 매체에 데이터가 없는 꼬리 주차는 추세·주간 증감에서 제외 (매체별 마지막 주가 다를 때 -100% 왜곡 방지) */
   while(ds.weekly.length>2&&(ds.weekly[ds.weekly.length-1].비용||0)===0)ds.weekly.pop();
   ds.S=computeScores(ds);}
@@ -2082,32 +2125,34 @@ function renderPeriodSeg(){const el=$("#pseg"),sec=$("#periodSec");if(!el||!sec)
   if(go)go.onclick=()=>{const f=$("#pFrom").value||null,t=$("#pTo").value||null;
     if(f&&t&&f>t){toast("시작일이 종료일보다 늦습니다");return;}
     customRange={from:f,to:t};bdDim=null;bdMet=null;tPage=1;if(active)show(DATASETS[active]);};}
+/* 세그 카운트 — 현재 선택된 기간 윈도(scope와 동일 컷 규칙)에서의 고유 소재 수 */
+function windowCount(ds,ch){
+  let rows=ch?ds.dataAll.filter(r=>r._ch===ch):ds.dataAll;
+  if(periodN==="custom"&&(customRange.from||customRange.to)){
+    const f=customRange.from||"0000-01-01",t=customRange.to||"9999-12-31";
+    rows=rows.filter(r=>r.date>=f&&r.date<=t);
+  }else if(periodN!=="all"&&periodN!=="custom"){
+    const dates=[...new Set(rows.map(r=>r.date).filter(d=>/^\d{4}-\d{2}-\d{2}/.test(String(d))))].sort();
+    if(dates.length>+periodN){const cut=dates[dates.length-+periodN];rows=rows.filter(r=>r.date>=cut);}}
+  const s=new Set();
+  for(const r of rows){let nm=r[ds.L.nameCol];if(nm==null||nm===""||nm==="nan")nm="(미지정)";s.add(nm);}
+  return s.size;}
 function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)return;
   if(dsMode!=="channeled"||!ds.channels||!ds.channels.length){sec.hidden=true;el.innerHTML="";return;}
   sec.hidden=false;
-  const cnt=ch=>{const b=ds.aggByChannel&&ds.aggByChannel.get(ch);return b?b.aggAll.length:0;};
+  const cnt=ch=>windowCount(ds,ch);
   el.innerHTML=ds.channels.map(ch=>`<button data-m="${ch}" class="${ch===ds.media?"on":""}">${ch}<span class="c">${cnt(ch)}</span></button>`).join("");
   $$("#mseg button").forEach(b=>b.onclick=()=>{const m=b.dataset.m;if(ds.media===m)return;ds.media=m;bdDim=null;bdMet=null;show(ds);});}
 function show(ds){scope(ds);
-  const rg=ds.range||{};
-  const wk=rg.first?`${rg.first} – ${rg.last} · ${rg.n}주${periodN!=="all"&&rg.total>rg.n?` (전체 ${rg.total}주 중)`:""}`:"";
-  const ch=dsMode==="channeled"&&ds.media?` · ${ds.media}`:"";
-  $("#src").innerHTML=`데이터 <b>${ds.src||"업로드 데이터"}</b> · ${ds.L.name} ${ds.agg.length.toLocaleString()}개${wk?" · "+wk:""}${ch}`;
-  /* 분석 헤더 스코프 캡션 — 지금 보고 있는 매체·기간·표본을 한눈에 */
-  const _pl={"4":"최근 1달","13":"최근 3달","52":"최근 1년","all":"전체 기간","custom":"직접 설정"}[periodN]||"";
-  const _am=$("#anaMeta");
-  if(_am)_am.textContent=[dsMode==="channeled"&&ds.media?ds.media:null,_pl,
-    rg.first?`${String(rg.first).slice(5).replace("-","/")}~${String(rg.last).slice(5).replace("-","/")}`:null,
-    `${ds.L.name} ${ds.agg.length.toLocaleString()}개`].filter(Boolean).join(" · ");
-  renderMediaSeg(ds);renderPeriodSeg();renderSideKpis(ds);renderLeaderboard(ds);renderKeyrow(ds);
+  renderMediaSeg(ds);renderPeriodSeg();renderSideKpis(ds);renderLeaderboard(ds);renderKeyrow(ds);renderSeg();
   requestAnimationFrame(()=>{renderQuad(ds);renderQuadTierLegend();
     renderTrend(ds);renderBreakdown(ds);
     requestAnimationFrame(()=>{renderTlegend();curDS=ds;renderQuickFo();renderTable(ds);renderAB(ds);});});}
 function setActive(k){if(!DATASETS[k])return;active=k;
-  bdDim=null;bdMet=null;tableShowAll=false;tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tPage=1;
+  bdDim=null;bdMet=null;tableShowAll=false;tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tPage=1;
   if($("#search"))$("#search").value="";if($("#showAll"))$("#showAll").checked=false;
   renderSeg();show(DATASETS[k]);}
-function renderSeg(){$("#seg").innerHTML=TAB_ORDER.filter(k=>DATASETS[k]).map(k=>{const L=LEVELS[k];return `<button role="tab" data-k="${k}" class="${k===active?"on":""}">${L.name}<span class="sc">${DATASETS[k].aggAll.length}</span></button>`;}).join("");$$("#seg button").forEach(b=>b.onclick=()=>setActive(b.dataset.k));}
+function renderSeg(){$("#seg").innerHTML=TAB_ORDER.filter(k=>DATASETS[k]).map(k=>{const L=LEVELS[k];return `<button role="tab" data-k="${k}" class="${k===active?"on":""}">${L.name}<span class="sc">${windowCount(DATASETS[k],null).toLocaleString()}</span></button>`;}).join("");$$("#seg button").forEach(b=>b.onclick=()=>setActive(b.dataset.k));}
 function renderFooter(){$("#ft").innerHTML=`
 <details open>
   <summary>점수 산정 방식 (Scoring Methodology)</summary>
@@ -2155,7 +2200,7 @@ function renderFooter(){$("#ft").innerHTML=`
     <thead><tr><th>지표</th><th class="n">가중치</th><th>방향</th><th>근거</th></tr></thead>
     <tbody>
       <tr><td>ROAS (전환값 ÷ 비용)</td><td class="n">35%</td><td>↑ 높을수록</td><td>매출 기반 광고의 최상위 KPI (Google Ads Value-based Bidding)</td></tr>
-      <tr><td>전환당비용 (Cost/Conv)</td><td class="n">20%</td><td>↓ 낮을수록</td><td>Target CPA 자동입찰의 최적화 대상</td></tr>
+      <tr><td>전환당 비용 (Cost/Conv)</td><td class="n">20%</td><td>↓ 낮을수록</td><td>Target CPA 자동입찰의 최적화 대상</td></tr>
       <tr><td>전환율 (Conv Rate)</td><td class="n">15%</td><td>↑ 높을수록</td><td>Ad Relevance Diagnostics의 <i>Conversion Rate Ranking</i></td></tr>
       <tr><td>CTR</td><td class="n">15%</td><td>↑ 높을수록</td><td>Quality Score의 <i>Expected CTR</i> 구성요소</td></tr>
       <tr><td>CPM</td><td class="n">15%</td><td>↓ 낮을수록</td><td>노출 도달 효율 — 소재 품질이 낮으면 CPM 상승</td></tr>
@@ -2262,7 +2307,7 @@ function renderFooter(){$("#ft").innerHTML=`
 function refreshAll(){if(!active||!DATASETS[active])active=TAB_ORDER.find(k=>DATASETS[k])||Object.keys(DATASETS)[0];renderSeg();if(active)setActive(active);}
 
 function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;bdDim=null;bdMet=null;tableShowAll=false;
-  tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tPage=1;ISLE.name=null;ISLE.metric=null;
+  tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tPage=1;ISLE.name=null;ISLE.metric=null;
   const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
 function dropZone(e){if(!e||e.clientY==null)return null;
   const H=window.innerHeight||800,W=window.innerWidth||1200;
@@ -2332,7 +2377,8 @@ function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(
         const ch=chOf(p)||(dsMode==="channeled"?trunc(String(p.fname||"파일").replace(/\.csv$/i,""),14):null);
         ingest(p.headers,p.data,p.fname,ch,"replace");}
       const reasons=[...new Set(non.map(reasonOf))].join(" · ");
-      setStandalone(true,`⚠️ <b>형식과 다른 파일입니다 — 이 파일의 데이터로만 분석합니다.</b> 저장소에 누적되지 않습니다 · 사유: ${reasons}`);
+      const fnames=showable.map(p=>trunc(p.fname||"파일",24)).join(", ");
+      setStandalone(true,`⚠️ <b>형식과 다른 파일입니다 — 이 파일의 데이터로만 분석합니다.</b> ${fnames} · 저장소에 누적되지 않습니다 · 사유: ${reasons}`);
       notes.push("형식과 다른 파일 → 이 파일 데이터로만 임시 분석");
     }
     rebuildAllDatasets();
@@ -2376,7 +2422,15 @@ document.addEventListener("dragleave",e=>{if(!_hasFiles(e))return;_dragDepth--;i
 document.addEventListener("drop",e=>{e.preventDefault();_dragDepth=0;if(dropOv)dropOv.classList.remove("show");if(e.dataTransfer&&e.dataTransfer.files.length){const z=dropZone(e);handleFiles(e.dataTransfer.files,z);}});
 let _sq;$("#search").addEventListener("input",e=>{const v=e.target.value;clearTimeout(_sq);_sq=setTimeout(()=>{tState.q=v;tPage=1;if(active)renderTable(DATASETS[active]);},120);});
 $("#showAll").addEventListener("change",e=>{tableShowAll=e.target.checked;tPage=1;if(active)renderTable(DATASETS[active]);});
-$("#table tbody").addEventListener("click",e=>{const tr=e.target.closest("tr");if(!tr||tr.classList.contains("isle-row"))return;const nm=tr.getAttribute("data-name");if(nm==null||!curDS)return;toggleIsland(curDS,nm,tr);});
+$("#table tbody").addEventListener("click",e=>{
+  /* 칩 클릭 = 그 값으로 필터 토글 (행 펼침과 분리) */
+  const chip=e.target.closest(".chip[data-ck]");
+  if(chip&&curDS){const k=chip.dataset.ck,v=chip.dataset.cv;
+    tChip=(tChip&&tChip.k===k&&tChip.v===v)?null:{k,v,lab:chip.textContent};
+    if(tChip&&tChip.k==="grp")tGroupBy=false; /* 그룹 필터는 소재 목록으로 */
+    tPage=1;renderQuickFo();renderTable(curDS);return;}
+  const tr=e.target.closest("tr");if(!tr||tr.classList.contains("isle-row"))return;const nm=tr.getAttribute("data-name");if(nm==null||!curDS)return;toggleIsland(curDS,nm,tr);});
+$("#chipFil").addEventListener("click",()=>{tChip=null;tPage=1;renderQuickFo();if(active)renderTable(DATASETS[active]);});
 let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{if(active&&DATASETS[active]){renderQuad(DATASETS[active]);renderTrend(DATASETS[active]);}const inner=document.querySelector(".isle"),sc=document.querySelector(".tbl-scroll");if(inner&&sc)inner.style.width=sc.clientWidth+"px";},140);});
 
 function _qRender(){if(active&&DATASETS[active])renderQuad(DATASETS[active]);}
@@ -2409,9 +2463,12 @@ const _qyRange=setupDual("qyRange",true,()=>({lo:qView.ylo,hi:qView.yhi}),q=>{qV
 function _qResetRanges(){qView={xlo:0,xhi:100,ylo:0,yhi:100};_qxRange.paint();_qyRange.paint();}
 $("#qrst").addEventListener("click",()=>{_qResetRanges();_qRender();});
 const _origSetActive=setActive;setActive=function(k){_qResetRanges();_origSetActive(k);};
-function updateLandingVisibility(){const el=document.getElementById("landing");if(!el)return;const hasData=active&&DATASETS[active]&&DATASETS[active].agg&&DATASETS[active].agg.length;el.classList.toggle("hidden",!!hasData);
+function updateLandingVisibility(){const el=document.getElementById("landing");if(!el)return;const hasData=active&&DATASETS[active]&&DATASETS[active].agg&&DATASETS[active].agg.length;
+  /* 자동 재접속 중엔 랜딩 대신 로딩 화면 — 로그인 상태 새로고침 시 비밀번호 창 깜빡임 방지 */
+  el.classList.toggle("hidden",!!hasData||cloudBooting);
+  const bo=document.getElementById("bootOv");if(bo)bo.hidden=!(cloudBooting&&!hasData);
   /* 첫 화면이면 비밀번호 입력에 바로 포커스 (다른 입력 사용 중일 땐 건드리지 않음) */
-  if(!hasData&&!cloudPw){const p=$("#pwIn");if(p&&(document.activeElement===document.body||document.activeElement==null))try{p.focus({preventScroll:true});}catch(e){}}}
+  if(!hasData&&!cloudPw&&!cloudBooting){const p=$("#pwIn");if(p&&(document.activeElement===document.body||document.activeElement==null))try{p.focus({preventScroll:true});}catch(e){}}}
 $$("#mtabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.t));
 renderGlossary();renderFooter();refreshAll();updateLandingVisibility();
 /* 서명된 기기라면 첫 화면 인사 개인화 (서명: 아무 데서나 /hansy 입력) */
@@ -2431,7 +2488,8 @@ if(_cloudLine)_cloudLine.addEventListener("click",cloudRestore);
 const _fmtBack=$("#fmtBarBack");
 if(_fmtBack)_fmtBack.addEventListener("click",cloudRestore);
 refreshCloudLine();
-if(cloudPw)cloudUnlock(cloudPw,{silent:true}).then(()=>updateLandingVisibility());
+if(cloudPw)cloudUnlock(cloudPw,{silent:true}).catch(()=>false).then(()=>{cloudBooting=false;updateLandingVisibility();});
+else cloudBooting=false;
 const _origSetActive2=setActive;setActive=function(k){_origSetActive2(k);updateLandingVisibility();};
 const _origResetAll=resetAll;resetAll=function(){_origResetAll();updateLandingVisibility();};
 _qxRange.paint();_qyRange.paint();
