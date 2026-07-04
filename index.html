@@ -964,11 +964,12 @@ function aggregate(data,L){const map=new Map();
     if((e._vcrDen||0)>0)e["영상 완주율"]=e._vcrNum/e._vcrDen;
     if((e["신규+재활성 유저 수"]||0)>0)e["신규+재활성 eCPA"]=e.비용/e["신규+재활성 유저 수"];
     if(e._g_assetType){
-      e["_g_interactionRate"]=(e["_g_interactions"]||0)>0&&e["노출 수"]>0?e["_g_interactions"]/e["노출 수"]:null;
-      e["_g_trueViewRate"]=(e["_g_trueViews"]||0)>0&&e["노출 수"]>0?e["_g_trueViews"]/e["노출 수"]:null;
-      e["_g_conversionRate"]=(e["_g_conversions"]||0)>0&&(e["_g_interactions"]||0)>0?e["_g_conversions"]/e["_g_interactions"]:null;
-      e["_g_costPerConv"]=(e["_g_conversions"]||0)>0?e.비용/e["_g_conversions"]:null;
-      e["_g_ROAS"]=(e["_g_convValue"]||0)>0&&e.비용>0?e["_g_convValue"]/e.비용:null;
+      /* 분모가 있으면 0도 유효한 성과값 — null 처리하면 성과 없는 소재가 해당 지표 평가(예: ROAS 가중 35%)를 회피한다 */
+      e["_g_interactionRate"]=e["노출 수"]>0?(e["_g_interactions"]||0)/e["노출 수"]:null;
+      e["_g_trueViewRate"]=e["노출 수"]>0?(e["_g_trueViews"]||0)/e["노출 수"]:null;
+      e["_g_conversionRate"]=(e["_g_interactions"]||0)>0?(e["_g_conversions"]||0)/e["_g_interactions"]:null;
+      e["_g_costPerConv"]=(e["_g_conversions"]||0)>0?e.비용/e["_g_conversions"]:null; /* 전환 0 → 비용/0은 정의 불가라 null 유지 */
+      e["_g_ROAS"]=e.비용>0?(e["_g_convValue"]||0)/e.비용:null;
       e["_g_convValuePerConv"]=(e["_g_convValue"]||0)>0&&(e["_g_allConv"]||0)>0?e["_g_convValue"]/e["_g_allConv"]:null;}
     e._wkCnt=e._wkSet?e._wkSet.size:0;e._wkSet=null;
     e.tags=tagEntity(e.name,e);return e;});
@@ -1484,21 +1485,14 @@ function fmtSpecVal(k,v){if(v==null)return"–";
   if(k==="_g_ROAS")return v.toFixed(1)+"×";
   if(k==="CTR"||k==="영상 완주율"||k.endsWith("Rate"))return fmtPct(v);
   return fmtWon(v);}
-/* 광고그룹 상세 — 광고그룹 보고서(ginfo) 스냅샷 패널: 상태·타겟 CPA·누적 성과·영상 재생 퍼널 */
+/* 광고그룹 상세 — 광고그룹 보고서(ginfo) 스냅샷 패널.
+   표·상태 칩에서 이미 보이는 값(상태·광고비·노출·클릭·전환류)은 넣지 않는다: 여기엔 보고서에만 있는 정보만 */
 function groupInfoHTML(gi){if(!gi)return "";
   const cells=[];
   const add=(k,v,tip,wide)=>{if(v!=null&&v!=="")cells.push(`<div class="gi-r${wide?" wide":""}" ${tip?`title="${escAttr(tip)}"`:""}><span class="gi-k">${k}</span><b class="gi-v num">${v}</b></div>`);};
-  const stTxt=/일시중지/.test(gi.st||"")?"⏸ 일시중지":(/제한/.test(gi.op||"")||/정책/.test(gi.rsn||""))?"⚠️ 운영(제한적)":"🟢 운영중";
-  add("상태",stTxt+(gi.rsn&&gi.rsn!=="알 수 없음"?` — ${trunc(gi.rsn,30)}`:""),gi.rsn,true);
   add("캠페인",gi.cpNm?trunc(groupPrettyName(gi.cpNm),40):null,gi.cpNm,true);
   add("타겟 CPA",gi.tcpa!=null?fmtWon(gi.tcpa):null,"이 그룹의 입찰 목표 CPA");
-  add("누적 광고비",gi.cost!=null?fmtKRW(gi.cost)+"원":null);
-  add("노출",gi.imp!=null?fmtKRW(gi.imp):null);
-  add("클릭",gi.clk!=null?`${fmtKRW(gi.clk)}${gi.ctr!=null?` (CTR ${gi.ctr}%)`:""}`:null);
-  add("상호작용률",gi.intRate!=null?gi.intRate+"%":null);
-  add("참여율",gi.eng!=null?gi.eng+"%":null);
-  add("전환수",gi.conv!=null?fmtInt(gi.conv):null,"인앱 액션 포함 Google 집계 전환");
-  add("전환당 비용",gi.cpConv!=null?fmtWon(gi.cpConv):null);
+  add("참여율",gi.eng!=null?gi.eng+"%":null,"Google 참여율 (보고서 기간 누적)");
   add("설치 시작 first_open",gi.fopen!=null?fmtInt(gi.fopen):null);
   add("홈 진입 home",gi.home!=null?fmtInt(gi.home):null);
   add("평균 시청 시간/노출",gi.watch!=null?gi.watch:null);
@@ -1506,7 +1500,8 @@ function groupInfoHTML(gi){if(!gi)return "";
   if(gi.v25!=null){
     const seg=[["25%",gi.v25],["50%",gi.v50],["75%",gi.v75],["100%",gi.v100]].filter(s=>s[1]!=null);
     fun=`<div class="gi-fun"><div class="gi-fun-t">동영상 재생 퍼널 <span>노출 대비 재생 도달률</span></div>${seg.map(([l,v])=>`<div class="gi-fr"><span>${l}</span><div class="gi-ft"><i style="width:${Math.min(100,v)}%"></i></div><b class="num">${v}%</b></div>`).join("")}</div>`;}
-  return `<section style="grid-column:1/-1"><div class="ish">그룹 정보 <span class="n">구글 광고그룹 보고서${gi.from?` · ${gi.from} ~ ${gi.to||""}`:""} 누적 기준</span></div><div class="gi-grid">${cells.join("")}</div>${fun}</section>`;}
+  if(!cells.length&&!fun)return "";
+  return `<section><div class="ish">보고서 추가 정보 <span class="n">광고그룹 보고서${gi.from?` · ${gi.from}~${gi.to||""}`:""} 누적</span></div><div class="gi-grid">${cells.join("")}</div>${fun}</section>`;}
 function scoreBreakdownHTML(ds,e){const S=ds.S;
   if(e.score==null||!S||!S.specs||!e._specPct)return"";
   const rows=S.specs.filter(s=>e._specPct[s.k]).map(s=>{const sp=e._specPct[s.k];
@@ -1591,12 +1586,20 @@ function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>
   const preview=assetPreview(previewUrlOf(e),e);
   const spark=creativeTrendHTML(ds,e);
   const leftCol=(preview||spark)?`<section><div class="isle-preview">${preview}${spark}</div></section>`:"";
-  const giPanel=e._isGroup?groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group)):"";
   inner.classList.toggle("no-preview",!leftCol);
-  inner.innerHTML=`${leftCol}${giPanel}
+  if(e._isGroup){
+    /* 그룹 상세: 추이 · 멤버 목록 · 보고서 스냅샷(표에 없는 정보만) 3열 + 점수 구성.
+       개별 소재 대비 코호트 순위는 그룹 합계엔 무의미해 표시하지 않는다 */
+    const giPanel=groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group));
+    inner.innerHTML=`${leftCol}
+      <section><div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}</section>
+      ${giPanel||"<section></section>"}
+      ${scoreBreakdownHTML(ds,e)}`;
+  }else{
+    inner.innerHTML=`${leftCol}
     <section><div class="mtog">${toggles}</div>${bars}</section>
     <section><div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}</section>
-    ${scoreBreakdownHTML(ds,e)}`;
+    ${scoreBreakdownHTML(ds,e)}`;}
   inner.querySelectorAll(".mtog button").forEach(b=>b.addEventListener("click",ev=>{ev.stopPropagation();ISLE.metric=b.dataset.m;inner.querySelectorAll(".mtog button").forEach(x=>x.classList.toggle("on",x.dataset.m===ISLE.metric));requestAnimationFrame(()=>fillIsland(ds,e,inner));}));
   /* 유튜브 소재면 제목을 조회해 화면 곳곳의 URL 이름을 실제 제목으로 교체 (미디어 위 중복 배너 없음) */
   const _ytid=ytIdOf(previewUrlOf(e));
@@ -1627,8 +1630,9 @@ function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-r
 function tableCols(L,ds){const meta=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score",t:"점수",help:"복합 지표 가중 종합"}];
   const isM=ds&&ds.agg&&ds.agg.some(e=>e._m_ctype),isG=ds&&ds.agg&&ds.agg.some(e=>e._g_assetType);
   const nums=[
-    {k:"비용",t:"광고비",f:"won",help:"쓴 광고비",lead:1,grp:"cost"},
-    {k:"노출 수",t:"노출",f:"int",help:"보여진 횟수",sub:1,grp:"cost"}];
+    {k:"노출 수",t:"노출",f:"int",help:"보여진 횟수 (도달 규모)",lead:1,grp:"vol"},
+    {k:"비용",t:"광고비",f:"won",help:"쓴 광고비",sub:1,grp:"vol"},
+    {k:"CPM",t:"CPM",f:"won",help:"노출 1,000회당 비용 · 낮을수록 좋음",sub:1,grp:"vol"}];
   if(L.hasConv)nums.push(
     {k:"eCPI",t:"eCPI",f:"won",help:"설치 1건당 비용 · 낮을수록 좋음",lead:1,grp:"inst"},
     {k:"어트리뷰션 수",t:"설치",f:"int",help:"이 항목으로 생긴 앱 설치 수",sub:1,grp:"inst"},
@@ -1684,11 +1688,13 @@ function buildAdGroupAgg(ds){
     g["활성 유저 eCPA"]=(g["활성 유저 수"]||0)>0?cost/g["활성 유저 수"]:null;
     if((g._vcrDen||0)>0)g["영상 완주율"]=g._vcrNum/g._vcrDen;
     if((g["신규+재활성 유저 수"]||0)>0)g["신규+재활성 eCPA"]=cost/g["신규+재활성 유저 수"];
-    g._g_interactionRate=imp>0&&g._g_interactions>0?g._g_interactions/imp:null;
-    g._g_conversionRate=g._g_interactions>0&&g._g_conversions>0?g._g_conversions/g._g_interactions:null;
-    g._g_costPerConv=g._g_conversions>0?cost/g._g_conversions:null;
-    g._g_ROAS=cost>0&&g._g_convValue>0?g._g_convValue/cost:null;
-    g._g_convValuePerConv=g._g_conversions>0&&g._g_convValue>0?g._g_convValue/g._g_conversions:null;
+    const isGg=g._members.some(m=>m._g_assetType);
+    /* 소재 레벨과 동일 규칙: 분모가 있으면 0도 유효한 성과값 (구글 그룹에만 적용) */
+    g._g_interactionRate=isGg&&imp>0?(g._g_interactions||0)/imp:null;
+    g._g_conversionRate=isGg&&(g._g_interactions||0)>0?(g._g_conversions||0)/g._g_interactions:null;
+    g._g_costPerConv=isGg&&(g._g_conversions||0)>0?cost/g._g_conversions:null;
+    g._g_ROAS=isGg&&cost>0?(g._g_convValue||0)/cost:null;
+    g._g_convValuePerConv=isGg&&(g._g_conversions||0)>0&&(g._g_convValue||0)>0?g._g_convValue/g._g_conversions:null;
     const fos=new Set(g._members.map(m=>m.tags&&m.tags.fo).filter(Boolean));
     if(fos.size===1)g.tags.fo=[...fos][0];
     else if(fos.size>1)g.tags.fo="혼합";});
