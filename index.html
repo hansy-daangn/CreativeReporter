@@ -32,34 +32,14 @@
   /* ===== sidebar (fill-based separation, dark) ===== */
   .side{background:var(--side); color:var(--side-ink); position:sticky; top:0; height:100vh; overflow-x:hidden; overflow-y:auto; display:flex; flex-direction:column; padding:20px 14px; min-width:0}
   .side *{min-width:0}
-  .side-h-sub{color:var(--side-faint);font-weight:600;font-size:9.5px;text-transform:none;letter-spacing:0;margin-left:4px}
+  .side-duo{display:contents}
+  .side-duo .side-sec:first-child{margin-top:2px}
   .mseg{display:flex;flex-direction:column;gap:3px}
   .mseg button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:8px 11px;border-radius:8px;background:transparent;color:var(--side-muted);font-size:12px;font-weight:650;transition:.12s}
   .mseg button:hover{background:var(--side-2);color:var(--side-ink)}
   .mseg button.on{background:rgba(255,255,255,.13);color:#fff}
   .mseg button .c{font-size:10px;font-weight:600;color:var(--side-faint);background:rgba(255,255,255,.06);padding:1px 6px;border-radius:5px}
   .mseg button.on .c{color:#fff;background:rgba(255,255,255,.14)}
-  /* sidebar leaderboard */
-  .srank{display:flex;flex-direction:column;gap:2px;padding:0 2px}
-  .srank-h{font-size:9.5px;font-weight:800;letter-spacing:.08em;color:var(--side-faint);margin-top:8px;padding:0 4px 4px}
-  .srank-h.good{color:#5FD0A8} .srank-h.bad{color:#F58AA0}
-  .srk-row{display:grid;grid-template-columns:20px 1fr;column-gap:8px;align-items:start;padding:6px 4px;border-radius:7px;cursor:pointer;transition:background .12s}
-  .srk-row:hover{background:rgba(255,255,255,.06)}
-  .srk-row+.srk-row{border-top:1px solid rgba(255,255,255,.05)}
-  .srk-rank{width:20px;height:20px;border-radius:5px;display:grid;place-items:center;font-size:10.5px;font-weight:800;background:rgba(255,255,255,.12);color:#fff;margin-top:1px}
-  .srk-row.bad .srk-rank{background:rgba(245,138,160,.22);color:#F58AA0}
-  .srk-name{color:#fff;font-weight:650;font-size:11.5px;line-height:1.3;word-break:break-all;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .srk-meta{grid-column:2;color:var(--side-muted);font-size:10.5px;line-height:1.45;margin-top:2px;word-break:break-all}
-  .srk-meta b{color:#fff;font-weight:650}
-  .srk-meta .sp{padding:1px 5px;border-radius:4px;font-size:9.5px;font-weight:800;margin-right:5px;vertical-align:1px}
-  .srk-empty{font-size:10.5px;color:var(--side-faint);padding:6px 4px}
-  /* level seg (sidebar) — vertical */
-  .side .seg{display:flex;flex-direction:column;gap:4px;background:transparent;padding:0;border-radius:0}
-  .side .seg button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:10px 12px;border-radius:9px;background:transparent;color:var(--side-muted);font-size:13px;font-weight:650;transition:.12s;box-shadow:none}
-  .side .seg button:hover{background:var(--side-2);color:var(--side-ink)}
-  .side .seg button.on{background:var(--karrot);color:#fff;box-shadow:none}
-  .side .seg button .sc{font-size:10.5px;font-weight:600;background:rgba(255,255,255,.08);color:var(--side-faint);padding:1px 7px;border-radius:6px;opacity:1}
-  .side .seg button.on .sc{background:rgba(255,255,255,.22);color:#fff}
   .side-sec{margin-top:22px}
   .side-h{font-size:10.5px; font-weight:700; letter-spacing:.06em; color:var(--side-faint); text-transform:uppercase; padding:0 6px 9px}
   .skpi{display:flex; flex-direction:column; gap:14px; padding:2px 6px}
@@ -248,7 +228,10 @@
   table{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
   th,td{padding:9px 11px;text-align:right;white-space:nowrap}
   tbody td{background:var(--surface)}
-  th.name,td.name{text-align:left;white-space:normal;min-width:230px}
+  th.name,td.name{text-align:left;white-space:normal;min-width:190px;max-width:330px}
+  th.csub,td.csub{background:#F7F6F1}
+  .colx{display:inline-grid;place-items:center;width:15px;height:15px;margin-left:4px;border-radius:4px;background:var(--surface-3);color:var(--muted);font-weight:800;font-size:11px;cursor:pointer;vertical-align:-1px}
+  .colx:hover{background:var(--karrot-f);color:var(--karrot)}
   th.bdg,td.bdg{width:58px;padding-left:14px;text-align:left}
   thead th{position:sticky;top:0;background:var(--surface-2);z-index:3;font-weight:650;color:var(--muted);cursor:pointer;user-select:none}
   thead th.help{text-decoration:underline dotted #cfcdc4;text-underline-offset:3px}
@@ -366,9 +349,9 @@
   /* 학습중 뱃지 */
   .lrn{display:inline-block;font-size:9px;font-weight:800;color:#3D6BB3;background:#E1EBF8;padding:1.5px 6px;border-radius:5px;vertical-align:1.5px;letter-spacing:.02em;cursor:help;margin-left:6px}
   /* 기간 직접 설정 (사이드바) */
-  .pcustom{display:flex;align-items:center;gap:5px;padding:7px 2px 0;flex-wrap:wrap}
-  .pcustom input[type=date]{background:var(--side-2);border:1px solid rgba(255,255,255,.14);color:var(--side-ink);border-radius:7px;padding:5px 6px;font-size:10.5px;font-family:inherit;width:112px;color-scheme:dark}
-  .pcustom span{color:var(--side-faint);font-size:11px}
+  .pcustom{display:flex;align-items:center;gap:5px;padding:7px 2px 0;flex-wrap:wrap;color:var(--side-muted);font-size:11px}
+  .pcustom input[type=number]{background:var(--side-2);border:1px solid rgba(255,255,255,.14);color:var(--side-ink);border-radius:7px;padding:5px 6px;font-size:11px;font-family:inherit;width:52px;color-scheme:dark}
+  .pcustom select{background:var(--side-2);border:1px solid rgba(255,255,255,.14);color:var(--side-ink);border-radius:7px;padding:5px 4px;font-size:11px;font-family:inherit;color-scheme:dark}
   .pcustom button{background:var(--karrot);color:#fff;border-radius:7px;padding:5px 11px;font-size:11px;font-weight:700}
   /* 소재 주차별 추이 (상세) */
   .ispark{width:100%;max-width:390px;margin:5px auto 0}
@@ -523,6 +506,10 @@
     .skpi{flex-direction:row;flex-wrap:wrap;gap:18px}
     .side-foot{margin-top:16px}
     .content{padding:18px 18px 4px}.card{padding:18px}
+    /* 세로 화면: 매체·기간은 좌우 2분할 (전체 너비 낭비 방지) */
+    .side-duo{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:start}
+    .side-duo .side-sec,.side-duo .side-sec:first-child{margin-top:16px}
+    th.name,td.name{min-width:150px;max-width:210px}
   }
   @media(max-width:760px){.isle{grid-template-columns:1fr;gap:18px}}
   @media (prefers-reduced-motion: reduce){*{transition:none!important}}
@@ -567,30 +554,19 @@
 <div class="app">
   <!-- SIDEBAR: identity + media + summary + actions -->
   <aside class="side">
-    <div class="side-sec" style="margin-top:2px">
-      <div class="side-h">레벨</div>
-      <div class="seg" id="seg" role="tablist"></div>
-    </div>
-    <div class="side-sec" id="msegSec" hidden>
-      <div class="side-h">매체</div>
-      <div class="mseg" id="mseg"></div>
-    </div>
-    <div class="side-sec" id="periodSec" hidden>
-      <div class="side-h">기간</div>
-      <div class="mseg" id="pseg"></div>
+    <div class="side-duo">
+      <div class="side-sec" id="msegSec" hidden>
+        <div class="side-h">매체</div>
+        <div class="mseg" id="mseg"></div>
+      </div>
+      <div class="side-sec" id="periodSec" hidden>
+        <div class="side-h">기간</div>
+        <div class="mseg" id="pseg"></div>
+      </div>
     </div>
     <div class="side-sec">
       <div class="side-h">요약</div>
       <div class="skpi" id="skpi"></div>
-    </div>
-    <div class="side-sec">
-      <div class="side-h">성과 순위 <span class="side-h-sub" id="srankSub"></span></div>
-      <div class="srank">
-        <div class="srank-h good">▲ TOP 3</div>
-        <div id="srTop"></div>
-        <div class="srank-h bad" id="srBadH">▼ BAD 3</div>
-        <div id="srBad"></div>
-      </div>
     </div>
     <div class="side-foot">
       <div class="src" id="cloudLine" style="cursor:pointer" title="클릭 — 비밀번호 입력 또는 저장소 새로고침">☁️ 저장소 미연결</div>
@@ -613,7 +589,6 @@
       </div>
 
       <section class="card" id="tabAnalysis">
-        <div class="card-h"><h2>분석</h2></div>
         <div class="keyrow" id="keyrow"></div>
         <p class="qhint" id="qhint"></p>
         <div class="qaxis"><span class="qaxis-lab">가로</span><div class="dtog" id="qxTog"></div></div>
@@ -637,15 +612,14 @@
       </section>
 
       <section class="card" id="tabTable" hidden>
-        <div class="card-h"><h2>전체 목록</h2></div>
         <div class="tbar">
           <input type="search" id="search" placeholder="이름으로 검색">
           <div class="qfo" id="qfoWrap" hidden>
             <button class="qfo-btn qfo-txt" id="chipFil" type="button" title="칩 필터 해제" hidden></button>
-            <button class="qfo-btn qfo-txt" id="qfoLive" type="button" title="최신 집행 주에 광고비가 나간 소재만" aria-label="라이브만 보기">🟢 라이브만</button>
-            <button class="qfo-btn qfo-txt" id="qfoGrp" type="button" title="광고그룹 단위로 집계해서 보기" aria-label="그룹별 보기">그룹별 보기</button>
-            <button class="qfo-btn" id="qfoVid" type="button" title="영상만 보기" aria-label="영상만">🎬 VDO</button>
-            <button class="qfo-btn" id="qfoImg" type="button" title="이미지만 보기" aria-label="이미지만">🖼️ IMG</button>
+            <button class="qfo-btn qfo-txt" id="qfoLive" type="button" title="최신 집행 주에 광고비가 나간 소재만" aria-label="라이브만 보기">Live</button>
+            <button class="qfo-btn qfo-txt" id="qfoGrp" type="button" title="광고그룹 단위로 집계해서 보기" aria-label="그룹별 보기">GroupView</button>
+            <button class="qfo-btn qfo-txt" id="qfoVid" type="button" title="영상만 보기" aria-label="영상만">Video</button>
+            <button class="qfo-btn qfo-txt" id="qfoImg" type="button" title="이미지만 보기" aria-label="이미지만">Image</button>
           </div>
           <label class="chk"><input type="checkbox" id="showAll">비활성(광고비 0)도 보기</label>
           <div class="tlegend" id="tlegend"></div>
@@ -654,7 +628,7 @@
       </section>
 
       <section class="card" id="tabAB" hidden>
-        <div class="card-h"><h2>AB테스트</h2><span class="meta" id="abMeta"></span></div>
+        <div class="card-h"><span class="meta" id="abMeta"></span></div>
         <div id="abBody"></div>
       </section>
 
@@ -1002,7 +976,6 @@ function weeklyTotals(data,weeks){const list=weeks&&weeks.length?weeks:WEEKS;
   for(const r of data){const w=r.date;if(!t[w])continue;for(const c of["비용","클릭 수","어트리뷰션 수","활성 유저 수","노출 수"]){const v=num(r[c]);if(v!=null)t[w][c]+=v;}}
   return list.map(w=>({week:w,...t[w]}));}
 function quantile(s,q){if(!s.length)return null;const p=(s.length-1)*q,b=Math.floor(p),r=p-b;return s[b+1]!==undefined?s[b]+r*(s[b+1]-s[b]):s[b];}
-function minVol(L){return L.key==="ad"?60:L.key==="adset"?500:1000;}
 function pctRank(s,v){if(s.length<=1)return .5;let i=0;while(i<s.length&&s[i]<v)i++;return i/(s.length-1);}
 /* 광고비 가중 백분위 — "계정의 돈이 실제로 흐르는 곳" 대비 상대 위치.
    저광고비 소재 수백 개가 분포를 왜곡하지 못하게 각 비교 대상을 광고비만큼의 질량으로 취급 */
@@ -1147,11 +1120,6 @@ function computeScores(ds){const L=ds.L,a=ds.agg;
   const goodFmt=pkey==="_g_ROAS"?"num":(pkey==="CTR"||pkey==="CPM"||pkey.endsWith("Rate")?(pkey==="CPM"?"won":"pct"):"won");
   return{best,worst,med,goodCol:pkey,goodDir:pdir,goodLabel:primary.lab,goodFmt,goodHelp:pdir<0?"낮을수록 좋음":"높을수록 좋음",volCol:"비용",eligCount:elig.length,specs,gSpecs:specs};}
 function sFmt(v,f){return f==="pct"?fmtPct(v):f==="num"?(v!=null&&isFinite(v)?v.toFixed(1)+"×":"–"):f==="int"?fmtInt(v):fmtWon(v);}
-function degText(e,S){const g=e[S.goodCol],med=S.med;if(g==null||med==null||med<=0)return"";
-  if(S.goodDir<0){const m=med/g;return m>=1.05?`평균(${sFmt(med,S.goodFmt)})보다 <b>${m.toFixed(1)}배 효율적</b>`:`평균보다 <b>${(g/med).toFixed(1)}배 비쌈</b>`;}
-  const m=g/med;return m>=1.05?`평균(${sFmt(med,S.goodFmt)})의 <b>${m.toFixed(1)}배</b>`:`평균보다 <b>낮음</b>`;}
-function gv(e,S){return sFmt(e[S.goodCol],S.goodFmt);}
-
 /* sidebar KPIs */
 function renderSideKpis(ds){const a=ds.data,L=ds.L,sum=c=>a.reduce((s,r)=>s+(num(r[c])||0),0);
   const tC=sum("비용"),tClk=sum("클릭 수"),tAttr=sum("어트리뷰션 수"),tAct=sum("활성 유저 수");
@@ -1189,22 +1157,6 @@ function chipsHTML(t,e){
     if(gid){const glab=e._m_group?gid:(adGroupLabel(gid)||"그룹 …"+String(gid).slice(-4));
       arr.push(mk("grp",gid,"grp",trunc(glab,20)));}}
   return arr.filter(Boolean).join("");}
-function renderLeaderboard(ds){const L=ds.L,S=ds.S;
-  const sub=$("#srankSub");if(sub)sub.innerHTML=`· ${S.goodLabel}`;
-  const best=S.best.slice(0,3),worst=S.worst.slice(0,3).filter(w=>!best.includes(w));
-  const sp=t=>t==="g2"?"sp-g2":t==="g1"?"sp-g1":t==="m"?"sp-mid":t==="w1"?"sp-w1":t==="w2"?"sp-w2":"sp-na";
-  const top=$("#srTop"),bad=$("#srBad"),badH=$("#srBadH");
-  if(!best.length){top.innerHTML=`<div class="srk-empty">순위 데이터 부족 (최소 ${L.volLab} ${minVol(L)}건 필요)</div>`;bad.innerHTML="";if(badH)badH.style.display="none";return;}
-  const row=(e,i,isBad)=>{const dom=isBad?e.dom==="bad":(i===0&&e.dom==="good");
-    const tag=dom?(isBad?'<span class="dom-tag bad" style="font-size:8.5px;margin-left:5px">독보적</span>':'<span class="dom-tag" style="font-size:8.5px;margin-left:5px">독보적</span>'):"";
-    return `<div class="srk-row${isBad?" bad":""}" data-name="${escAttr(e.name)}" title="클릭 → 전체 목록에서 자세히"><div class="srk-rank">${i+1}</div>
-      <div class="srk-name" title="${escAttr(e.name)}">${displayNameOf(e)}${tag}</div>
-      <div class="srk-meta"><span class="sp ${sp(e.tier)}">${e.score??"–"}</span>${S.goodLabel} <b>${gv(e,S)}</b> · ${degText(e,S)}</div></div>`;};
-  top.innerHTML=best.map((e,i)=>row(e,i,false)).join("");
-  if(badH)badH.style.display=worst.length?"":"none";
-  bad.innerHTML=worst.map((e,i)=>row(e,i,true)).join("");
-  [top,bad].forEach(el=>{if(!el)return;el.querySelectorAll(".srk-row").forEach(r=>{r.onclick=()=>{const nm=r.dataset.name;if(nm)goToIslandFromQuad(nm);};});});}
-
 /* key summary tiles */
 function renderKeyrow(ds){const L=ds.L,a=ds.agg,tiles=[];
   const volK=L.hasConv?L.volCol:"클릭 수",szLab=L.hasConv?L.volLab+" 1건당":"클릭 1회당";
@@ -1423,6 +1375,7 @@ let tQuickFo=null; /* "영상" | "이미지" | null */
 let tGroupBy=false; /* true → aggregate table rows by 광고그룹 ID */
 let tLiveOnly=true; /* 기본 ON — 스코프 최신 집행 주에 광고비>0인 소재만 (전체 목록 한정) */
 let tChip=null; /* 칩 클릭 필터 {k:"ve|fo|nat|size|grp", v, lab} — 한 번에 하나, 다시 클릭·✕로 해제 */
+let tExp=new Set(); /* 펼쳐진 컬럼 그룹(cost/inst/act/clk/g) — 기본은 대표 컬럼만 */
 function isInactive(e){if(!e)return true;
   if((e.비용||0)<=0)return true;
   if(!("클릭 수" in e)||!("어트리뷰션 수" in e))return true;
@@ -1631,7 +1584,7 @@ function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>
   const giPanel=e._isGroup?groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group)):"";
   inner.classList.toggle("no-preview",!leftCol);
   inner.innerHTML=`${leftCol}${giPanel}
-    <section><div class="ish">기준별 위치 <span class="n">${cur.good?cur.lab+" 기준":"광고비 기준"}</span></div><div class="mtog">${toggles}</div>${bars}</section>
+    <section><div class="mtog">${toggles}</div>${bars}</section>
     <section><div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}</section>
     ${scoreBreakdownHTML(ds,e)}`;
   inner.querySelectorAll(".mtog button").forEach(b=>b.addEventListener("click",ev=>{ev.stopPropagation();ISLE.metric=b.dataset.m;inner.querySelectorAll(".mtog button").forEach(x=>x.classList.toggle("on",x.dataset.m===ISLE.metric));requestAnimationFrame(()=>fillIsland(ds,e,inner));}));
@@ -1654,33 +1607,42 @@ function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-r
   if(wasOpen){ISLE.name=null;return;}
   const e=findRow(ds,name);if(!e)return;ISLE.name=name;ISLE.metric=defaultMetric(ds,e);
   tr.classList.add("exp");const row=document.createElement("tr");row.className="isle-row";
-  const td=document.createElement("td");td.colSpan=tableCols(ds.L,ds).length;const inner=document.createElement("div");inner.className="isle";
+  const td=document.createElement("td");td.colSpan=tableCols(ds.L,ds).filter(c=>!c.sub||tExp.has(c.grp)).length;const inner=document.createElement("div");inner.className="isle";
   td.appendChild(inner);row.appendChild(td);tr.parentNode.insertBefore(row,tr.nextSibling);
   const sc=document.querySelector(".tbl-scroll");inner.style.width=(sc?sc.clientWidth:1000)+"px";
   inner.innerHTML=`<div class="isle-load">불러오는 중…</div>`;
   requestAnimationFrame(()=>{if(ISLE.name===name)fillIsland(ds,e,inner);});}
+/* 표 컬럼 — 성격이 같은 지표는 그룹으로 묶고, 기본은 대표(lead) 컬럼만.
+   대표 컬럼 헤더의 +를 누르면 하위(sub) 지표가 펼쳐진다. 점수·이름은 항상 표시 */
 function tableCols(L,ds){const meta=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score",t:"점수",help:"복합 지표 가중 종합"}];
-  const nums=[{k:"비용",t:"광고비",f:"won",help:"쓴 광고비"},{k:"노출 수",t:"노출",f:"int",help:"보여진 횟수"},{k:"클릭 수",t:"클릭",f:"int",help:"눌린 횟수"},
-    {k:"CTR",t:"CTR",f:"pct",help:"클릭률 = 클릭÷노출 · 높을수록 좋음"},{k:"CPC",t:"CPC",f:"won",help:"클릭당 비용 · 낮을수록 좋음"}];
-  if(L.hasConv)nums.push({k:"어트리뷰션 수",t:"설치",f:"int",help:"이 항목으로 생긴 앱 설치 수"},{k:"eCPI",t:"eCPI",f:"won",help:"설치 1건당 비용 · 낮을수록 좋음"},
-    {k:"활성 유저 수",t:"활성유저",f:"int",help:"설치 후 실제 사용자"},{k:"활성 유저 eCPA",t:"eCPA",f:"won",help:"활성유저당 비용 · 낮을수록 좋음"});
-  if(ds&&ds.agg&&ds.agg.some(e=>e._m_ctype))nums.push(
-    {k:"영상 완주율",t:"완주율",f:"pct",help:"영상을 끝까지 본 비율 (노출 가중 평균) · 높을수록 좋음"},
-    {k:"신규+재활성 유저 수",t:"신규+재활성",f:"int",help:"신규 + 휴면 복귀 유저 수"},
-    {k:"신규+재활성 eCPA",t:"신규 eCPA",f:"won",help:"신규+재활성 유저 1명당 비용 · 낮을수록 좋음"},
-    {k:"_m_installs",t:"설치(몰로코)",f:"int",help:"몰로코 리포트 기준 설치 수 — MMP 어트리뷰션과 다를 수 있음"}
-  );
-  if(ds&&ds.agg&&ds.agg.some(e=>e._g_assetType))nums.push(
-    {k:"_g_ROAS",t:"ROAS",f:"num",help:"전환 가치÷비용 · 높을수록 좋음"},
-    {k:"_g_costPerConv",t:"전환당 비용",f:"won",help:"비용÷전환수 · 낮을수록 좋음"},
-    {k:"_g_conversionRate",t:"전환율",f:"pct",help:"전환÷상호작용 (Google 관례) · 높을수록 좋음"},
-    {k:"_g_interactions",t:"상호작용",f:"int",help:"상호작용 총 수"},
-    {k:"_g_interactionRate",t:"상호작용률",f:"pct",help:"상호작용÷노출 · 높을수록 좋음"},
-    {k:"_g_conversions",t:"전환",f:"int",help:"Google 전환 수"},
-    {k:"_g_allConv",t:"모든 전환",f:"int",help:"모든 전환 (전환 시간별)"},
-    {k:"_g_convValue",t:"전환 가치",f:"won",help:"모든 전환 가치 (KRW)"},
-    {k:"_g_convValuePerConv",t:"전환당 가치",f:"won",help:"전환 가치÷모든 전환"}
-  );
+  const isM=ds&&ds.agg&&ds.agg.some(e=>e._m_ctype),isG=ds&&ds.agg&&ds.agg.some(e=>e._g_assetType);
+  const nums=[
+    {k:"비용",t:"광고비",f:"won",help:"쓴 광고비",lead:1,grp:"cost"},
+    {k:"노출 수",t:"노출",f:"int",help:"보여진 횟수",sub:1,grp:"cost"}];
+  if(L.hasConv)nums.push(
+    {k:"eCPI",t:"eCPI",f:"won",help:"설치 1건당 비용 · 낮을수록 좋음",lead:1,grp:"inst"},
+    {k:"어트리뷰션 수",t:"설치",f:"int",help:"이 항목으로 생긴 앱 설치 수",sub:1,grp:"inst"},
+    ...(isM?[{k:"_m_installs",t:"설치(몰로코)",f:"int",help:"몰로코 리포트 기준 설치 수 — MMP 어트리뷰션과 다를 수 있음",sub:1,grp:"inst"}]:[]),
+    {k:"활성 유저 eCPA",t:"eCPA",f:"won",help:"활성유저 1명당 비용 · 낮을수록 좋음",lead:1,grp:"act"},
+    {k:"활성 유저 수",t:"활성유저",f:"int",help:"설치 후 실제 사용자",sub:1,grp:"act"},
+    ...(isM?[
+      {k:"신규+재활성 유저 수",t:"신규+재활성",f:"int",help:"신규 + 휴면 복귀 유저 수",sub:1,grp:"act"},
+      {k:"신규+재활성 eCPA",t:"신규 eCPA",f:"won",help:"신규+재활성 유저 1명당 비용 · 낮을수록 좋음",sub:1,grp:"act"}]:[]));
+  nums.push(
+    {k:"CTR",t:"CTR",f:"pct",help:"클릭률 = 클릭÷노출 · 높을수록 좋음",lead:1,grp:"clk"},
+    {k:"클릭 수",t:"클릭",f:"int",help:"눌린 횟수",sub:1,grp:"clk"},
+    {k:"CPC",t:"CPC",f:"won",help:"클릭당 비용 · 낮을수록 좋음",sub:1,grp:"clk"});
+  if(isM)nums.push({k:"영상 완주율",t:"완주율",f:"pct",help:"영상을 끝까지 본 비율 (노출 가중 평균) · 높을수록 좋음",lead:1,grp:"vid"});
+  if(isG)nums.push(
+    {k:"_g_ROAS",t:"ROAS",f:"num",help:"전환 가치÷비용 · 높을수록 좋음",lead:1,grp:"g"},
+    {k:"_g_costPerConv",t:"전환당 비용",f:"won",help:"비용÷전환수 · 낮을수록 좋음",sub:1,grp:"g"},
+    {k:"_g_conversionRate",t:"전환율",f:"pct",help:"전환÷상호작용 (Google 관례) · 높을수록 좋음",sub:1,grp:"g"},
+    {k:"_g_conversions",t:"전환",f:"int",help:"Google 전환 수",sub:1,grp:"g"},
+    {k:"_g_interactions",t:"상호작용",f:"int",help:"상호작용 총 수",sub:1,grp:"g"},
+    {k:"_g_interactionRate",t:"상호작용률",f:"pct",help:"상호작용÷노출 · 높을수록 좋음",sub:1,grp:"g"},
+    {k:"_g_allConv",t:"모든 전환",f:"int",help:"모든 전환 (전환 시간별)",sub:1,grp:"g"},
+    {k:"_g_convValue",t:"전환 가치",f:"won",help:"모든 전환 가치 (KRW)",sub:1,grp:"g"},
+    {k:"_g_convValuePerConv",t:"전환당 가치",f:"won",help:"전환 가치÷모든 전환",sub:1,grp:"g"});
   const filtered=nums.filter(c=>isAvail(ds,c.k));
   return meta.concat(filtered);}
 function fcell(v,f){return f==="won"?fmtWon(v):f==="int"?fmtInt(v):f==="pct"?fmtPct(v):f==="num"?(v!=null&&isFinite(v)?v.toFixed(1)+"×":"–"):(v??"–");}
@@ -1750,8 +1712,13 @@ function cellTier(v,sortedAll,dir){
   if(g<=0.05)return "w2";
   if(g<=0.15)return "w1";
   return "m";}
-function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L,ds),thead=$("#table thead"),tbody=$("#table tbody");curDS=ds;ISLE.name=null;
-  thead.innerHTML="<tr>"+cols.map(c=>{const sorted=tState.sort===c.k,arr=sorted?(tState.dir<0?"▼":"▲"):"";const cl=(c.k==="name"?"name ":c.k==="_b"?"bdg ":"")+(c.help?"help ":"")+(sorted?"sorted":"");return `<th class="${cl.trim()}" data-k="${c.k}" ${c.help?`title="${c.help}"`:""}>${c.t} <span class="arr">${arr}</span></th>`;}).join("")+"</tr>";
+function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#table thead"),tbody=$("#table tbody");curDS=ds;ISLE.name=null;
+  const cols=allCols.filter(c=>!c.sub||tExp.has(c.grp));
+  thead.innerHTML="<tr>"+cols.map(c=>{const sorted=tState.sort===c.k,arr=sorted?(tState.dir<0?"▼":"▲"):"";
+    const cl=(c.k==="name"?"name ":c.k==="_b"?"bdg ":"")+(c.help?"help ":"")+(c.sub?"csub ":"")+(sorted?"sorted":"");
+    const hasSubs=c.lead&&allCols.some(x=>x.sub&&x.grp===c.grp);
+    const xp=hasSubs?`<span class="colx" data-g="${c.grp}" title="${tExp.has(c.grp)?"세부 지표 접기":"세부 지표 펼치기"}">${tExp.has(c.grp)?"−":"+"}</span>`:"";
+    return `<th class="${cl.trim()}" data-k="${c.k}" ${c.help?`title="${c.help}"`:""}>${c.t} <span class="arr">${arr}</span>${xp}</th>`;}).join("")+"</tr>";
   let rows=getRowsForTable(ds);
   if(!tableShowAll)rows=rows.filter(r=>!isInactive(r));
   rows=applyTFilter(rows,ds);
@@ -1783,9 +1750,9 @@ function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L,ds),thead=$("#tabl
       if(c.k==="score")return `<td>${score}</td>`;
       const dir=COL_DIR[c.k]||0;
       const t=dir?cellTier(r[c.k],colSorted[c.k],dir):"m";
-      return `<td class="num c-${t}">${fcell(r[c.k],c.f)}</td>`;}).join("")+"</tr>";}).join("");
+      return `<td class="num c-${t}${c.sub?" csub":""}">${fcell(r[c.k],c.f)}</td>`;}).join("")+"</tr>";}).join("");
   const pagerRow=totalPages>1?`<tr class="pager"><td colspan="${cols.length}"><div class="pager-nav"><button id="pgPrev" type="button" ${tPage<=1?"disabled":""}>◄ 이전 60개</button><span class="pnum"><b>${tPage}</b> / ${totalPages} 페이지</span><button id="pgNext" type="button" ${tPage>=totalPages?"disabled":""}>다음 60개 ►</button></div></td></tr>`:"";
-  const emptyRow=totalRows===0?`<tr><td colspan="${cols.length}" class="tempty">${liveOn?"조건에 맞는 라이브 소재가 없습니다 — 종료된 소재까지 찾으려면 🟢 라이브만을 꺼 주세요":"조건에 맞는 소재가 없습니다"}</td></tr>`:"";
+  const emptyRow=totalRows===0?`<tr><td colspan="${cols.length}" class="tempty">${liveOn?"조건에 맞는 라이브 소재가 없습니다 — 종료된 소재까지 찾으려면 Live 필터를 꺼 주세요":"조건에 맞는 소재가 없습니다"}</td></tr>`:"";
   tbody.innerHTML=html+emptyRow+pagerRow;
   const pp=$("#pgPrev");if(pp)pp.onclick=()=>{if(tPage>1){tPage--;renderTable(ds);document.querySelector("#table")?.scrollIntoView({behavior:"smooth",block:"start"});}};
   const pn=$("#pgNext");if(pn)pn.onclick=()=>{if(tPage<totalPages){tPage++;renderTable(ds);document.querySelector("#table")?.scrollIntoView({behavior:"smooth",block:"start"});}};
@@ -1794,17 +1761,17 @@ function renderTable(ds){const L=ds.L,S=ds.S,cols=tableCols(L,ds),thead=$("#tabl
     t.addEventListener("mouseenter",ev=>{const h=assetPreviewTipHTML(url,lab);if(h)showTip(h,ev.clientX,ev.clientY,true);});
     t.addEventListener("mousemove",ev=>{if(tip.style.opacity!=="0")placeTip(ev.clientX,ev.clientY);});
     t.addEventListener("mouseleave",hideTip);});
-  thead.querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(tState.sort===k)tState.dir*=-1;else{tState.sort=k;tState.dir=(k==="name")?1:-1;}tPage=1;renderTable(ds);});
+  thead.querySelectorAll("th").forEach(th=>th.onclick=(ev)=>{
+    const cx=ev.target.closest(".colx");
+    if(cx){const g=cx.dataset.g;if(tExp.has(g))tExp.delete(g);else tExp.add(g);renderTable(ds);return;}
+    const k=th.dataset.k;if(tState.sort===k)tState.dir*=-1;else{tState.sort=k;tState.dir=(k==="name")?1:-1;}tPage=1;renderTable(ds);});
   hydrateYtNames();}
 /* 유튜브 제목이 캐시에 도착하면 다시 그리지 않고 화면의 URL 이름만 제자리 갱신 */
 function refreshDisplayNames(){
   if(!curDS)return;
   $$("#table tbody tr.row").forEach(tr=>{const nm=tr.getAttribute("data-name");const ent=findRow(curDS,nm);if(!ent)return;
     const dn=trunc(displayNameOf(ent),60),tx=tr.querySelector(".ntxt");
-    if(tx&&tx.childNodes[0]&&tx.childNodes[0].nodeType===3&&tx.childNodes[0].textContent!==dn){tx.childNodes[0].textContent=dn;if(dn!==nm)tx.title=nm;}});
-  $$("#srTop .srk-row,#srBad .srk-row").forEach(r=>{const nm=r.dataset.name;const ent=findRow(curDS,nm);if(!ent)return;
-    const el=r.querySelector(".srk-name"),dn=displayNameOf(ent);
-    if(el&&el.childNodes[0]&&el.childNodes[0].nodeType===3&&el.childNodes[0].textContent!==dn)el.childNodes[0].textContent=dn;});}
+    if(tx&&tx.childNodes[0]&&tx.childNodes[0].nodeType===3&&tx.childNodes[0].textContent!==dn){tx.childNodes[0].textContent=dn;if(dn!==nm)tx.title=nm;}});}
 /* 표에 보이는 유튜브 URL 이름은 영상 제목을 자동 조회해 교체 (동시 4개, 캐시는 영구) */
 let _hydSeq=0;
 async function hydrateYtNames(){
@@ -1856,8 +1823,11 @@ function renderQuickFo(){const wrap=$("#qfoWrap"),ds=curDS;
   if(g){g.hidden=!hasAdGr;g.classList.toggle("on",tGroupBy);}
   if(lv){lv.hidden=!hasLive;lv.classList.toggle("on",tLiveOnly&&hasLive);
     if(hasLive)lv.title=`최신 집행 주(${String(ds.liveWeek).slice(5).replace("-","/")})에 광고비가 나간 소재 ${ds.agg.filter(e=>e._live).length.toLocaleString()}개만 보기`;}}
-function toggleQuickFo(val){tQuickFo=tQuickFo===val?null:val;renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);}
+function toggleQuickFo(val){tQuickFo=tQuickFo===val?null:val;
+  if(tQuickFo)tGroupBy=false; /* Video/Image 선택 시 GroupView 자동 해제 */
+  renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);}
 function toggleGroupBy(){tGroupBy=!tGroupBy;
+  if(tGroupBy)tQuickFo=null; /* GroupView 선택 시 Video/Image 자동 해제 */
   /* 모드에 없는 칩 필터는 자동 해제 (그룹 전용: gpre/gdt/gxt · 소재 전용: fo/nat/size) */
   if(tChip&&(!tGroupBy&&["gpre","gdt","gxt"].includes(tChip.k)||tGroupBy&&["fo","nat","size"].includes(tChip.k)))tChip=null;
   renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);}
@@ -2203,7 +2173,7 @@ function rebuildAllDatasets(){
       if(!ds.media||!chs.includes(ds.media))ds.media=chs[0]||null;
     }else{ds.channels=[];ds.aggByChannel=null;ds.media=null;}}}
 /* 분석 기간 윈도우 — 최근 N주("4"=1달|"13"=3달|"52"=1년) | "all" | "custom"(직접 설정) · 기본 최근 3달 */
-let periodN="13",customRange={from:null,to:null};
+let periodN="13",customNVal=8,customUnit="w",customWeeks=8; /* 직접 설정: 최근 N 주/달 → 주 수로 환산 */
 function scope(ds){
   let rows,chIdx=null;
   if(dsMode==="channeled"&&ds.aggByChannel&&ds.media&&ds.aggByChannel.has(ds.media)){
@@ -2212,14 +2182,11 @@ function scope(ds){
   }else{rows=ds.dataAll;}
   const dates=[...new Set(rows.map(r=>r.date).filter(d=>/^\d{4}-\d{2}-\d{2}/.test(String(d))))].sort();
   let winDates=dates;
-  if(periodN==="custom"&&(customRange.from||customRange.to)){
-    const f=customRange.from||"0000-01-01",t=customRange.to||"9999-12-31";
-    rows=rows.filter(r=>r.date>=f&&r.date<=t);
-    winDates=dates.filter(d=>d>=f&&d<=t);
-  }else if(periodN!=="all"&&periodN!=="custom"&&dates.length>+periodN){
-    const cut=dates[dates.length-+periodN];
+  const winN=periodN==="custom"?customWeeks:(periodN!=="all"?+periodN:0);
+  if(winN>0&&dates.length>winN){
+    const cut=dates[dates.length-winN];
     rows=rows.filter(r=>r.date>=cut);
-    winDates=dates.slice(-+periodN);}
+    winDates=dates.slice(-winN);}
   ds.data=rows;
   ds.range={first:winDates[0]||null,last:winDates[winDates.length-1]||null,n:winDates.length,total:dates.length};
   if(periodN==="all"){
@@ -2247,26 +2214,26 @@ function renderPeriodSeg(){const el=$("#pseg"),sec=$("#periodSec");if(!el||!sec)
   const ds=active&&DATASETS[active];
   const hasData=ds&&ds.dataAll.length&&!standaloneMode;
   sec.hidden=!hasData;if(!hasData)return;
-  const opts=[["4","최근 1달"],["13","최근 3달"],["52","최근 1년"],["all","전체"],["custom","직접 설정"]];
-  const rg=ds.range||{};
+  const cLab=periodN==="custom"?`최근 ${customNVal}${customUnit==="m"?"달":"주"}`:"직접 설정";
+  const opts=[["4","최근 1달"],["13","최근 3달"],["all","전체"],["custom",cLab]];
   el.innerHTML=opts.map(([v,lab])=>`<button data-p="${v}" class="${v===periodN?"on":""}">${lab}</button>`).join("")
-    +(periodN==="custom"?`<div class="pcustom"><input type="date" id="pFrom" value="${customRange.from||rg.first||""}"><span>~</span><input type="date" id="pTo" value="${customRange.to||rg.last||""}"><button id="pGo" type="button">적용</button></div>`:"");
+    +(periodN==="custom"?`<div class="pcustom">최근 <input type="number" id="pN" min="1" max="104" value="${customNVal}"><select id="pU"><option value="w"${customUnit==="w"?" selected":""}>주</option><option value="m"${customUnit==="m"?" selected":""}>달</option></select><button id="pGo" type="button">적용</button></div>`:"");
   $$("#pseg > button").forEach(b=>b.onclick=()=>{const v=b.dataset.p;
     if(periodN===v&&v!=="custom")return;
     periodN=v;bdDim=null;bdMet=null;tPage=1;if(active)show(DATASETS[active]);});
   const go=$("#pGo");
-  if(go)go.onclick=()=>{const f=$("#pFrom").value||null,t=$("#pTo").value||null;
-    if(f&&t&&f>t){toast("시작일이 종료일보다 늦습니다");return;}
-    customRange={from:f,to:t};bdDim=null;bdMet=null;tPage=1;if(active)show(DATASETS[active]);};}
+  if(go)go.onclick=()=>{const n=Math.max(1,Math.min(104,Math.round(+$("#pN").value||0)));
+    if(!n){toast("숫자를 입력해 주세요");return;}
+    customNVal=n;customUnit=$("#pU").value;
+    customWeeks=customUnit==="m"?Math.max(1,Math.round(n*4.345)):n; /* 1달≈4주, 3달≈13주와 일관 */
+    bdDim=null;bdMet=null;tPage=1;if(active)show(DATASETS[active]);};}
 /* 세그 카운트 — 현재 선택된 기간 윈도(scope와 동일 컷 규칙)에서의 고유 소재 수 */
 function windowCount(ds,ch){
   let rows=ch?ds.dataAll.filter(r=>r._ch===ch):ds.dataAll;
-  if(periodN==="custom"&&(customRange.from||customRange.to)){
-    const f=customRange.from||"0000-01-01",t=customRange.to||"9999-12-31";
-    rows=rows.filter(r=>r.date>=f&&r.date<=t);
-  }else if(periodN!=="all"&&periodN!=="custom"){
+  const winN=periodN==="custom"?customWeeks:(periodN!=="all"?+periodN:0);
+  if(winN>0){
     const dates=[...new Set(rows.map(r=>r.date).filter(d=>/^\d{4}-\d{2}-\d{2}/.test(String(d))))].sort();
-    if(dates.length>+periodN){const cut=dates[dates.length-+periodN];rows=rows.filter(r=>r.date>=cut);}}
+    if(dates.length>winN){const cut=dates[dates.length-winN];rows=rows.filter(r=>r.date>=cut);}}
   const s=new Set();
   for(const r of rows){let nm=r[ds.L.nameCol];if(nm==null||nm===""||nm==="nan")nm="(미지정)";s.add(nm);}
   return s.size;}
@@ -2277,15 +2244,14 @@ function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)r
   el.innerHTML=ds.channels.map(ch=>`<button data-m="${ch}" class="${ch===ds.media?"on":""}">${ch}<span class="c">${cnt(ch)}</span></button>`).join("");
   $$("#mseg button").forEach(b=>b.onclick=()=>{const m=b.dataset.m;if(ds.media===m)return;ds.media=m;bdDim=null;bdMet=null;show(ds);});}
 function show(ds){scope(ds);
-  renderMediaSeg(ds);renderPeriodSeg();renderSideKpis(ds);renderLeaderboard(ds);renderKeyrow(ds);renderSeg();
+  renderMediaSeg(ds);renderPeriodSeg();renderSideKpis(ds);renderKeyrow(ds);
   requestAnimationFrame(()=>{renderQuad(ds);renderQuadTierLegend();
     renderTrend(ds);renderBreakdown(ds);
     requestAnimationFrame(()=>{renderTlegend();curDS=ds;renderQuickFo();renderTable(ds);renderAB(ds);});});}
 function setActive(k){if(!DATASETS[k])return;active=k;
-  bdDim=null;bdMet=null;tableShowAll=false;tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tPage=1;
+  bdDim=null;bdMet=null;tableShowAll=false;tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;
   if($("#search"))$("#search").value="";if($("#showAll"))$("#showAll").checked=false;
-  renderSeg();show(DATASETS[k]);}
-function renderSeg(){$("#seg").innerHTML=TAB_ORDER.filter(k=>DATASETS[k]).map(k=>{const L=LEVELS[k];return `<button role="tab" data-k="${k}" class="${k===active?"on":""}">${L.name}<span class="sc">${windowCount(DATASETS[k],null).toLocaleString()}</span></button>`;}).join("");$$("#seg button").forEach(b=>b.onclick=()=>setActive(b.dataset.k));}
+  show(DATASETS[k]);}
 function renderFooter(){$("#ft").innerHTML=`
 <details open>
   <summary>점수 산정 방식 (Scoring Methodology)</summary>
@@ -2437,10 +2403,10 @@ function renderFooter(){$("#ft").innerHTML=`
 등급은 <b>업로드된 계정 내 상대 평가</b>이며, 다른 계정 간의 비교에는 적합하지 않습니다 ·
 몰로코 크리에이티브 리포트(<code>creative_preview</code>·<code>creative_type</code> 포함)는 자동 감지되어 <b>소재 단위</b>로 분석되며,
 이미지·영상 미리보기는 몰로코 CDN에서 브라우저가 직접 불러옵니다(외부 업로드 없음).</p>`;}
-function refreshAll(){if(!active||!DATASETS[active])active=TAB_ORDER.find(k=>DATASETS[k])||Object.keys(DATASETS)[0];renderSeg();if(active)setActive(active);}
+function refreshAll(){if(!active||!DATASETS[active])active=TAB_ORDER.find(k=>DATASETS[k])||Object.keys(DATASETS)[0];if(active)setActive(active);}
 
 function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;bdDim=null;bdMet=null;tableShowAll=false;
-  tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tPage=1;ISLE.name=null;ISLE.metric=null;
+  tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;ISLE.name=null;ISLE.metric=null;
   const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
 function dropZone(e){if(!e||e.clientY==null)return null;
   const H=window.innerHeight||800,W=window.innerWidth||1200;
