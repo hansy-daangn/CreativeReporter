@@ -105,7 +105,9 @@
   .chip.gdt{background:#E3EDF6;color:var(--c2)}
   .ocr-mark{font-size:8.5px;font-weight:800;letter-spacing:.04em;padding:1px 5px;border-radius:4px;margin-left:5px;background:var(--surface-3);color:var(--faint);vertical-align:1.5px}
   .gst{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:5px;margin-left:6px;vertical-align:1px;white-space:nowrap}
-  .gst.run{background:var(--g1-f);color:var(--g1)} .gst.pau{background:var(--surface-3);color:var(--faint)} .gst.lim{background:var(--w1-f);color:var(--w1)}
+  .gst.lim{background:var(--w1-f);color:var(--w1)}
+  .lvb{font-size:9.5px;font-weight:800;color:var(--g1);margin-left:6px;vertical-align:1px;white-space:nowrap;letter-spacing:.2px}
+  .lvb::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--g1);margin-right:3px;vertical-align:.5px}
   .gi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px 18px;margin-top:8px}
   .gi-r{display:flex;justify-content:space-between;gap:10px;font-size:12px;border-bottom:1px dashed var(--surface-3);padding:3px 0;min-width:0}
   .gi-r.wide{grid-column:1/-1}
@@ -694,8 +696,13 @@ function isImageUrl(u){return /simgad|googlesyndication\.com|\.(png|jpe?g|gif|we
    이후 이미지를 처음부터 프록시로 렌더(crImgProxy 학습). 프록시는 무료 공개 CDN이라 자체 리소스 부담 없음.
    순서: 원본 → (실패 즉시) 프록시 → (1.2s) 원본+캐시우회 → (1.2s) 프록시+캐시우회 → 실패 UI */
 const IMG_PROXY=u=>"https://wsrv.nl/?url="+encodeURIComponent(u);
-function imgSrc(u){try{return sessionStorage.getItem("crImgProxy")?IMG_PROXY(u):u;}catch(e){return u;}}
-function imgOk(img){if(String(img.src).indexOf("wsrv.nl/")>-1&&(+img.dataset.rt||0)>0){try{sessionStorage.setItem("crImgProxy","1");}catch(e){}}}
+/* 학습은 기기 단위로 지속(localStorage) — 차단 환경으로 판명된 기기는 재방문 때도 처음부터 프록시로 렌더 */
+function imgSrc(u){try{if(localStorage.getItem("crImgProxy")||sessionStorage.getItem("crImgProxy"))return IMG_PROXY(u);}catch(e){}return u;}
+function imgOk(img){if(String(img.src).indexOf("wsrv.nl/")>-1&&(+img.dataset.rt||0)>0){try{localStorage.setItem("crImgProxy","1");}catch(e){try{sessionStorage.setItem("crImgProxy","1");}catch(_){}}}}
+/* 툴팁 유튜브 썸네일 — 표에서 이미 캐시된 저해상도를 즉시 띄우고, 고해상도가 준비되면 바꿔치기 */
+function imgHi(img){const h=img.dataset.hi;if(!h)return;img.dataset.hi="";
+  const p=new Image();p.referrerPolicy="no-referrer";
+  p.onload=()=>{if(img.isConnected&&!(+img.dataset.rt||0))img.src=p.src;};p.src=h;}
 function imgRetry(img){
   const n=(+img.dataset.rt||0)+1;
   if(n>3){
@@ -713,7 +720,8 @@ function imgRetry(img){
   },1200);}
 function assetPreviewTipHTML(url,label){if(!url)return "";
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
-  if(yt){const tu=`https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg`;return `<img src="${imgSrc(tu)}" data-osrc="${tu}" alt="" referrerpolicy="no-referrer" onload="imgOk(this)" onerror="imgRetry(this)"><div class="tp-cap">${label||"영상"}</div>`;}
+  if(yt){const lo=`https://img.youtube.com/vi/${yt[1]}/default.jpg`,hi=`https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg`;
+    return `<img src="${imgSrc(lo)}" data-osrc="${lo}" data-hi="${escAttr(imgSrc(hi))}" alt="" referrerpolicy="no-referrer" onload="imgOk(this);imgHi(this)" onerror="imgRetry(this)"><div class="tp-cap">${label||"영상"}</div>`;}
   if(isVideoUrl(url))return `<video src="${url}" autoplay muted loop playsinline preload="metadata"></video><div class="tp-cap">▶ ${label||"영상"}</div>`;
   if(isImageUrl(url))return `<img src="${imgSrc(url)}" data-osrc="${escAttr(url)}" alt="" referrerpolicy="no-referrer" onload="imgOk(this)" onerror="imgRetry(this)"><div class="tp-cap">${label||""}</div>`;
   return `<div class="tp-cap">${label||"미리보기 없음"}</div>`;}
@@ -935,12 +943,15 @@ function groupPrettyName(nm){
   const t=groupSegTags(nm);
   const parts=[t.pre,t.ve,...(t.xt||[]),t.dt].filter(Boolean);
   return parts.length?parts.join("·"):String(nm||"");}
-/* 그룹 상태 칩 — 보고서의 상태·사유를 한 눈에 (운영중/일시중지/정책 제한) */
+/* 그룹 상태 뱃지 — 정책 제한만 '경고'로 표시. 운영중·일시중지는 뱃지 없음(집행 여부는 Live 뱃지가 말해줌) */
 function giStatusChip(gi){if(!gi)return "";
-  const paused=/일시중지/.test(gi.st||"")||/일시중지/.test(gi.op||"");
   const limited=/제한/.test(gi.op||"")||/정책/.test(gi.rsn||"");
-  const m=paused?["pau","⏸ 일시중지"]:limited?["lim","⚠️ 제한적"]:["run","🟢 운영중"];
-  return `<span class="gst ${m[0]}" title="${escAttr([gi.op||gi.st||"",gi.rsn&&gi.rsn!=="알 수 없음"?gi.rsn:""].filter(Boolean).join(" · "))}">${m[1]}</span>`;}
+  if(!limited)return "";
+  return `<span class="gst lim" title="${escAttr(["정책 제한",gi.op||gi.st||"",gi.rsn&&gi.rsn!=="알 수 없음"?gi.rsn:""].filter(Boolean).join(" · "))}">경고</span>`;}
+/* 최신 집행 주에 광고비가 나간 소재/그룹 — 매체 공통 Live 뱃지 */
+function liveBadge(ds,e){if(!ds||standaloneMode||!ds.liveWeek)return "";
+  const lv=e._isGroup?(e._members||[]).some(m=>m._live):e._live;
+  return lv?`<span class="lvb" title="최신 집행 주(${String(ds.liveWeek).slice(5).replace("-","/")})에 광고비가 집행된 소재">Live</span>`:"";}
 /* 화면 표시용 이름 — 구글 애셋은 URL/ID 대신 매핑된 실제 애셋 이름을, 유튜브 소재는 캐시된 영상 제목을 우선 표시.
    내부 식별 키(data-name, 저장, 병합)는 항상 원본 name을 그대로 쓴다 */
 function displayNameOf(e){if(!e)return "";
@@ -1674,7 +1685,8 @@ function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>
     listTitle=e._m_group?"같은 크리에이티브 그룹 내 비교":"같은 광고 그룹 내 비교";
     const _lgi=e._m_group?null:groupInfoOf(grpId);
     const _lraw=e._m_group?grpId:adGroupLabel(grpId);
-    listMetaN=`${_lraw?trunc(groupPrettyName(_lraw),34):"그룹 "+grpId} · ${grp.length}개${_lgi?` · ${/일시중지/.test(_lgi.st||"")?"⏸ 일시중지":"🟢 운영중"}`:""}`;
+    const _lst=_lgi?(/일시중지/.test(_lgi.st||"")||/일시중지/.test(_lgi.op||"")?" · 일시중지":(/제한/.test(_lgi.op||"")||/정책/.test(_lgi.rsn||"")?" · 정책 제한":"")):"";
+    listMetaN=`${_lraw?trunc(groupPrettyName(_lraw),34):"그룹 "+grpId} · ${grp.length}개${_lst}`;
     listHTML=grp.length<=1?`<div class="fam-note">이 그룹에 다른 소재가 없습니다.</div>`:
       `<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">유형 / 이름</th><th>광고비</th><th>${effLab}</th><th>점수</th></tr></thead><tbody>`+
       grp.map(x=>{const url=previewUrlOf(x);
@@ -1882,7 +1894,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
       if(c.k==="name"){const th=thumbHTML(r);const dn=displayNameOf(r);
         const gst=r._isGroup?giStatusChip(groupInfoOf(r._g_adGroupId||r._m_group)):"";
         const om=isOcrName(r)?`<span class="ocr-mark" title="이미지에서 자동 추출한 텍스트(OCR) — 공식 애셋 이름을 등록하면 대체됩니다">OCR</span>`:"";
-        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}>${trunc(dn,60)}${om}${lrnBadge(r)}${gst}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
+        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}>${trunc(dn,60)}${om}${liveBadge(ds,r)}${gst}${lrnBadge(r)}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
       if(c.k==="score")return `<td>${score}</td>`;
       const dir=COL_DIR[c.k]||0;
       const t=dir?cellTier(r[c.k],colSorted[c.k],dir):"m";
