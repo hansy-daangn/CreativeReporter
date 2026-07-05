@@ -733,6 +733,7 @@ function copyText(t){
 function fmtKRW(v){if(v==null||!isFinite(v))return"–";const a=Math.abs(v);if(a>=1e8)return(v/1e8).toFixed(2)+"억";if(a>=1e4)return(v/1e4).toFixed(1)+"만";return Math.round(v).toLocaleString("ko-KR");}
 function fmtWon(v){if(v==null||!isFinite(v))return"–";return"₩"+Math.round(v).toLocaleString("ko-KR");}
 function fmtInt(v){if(v==null||!isFinite(v))return"–";return Math.round(v).toLocaleString("ko-KR");}
+function fmtScore(v){return v==null||!isFinite(v)?"–":(+v).toFixed(1);}
 function fmtPct(v){if(v==null||!isFinite(v))return"–";return(v*100).toFixed(2)+"%";}
 function trunc(s,n=30){s=String(s);return s.length>n?s.slice(0,n-1)+"…":s;}
 
@@ -1164,13 +1165,22 @@ function runScoring(pop,elig,specs){
     const R=impSorted.length?pctRank(impSorted,e["노출 수"]||0):0.5;
     const C=Math.min(1,Math.log(1+convOf(e))/denomLn);
     e._E=E;e._R=R;e._C=C;
-    e.score=Math.round(100*(SCORING.EFF_W*E+SCORING.REACH_W*R+SCORING.CONF_W*C));});
+    e._raw=100*(SCORING.EFF_W*E+SCORING.REACH_W*R+SCORING.CONF_W*C);});
+  /* 원점수는 다지표 평균+표본 수축 탓에 실제로 25~85 구간에 몰린다. 상대평가답게
+     비교군 내 위치로 재배치: 원점수 5백분위→12점, 95백분위→92점 선형. 양 끝은 하드 클램프 대신
+     점근 압축(위 99·아래 2)이라 극단값들이 한 점수로 뭉치지 않고 순위가 완전히 보존된다.
+     결과: 1등이 90점대 후반, 계정 평균 50 근처, 소재 간 편차가 눈에 보인다 */
+  const raws=elig.map(e=>e._raw).sort((x,y)=>x-y);
+  const rLo=quantile(raws,0.05),rHi=quantile(raws,0.95);
+  const lin=(elig.length>=8&&rHi>rLo)?(v=>12+(v-rLo)/(rHi-rLo)*80):(v=>v);
+  const soft=v=>v>92?92+(v-92)*7/((v-92)+7):v<12?12-(12-v)*10/((12-v)+10):v;
+  elig.forEach(e=>{e.score=Math.round(Math.max(2,Math.min(99.4,soft(lin(e._raw))))*10)/10;});
   const sc=elig.map(e=>e.score).sort((x,y)=>x-y);
   elig.forEach(e=>{const p=pctRank(sc,e.score);e.tier=p>=0.8?"g2":p>=0.6?"g1":p>=0.4?"m":p>=0.2?"w1":"w2";});}
 function computeScores(ds){const L=ds.L,a=ds.agg;
   ds.fieldAvail=computeFieldAvail(a);
   const av=ds.fieldAvail;
-  a.forEach(e=>{e.score=null;e.tier="na";e.dom=null;e._E=null;e._R=null;e._C=null;e._specPct=null;});
+  a.forEach(e=>{e.score=null;e.tier="na";e.dom=null;e._E=null;e._R=null;e._C=null;e._raw=null;e._specPct=null;});
   const allSpecs=specsFor(ds);
   const specs=allSpecs.filter(s=>(av[s.k]||0)>=0.10);
   if(!specs.length)return{best:[],worst:[],med:null,goodCol:"score",goodDir:1,goodLabel:"점수",goodFmt:"int",goodHelp:"복합 지표",volCol:"비용",eligCount:0,specs:[]};
@@ -1604,7 +1614,7 @@ function scoreBreakdownHTML(ds,e){const S=ds.S;
     const shr=sp.w<0.8?`<span class="sb-shr" title="표본이 적어 백분위를 중앙(50) 방향으로 축소 반영 · 데이터 신뢰 ${(sp.w*100).toFixed(0)}%">표본보정</span>`:"";
     return `<div class="sb-row"><span class="sb-k">${s.lab}</span><span class="sb-raw num">${fmtSpecVal(s.k,e[s.k])}</span><div class="sb-bar"><i style="width:${pctv}%;background:${col}"></i></div><span class="sb-p num" style="color:${col}">${pctv}</span><span class="sb-w num">×${Math.round(s.w*100)}%</span>${shr}</div>`;}).join("");
   if(!rows)return"";
-  return `<section style="grid-column:1/-1"><div class="ish">점수 구성 <span class="n">점수 ${e.score} = 효율 ${(e._E*100).toFixed(0)}×0.75 + 규모 ${(e._R*100).toFixed(0)}×0.20 + 신뢰 ${(e._C*100).toFixed(0)}×0.05 · 막대 = 광고비 가중 백분위(50=계정 평균, 높을수록 좋음)</span></div>${diagHTML(ds,e)}<div class="sb">${rows}</div></section>`;}
+  return `<section style="grid-column:1/-1"><div class="ish">점수 구성 <span class="n">원점수 ${e._raw!=null?e._raw.toFixed(1):"–"} = 효율 ${(e._E*100).toFixed(0)}×0.75 + 규모 ${(e._R*100).toFixed(0)}×0.20 + 신뢰 ${(e._C*100).toFixed(0)}×0.05 → 비교군 내 위치로 재배치한 점수 ${fmtScore(e.score)} · 막대 = 광고비 가중 백분위(50=계정 평균, 높을수록 좋음)</span></div>${diagHTML(ds,e)}<div class="sb">${rows}</div></section>`;}
 /* 소재(또는 그룹)의 주차별 광고비·핵심지표 미니 차트 — 상세 뷰 미리보기 아래 표시.
    막대=광고비(투입). 선은 매체 데이터에 맞춰 자동 선택, 각 선은 자체 최대값으로 정규화(모양=추세, 절대값은 범례 최신값·호버).
    · 구글(전환 데이터 보유): ROAS + 전환당 비용 2선 — 수익성·전환효율이 채점의 55%라 이 둘이면 성패가 보임
@@ -1695,14 +1705,14 @@ function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>
         return `<tr class="${x.name===e.name?"me":""} hoverable" data-nm="${escAttr(x.name)}" data-preview="${escAttr(url)}" data-label="${escAttr(typeShort+' · '+trunc(displayNameOf(x),40))}" title="클릭 → 이 소재 상세로 이동">
         <td class="l"><span class="g-type-emoji">${emoji}</span> <span class="g-type-lab">${typeShort}</span> <span class="g-name">${displayNameOf(x)}</span></td>
         <td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td>
-        <td><span class="sp ${sp(x.tier)}">${x.score??"–"}</span></td></tr>`;}).join("")+
+        <td><span class="sp ${sp(x.tier)}">${fmtScore(x.score)}</span></td></tr>`;}).join("")+
       `</tbody></table></div></div>`;
   }else{
     const fam=(ds.byFk.get(e._fk||familyKey(e.name))||[e]).slice().sort((a,b)=>(b.score??-1)-(a.score??-1));
     listTitle="유사 이름 시리즈";listMetaN=`${fam.length}개`;
     listHTML=fam.length<=1?`<div class="fam-note">유사 이름 시리즈가 없습니다.</div>`:
       `<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">이름</th><th>광고비</th><th>${effLab}</th><th>점수</th></tr></thead><tbody>`+
-      fam.map(x=>`<tr class="${x.name===e.name?"me":""}" data-nm="${escAttr(x.name)}" title="클릭 → 이 소재 상세로 이동"><td class="l"><span class="mb b-${x.dom==="good"?"gold":x.tier}">${tierBadge(x)}</span> ${displayNameOf(x)}</td><td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td><td><span class="sp ${sp(x.tier)}">${x.score??"–"}</span></td></tr>`).join("")+
+      fam.map(x=>`<tr class="${x.name===e.name?"me":""}" data-nm="${escAttr(x.name)}" title="클릭 → 이 소재 상세로 이동"><td class="l"><span class="mb b-${x.dom==="good"?"gold":x.tier}">${tierBadge(x)}</span> ${displayNameOf(x)}</td><td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td><td><span class="sp ${sp(x.tier)}">${fmtScore(x.score)}</span></td></tr>`).join("")+
       `</tbody></table></div></div>`;}
   const preview=assetPreview(previewUrlOf(e),e);
   const spark=creativeTrendHTML(ds,e);
@@ -1889,7 +1899,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
   const visible=rows.slice(startIdx,endIdx);
   const liveOn=tLiveOnly&&!standaloneMode&&ds.liveWeek;
   const html=visible.map(r=>{const spCls=r.tier==="g2"?"sp-g2":r.tier==="g1"?"sp-g1":r.tier==="m"?"sp-mid":r.tier==="w1"?"sp-w1":r.tier==="w2"?"sp-w2":"sp-na";
-    const score=r.score!=null?`<span class="sp ${spCls}">${r.score}</span>`:`<span class="sp sp-na">–</span>`;
+    const score=r.score!=null?`<span class="sp ${spCls}">${fmtScore(r.score)}</span>`:`<span class="sp sp-na">–</span>`;
     return `<tr class="row" data-name="${escAttr(r.name)}">`+cols.map(c=>{if(c.k==="_b")return `<td class="bdg">${tierBadge(r)}</td>`;
       if(c.k==="name"){const th=thumbHTML(r);const dn=displayNameOf(r);
         const gst=r._isGroup?giStatusChip(groupInfoOf(r._g_adGroupId||r._m_group)):"";
@@ -2055,7 +2065,7 @@ function renderAB(ds){const el=$("#abBody"),meta=$("#abMeta"),cnt=$("#abCnt");
         _g_ROAS:cost>0&&gv>0?gv/cost:null,_g_costPerConv:gc>0?cost/gc:null,vcr:vd>0?vn/vd:null,
         learning:mem.every(isLearning)};
       const sc=mem.filter(e=>e.score!=null);
-      r.score=sc.length?Math.round(sc.reduce((s,e)=>s+e.score*(e.비용||1),0)/sc.reduce((s,e)=>s+(e.비용||1),0)):null;
+      r.score=sc.length?Math.round(sc.reduce((s,e)=>s+e.score*(e.비용||1),0)/sc.reduce((s,e)=>s+(e.비용||1),0)*10)/10:null;
       r.pv=r[primary.k];
       return r;});
     f.cost=f.rows.reduce((s,r)=>s+r.cost,0);
@@ -2426,21 +2436,38 @@ function setActive(k){if(!DATASETS[k])return;active=k;
   show(DATASETS[k]);}
 function renderFooter(){$("#ft").innerHTML=`
 <details open>
-  <summary>점수 산정 방식 (Scoring Methodology)</summary>
-  <p>본 대시보드의 소재 점수는 <b>효율(Effectiveness) × 규모(Reach) × 통계적 신뢰도(Statistical Confidence)</b>의 세 축을
-  가중 결합한 <b>0~100 복합 지표</b>입니다. 이는 Google Ads의 <a href="https://support.google.com/google-ads/answer/6167118" target="_blank" rel="noopener">Quality Score</a>가
+  <summary>점수 읽는 법 (한눈에)</summary>
+  <p><b>점수는 같은 매체·기간 비교군 안에서의 상대 위치입니다.</b> 1등이 90점대 후반, 계정 평균이 50점 근처, 하위권이 10점대.
+  절대 합격선이 아니므로 40점은 "낙제"가 아니라 <b>"이 비교군에서 하위 40% 부근"</b>이라는 뜻입니다.
+  매체나 기간을 바꾸면 비교군이 바뀌므로 점수도 함께 달라집니다.</p>
+  <div class="ft-formula">
+    <b>점수 = 효율 75% + 규모 20% + 신뢰 5%</b> → 원점수를 비교군 내 위치로 0~100에 재배치<br>
+    &nbsp;&nbsp;<b>효율 75%</b> — 전환 단가(eCPI·eCPA·ROAS 등)·CTR·CPM이 계정의 돈 흐름 대비 얼마나 좋은가 (매체별 지표·가중치는 아래 표)<br>
+    &nbsp;&nbsp;<b>규모 20%</b> — 노출량의 계정 내 순위. 많이 틀고도 효율을 지킨 소재가 진짜 강한 소재<br>
+    &nbsp;&nbsp;<b>신뢰 5%</b> — 전환 표본량(30건이면 만점). 몇 건짜리 반짝 성과가 상위권을 차지하는 것을 방지<br>
+    &nbsp;&nbsp;표본이 적은 지표는 백분위 자체도 중앙(50) 쪽으로 당겨 계산 — 상세의 <b>표본보정</b> 표기가 그 흔적
+  </div>
+  <p>개별 소재의 계산 내역(지표별 백분위·가중치·원점수)은 상세(행 클릭)의 <b>점수 구성</b> 패널에서 그대로 확인할 수 있습니다.</p>
+</details>
+
+<details>
+  <summary>방법론 상세 (공식·학술 근거)</summary>
+  <p>소재 점수는 <b>효율(Effectiveness) × 규모(Reach) × 통계적 신뢰도(Statistical Confidence)</b>의 세 축을
+  가중 결합한 복합 지표입니다. 이는 Google Ads의 <a href="https://support.google.com/google-ads/answer/6167118" target="_blank" rel="noopener">Quality Score</a>가
   기대 CTR·광고 관련성·랜딩페이지 경험을 결합하는 방식, Meta의 <a href="https://www.facebook.com/business/help/635337992940913" target="_blank" rel="noopener">Ad Relevance Diagnostics</a>가
   품질·참여율·전환율의 세 진단축으로 소재를 평가하는 방식,
   그리고 학계의 <i>Marketing Metrics: The Manager's Guide to Measuring Marketing Performance</i>(Farris et al., 4th ed.)에서
   다차원 지표를 <b>정규화 후 가중합</b>하는 표준 절차와 궤를 같이합니다.</p>
 
   <div class="ft-formula">
-    <b>Score</b> = 100 × (0.75·<b>E</b> + 0.20·<b>R</b> + 0.05·<b>C</b>)<br>
+    <b>원점수</b> = 100 × (0.75·<b>E</b> + 0.20·<b>R</b> + 0.05·<b>C</b>)<br>
     &nbsp;&nbsp;<b>E</b> = Σ (w<sub>i</sub> · g′<sub>i</sub>)&nbsp;&nbsp;→ 지표별 <b>광고비 가중 백분위</b>의 축소 추정치 가중 평균<br>
     &nbsp;&nbsp;&nbsp;&nbsp;g′ = 0.5 + (g − 0.5) · n/(n+n₀)&nbsp;&nbsp;→ 표본(n)이 적으면 중앙(50)으로 축소 · n₀: 전환류 50, 클릭 100, 노출 2,000<br>
     &nbsp;&nbsp;&nbsp;&nbsp;CTR·CPM·CPC·완주율은 <b>같은 포맷(영상/이미지) 안에서만</b> 상대 평가<br>
     &nbsp;&nbsp;<b>R</b> = pctRank(노출 수)&nbsp;&nbsp;→ 도달 규모 백분위<br>
-    &nbsp;&nbsp;<b>C</b> = min(1, ln(1+전환)/ln(1+30))&nbsp;&nbsp;→ 전체 표본 신뢰 감쇠
+    &nbsp;&nbsp;<b>C</b> = min(1, ln(1+전환)/ln(1+30))&nbsp;&nbsp;→ 전체 표본 신뢰 감쇠<br>
+    &nbsp;&nbsp;<b>표시 점수</b> = 원점수를 비교군 분포 기준으로 선형 재배치 (5백분위→12점 · 95백분위→92점, 양 끝은 점근 압축 최고 99·최저 2, 순위 완전 보존 · 비교군이 8개 미만이면 분위 기준이 불안정해 원점수 그대로)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;원점수는 다지표 평균과 축소 탓에 25~85 구간에 몰리므로, 상대평가 취지에 맞게 1등이 90점대 후반에 닿도록 폅니다
   </div>
 
   <div class="ft-grid">
