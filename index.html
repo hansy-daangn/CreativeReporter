@@ -345,9 +345,7 @@
   .abt td.gd{color:#1C8A6E}.abt td.bd{color:#BE3F53}
   .abt td.num.gd,.abt td.num.bd{font-weight:800}
   .abt-mrow td{padding:14px 12px}
-  .abt-media .asset-wrap{align-items:center}
-  .abt-media .asset-vid{height:auto!important;max-height:320px!important;width:auto!important;max-width:100%!important;aspect-ratio:auto}
-  .abt-media .asset-img{max-height:300px}
+  .abt-media .isle-frame{height:300px}
   .abt-go td{padding:10px;border-bottom:0}
   .abx{display:grid;gap:12px}
   @media(max-width:980px){.abx{grid-template-columns:1fr!important}}
@@ -356,9 +354,7 @@
   .abxc-h{display:flex;align-items:center;gap:9px;font-size:17px}
   .abxc-h .abv-tag{padding:4px 13px;font-size:14px}
   .abxc-media{display:flex;justify-content:center;align-items:center;min-height:56px}
-  .abxc-media .asset-wrap{align-items:center}
-  .abxc-media .asset-vid{height:auto!important;max-height:230px!important;width:auto!important;max-width:100%!important;aspect-ratio:auto}
-  .abxc-media .asset-img{max-height:210px}
+  .abxc-media .isle-frame{height:220px}
   .abxc-nomedia{font-size:11px;color:var(--faint);padding:22px 0}
   .abx-mets{display:flex;flex-direction:column}
   .abx-m{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;padding:4.5px 2px;border-bottom:1px dashed #ECEBE3}
@@ -397,38 +393,40 @@
   .caret{color:var(--faint);font-weight:800;margin-left:7px;display:inline-block;transition:transform .15s;font-size:13px}
   tbody tr.exp .caret{transform:rotate(90deg);color:var(--karrot)}
   .isle-row>td{padding:0!important;background:var(--surface-2);border-bottom:1px solid #E6E5DE}
-  .isle{position:sticky;left:0;box-sizing:border-box;padding:18px 20px;display:grid;grid-template-columns:minmax(300px,1.3fr) minmax(225px,1.05fr) minmax(320px,1.3fr);gap:22px;min-width:0}
-  .isle-nav{grid-column:1/-1;display:flex;justify-content:flex-end;align-items:center;gap:6px;margin:-4px 0 -14px}
-  .isle-nav .in-pos{font-size:10.5px;color:var(--faint);margin-right:2px}
-  .isle-nav button{font-size:11px;font-weight:600;padding:3px 10px;border-radius:7px;background:var(--surface-2);color:var(--muted);border:1px solid #E1DFD7;cursor:pointer}
-  .isle-nav button:hover:not(:disabled){color:var(--ink);background:var(--surface-3)}
-  .isle-nav button:disabled{opacity:.35;cursor:default}
-  .diag{font-size:11.5px;color:var(--muted);margin:0 0 9px;line-height:2;text-align:left}
+  /* 상세(B안): 히어로 [미디어 | 점수·진단·추이 | 같은 그룹] + 하단 지표 위치 2열.
+     미디어 프레임은 소재 비율에 따라 3종(ar-v 세로 / ar-s 정방 / ar-h 가로)으로 폭·높이 전환 */
+  .isle{position:sticky;left:0;box-sizing:border-box;padding:20px;display:flex;flex-direction:column;gap:20px;min-width:0}
+  .isle-hero{display:grid;gap:28px;grid-template-columns:280px minmax(0,1fr) minmax(0,1.15fr);align-items:start}
+  .isle.ar-v .isle-hero{grid-template-columns:232px minmax(0,1fr) minmax(0,1.15fr)}
+  .isle.ar-h .isle-hero{grid-template-columns:400px minmax(0,1fr) minmax(0,1fr)}
+  .isle-hero.nomedia{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr)}
+  .isle-hero.grp{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr)}
+  .isle-hero.grp.two{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)}
+  .isle-hero>*{min-width:0}
+  .ih-media{display:flex;flex-direction:column;gap:6px}
+  .isle-frame{width:100%;height:280px;background:var(--surface-3);border-radius:12px;display:grid;place-items:center;overflow:hidden;position:relative}
+  .isle.ar-v .isle-frame{height:396px}
+  .isle.ar-h .isle-frame{height:250px}
+  .isle-frame img{max-width:100%;max-height:100%;width:auto;height:auto;display:block}
+  .isle-frame video{width:100%;height:100%;object-fit:contain;display:block;background:#141410;border-radius:12px}
+  .isle-frame .asset-yt{width:100%;height:100%;border:0}
+  .isle-frame .asset-err{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:11px;color:var(--muted)}
+  .ih-mid{display:flex;flex-direction:column;gap:11px}
+  .ih-score{display:flex;align-items:baseline;gap:9px}
+  .ih-score .n{font-size:38px;font-weight:800;letter-spacing:-.03em;line-height:1}
+  .ih-score .s{font-size:11.5px;font-weight:700;color:var(--faint)}
+  .ih-mid .ispark{margin:2px 0 0;max-width:100%}
+  .ipos .sb2{columns:2;column-gap:44px}
+  .ipos .sb2 .sb-row{break-inside:avoid}
+  @media(max-width:1180px){.isle-hero{gap:20px}}
+  @media(max-width:900px){.isle-hero,.isle.ar-v .isle-hero,.isle.ar-h .isle-hero,.isle-hero.nomedia,.isle-hero.grp,.isle-hero.grp.two{grid-template-columns:1fr}
+    .ipos .sb2{columns:1}}
+  .diag{font-size:11.5px;color:var(--muted);line-height:2;text-align:left}
   .diag .dg-k{background:var(--surface-2);border-radius:5px;padding:1.5px 7px;font-size:10px;font-weight:700;color:var(--faint);margin-right:5px}
   .diag .dg-sep{display:inline-block;width:14px}
   .diag .dg-warn{color:var(--w2);font-weight:700}
-  .isle.no-preview{grid-template-columns:minmax(260px,1fr) minmax(320px,1.35fr)}
-  @media(max-width:1180px){.isle{grid-template-columns:minmax(250px,1.15fr) minmax(210px,1fr) minmax(290px,1.3fr);gap:18px}
-    .isle.no-preview{grid-template-columns:minmax(240px,1fr) minmax(280px,1.4fr)}}
-  @media(max-width:900px){.isle,.isle.no-preview{grid-template-columns:1fr;gap:18px}}
-  .isle>section{min-width:0}
-  .isle-hd{grid-column:1/-1;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-  .isle-hd .nm{font-size:13.5px;font-weight:740;word-break:break-all}
-  .isle-hd .sp{flex:0 0 auto}
   .ish{font-size:12px;font-weight:700;color:var(--muted);margin:0 0 11px;display:flex;align-items:baseline;gap:7px}
   .ish .n{font-size:11px;color:var(--faint);font-weight:500}
-  .mtog{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:13px}
-  .mtog button{padding:5px 11px;border-radius:8px;background:var(--surface-3);color:var(--muted);font-size:11.5px;font-weight:600}
-  .mtog button.on{background:var(--ink);color:#fff}
-  .pos{margin-bottom:14px}
-  .pos-l{font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;margin-bottom:6px}
-  .pos-l .pn{font-size:10.5px;color:var(--faint);font-weight:500;background:var(--surface-3);padding:0 6px;border-radius:5px}
-  .pos-l .me{margin-left:auto;font-size:11.5px;font-weight:700}
-  .pos-track{position:relative;height:8px;border-radius:5px;background:var(--surface-3)}
-  .pos-fill{position:absolute;left:0;top:0;height:100%;border-radius:5px;opacity:.85}
-  .pos-mark{position:absolute;top:50%;width:13px;height:13px;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 3px var(--surface-2)}
-  .pos-meta{font-size:11px;color:var(--muted);margin-top:5px} .pos-meta b{color:var(--ink);font-weight:650}
-  .pos-na{font-size:11px;color:var(--faint);padding:2px 0 6px}
   .fam{background:var(--surface);border-radius:10px;overflow:hidden}
   .fam table{width:100%;border-collapse:collapse;font-size:12px}
   .fam th,.fam td{padding:7px 10px;text-align:right;border-bottom:1px solid #F0EFE9;white-space:nowrap}
@@ -447,14 +445,11 @@
   .fam tr.me .g-name{color:var(--ink);font-weight:650}
   .fam-note{font-size:11px;color:var(--faint);margin-top:8px}
   .isle-load{font-size:12px;color:var(--faint);padding:16px 4px}
-  .isle-preview{background:var(--surface-2);border-radius:12px;padding:11px;display:flex;flex-direction:column;gap:7px;align-items:center;min-width:0}
   .asset-wrap{display:flex;flex-direction:column;gap:6px;width:100%;align-items:center;min-width:0}
   .asset-vid{width:100%;aspect-ratio:16/9;border-radius:8px;border:0;background:#000;max-width:100%}
   .asset-img{max-width:100%;max-height:310px;width:auto;height:auto;border-radius:8px;object-fit:contain;background:#fff}
   .asset-src{font-size:10.5px;color:var(--muted);word-break:break-all;text-align:center;max-width:100%}
   .asset-src a{color:var(--muted)}
-  .isle-preview .g-extra,.isle-preview .g-ids{width:100%}
-  @media(max-width:900px){.isle-preview{max-width:520px;margin:0 auto;width:100%}}
   .tempty{padding:26px 14px;text-align:center;color:var(--muted);font-size:12.5px}
   .asset-err{font-size:11px;color:var(--w2)}
   .asset-err .mini{margin-left:6px;font-size:10.5px;padding:2px 8px;border-radius:7px;border:1px solid #d8d7cf;background:var(--surface);color:var(--muted);cursor:pointer}
@@ -709,7 +704,7 @@ function imgRetry(img){
   const n=(+img.dataset.rt||0)+1;
   if(n>3){
     const t=img.closest(".tthumb");if(t)t.classList.add("err");
-    const w=img.closest(".asset-wrap");if(w){const e=w.querySelector(".asset-err");if(e)e.hidden=false;img.hidden=true;}
+    const w=img.closest(".asset-wrap,.isle-frame");if(w){const e=w.querySelector(".asset-err");if(e)e.hidden=false;img.hidden=true;}
     return;}
   img.dataset.rt=n;
   if(!img.dataset.osrc)img.dataset.osrc=img.getAttribute("src");
@@ -1465,50 +1460,22 @@ function familyKey(name){let s=String(name);
   s=s.replace(/[_\-\s.]+/g," ").trim().toLowerCase();
   return s||String(name).toLowerCase();}
 /* 상세 지표 토글 — 표의 상위 카테고리와 동일한 대표 지표만, 같은 순서 (노출 → eCPI → 활성 eCPA → CTR → 완주율 → ROAS) */
-function islandMetrics(L,e){const M=[];const add=(k,lab,dir,fmt,good)=>M.push({k,lab,dir,fmt,good});
-  add("노출 수","노출",1,fmtInt,false);
-  if(L.key==="cg"){add("CTR","CTR",1,fmtPct,true);}
-  else{
-    if(e.eCPI!=null)add("eCPI","eCPI",-1,fmtWon,true);
-    if(e["활성 유저 eCPA"]!=null)add("활성 유저 eCPA","활성 eCPA",-1,fmtWon,true);
-    if(e.CTR!=null&&e.CTR>0)add("CTR","CTR",1,fmtPct,true);
-    if(e["영상 완주율"]!=null)add("영상 완주율","완주율",1,fmtPct,true);
-    if(e._g_assetType&&e._g_ROAS!=null)add("_g_ROAS","ROAS",1,v=>(v!=null&&isFinite(v)?v.toFixed(1)+"×":"–"),true);}
-  return M;}
-function defaultMetric(ds,e){const M=islandMetrics(ds.L,e);return (M.find(m=>m.good&&e[m.k]!=null)||M.find(m=>e[m.k]!=null)||M[M.length-1]).k;}
-function cohorts(ds,e){const a=ds.agg,out=[{label:"전체",mem:a}];
-  const isG=!!e._g_assetType;
-  if(e.tags.ve)out.push({label:"같은 서비스 · "+e.tags.ve,mem:ds.byVe.get(e.tags.ve)||[]});
-  if(e.tags.fo)out.push({label:"같은 포맷 · "+e.tags.fo,mem:ds.byFo.get(e.tags.fo)||[]});
-  if(e.tags.size)out.push({label:"같은 사이즈 · "+e.tags.size,mem:ds.bySize.get(e.tags.size)||[]});
-  const gid=e._g_adGroupId||e._m_group;
-  if(gid&&ds.byAdGr&&(ds.byAdGr.get(gid)||[]).length>1){const _cr=e._m_group?gid:adGroupLabel(gid);
-    out.push({label:"같은 그룹 · "+trunc(_cr?groupPrettyName(_cr):String(gid),24),mem:ds.byAdGr.get(gid)});}
-  if(!isG){const fam=ds.byFk.get(e._fk||familyKey(e.name))||[];
-    if(fam.length>1)out.push({label:"같은 시리즈 (이름·해상도·변형)",mem:fam});}
-  return out;}
-function cohortStat(members,m,e){const vals=members.filter(x=>x[m.k]!=null&&x.비용>0).map(x=>({n:x.name,v:x[m.k]}));
-  if(!vals.length||e[m.k]==null)return null;const sorted=[...vals].sort((a,b)=>m.dir<0?a.v-b.v:b.v-a.v);const N=sorted.length;
-  let rank=sorted.findIndex(x=>x.n===e.name)+1;if(rank<1)rank=N;const med=quantile(vals.map(x=>x.v).sort((a,b)=>a-b),0.5);
-  return {N,rank,med,posFrac:N>1?(N-rank)/(N-1):1,topPct:Math.max(1,Math.round(rank/N*100)),val:e[m.k]};}
-function posBar(label,st,m){if(!st)return `<div class="pos"><div class="pos-l">${label}</div><div class="pos-na">이 그룹엔 비교 가능한 소재가 없음</div></div>`;
-  const pct=Math.round(st.posFrac*100),col=m.good?(st.posFrac>=.66?"var(--g1)":st.posFrac>=.33?"var(--w1)":"var(--w2)"):"var(--c2)";
-  return `<div class="pos"><div class="pos-l">${label} <span class="pn">${st.N}개</span><span class="me" style="color:${col}">상위 ${st.topPct}%${m.good?"":" 규모"}</span></div>
-    <div class="pos-track"><div class="pos-fill" style="width:${pct}%;background:${col}"></div><div class="pos-mark" style="left:${pct}%;background:${col}"></div></div>
-    <div class="pos-meta">${st.N}개 중 <b>${st.rank}위</b> · 이 소재 <b>${m.fmt(st.val)}</b> · 중앙값 ${m.fmt(st.med)}</div></div>`;}
+/* 미리보기 실제 비율 → 상세 레이아웃 3종(세로 ar-v / 정방 ar-s / 가로 ar-h) 전환 */
+function applyIsleAr(isle,w,h){if(!w||!h)return;
+  const cls=h/w>=1.2?"ar-v":w/h>=1.2?"ar-h":"ar-s";
+  if(isle.classList.contains(cls))return;
+  isle.classList.remove("ar-v","ar-h","ar-s");isle.classList.add(cls);}
+function isleAr(el){const isle=el&&el.closest?el.closest(".isle"):null;if(!isle)return;
+  applyIsleAr(isle,el.naturalWidth||el.videoWidth||0,el.naturalHeight||el.videoHeight||0);}
+/* 미리보기 — 고정 프레임(.isle-frame) 안에 비율 유지로 수납. 프레임 크기는 .isle의 ar-* 클래스가 결정 */
 function assetPreview(url,ent){if(!url)return "";
   const srcLine=(note)=>`<div class="asset-src">${note?note+" · ":""}<a href="${url}" target="_blank" rel="noopener">${trunc(url,60)}</a></div>`;
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
-  if(yt)return `<div class="asset-wrap"><iframe class="asset-vid" src="https://www.youtube.com/embed/${yt[1]}" frameborder="0" allow="encrypted-media" allowfullscreen></iframe>${srcLine()}</div>`;
-  if(isVideoUrl(url)){
-    let style="width:100%;height:auto;max-height:390px";
-    const res=ent&&ent._m_res;
-    if(res){const[w,h]=res.split("x").map(Number);
-      if(w&&h)style=h>w?`aspect-ratio:${w}/${h};height:390px;width:auto;max-width:100%`:`aspect-ratio:${w}/${h};width:100%;height:auto;max-height:390px`;}
-    return `<div class="asset-wrap"><video class="asset-vid" src="${url}" controls muted playsinline preload="metadata" style="${style}"></video>${srcLine()}</div>`;}
+  if(yt)return `<div class="isle-frame"><iframe class="asset-yt" src="https://www.youtube.com/embed/${yt[1]}" frameborder="0" allow="encrypted-media" allowfullscreen></iframe></div>${srcLine()}`;
+  if(isVideoUrl(url))return `<div class="isle-frame"><video class="asset-vid" src="${url}" controls muted playsinline preload="metadata"></video></div>${srcLine()}`;
   if(isImageUrl(url)){
     const note=(ent&&ent.tags&&ent.tags.fo==="영상")?"영상 소재의 썸네일":"";
-    return `<div class="asset-wrap"><img class="asset-img" src="${imgSrc(url)}" data-osrc="${escAttr(url)}" alt="asset" referrerpolicy="no-referrer" loading="lazy" onload="imgOk(this)" onerror="imgRetry(this)"><div class="asset-err" hidden>미리보기를 불러오지 못했습니다 <button class="mini" onclick="const w=this.closest('.asset-wrap'),i=w.querySelector('img');this.parentNode.hidden=true;i.hidden=false;i.dataset.rt=0;const s=i.dataset.osrc||i.src;i.src=s+(s.includes('?')?'&':'?')+'rt='+Date.now()">다시 시도</button></div>${srcLine(note)}</div>`;}
+    return `<div class="isle-frame"><img class="asset-img" src="${imgSrc(url)}" data-osrc="${escAttr(url)}" alt="asset" referrerpolicy="no-referrer" loading="lazy" onload="imgOk(this);isleAr(this)" onerror="imgRetry(this)"><div class="asset-err" hidden>미리보기를 불러오지 못했습니다 <button class="mini" onclick="const w=this.closest('.isle-frame'),i=w.querySelector('img');this.parentNode.hidden=true;i.hidden=false;i.dataset.rt=0;const s=i.dataset.osrc||i.src;i.src=s+(s.includes('?')?'&':'?')+'rt='+Date.now()">다시 시도</button></div></div>${srcLine(note)}`;}
   return "";}
 function thumbHTML(e){const url=previewUrlOf(e);if(!url)return "";
   const vidMark=e.tags&&e.tags.fo==="영상";
@@ -1571,7 +1538,7 @@ function diagHTML(ds,e){
   if(fat)seg.push(`<b class="dg-warn">피로 징후 · ${fat}</b>`);
   if(!seg.length)return"";
   return `<div class="diag">${seg.join('<span class="dg-sep"></span>')}</div>`;}
-function scoreBreakdownHTML(ds,e){const S=ds.S;
+function scorePosHTML(ds,e){const S=ds.S;
   if(e.score==null||!S||!S.specs||!e._specPct)return"";
   const rows=S.specs.filter(s=>e._specPct[s.k]).map(s=>{const sp=e._specPct[s.k];
     const pctv=Math.round(sp.g*100);
@@ -1579,8 +1546,8 @@ function scoreBreakdownHTML(ds,e){const S=ds.S;
     const shr=sp.w<0.8?`<span class="sb-shr" title="표본이 적어 백분위를 중앙(50) 방향으로 축소 반영 · 데이터 신뢰 ${(sp.w*100).toFixed(0)}%">표본보정</span>`:"";
     return `<div class="sb-row"><span class="sb-k">${s.lab}</span><span class="sb-raw num">${fmtSpecVal(s.k,e[s.k])}</span><div class="sb-bar"><i style="width:${pctv}%;background:${col}"></i></div><span class="sb-p num" style="color:${col}">${pctv}</span>${shr}</div>`;}).join("");
   if(!rows)return"";
-  /* 계산식·가중치·원점수는 노출하지 않는다(암산 강요 금지) — 지표별 위치 막대만. 산정 방식은 푸터에 */
-  return `<section style="grid-column:1/-1"><div class="ish">점수 구성 <span class="n">점수 ${fmtScore(e.score)} · 막대 = 지표별 계정 내 위치(50=계정 평균 · 길수록 좋음) · 중요한 지표가 위</span></div>${diagHTML(ds,e)}<div class="sb">${rows}</div></section>`;}
+  /* 계산식·가중치·원점수는 노출하지 않는다(암산 강요 금지) — 지표별 위치 막대만, 2열로 세로 최소화. 산정 방식은 푸터에 */
+  return `<section class="ipos"><div class="ish">지표별 계정 내 위치 <span class="n">막대 = 광고비 가중 백분위(50=계정 평균 · 길수록 좋음) · 중요한 지표 순</span></div><div class="sb sb2">${rows}</div></section>`;}
 /* 소재(또는 그룹)의 주차별 광고비·핵심지표 미니 차트 — 상세 뷰 미리보기 아래 표시.
    막대=광고비(투입). 선은 매체 데이터에 맞춰 자동 선택, 각 선은 자체 최대값으로 정규화(모양=추세, 절대값은 범례 최신값·호버).
    · 구글(전환 데이터 보유): ROAS + 전환당 비용 2선 — 수익성·전환효율이 채점의 55%라 이 둘이면 성패가 보임
@@ -1648,10 +1615,10 @@ function creativeTrendHTML(ds,e){
     s+=`<path d="${p}" fill="none" stroke="${ln.col}" stroke-width="1.5" stroke-opacity="0.95"/>${dots}`;}
   const leg=lines.map(ln=>`<i class="lgd" style="background:${ln.col}"></i>${ln.lab} <b>${ln.last!=null?ln.fmt(ln.last):"–"}</b>`).join(" ");
   return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · 막대 광고비 ${leg}</span></div><svg class="ispark-svg" viewBox="0 0 ${W} ${H}">${s}</svg></div>`;}
-function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>m.k===ISLE.metric)||M[0];
+/* 상세 — 히어로(미디어 | 점수·진단·추이 | 같은 그룹 비교) + 하단 지표 위치 2분할.
+   행에 이미 있는 이름·뱃지·칩은 반복하지 않고, 미디어 프레임은 소재 비율(세로/정방/가로)에 따라 3종 폭으로 전환 */
+function fillIsland(ds,e,inner){const L=ds.L;
   const sp=t=>t==="g2"?"sp-g2":t==="g1"?"sp-g1":t==="m"?"sp-mid":t==="w1"?"sp-w1":t==="w2"?"sp-w2":"sp-na";
-  const bars=cohorts(ds,e).map(c=>posBar(c.label,cohortStat(c.mem,cur,e),cur)).join("");
-  const toggles=M.map(m=>`<button data-m="${m.k}" class="${m.k===cur.k?"on":""}">${m.lab}</button>`).join("");
   const isG=!!e._g_assetType;
   const effK=L.key==="cg"?"CTR":L.effCol,effFmt=L.key==="cg"?fmtPct:fmtWon,effLab=L.key==="cg"?"CTR":L.effLabel;
   let listHTML,listTitle,listMetaN;
@@ -1682,31 +1649,25 @@ function fillIsland(ds,e,inner){const L=ds.L,M=islandMetrics(L,e),cur=M.find(m=>
       `</tbody></table></div></div>`;}
   const preview=assetPreview(previewUrlOf(e),e);
   const spark=creativeTrendHTML(ds,e);
-  const leftCol=(preview||spark)?`<section><div class="isle-preview">${preview}${spark}</div></section>`:"";
-  inner.classList.toggle("no-preview",!leftCol);
-  /* 상세 내비: 표 순서 그대로 이전/다음 이동(← → 키 지원) + 이 소재로 바로 오는 링크 복사 */
-  const ordRows=orderedRowsForTable(ds),ordI=ordRows.findIndex(x=>x.name===e.name);
-  const nav=`<div class="isle-nav">${ordI>=0?`<span class="in-pos num">${ordI+1} / ${ordRows.length}</span>`:""}<button type="button" class="in-prev" ${ordI<=0?"disabled":""} title="표 순서상 이전 소재 (←)">‹ 이전</button><button type="button" class="in-next" ${ordI<0||ordI>=ordRows.length-1?"disabled":""} title="표 순서상 다음 소재 (→)">다음 ›</button><button type="button" class="in-link" title="접속하면 이 소재 상세가 바로 열리는 링크 복사">링크 복사</button></div>`;
+  /* 점수 대형 + 회색 순위 주석 (계정 상위/하위 %) */
+  const S=ds.S,_tp=(e.rank&&S&&S.eligCount)?Math.round(e.rank/S.eligCount*100):null;
+  const rankTxt=_tp==null?"":` · 계정 ${_tp<=50?`상위 ${Math.max(1,_tp)}%`:`하위 ${Math.max(1,101-_tp)}%`}`;
+  const scoreHTML=e.score!=null?`<div class="ih-score"><span class="n num">${fmtScore(e.score)}</span><span class="s">/ 100${rankTxt}</span></div>`:"";
+  const mid=`<div class="ih-mid">${scoreHTML}${diagHTML(ds,e)}${spark}</div>`;
+  const cmp=`<div class="ih-cell"><div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}</div>`;
+  /* 미디어 비율 클래스: 몰로코 해상도·유튜브는 즉시, 그 외 이미지는 로드 후(isleAr) 판정 */
+  inner.classList.remove("ar-v","ar-h","ar-s");
+  const _pu=previewUrlOf(e);
+  if(ytIdOf(_pu))inner.classList.add("ar-h");
+  else{const _res=e._m_res&&String(e._m_res).match(/(\d+)\s*[x×]\s*(\d+)/i);
+    if(_res)applyIsleAr(inner,+_res[1],+_res[2]);else inner.classList.add("ar-s");}
   if(e._isGroup){
-    /* 그룹 상세: 추이 · 멤버 목록 · 보고서 스냅샷(표에 없는 정보만) 3열 + 점수 구성.
-       개별 소재 대비 코호트 순위는 그룹 합계엔 무의미해 표시하지 않는다 */
     const giPanel=groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group));
-    inner.innerHTML=`${nav}${leftCol}
-      <section><div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}</section>
-      ${giPanel||"<section></section>"}
-      ${scoreBreakdownHTML(ds,e)}`;
+    inner.innerHTML=`<div class="isle-hero grp${giPanel?"":" two"}">${mid}${cmp}${giPanel}</div>${scorePosHTML(ds,e)}`;
   }else{
-    inner.innerHTML=`${nav}${leftCol}
-    <section><div class="mtog">${toggles}</div>${bars}</section>
-    <section><div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}</section>
-    ${scoreBreakdownHTML(ds,e)}`;}
-  const nv=inner.querySelector(".isle-nav");
-  if(nv){nv.querySelector(".in-prev").onclick=ev=>{ev.stopPropagation();navIsland(-1);};
-    nv.querySelector(".in-next").onclick=ev=>{ev.stopPropagation();navIsland(1);};
-    nv.querySelector(".in-link").onclick=ev=>{ev.stopPropagation();
-      const link=location.origin+location.pathname+"#ad="+encodeURIComponent(e.name)+"&ch="+encodeURIComponent(ds.media||"");
-      Promise.resolve(copyText(link)).then(()=>toast("소재 링크를 복사했습니다 — 접속하면 이 상세가 바로 열립니다"));};}
-  inner.querySelectorAll(".mtog button").forEach(b=>b.addEventListener("click",ev=>{ev.stopPropagation();ISLE.metric=b.dataset.m;inner.querySelectorAll(".mtog button").forEach(x=>x.classList.toggle("on",x.dataset.m===ISLE.metric));requestAnimationFrame(()=>fillIsland(ds,e,inner));}));
+    inner.innerHTML=`<div class="isle-hero${preview?"":" nomedia"}">${preview?`<div class="ih-media">${preview}</div>`:""}${mid}${cmp}</div>${scorePosHTML(ds,e)}`;}
+  const _vv=inner.querySelector(".isle-frame video");
+  if(_vv)_vv.addEventListener("loadedmetadata",()=>isleAr(_vv));
   /* 유튜브 소재면 제목을 조회해 화면 곳곳의 URL 이름을 실제 제목으로 교체 (미디어 위 중복 배너 없음) */
   const _ytid=ytIdOf(previewUrlOf(e));
   if(_ytid&&_ytTitles[_ytid]===undefined)fetchYtTitle(_ytid).then(t=>{if(t)refreshDisplayNames();});
@@ -1734,7 +1695,7 @@ function navIsland(delta){if(!curDS||!ISLE.name)return;
 function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-row");const wasOpen=ISLE.name===name;
   if(existing)existing.remove();$$("#table tbody tr.exp").forEach(t=>t.classList.remove("exp"));
   if(wasOpen){ISLE.name=null;try{history.replaceState(null,"",location.pathname+location.search);}catch(_){}return;}
-  const e=findRow(ds,name);if(!e)return;ISLE.name=name;ISLE.metric=defaultMetric(ds,e);
+  const e=findRow(ds,name);if(!e)return;ISLE.name=name;
   try{history.replaceState(null,"","#ad="+encodeURIComponent(name)+"&ch="+encodeURIComponent(ds.media||""));}catch(_){}
   tr.classList.add("exp");const row=document.createElement("tr");row.className="isle-row";
   const td=document.createElement("td");td.colSpan=tableCols(ds.L,ds).filter(c=>!c.sub||tExp.has(c.grp)).length;const inner=document.createElement("div");inner.className="isle";
@@ -2573,7 +2534,7 @@ function renderFooter(){$("#ft").innerHTML=`
 function refreshAll(){if(!active||!DATASETS[active])active=TAB_ORDER.find(k=>DATASETS[k])||Object.keys(DATASETS)[0];if(active)setActive(active);}
 
 function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;tableShowAll=false;
-  tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;ISLE.name=null;ISLE.metric=null;
+  tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;ISLE.name=null;
   const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
 function dropZone(e){if(!e||e.clientY==null)return null;
   const H=window.innerHeight||800,W=window.innerWidth||1200;
