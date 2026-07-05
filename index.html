@@ -396,14 +396,18 @@
   /* 상세(B안): 히어로 [미디어 | 점수·진단·추이 | 같은 그룹] + 하단 지표 위치 2열.
      미디어 프레임은 소재 비율에 따라 3종(ar-v 세로 / ar-s 정방 / ar-h 가로)으로 폭·높이 전환 */
   .isle{position:sticky;left:0;box-sizing:border-box;padding:20px;display:flex;flex-direction:column;gap:20px;min-width:0}
-  .isle-hero{display:grid;gap:28px;grid-template-columns:280px minmax(0,1fr) minmax(0,1.15fr);align-items:start}
-  .isle.ar-v .isle-hero{grid-template-columns:232px minmax(0,1fr) minmax(0,1.15fr)}
-  .isle.ar-h .isle-hero{grid-template-columns:400px minmax(0,1fr) minmax(0,1fr)}
-  .isle-hero.nomedia{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr)}
-  .isle-hero.grp{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr)}
-  .isle-hero.grp.two{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)}
+  /* 그리드 영역 기반 3단계 반응형 — DOM 순서 = 중요도(미디어→비교→추이→점수·진단), 어느 폭에서도 겹침 없음 */
+  .isle-hero{display:grid;gap:20px 26px;align-items:start;
+    grid-template-columns:280px minmax(0,1.35fr) minmax(0,1fr);
+    grid-template-areas:"media cmp trend" "media cmp sd"}
+  .isle.ar-v .isle-hero{grid-template-columns:232px minmax(0,1.35fr) minmax(0,1fr)}
+  .isle.ar-h .isle-hero{grid-template-columns:400px minmax(0,1.2fr) minmax(0,1fr)}
+  .isle-hero.nomedia{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);grid-template-areas:"cmp trend" "cmp sd"}
   .isle-hero>*{min-width:0}
-  .ih-media{display:flex;flex-direction:column;gap:6px}
+  .ihA-media{grid-area:media;display:flex;flex-direction:column;gap:6px;min-width:0}
+  .ihA-cmp{grid-area:cmp}
+  .ihA-trend{grid-area:trend}
+  .ihA-sd{grid-area:sd;display:flex;flex-direction:column;gap:8px;padding-top:2px}
   .isle-frame{width:100%;height:280px;background:var(--surface-3);border-radius:12px;display:grid;place-items:center;overflow:hidden;position:relative}
   .isle.ar-v .isle-frame{height:396px}
   .isle.ar-h .isle-frame{height:250px}
@@ -411,15 +415,27 @@
   .isle-frame video{width:100%;height:100%;object-fit:contain;display:block;background:#141410;border-radius:12px}
   .isle-frame .asset-yt{width:100%;height:100%;border:0}
   .isle-frame .asset-err{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:11px;color:var(--muted)}
-  .ih-mid{display:flex;flex-direction:column;gap:11px}
-  .ih-score{display:flex;align-items:baseline;gap:9px}
-  .ih-score .n{font-size:38px;font-weight:800;letter-spacing:-.03em;line-height:1}
-  .ih-score .s{font-size:11.5px;font-weight:700;color:var(--faint)}
-  .ih-mid .ispark{margin:2px 0 0;max-width:100%}
+  .ih-score{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .ih-score .n{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1}
+  .ih-score .s{font-size:11px;font-weight:700;color:var(--faint)}
+  .ihA-trend .ispark,.ihA-media .ispark{margin:0;max-width:100%}
   .ipos .sb2{columns:2;column-gap:44px}
   .ipos .sb2 .sb-row{break-inside:avoid}
-  @media(max-width:1180px){.isle-hero{gap:20px}}
-  @media(max-width:900px){.isle-hero,.isle.ar-v .isle-hero,.isle.ar-h .isle-hero,.isle-hero.nomedia,.isle-hero.grp,.isle-hero.grp.two{grid-template-columns:1fr}
+  /* 중간 폭: [미디어|비교] 2열, 점수·진단은 미디어 아래, 추이는 전폭 */
+  @media(max-width:1200px){
+    .isle-hero,.isle.ar-v .isle-hero{grid-template-columns:260px minmax(0,1fr);gap:18px 22px;
+      grid-template-areas:"media cmp" "sd cmp" "trend trend"}
+    .isle.ar-h .isle-hero{grid-template-columns:340px minmax(0,1fr);
+      grid-template-areas:"media cmp" "sd cmp" "trend trend"}
+    .isle-hero.nomedia{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);grid-template-areas:"cmp sd" "trend trend"}}
+  /* 좁은 폭: 중요도 순 1열 스택, 프레임 폭 캡으로 회색 여백 방지 */
+  @media(max-width:860px){
+    .isle{padding:16px 14px}
+    .isle-hero,.isle.ar-v .isle-hero,.isle.ar-h .isle-hero,.isle-hero.nomedia{grid-template-columns:minmax(0,1fr);gap:18px;
+      grid-template-areas:"media" "cmp" "trend" "sd"}
+    .ihA-media{align-items:center}
+    .ihA-media .isle-frame{max-width:320px}
+    .isle.ar-h .ihA-media .isle-frame{max-width:420px}
     .ipos .sb2{columns:1}}
   .diag{font-size:11.5px;color:var(--muted);line-height:2;text-align:left}
   .diag .dg-k{background:var(--surface-2);border-radius:5px;padding:1.5px 7px;font-size:10px;font-weight:700;color:var(--faint);margin-right:5px}
@@ -432,7 +448,7 @@
   .fam th,.fam td{padding:7px 10px;text-align:right;border-bottom:1px solid #F0EFE9;white-space:nowrap}
   .fam tr:last-child td{border-bottom:0}
   .fam th{background:var(--surface-2);color:var(--muted);font-weight:600;font-size:11px;position:sticky;top:0}
-  .fam th.l,.fam td.l{text-align:left}
+  .fam th.l,.fam td.l{text-align:left;white-space:normal;word-break:break-word;min-width:150px}
   .fam tr.me td{background:var(--gold-f);font-weight:650}
   .fam .mb svg{width:13px;height:13px;vertical-align:middle}
   .fam-wrap{max-height:360px;overflow:auto;border-radius:10px}
@@ -1653,8 +1669,9 @@ function fillIsland(ds,e,inner){const L=ds.L;
   const S=ds.S,_tp=(e.rank&&S&&S.eligCount)?Math.round(e.rank/S.eligCount*100):null;
   const rankTxt=_tp==null?"":` · 계정 ${_tp<=50?`상위 ${Math.max(1,_tp)}%`:`하위 ${Math.max(1,101-_tp)}%`}`;
   const scoreHTML=e.score!=null?`<div class="ih-score"><span class="n num">${fmtScore(e.score)}</span><span class="s">/ 100${rankTxt}</span></div>`:"";
-  const mid=`<div class="ih-mid">${scoreHTML}${diagHTML(ds,e)}${spark}</div>`;
-  const cmp=`<div class="ih-cell"><div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}</div>`;
+  const sd=`<div class="ihA-sd">${scoreHTML}${diagHTML(ds,e)}</div>`;
+  const trendB=spark?`<div class="ihA-trend">${spark}</div>`:"";
+  const cmpB=`<div class="ihA-cmp"><div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}</div>`;
   /* 미디어 비율 클래스: 몰로코 해상도·유튜브는 즉시, 그 외 이미지는 로드 후(isleAr) 판정 */
   inner.classList.remove("ar-v","ar-h","ar-s");
   const _pu=previewUrlOf(e);
@@ -1663,9 +1680,11 @@ function fillIsland(ds,e,inner){const L=ds.L;
     if(_res)applyIsleAr(inner,+_res[1],+_res[2]);else inner.classList.add("ar-s");}
   if(e._isGroup){
     const giPanel=groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group));
-    inner.innerHTML=`<div class="isle-hero grp${giPanel?"":" two"}">${mid}${cmp}${giPanel}</div>${scorePosHTML(ds,e)}`;
+    const giB=giPanel?`<div class="ihA-media">${giPanel}</div>`:""; /* 그룹은 보고서 정보가 미디어 자리를 사용 */
+    inner.innerHTML=`<div class="isle-hero${giB?"":" nomedia"}">${giB}${cmpB}${trendB}${sd}</div>${scorePosHTML(ds,e)}`;
   }else{
-    inner.innerHTML=`<div class="isle-hero${preview?"":" nomedia"}">${preview?`<div class="ih-media">${preview}</div>`:""}${mid}${cmp}</div>${scorePosHTML(ds,e)}`;}
+    const mediaB=preview?`<div class="ihA-media">${preview}</div>`:"";
+    inner.innerHTML=`<div class="isle-hero${mediaB?"":" nomedia"}">${mediaB}${cmpB}${trendB}${sd}</div>${scorePosHTML(ds,e)}`;}
   const _vv=inner.querySelector(".isle-frame video");
   if(_vv)_vv.addEventListener("loadedmetadata",()=>isleAr(_vv));
   /* 유튜브 소재면 제목을 조회해 화면 곳곳의 URL 이름을 실제 제목으로 교체 (미디어 위 중복 배너 없음) */
