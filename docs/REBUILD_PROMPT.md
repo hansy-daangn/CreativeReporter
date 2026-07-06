@@ -61,7 +61,8 @@ alter table weekly_creative_stats enable row level security;
 alter table cr_kv enable row level security;
 alter table cr_users enable row level security;
 
--- 데이터 게이트: 레거시 '<PASSWORD>' 또는 '승인됨' 사용자의 비번이면 통과
+-- 권한 컬럼: cr_users.role text default 'viewer' check (role in ('viewer','editor'))
+-- 읽기 게이트: 레거시 '<PASSWORD>' 또는 '승인됨' 사용자의 비번이면 통과
 create or replace function _cr_check_pw(pw text) returns void
 language plpgsql security definer set search_path to 'public' as $$
 begin
@@ -70,12 +71,21 @@ begin
              and pw_hash = encode(extensions.digest(pw,'sha256'),'hex')) then return; end if;
   raise exception 'invalid password' using errcode = '28000';
 end $$;
+-- 쓰기 게이트: 승인됨 + role=editor 만 통과 ('<PASSWORD>'·뷰어 거부). cr_save/cr_kv_merge가 perform _cr_check_editor(pw).
+create or replace function _cr_check_editor(pw text) returns void
+language plpgsql security definer set search_path to 'public' as $$
+begin
+  if pw = '<PASSWORD>' then raise exception 'viewer cannot edit' using errcode='28000'; end if;
+  if exists (select 1 from cr_users where status='승인됨' and role='editor'
+             and pw_hash = encode(extensions.digest(pw,'sha256'),'hex')) then return; end if;
+  raise exception 'not editor' using errcode='28000';
+end $$;
 
--- 관리자 게이트(사용자 비번과 분리된 별도 시크릿) + cr_register/cr_login/cr_admin_list/cr_admin_set.
--- cr_register: 이름 ^[A-Za-z][A-Za-z0-9]{1,23}$·비번 ≥4자·이름/해시 중복 거부 → 신청함 적재.
--- cr_login(p_pw): 비번 해시로 사용자 조회 → {found,name,status} (틀려도 예외 아님).
--- cr_admin_list(admin_pw): 신청함 먼저 전체 목록. cr_admin_set(admin_pw,p_id,p_status,reviewer): 상태·처리자 갱신.
--- 소유자 시드: insert cr_users('hansy', digest('<PASSWORD>'), '승인됨'). RPC는 anon,authenticated에 grant execute.
+-- 관리자 게이트(_cr_check_admin, 별도 시크릿) + cr_register/cr_login/cr_admin_list/cr_admin_set.
+-- cr_register: 이름 ^[A-Za-z][A-Za-z0-9]{1,23}$·비번 ≥4자·예약비번 '<PASSWORD>' 금지·이름/해시 중복 거부 → 신청함·viewer.
+-- cr_login(p_pw): '<PASSWORD>'=이름없는 뷰어 {found,viewer:true,role:viewer,status:승인됨}. 그 외는 해시 조회 → {found,name,status,role,viewer:false}.
+-- cr_admin_list(admin_pw): 신청함 먼저·role 포함. cr_admin_set(admin_pw,p_id,p_status default null,reviewer,p_role default null): status·role 각각 nullable(하나만 변경 가능).
+-- 시드 없음('<PASSWORD>'가 하드코딩 뷰어). 소유자는 가입 후 admin.html에서 자신을 editor로 승인. RPC는 anon,authenticated에 grant execute.
 -- 관리자 비번은 admin.html에 넣지 말 것(공개 파일) — 런타임 입력만.
 
 -- 전체 로드 (단일 jsonb — PostgREST 1,000행 제한 우회)
@@ -222,9 +232,9 @@ tier: 적격자 점수 5분위(g2/g1/m/w1/w2) + dom '독보적'(1위가 2위와 
 - 이름 옆 뱃지: `Live`(초록 점, 최신 집행 주 광고비>0 — 그룹은 멤버 기준, 전 매체) · `경고`(구글 ginfo 정책 제한만, 사유 툴팁) · `학습중`(2주 미만 or 전환 30건 미만). 운영중·일시중지는 뱃지 없음(일시중지는 그룹 상세 메타 텍스트로만).
 - 상세(행 클릭 아코디언): 구조 = `.isle-row3` 단일 grid(areas "media mid cmp"): [ir-media(프레임+원본링크, 열폭 ar-v 232/ar-s 280/ar-h 400px, ≤1200에서 260/320) | ir-mid(그래프 탭) | ir-cmp(같은 그룹/시리즈 비교, minmax(0,1.25fr))]. ir-mid는 세그먼트 탭(.dtog) 3종 — **주차별 추이**(ispark, 폭·높이 캡 없이 컬럼 폭 비례 스케일. 매 막대 아래 2줄 라벨: MM/DD + 그 주 점수 — weeklyScoresOf(ds,e): 주별 rows→aggregate→computeScores(그룹 상세는 buildAdGroupAgg까지)로 재채점, ds._wkScore/_wkScoreG에 캐시(scope()가 무효화), 티어 색 표기·부적격 주는 '–', 툴팁에도 점수) / **영상 시청**(영상 소재만): 구간별 시청 유지 곡선([노출 100]→_v25~_v100÷노출, 없으면 ginfo v25~v100 그룹 퍼널을 캡션에 '그룹 단위' 명시, 둘 다 없으면 완주율 큰 값+영상 코호트 중앙값 대비) + 완주율|TrueView 조회율 주차별 선(영상 중앙값 점선), 최대 이탈 구간 음영+−%p 라벨 / **포지셔닝**: 백분위 사분면 산점도 — 두 축 모두 계정 내 위치(광고비 가중 백분위 wPctRank, dir<0은 1−r, 0~100·표본 축소 없음), 축 지표는 가로/세로 .dtog 토글(quadMetricsFor 중 본인 값 보유+비교군 ≥6, 기본 가로 CTR류·세로 효율류, 같은 지표 선택 시 축 맞바꿈, ISLE.posX/posY 유지). 중앙(50) 십자선은 userSpaceOnUse 그라데이션(빨강 .75→#D8D6CC→초록 .85, 가로=왼→오·세로=아래→위)으로 나쁨→좋음 방향을 표시하고 선 끝 밖에 +(초록)/−(빨강) 글리프(pad 16) — 사분면 틴트·코너 문구 없음, 광고비 상위 140+본인·같은 그룹 항상 포함, 회색=타 소재·파랑=같은 그룹·주황=이 소재+링+'이 소재' 라벨, 점 크기=광고비, 점 클릭→해당 소재 상세, 헤더·툴팁에 '상위 N%'(=100−백분위) + '지표별 계정 내 위치' .sb 막대. 있는 데이터의 탭만(1개면 탭 줄 숨김), 선택 탭 ISLE.gtab로 소재 이동 간 유지. 점수·진단·구분선·내비 버튼 없음. 비교 목록: table-layout:fixed(수치 열 90/82/62px)+한 줄 ellipsis, prefixTrimmer(공통 접두 토큰 경계(≥10자)에서 '…' 접기, tr title=풀네임). 모바일(≤860): areas "media"/"cmp"/"mid" 1열(중요도 순), 프레임 max-width 320(가로 420)px 중앙. 이미지 실패·비율 판정(isleAr)·키보드 ←/→·Esc·딥링크 해시는 유지. 그룹 상세: 미디어 자리=보고서 추가 정보(퍼널 제외), 그래프 탭 동일(포지셔닝 비교군=그룹 집계 행들).
 - AB테스트: 접미 변형 자동 인식 — 확장자·해상도(1080x1920)·화면비(16x9) 제거 후, 문자 변형(구분자+[Vv|ver|시안]?+A~F, 어간 영숫자≥4 또는 한글≥2), 숫자 변형 1~5만(v접두/제로패딩 01~05/회차 ep·part·pt·편·화·회차+숫자/문자 직결 숫자, 맨숫자 "_2"는 제외, 숫자 계열은 변형 '1' 필수). 목록(이름+🥇🥈🥉 미니 썸네일)→펼침: 변형=열 비교표, 스프레드 ≥5% 지표만 최고 초록·최저 빨강, 대표(최고 점수) 미디어 크게, '대표 소재 상세' 버튼.
-- 랜딩(로그인/가입): 세로 스택 — Google Ads · SuperSet · **회원가입** · **비밀번호 필드**(좌측 입력 + 우측 검은 화살표 버튼, 클릭·Enter 모두 로그인). 지시문·힌트 텍스트 없이 상단 소형 워드마크만. 로그인=`cr_login`으로 상태 분기(승인됨 열기+"안녕하세요 NAME" 탭당 1회 / 신청함 "관리자 승인 대기중입니다" / 거절됨 "가입이 거절된 계정입니다" / 미존재 흔들기). 회원가입=뷰 전환(같은 스택에 daangn name·비번·비번확인·가입하기·← 로그인), name은 영문·숫자만 입력 필터, 제출 시 형식·일치 검증 후 `cr_register`→"관리자 확인 후 가입이 승인됩니다". 승인된 사용자 이름은 crname(탭)·cr_uploader(기기)에 저장돼 업로드·수정 서명이 됨.
-- 관리자 페이지 `admin.html`: 별도 자기완결 파일(공개 URL). 관리자 비번 게이트(런타임 입력, 파일에 비저장) → `cr_admin_list` 표(신청함 먼저·상태 뱃지·신청일·처리자) → 행별 승인/거절/대기 버튼(`cr_admin_set`). 거절은 confirm 후 상태 저장(삭제 아님), 처리자 이름 입력칸.
-- 공통: 자동 재접속 시 랜딩 대신 "저장소 불러오는 중" 대형 미니멀 로딩(비밀번호 무효 시에만 입력 화면+저장값 폐기), `/아이디`+Enter 서명·`/logout` 해제(레거시 수동 서명, 로그인 서명과 병존), 토스트 알림, 용어 사전, 점수 방법론 푸터.
+- 랜딩(로그인/가입) — Apple 미니멀·프리미엄, 성격별 그룹, Pretendard 폰트·굵기 위계: 제목 **당근 소재분석툴**(800) · 인증 그룹(라운드렉트 비밀번호 필드[좌측 입력+우측 검은 화살표, 클릭·Enter 로그인]+회원가입 텍스트링크) · 외부도구 그룹(Google Ads·SuperSet 로고 칩 2개 나란히, 인라인 SVG 재현) · 맨 아래 `</> Dev`(→ admin.html). 지시문·힌트 없음. 로그인=`cr_login` 분기: 0715 뷰어="뷰어 권한으로 로그인했어요"(이름 없음, canEdit=false) / 에디터="NAME님 환영해요! 🥕"(canEdit=true) / 승인된 뷰어="NAME님 환영해요! · 지금은 뷰어 권한이에요" / 신청함·거절됨·미존재 각 안내·흔들기. 회원가입=뷰 전환(daangn name·비번·비번확인·가입하기·← 로그인), name 영문·숫자만, 검증 후 `cr_register`→"가입 신청을 받았어요 · 관리자 승인 후 이용할 수 있어요". 승인 사용자 이름은 crname·cr_uploader에 저장(수정 서명), 에디터 여부는 crcan에 저장(canEdit). **저장·수정 경로(cloudSaveAll·kv merge·ytt)는 canEdit 게이트** — 뷰어는 드롭 분석만 되고 저장은 건너뜀(토스트 안내).
+- 관리자 페이지 `admin.html`: 별도 자기완결 파일(공개 URL). 관리자 비번 게이트(런타임 입력, 파일에 비저장) → `cr_admin_list` 표(신청함 먼저·상태 뱃지·**권한 뷰어/에디터 토글**·신청일·처리자) → 행별 승인/거절/대기(`cr_admin_set` p_status) + 권한 토글(`cr_admin_set` p_role). 거절은 confirm 후 상태 보존(삭제 아님), 처리자 이름칸.
+- 모든 사용자 대면 문구(토스트·인사·안내)는 **당근 보이스**(친근한 해요체). 공통: 자동 재접속 시 "저장소 불러오는 중" 미니멀 로딩, `/아이디`+Enter 서명·`/logout` 해제(레거시, 로그인 서명과 병존), 토스트, 용어 사전, 점수 방법론 푸터.
 
 ### 7. 배포 — .github/workflows/pages.yml
 

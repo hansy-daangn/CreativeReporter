@@ -64,16 +64,19 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 | name_lower | text **generated** unique | `lower(daangn_name)` — 대소문자 무관 유일성(사칭 방지) |
 | pw_hash | text **unique** | 비밀번호 sha256 해시(평문 미저장). 로그인이 비번만으로 사용자를 식별하므로 전역 유일 |
 | status | text | `신청함`(가입 신청, 로그인 불가) · `승인됨`(로그인·데이터 접근 가능) · `거절됨`(로그인 불가, 기록 보존·재승인 가능) |
-| created_at·reviewed_at·reviewed_by | | 신청 시각 · 승인/거절 처리 시각·처리자 |
+| **role** | text | `viewer`(보기 전용, 기본값) · `editor`(저장·수정 가능). 관리자가 admin.html에서 지정 |
+| created_at·reviewed_at·reviewed_by | | 신청 시각 · 승인/거절/권한 처리 시각·처리자 |
 
-- **비밀번호만으로 로그인**: 입력 비번의 sha256 해시로 사용자를 찾아 이름·상태를 반환(`cr_login`). 그래서 pw_hash를 전역 유일로 강제(가입 시 중복 비번 거부).
-- 소유자(`hansy`)는 레거시 비번 `0715` 해시로 **승인됨** 시드 — 기존 세션·부트스트랩 유지.
+- **비밀번호만으로 로그인**: 입력 비번의 sha256 해시로 사용자를 찾아 이름·상태·권한을 반환(`cr_login`). 그래서 pw_hash를 전역 유일로 강제(가입 시 중복 비번 거부).
+- **레거시 `0715`는 이름 없는 뷰어 하드코딩 로그인** — cr_login이 `{viewer:true}`를 반환(이름 없음), 데이터는 읽되 저장·수정은 불가. cr_users 행이 아니므로 가입 시 예약 비번 `0715`는 거부.
+- 권한 모델: **뷰어**(0715 또는 role=viewer 사용자) = 읽기 전용 · **에디터**(승인됨 + role=editor) = 저장·수정 가능. 소유자는 계정을 만들어 admin.html에서 자신을 에디터로 승인.
 
 ## 3. 보안 모델
 
 - 세 테이블 모두 **RLS deny-all**: anon 키로는 SELECT/INSERT 자체가 불가능.
 - 모든 데이터 접근은 **SECURITY DEFINER RPC**를 통해서만 하고, 각 RPC 첫 줄에서 `_cr_check_pw(pw)`가 비밀번호를 검사(불일치 시 예외).
-- **`_cr_check_pw`는 이제 계정 인식**: 입력 비번이 레거시 `0715` 이거나 **승인됨 사용자의 비번**이면 통과. 즉 승인된 사용자는 각자의 비밀번호로 전 데이터에 접근하고, 신청함·거절됨 사용자는 데이터 RPC에서 차단된다.
+- **읽기 게이트 `_cr_check_pw`**: 입력 비번이 레거시 `0715` 이거나 **승인됨 사용자의 비번**이면 통과(읽기). 신청함·거절됨은 차단.
+- **쓰기 게이트 `_cr_check_editor`**: `cr_save`·`cr_kv_merge`(저장·이름매핑·그룹정보·유튜브제목)는 **승인됨 + role=editor** 만 통과. 0715·뷰어는 거부(프론트도 `canEdit`로 미리 막아 드롭은 분석만 되고 저장은 건너뜀).
 - 클라이언트의 publishable key는 공개되어도 되는 값(설계상 공개키). 실질 게이트는 비밀번호.
 - 비밀번호는 브라우저 sessionStorage(탭 단위)에만 저장(`crpw`) — 새로고침 유지, 탭 종료 시 소멸. 로그인한 daangn name은 `crname`(탭)·`cr_uploader`(localStorage, 기기)에 저장돼 업로드·수정 서명에 쓰인다.
 - **관리자 게이트**는 사용자 비번과 완전히 분리된 별도 시크릿(`_cr_check_admin`). admin.html에서 런타임 입력만 하고 **리포지토리엔 저장하지 않는다**(GitHub Pages 공개 파일). 관리 RPC(`cr_admin_*`)만 이 시크릿으로 게이트.
@@ -82,17 +85,18 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 ### 로그인·가입 흐름
 1. **가입**: 랜딩 '회원가입' → daangn name(영문 시작 2~24자)·비번·비번확인 → `cr_register`(신청함 적재). 이름/비번 중복·형식 오류는 서버가 거부(`name_taken`/`pw_taken`/`name_invalid`/`pw_weak`). 성공 시 "관리자 확인 후 가입이 승인됩니다".
 2. **관리자 처리**: admin.html에서 신청함 → 승인됨/거절됨. 거절은 삭제가 아니라 상태 저장이라 언제든 재승인 가능.
-3. **로그인**: 비밀번호만 입력 → `cr_login`이 `{found,name,status}` 반환. 승인됨=데이터 열고 "안녕하세요 NAME" 인사(탭당 1회) · 신청함="관리자 승인 대기중입니다" · 거절됨="가입이 거절된 계정입니다" · 미존재=흔들기.
+3. **로그인**: 비밀번호만 입력 → `cr_login`이 `{found,name,status,role,viewer}` 반환. 권한별 인사(탭당 1회) — 0715 뷰어="뷰어 권한으로 로그인했어요 👀"(이름 없음) · 에디터="NAME님 환영해요! 🥕" · 승인된 뷰어="NAME님 환영해요! · 지금은 뷰어 권한이에요" · 신청함="아직 관리자 승인 대기 중이에요" · 거절됨="가입이 거절된 계정이에요" · 미존재=흔들기. (모든 토스트는 당근 보이스 해요체)
 
 ### RPC 목록
 | 함수 | 역할 |
 |---|---|
-| `_cr_check_pw(pw)` | 데이터 게이트 — 레거시 `0715` 또는 승인됨 사용자 비번이면 통과 |
-| `_cr_check_admin(pw)` | 관리자 게이트 (별도 시크릿, 내부용) |
-| `cr_register(p_name, p_pw)` | 가입 신청 적재(신청함). 이름/비번 형식·중복 검증 |
-| `cr_login(p_pw)` | 비번만으로 사용자 식별 → `{found,name,status}` (틀려도 예외 아님) |
-| `cr_admin_list(admin_pw)` | 전 사용자 목록(신청함 먼저) — 관리자용 |
-| `cr_admin_set(admin_pw, p_id, p_status, reviewer)` | 상태 변경(승인/거절/대기) + 처리자·시각 기록 |
+| `_cr_check_pw(pw)` | 읽기 게이트 — 레거시 `0715` 또는 승인됨 사용자 비번이면 통과 |
+| `_cr_check_editor(pw)` | 쓰기 게이트 — 승인됨 + role=editor 만 통과 (0715·뷰어 거부) |
+| `_cr_check_admin(pw)` | 관리자 게이트 (별도 시크릿, 내부용, 저장소·코드에 비저장) |
+| `cr_register(p_name, p_pw)` | 가입 신청 적재(신청함·viewer). 이름/비번 형식·중복·예약비번(0715) 검증 |
+| `cr_login(p_pw)` | 비번만으로 사용자 식별 → `{found,name,status,role,viewer}` (틀려도 예외 아님) |
+| `cr_admin_list(admin_pw)` | 전 사용자 목록(신청함 먼저, role 포함) — 관리자용 |
+| `cr_admin_set(admin_pw, p_id, p_status, reviewer, p_role)` | 상태·권한 변경(둘 다 nullable — 하나만 변경 가능) + 처리자·시각 기록 |
 | `cr_load(pw)` | 전 기록을 단일 jsonb 배열로 반환 (PostgREST 1,000행 페이지네이션 우회) |
 | `cr_save(pw, rows, uploader)` | 주간 기록 벌크 저장. 서버 가드: 채널 공백/'기타' 거부, 이름 필수, **비용 ₩1,500 미만 거부**, 중복은 `ON CONFLICT DO NOTHING` |
 | `cr_status(pw)` | rows·ads(고유 소재)·weeks·channels·기간·unsigned_rows·**uploaders 분포·last_upload** |
