@@ -1584,6 +1584,25 @@ function weeklyAggOf(ds,e){
     o.vn+=num(r["_vcrNum"])||0;o.vd+=num(r["_vcrDen"])||0;o.tv+=num(r["_g_trueViews"])||0;}
   const ws=[...wkMap.keys()].sort();
   return{ws,os:ws.map(w=>wkMap.get(w))};}
+/* 주차별 점수 — 그 주 데이터만으로 전체 파이프라인(집계→채점)을 돌린 '그 주의 상대 점수'.
+   주 단위 표본이라 변동이 크고, 그 주에 부적격(광고비 하위 15%·핵심 지표 결측)이면 null(–).
+   스코프(매체·기간) 단위 캐시 — scope()가 무효화. 그룹 상세는 주별 그룹 집계를 따로 채점 */
+function weeklyScoresOf(ds,e){
+  const isG=!!e._isGroup,key=isG?"_wkScoreG":"_wkScore";
+  if(!ds[key]){
+    const m=new Map(),byW=new Map();
+    for(const r of ds.data){const d=String(r.date||"").slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;
+      let a=byW.get(d);if(!a){a=[];byW.set(d,a);}a.push(r);}
+    for(const[w,rows]of byW){
+      const sub={L:ds.L,agg:aggregate(rows,ds.L)};
+      sub.S=computeScores(sub);
+      const ents=isG?buildAdGroupAgg(sub):sub.agg;
+      const wm=new Map();
+      for(const x of ents)wm.set(isG?String(x._g_adGroupId||x._m_group):x.name,{s:x.score,t:x.tier});
+      m.set(w,wm);}
+    ds[key]=m;}
+  const id=isG?String(e._g_adGroupId||e._m_group):e.name;
+  return w=>{const wm=ds[key].get(w);return (wm&&wm.get(id))||null;};}
 function creativeTrendHTML(ds,e){
   const all=weeklyAggOf(ds,e);
   const ws=all.ws.slice(-13);
@@ -1610,20 +1629,23 @@ function creativeTrendHTML(ds,e){
     const mx=Math.max(...vals.filter(v=>v!=null))*1.12||1;
     let last=null;for(let i=vals.length-1;i>=0;i--)if(vals[i]!=null){last=vals[i];break;}
     lines.push({...cd,vals,mx,last});usedCol.add(cd.col);}
-  const W=300,H=lines.length>=3?92:80,pl=4,pr=4,pt=8,pb=12,iw=W-pl-pr,ih=H-pt-pb;
+  const W=300,H=lines.length>=3?104:92,pl=4,pr=4,pt=8,pb=24,iw=W-pl-pr,ih=H-pt-pb;
   const cmax=Math.max(...os.map(o=>o.c))||1;
   const bw=5; /* 고정 얇은 막대 */
   const slot=iw/ws.length,xat=i=>pl+(i+0.5)*slot;
-  let s="",prevMon="";
+  const scoreOf=weeklyScoresOf(ds,e);
+  const tierCol={g2:"var(--g2)",g1:"var(--g1)",m:"var(--mid)",w1:"var(--w1)",w2:"var(--w2)"};
+  let s="";
   ws.forEach((w,i)=>{const o=os[i],x=xat(i);
     const h=Math.max(2,(o.c/cmax)*ih);
+    const sc=scoreOf(w);
     let tipTxt=`<b>${w.slice(5).replace("-","/")} 주</b><br>광고비 ${fmtWon(o.c)}`;
+    if(sc&&sc.s!=null)tipTxt+=`<br>점수 ${fmtScore(sc.s)} (그 주 비교군 내 상대평가)`;
     for(const ln of lines)if(ln.vals[i]!=null)tipTxt+=`<br>${ln.lab} ${ln.fmt(ln.vals[i])}`;
     s+=`<rect class="ispk-b" data-tip="${escAttr(tipTxt)}" x="${(x-bw/2).toFixed(1)}" y="${(H-pb-h).toFixed(1)}" width="${bw}" height="${h.toFixed(1)}" rx="2" fill="var(--karrot)" fill-opacity="0.5"/>`;
-    /* 달이 바뀌는 지점에만 YY-M 라벨 (겹침 방지) */
-    const mon=w.slice(0,7);
-    if(mon!==prevMon){prevMon=mon;
-      s+=`<text x="${x.toFixed(1)}" y="${H-3}" font-size="7.2" fill="var(--faint)" text-anchor="middle">${w.slice(2,4)}-${parseInt(w.slice(5,7),10)}</text>`;}});
+    /* 모든 막대 아래 두 줄 라벨: 주 시작일 MM/DD + 그 주 점수(티어 색, 부적격 주는 –) */
+    s+=`<text x="${x.toFixed(1)}" y="${H-13}" font-size="6.8" fill="var(--faint)" text-anchor="middle">${w.slice(5,7)}/${w.slice(8,10)}</text>`;
+    s+=`<text x="${x.toFixed(1)}" y="${H-3.5}" font-size="7.2" font-weight="700" fill="${sc&&sc.s!=null?(tierCol[sc.t]||"var(--mid)"):"var(--faint)"}" text-anchor="middle">${sc&&sc.s!=null?fmtScore(sc.s):"–"}</text>`;});
   for(const ln of lines){let p="",st=false,dots="";
     ws.forEach((w,i)=>{const v=ln.vals[i];if(v==null)return;
       const x=xat(i),y=pt+(1-v/ln.mx)*ih;
@@ -1631,7 +1653,7 @@ function creativeTrendHTML(ds,e){
       dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.4" fill="${ln.col}"/>`;});
     s+=`<path d="${p}" fill="none" stroke="${ln.col}" stroke-width="1.5" stroke-opacity="0.95"/>${dots}`;}
   const leg=lines.map(ln=>`<i class="lgd" style="background:${ln.col}"></i>${ln.lab} <b>${ln.last!=null?ln.fmt(ln.last):"–"}</b>`).join(" ");
-  return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · 막대 광고비 ${leg}</span></div><svg class="ispark-svg" viewBox="0 0 ${W} ${H}">${s}</svg></div>`;}
+  return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · 막대 광고비 ${leg} · 막대 아래 그 주 점수</span></div><svg class="ispark-svg" viewBox="0 0 ${W} ${H}">${s}</svg></div>`;}
 /* 상세 '영상 시청' — 어디까지 많이 보고 어디서 이탈했는지 (영상 소재만).
    구간 도달 곡선 데이터 우선순위: ① 소재 자체 구간별 재생수(_v25~_v100 ÷ 노출, 선택 기간)
    ② 구글 광고그룹 보고서 누적 퍼널 v25~v100(소재별 데이터가 없어 그룹 단위임을 캡션에 명시).
@@ -1722,18 +1744,22 @@ function positioningHTML(ds,e){
   const kept=new Set(raw.slice(0,140));
   raw.forEach(p=>{if(p.name===e.name||inGrp(p))kept.add(p);});
   const pts=[...kept].map(p=>({p,x:good(dx,xM,p),y:good(dy,yM,p)}));
-  const W=320,H=230,pad={l:10,r:10,t:12,b:12};
+  const W=320,H=230,pad={l:16,r:16,t:16,b:16};
   const X=v=>pad.l+(v/100)*(W-pad.l-pad.r),Y=v=>H-pad.b-(v/100)*(H-pad.t-pad.b);
   const cmax=Math.max(...pts.map(o=>o.p.비용))||1,R=v=>2.6+Math.sqrt((v||0)/cmax)*4.5;
-  let g=`<rect x="${pad.l}" y="${pad.t}" width="${W-pad.l-pad.r}" height="${H-pad.t-pad.b}" rx="9" fill="var(--surface-2)"/>`;
-  /* 사분면: 우상(+,+) 초록 · 좌하(−,−) 빨강 틴트 + 중앙(50) 십자선 */
-  g+=`<rect x="${X(50).toFixed(1)}" y="${pad.t}" width="${(X(100)-X(50)).toFixed(1)}" height="${(Y(50)-pad.t).toFixed(1)}" fill="var(--g1)" fill-opacity="0.08"/>`;
-  g+=`<rect x="${pad.l}" y="${Y(50).toFixed(1)}" width="${(X(50)-pad.l).toFixed(1)}" height="${(H-pad.b-Y(50)).toFixed(1)}" fill="var(--w2)" fill-opacity="0.07"/>`;
-  g+=`<line x1="${X(50).toFixed(1)}" y1="${pad.t}" x2="${X(50).toFixed(1)}" y2="${H-pad.b}" stroke="#D8D6CC"/><line x1="${pad.l}" y1="${Y(50).toFixed(1)}" x2="${W-pad.r}" y2="${Y(50).toFixed(1)}" stroke="#D8D6CC"/>`;
-  g+=`<text x="${(X(100)-5).toFixed(1)}" y="${pad.t+12}" text-anchor="end" font-size="7.8" font-weight="800" fill="var(--g1)">둘 다 좋음 ↗</text>`;
-  g+=`<text x="${pad.l+5}" y="${(H-pad.b-6).toFixed(1)}" font-size="7.8" font-weight="800" fill="var(--w2)">↙ 둘 다 나쁨</text>`;
-  g+=`<text x="${pad.l+5}" y="${pad.t+12}" font-size="7.4" fill="var(--faint)">↑ ${yM.lab} 좋음</text>`;
-  g+=`<text x="${(W-pad.r-5).toFixed(1)}" y="${(H-pad.b-6).toFixed(1)}" text-anchor="end" font-size="7.4" fill="var(--faint)">${xM.lab} 좋음 →</text>`;
+  /* 미니멀 방향 표시: 중앙(50) 십자선에 나쁨(빨강)→좋음(초록) 그라데이션 + 선 끝 +/− 글리프만.
+     사분면 틴트·코너 문구는 점과 겹쳐 가독성을 해쳐 없앴다 */
+  let g=`<defs>
+    <linearGradient id="crPGX" gradientUnits="userSpaceOnUse" x1="${pad.l}" y1="0" x2="${W-pad.r}" y2="0"><stop offset="0" style="stop-color:var(--w2);stop-opacity:.75"/><stop offset=".5" style="stop-color:#D8D6CC"/><stop offset="1" style="stop-color:var(--g1);stop-opacity:.85"/></linearGradient>
+    <linearGradient id="crPGY" gradientUnits="userSpaceOnUse" x1="0" y1="${H-pad.b}" x2="0" y2="${pad.t}"><stop offset="0" style="stop-color:var(--w2);stop-opacity:.75"/><stop offset=".5" style="stop-color:#D8D6CC"/><stop offset="1" style="stop-color:var(--g1);stop-opacity:.85"/></linearGradient>
+  </defs>`;
+  g+=`<rect x="${pad.l}" y="${pad.t}" width="${W-pad.l-pad.r}" height="${H-pad.t-pad.b}" rx="9" fill="var(--surface-2)"/>`;
+  g+=`<line x1="${pad.l}" y1="${Y(50).toFixed(1)}" x2="${W-pad.r}" y2="${Y(50).toFixed(1)}" stroke="url(#crPGX)" stroke-width="1.6"/>`;
+  g+=`<line x1="${X(50).toFixed(1)}" y1="${H-pad.b}" x2="${X(50).toFixed(1)}" y2="${pad.t}" stroke="url(#crPGY)" stroke-width="1.6"/>`;
+  g+=`<text x="${W-pad.r+8}" y="${(Y(50)+3).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--g1)">+</text>`;
+  g+=`<text x="${pad.l-8}" y="${(Y(50)+3).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--w2)">−</text>`;
+  g+=`<text x="${X(50).toFixed(1)}" y="${pad.t-5}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--g1)">+</text>`;
+  g+=`<text x="${X(50).toFixed(1)}" y="${H-pad.b+12}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--w2)">−</text>`;
   const topPct=v=>Math.max(1,Math.round(100-v));
   const tipOf=o=>`<b>${trunc(displayNameOf(o.p),46)}</b><br>${xM.lab} ${xM.fmt(o.p[xM.k])} · 상위 ${topPct(o.x)}%<br>${yM.lab} ${yM.fmt(o.p[yM.k])} · 상위 ${topPct(o.y)}%<br>광고비 ${fmtWon(o.p.비용)}`;
   const dot=(o,fill,op,rr,extra)=>`<circle ${extra||""} data-tip="${escAttr(tipOf(o))}" cx="${X(o.x).toFixed(1)}" cy="${Y(o.y).toFixed(1)}" r="${rr.toFixed(1)}" fill="${fill}" fill-opacity="${op}"/>`;
@@ -1745,7 +1771,7 @@ function positioningHTML(ds,e){
   g+=`<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="9.5" fill="none" stroke="var(--karrot)" stroke-opacity=".5" stroke-width="2"/>`+dot(me,"var(--karrot)",1,5.4,`stroke="#fff" stroke-width="1.6"`);
   g+=`<text x="${Math.max(pad.l+22,Math.min(W-pad.r-22,ex)).toFixed(1)}" y="${(ey>pad.t+34?ey-14:ey+23).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="800" fill="var(--karrot)">이 소재</text>`;
   const axRow=(lab,cls,cur)=>`<div class="pos-ax"><span>${lab}</span><div class="dtog ${cls}">${mets.map(m=>`<button data-m="${m.k}" class="${m.k===cur?"on":""}">${m.lab}</button>`).join("")}</div></div>`;
-  return `<section><div class="ish">타 소재 대비 포지셔닝 <span class="n">${xM.lab} <b>상위 ${topPct(me.x)}%</b> · ${yM.lab} <b>상위 ${topPct(me.y)}%</b></span></div>${axRow("가로","posx",xM.k)}${axRow("세로","posy",yM.k)}<svg class="iposc-svg" viewBox="0 0 ${W} ${H}">${g}</svg><div class="vret-cap">축 = 계정 내 위치(광고비 가중 백분위) · <b style="color:var(--g1)">우상 = 둘 다 좋음</b> · 회색 비교군 ${nOther+nGrp+1}개${nGrp?` · <b style="color:var(--g2)">파랑</b> 같은 그룹 ${nGrp}개`:""} · 점 크기 광고비${e._isGroup?"":" · 점 클릭 = 해당 소재로 이동"}</div></section>`+bars;}
+  return `<section><div class="ish">타 소재 대비 포지셔닝 <span class="n">${xM.lab} <b>상위 ${topPct(me.x)}%</b> · ${yM.lab} <b>상위 ${topPct(me.y)}%</b></span></div>${axRow("가로","posx",xM.k)}${axRow("세로","posy",yM.k)}<svg class="iposc-svg" viewBox="0 0 ${W} ${H}">${g}</svg><div class="vret-cap">축 = 계정 내 위치(광고비 가중 백분위) · 십자선 = 중앙값, <b style="color:var(--g1)">+</b>쪽일수록 좋음 · 회색 비교군 ${nOther+nGrp+1}개${nGrp?` · <b style="color:var(--g2)">파랑</b> 같은 그룹 ${nGrp}개`:""} · 점 크기 광고비${e._isGroup?"":" · 점 클릭 = 해당 소재로 이동"}</div></section>`+bars;}
 /* 같은 그룹 비교 — 이름들의 공통 접두를 '…'로 접고 달라지는 부분부터 표시 (토큰 경계에서 자름) */
 function prefixTrimmer(names){
   const list=names.filter(Boolean);
@@ -2469,7 +2495,8 @@ function scope(ds){
   ds.weekly=weeklyTotals(rows,winDates);
   /* 이 매체에 데이터가 없는 꼬리 주차는 추세·주간 증감에서 제외 (매체별 마지막 주가 다를 때 -100% 왜곡 방지) */
   while(ds.weekly.length>2&&(ds.weekly[ds.weekly.length-1].비용||0)===0)ds.weekly.pop();
-  ds.S=computeScores(ds);}
+  ds.S=computeScores(ds);
+  ds._wkScore=null;ds._wkScoreG=null; /* 상세 주차별 점수 캐시 — 스코프 바뀌면 다시 계산 */}
 function renderPeriodSeg(){const el=$("#pseg"),sec=$("#periodSec");if(!el||!sec)return;
   /* 임시 분석(비규격 파일)에서는 날짜가 주 단위가 아닐 수 있어 기간 필터 숨김 */
   const ds=active&&DATASETS[active];
