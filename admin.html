@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>사용자 승인 관리 · Creative Reporter</title>
+<style>
+  :root{--karrot:#FF6F0F;--karrot-2:#E5610A;--ink:#1D1D1F;--muted:#6B6B70;--faint:#98989E;
+    --canvas:#FAFAF7;--surface:#fff;--surface-2:#F4F4F0;--line:#E6E5DE;
+    --g:#1C8A6E;--g-f:#E4F1EC;--w:#C73F54;--w-f:#F7E7EA;--y:#B7791F;--y-f:#F6EEDD}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--canvas);color:var(--ink);font-family:"SF Pro Text","Pretendard","Apple SD Gothic Neo",-apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.5}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 22px 80px}
+  h1{font-size:22px;font-weight:700;letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  /* gate */
+  #gate{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:20;padding:24px}
+  #gate.hidden{display:none}
+  #gate .card{width:320px;max-width:88vw;display:flex;flex-direction:column;gap:12px;text-align:center}
+  #gate .gmark{font-size:15px;font-weight:600;color:var(--muted);margin-bottom:8px}
+  #gate .pwbox{display:flex;align-items:stretch;background:var(--surface-2);border:1.5px solid var(--line);border-radius:980px;overflow:hidden;transition:border-color .15s,background .15s}
+  #gate .pwbox:focus-within{border-color:var(--karrot);background:#fff}
+  #gate .pwbox.err{border-color:var(--w);animation:shk .3s}
+  #gate .pwbox input{flex:1;min-width:0;border:0;background:transparent;padding:12px 6px 12px 20px;font:inherit;font-size:14.5px;text-align:center;outline:none;letter-spacing:.06em}
+  #gate .pwgo{flex:0 0 auto;width:46px;background:var(--ink);color:#fff;border:0;display:grid;place-items:center;cursor:pointer}
+  #gate .pwgo:hover{background:#000}#gate .pwgo svg{width:18px;height:18px}
+  @keyframes shk{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  .topbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:22px 0 18px}
+  .rev{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted)}
+  .rev input{border:1px solid var(--line);border-radius:8px;padding:6px 10px;font:inherit;font-size:12.5px;width:120px;background:var(--surface)}
+  .btn{border:0;border-radius:9px;padding:8px 14px;font:inherit;font-size:12.5px;font-weight:650;cursor:pointer;background:var(--surface-2);color:var(--muted)}
+  .btn:hover{color:var(--ink)}
+  .btn.pri{background:var(--ink);color:#fff}.btn.pri:hover{background:#000}
+  .spacer{margin-left:auto}
+  .counts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .chip{font-size:12px;font-weight:650;padding:4px 11px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+  .chip b{color:var(--ink)}
+  .chip.p{background:var(--y-f);color:var(--y)}.chip.a{background:var(--g-f);color:var(--g)}.chip.r{background:var(--w-f);color:var(--w)}
+  table{width:100%;border-collapse:separate;border-spacing:0;background:var(--surface);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  th,td{padding:11px 14px;text-align:left;font-size:13px;border-bottom:1px solid var(--line)}
+  th{background:var(--surface-2);color:var(--muted);font-weight:650;font-size:12px;position:sticky;top:0}
+  tr:last-child td{border-bottom:0}
+  td.name{font-weight:650}
+  .stt{font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:6px;white-space:nowrap}
+  .stt.p{background:var(--y-f);color:var(--y)}.stt.a{background:var(--g-f);color:var(--g)}.stt.r{background:var(--w-f);color:var(--w)}
+  td.meta{color:var(--faint);font-size:11.5px}
+  td.act{text-align:right;white-space:nowrap}
+  .abtn{border:0;border-radius:7px;padding:5px 11px;font:inherit;font-size:11.5px;font-weight:650;cursor:pointer;margin-left:5px}
+  .abtn.ap{background:var(--g-f);color:var(--g)}.abtn.ap:hover{background:#d3e9e1}
+  .abtn.rj{background:var(--w-f);color:var(--w)}.abtn.rj:hover{background:#f2d8dd}
+  .abtn.pd{background:var(--surface-2);color:var(--muted)}.abtn.pd:hover{color:var(--ink)}
+  .abtn[disabled]{opacity:.4;cursor:default;pointer-events:none}
+  .empty{padding:40px;text-align:center;color:var(--faint);font-size:13px}
+  #toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:11px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:40;max-width:90vw;text-align:center}
+  #toast.show{opacity:.96}
+  @media(max-width:560px){td.meta.rvw{display:none}th.rvw{display:none}}
+</style>
+</head>
+<body>
+<div id="gate">
+  <div class="card">
+    <div class="gmark">사용자 승인 관리</div>
+    <form class="pwbox" id="gateForm">
+      <input type="password" id="apwIn" autocomplete="off" placeholder="관리자 비밀번호" autofocus>
+      <button class="pwgo" type="submit" aria-label="열기"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </form>
+  </div>
+</div>
+
+<div class="wrap">
+  <h1>사용자 승인 관리</h1>
+  <div class="sub">가입 신청을 승인·거절하고, 승인된 사용자를 관리합니다. 거절해도 기록은 <b>거절됨</b> 상태로 보존되어 언제든 다시 승인할 수 있습니다.</div>
+
+  <div class="topbar">
+    <div class="rev">처리자 <input type="text" id="reviewer" placeholder="이름(선택)" maxlength="24"></div>
+    <div class="spacer"></div>
+    <button class="btn" id="refreshBtn" type="button">새로고침</button>
+    <button class="btn" id="logoutBtn" type="button">잠금</button>
+  </div>
+
+  <div class="counts" id="counts"></div>
+  <table>
+    <thead><tr>
+      <th>daangn name</th><th>상태</th><th>신청일</th><th class="rvw">처리</th><th style="text-align:right">액션</th>
+    </tr></thead>
+    <tbody id="rows"><tr><td colspan="5" class="empty">관리자 비밀번호를 입력해 주세요.</td></tr></tbody>
+  </table>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SB_URL="https://newoydegfbnnqujgiips.supabase.co";
+const SB_KEY="sb_publishable_6remFFz9oGKffdlRakvdfg_OOLp6zYL";
+const $=s=>document.querySelector(s);
+let adminPw=sessionStorage.getItem("cradmin")||null;
+let _tt;
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove("show"),2600);}
+async function rpc(fn,body){
+  const res=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:"POST",
+    headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,"Content-Type":"application/json"},
+    body:JSON.stringify(body)});
+  if(!res.ok){let m="";try{const j=await res.json();m=j.message||j.hint||JSON.stringify(j);}catch(e){m="HTTP "+res.status;}
+    const err=new Error(m);err.status=res.status;throw err;}
+  return res.json();}
+const STT={"신청함":["p","신청함"],"승인됨":["a","승인됨"],"거절됨":["r","거절됨"]};
+function fmtDate(s){if(!s)return"–";const d=String(s).replace("T"," ").slice(0,16);return d;}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+let USERS=[];
+function render(){
+  const tb=$("#rows");
+  if(!USERS.length){tb.innerHTML=`<tr><td colspan="5" class="empty">아직 가입 신청이 없습니다.</td></tr>`;$("#counts").innerHTML="";return;}
+  /* 서버가 이미 신청함 먼저 정렬하지만, 견고하게 클라이언트에서도 재정렬: 신청→승인→거절, 그룹 내 최신순 */
+  const ord={"신청함":0,"승인됨":1,"거절됨":2};
+  USERS.sort((a,b)=>(ord[a.status]??9)-(ord[b.status]??9)||String(b.created_at||"").localeCompare(String(a.created_at||"")));
+  const c={신청함:0,승인됨:0,거절됨:0};USERS.forEach(u=>{c[u.status]=(c[u.status]||0)+1;});
+  $("#counts").innerHTML=
+    `<span class="chip p">신청 <b>${c.신청함}</b></span>`+
+    `<span class="chip a">승인 <b>${c.승인됨}</b></span>`+
+    `<span class="chip r">거절 <b>${c.거절됨}</b></span>`+
+    `<span class="chip">전체 <b>${USERS.length}</b></span>`;
+  tb.innerHTML=USERS.map(u=>{
+    const st=STT[u.status]||["","?"];
+    const ap=u.status==="승인됨",rj=u.status==="거절됨",pd=u.status==="신청함";
+    return `<tr>
+      <td class="name">${esc(u.name)}</td>
+      <td><span class="stt ${st[0]}">${st[1]}</span></td>
+      <td class="meta">${fmtDate(u.created_at)}</td>
+      <td class="meta rvw">${u.reviewed_by?esc(u.reviewed_by)+" · "+fmtDate(u.reviewed_at):"–"}</td>
+      <td class="act">
+        <button class="abtn ap" data-id="${u.id}" data-s="승인됨" ${ap?"disabled":""}>승인</button>
+        <button class="abtn rj" data-id="${u.id}" data-s="거절됨" ${rj?"disabled":""}>거절</button>
+        <button class="abtn pd" data-id="${u.id}" data-s="신청함" ${pd?"disabled":""}>대기</button>
+      </td></tr>`;}).join("");
+  tb.querySelectorAll(".abtn").forEach(b=>b.onclick=()=>setStatus(+b.dataset.id,b.dataset.s,b.textContent.trim()));
+}
+async function load(){
+  if(!adminPw)return;
+  try{const list=await rpc("cr_admin_list",{admin_pw:adminPw});
+    USERS=Array.isArray(list)?list:[];render();
+  }catch(e){
+    if(e.status===400||/denied/i.test(e.message||"")){lock();toast("관리자 비밀번호가 올바르지 않습니다");}
+    else toast("목록 불러오기 실패: "+(e.message||""));}
+}
+async function setStatus(id,status,label){
+  const reviewer=($("#reviewer").value||"").trim()||"admin";
+  const u=USERS.find(x=>x.id===id);
+  if(status==="거절됨"&&!confirm(`${u?u.name:"이 사용자"} 을(를) 거절 처리할까요?\n(기록은 보존되며 언제든 다시 승인할 수 있습니다)`))return;
+  try{await rpc("cr_admin_set",{admin_pw:adminPw,p_id:id,p_status:status,reviewer});
+    toast(`${u?u.name:""} → ${status}`);
+    await load();
+  }catch(e){toast("변경 실패: "+(e.message||""));}
+}
+function unlock(pw){adminPw=pw;sessionStorage.setItem("cradmin",pw);$("#gate").classList.add("hidden");load();}
+function lock(){adminPw=null;sessionStorage.removeItem("cradmin");$("#gate").classList.remove("hidden");$("#rows").innerHTML=`<tr><td colspan="5" class="empty">관리자 비밀번호를 입력해 주세요.</td></tr>`;$("#counts").innerHTML="";const i=$("#apwIn");if(i){i.value="";i.focus();}}
+$("#gateForm").addEventListener("submit",async e=>{e.preventDefault();
+  const inp=$("#apwIn"),box=$("#gateForm"),v=(inp.value||"").trim();if(!v)return;
+  try{const list=await rpc("cr_admin_list",{admin_pw:v});USERS=Array.isArray(list)?list:[];unlock(v);render();}
+  catch(err){box.classList.remove("err");void box.offsetWidth;box.classList.add("err");inp.select();
+    if(!(err.status===400||/denied/i.test(err.message||"")))toast("연결 실패: "+(err.message||""));}});
+$("#refreshBtn").onclick=load;
+$("#logoutBtn").onclick=lock;
+/* 저장된 관리자 비밀번호가 있으면 자동 진입 시도 */
+if(adminPw){ $("#gate").classList.add("hidden"); load(); }
+</script>
+</body>
+</html>
