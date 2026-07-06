@@ -395,19 +395,17 @@
   .isle-row>td{padding:0!important;background:var(--surface-2);border-bottom:1px solid #E6E5DE}
   /* 상세(B안): 히어로 [미디어 | 점수·진단·추이 | 같은 그룹] + 하단 지표 위치 2열.
      미디어 프레임은 소재 비율에 따라 3종(ar-v 세로 / ar-s 정방 / ar-h 가로)으로 폭·높이 전환 */
-  .isle{position:sticky;left:0;box-sizing:border-box;padding:20px;display:flex;flex-direction:column;gap:20px;min-width:0}
-  /* 그리드 영역 기반 3단계 반응형 — DOM 순서 = 중요도(미디어→비교→추이→점수·진단), 어느 폭에서도 겹침 없음 */
-  .isle-hero{display:grid;gap:20px 26px;align-items:start;
-    grid-template-columns:280px minmax(0,1.35fr) minmax(0,1fr);
-    grid-template-areas:"media cmp trend" "media cmp sd"}
-  .isle.ar-v .isle-hero{grid-template-columns:232px minmax(0,1.35fr) minmax(0,1fr)}
-  .isle.ar-h .isle-hero{grid-template-columns:400px minmax(0,1.2fr) minmax(0,1fr)}
-  .isle-hero.nomedia{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);grid-template-areas:"cmp trend" "cmp sd"}
-  .isle-hero>*{min-width:0}
-  .ihA-media{grid-area:media;display:flex;flex-direction:column;gap:6px;min-width:0}
-  .ihA-cmp{grid-area:cmp}
-  .ihA-trend{grid-area:trend}
-  .ihA-sd{grid-area:sd;display:flex;flex-direction:column;gap:8px;padding-top:2px}
+  .isle{position:sticky;left:0;box-sizing:border-box;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+  /* 상단 2분할 [미리보기(+점수·진단) | 같은 그룹 비교] ÷ 구분선 ÷ 하단 3분할 [주차별 추이 | 지표별 위치 2열] */
+  .isle-top{display:grid;gap:26px;grid-template-columns:280px minmax(0,1fr);align-items:start}
+  .isle.ar-v .isle-top{grid-template-columns:232px minmax(0,1fr)}
+  .isle.ar-h .isle-top{grid-template-columns:400px minmax(0,1fr)}
+  .isle-top.nomedia{grid-template-columns:minmax(220px,1fr) minmax(0,2.4fr)}
+  .isle-top>*{min-width:0}
+  .it-side{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .isle-bot{display:grid;gap:26px;grid-template-columns:minmax(0,1fr) minmax(0,2fr);align-items:start;border-top:1px solid #E1DFD7;padding-top:15px}
+  .isle-bot>*{min-width:0}
+  .isle-bot.noTrend{grid-template-columns:1fr}
   .isle-frame{width:100%;height:280px;background:var(--surface-3);border-radius:12px;display:grid;place-items:center;overflow:hidden;position:relative}
   .isle.ar-v .isle-frame{height:396px}
   .isle.ar-h .isle-frame{height:250px}
@@ -415,27 +413,21 @@
   .isle-frame video{width:100%;height:100%;object-fit:contain;display:block;background:#141410;border-radius:12px}
   .isle-frame .asset-yt{width:100%;height:100%;border:0}
   .isle-frame .asset-err{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:11px;color:var(--muted)}
+  .ihA-sd{display:flex;flex-direction:column;gap:8px}
   .ih-score{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
   .ih-score .n{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1}
   .ih-score .s{font-size:11px;font-weight:700;color:var(--faint)}
-  .ihA-trend .ispark,.ihA-media .ispark{margin:0;max-width:100%}
-  .ipos .sb2{columns:2;column-gap:44px}
+  .ib-trend .ispark{margin:0;max-width:100%}
+  .ipos .sb2{columns:2;column-gap:36px}
   .ipos .sb2 .sb-row{break-inside:avoid}
-  /* 중간 폭: [미디어|비교] 2열, 점수·진단은 미디어 아래, 추이는 전폭 */
-  @media(max-width:1200px){
-    .isle-hero,.isle.ar-v .isle-hero{grid-template-columns:260px minmax(0,1fr);gap:18px 22px;
-      grid-template-areas:"media cmp" "sd cmp" "trend trend"}
-    .isle.ar-h .isle-hero{grid-template-columns:340px minmax(0,1fr);
-      grid-template-areas:"media cmp" "sd cmp" "trend trend"}
-    .isle-hero.nomedia{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);grid-template-areas:"cmp sd" "trend trend"}}
-  /* 좁은 폭: 중요도 순 1열 스택, 프레임 폭 캡으로 회색 여백 방지 */
+  /* 좁은 폭: 1열 스택(미리보기→비교→추이→지표), 프레임 폭 캡으로 회색 여백 방지 */
   @media(max-width:860px){
     .isle{padding:16px 14px}
-    .isle-hero,.isle.ar-v .isle-hero,.isle.ar-h .isle-hero,.isle-hero.nomedia{grid-template-columns:minmax(0,1fr);gap:18px;
-      grid-template-areas:"media" "cmp" "trend" "sd"}
-    .ihA-media{align-items:center}
-    .ihA-media .isle-frame{max-width:320px}
-    .isle.ar-h .ihA-media .isle-frame{max-width:420px}
+    .isle-top,.isle.ar-v .isle-top,.isle.ar-h .isle-top,.isle-top.nomedia{grid-template-columns:1fr;gap:18px}
+    .isle-bot,.isle-bot.noTrend{grid-template-columns:1fr;gap:18px}
+    .it-side .isle-frame{max-width:320px;margin:0 auto}
+    .isle.ar-h .it-side .isle-frame{max-width:420px}
+    .it-side .asset-src{text-align:center}
     .ipos .sb2{columns:1}}
   .diag{font-size:11.5px;color:var(--muted);line-height:2;text-align:left}
   .diag .dg-k{background:var(--surface-2);border-radius:5px;padding:1.5px 7px;font-size:10px;font-weight:700;color:var(--faint);margin-right:5px}
@@ -444,15 +436,17 @@
   .ish{font-size:12px;font-weight:700;color:var(--muted);margin:0 0 11px;display:flex;align-items:baseline;gap:7px}
   .ish .n{font-size:11px;color:var(--faint);font-weight:500}
   .fam{background:var(--surface);border-radius:10px;overflow:hidden}
-  .fam table{width:100%;border-collapse:collapse;font-size:12px}
-  .fam th,.fam td{padding:7px 10px;text-align:right;border-bottom:1px solid #F0EFE9;white-space:nowrap}
+  .fam table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+  .fam th:nth-child(2),.fam td:nth-child(2){width:90px}
+  .fam th:nth-child(3),.fam td:nth-child(3){width:82px}
+  .fam th:nth-child(4),.fam td:nth-child(4){width:62px}
+  .fam th,.fam td{padding:7px 10px;text-align:right;border-bottom:1px solid #F0EFE9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .fam tr:last-child td{border-bottom:0}
   .fam th{background:var(--surface-2);color:var(--muted);font-weight:600;font-size:11px;position:sticky;top:0}
-  .fam th.l,.fam td.l{text-align:left;white-space:normal;word-break:break-word;min-width:150px}
+  .fam th.l,.fam td.l{text-align:left}
   .fam tr.me td{background:var(--gold-f);font-weight:650}
   .fam .mb svg{width:13px;height:13px;vertical-align:middle}
   .fam-wrap{max-height:360px;overflow:auto;border-radius:10px}
-  .fam table{table-layout:auto} .fam td.l{white-space:normal;word-break:break-all;line-height:1.4}
   .fam tr.hoverable{cursor:help}
   .fam tr.hoverable:hover td{background:var(--surface-3)!important}
   .fam .g-type-emoji{font-size:12px;margin-right:2px}
@@ -1631,7 +1625,16 @@ function creativeTrendHTML(ds,e){
     s+=`<path d="${p}" fill="none" stroke="${ln.col}" stroke-width="1.5" stroke-opacity="0.95"/>${dots}`;}
   const leg=lines.map(ln=>`<i class="lgd" style="background:${ln.col}"></i>${ln.lab} <b>${ln.last!=null?ln.fmt(ln.last):"–"}</b>`).join(" ");
   return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · 막대 광고비 ${leg}</span></div><svg class="ispark-svg" viewBox="0 0 ${W} ${H}">${s}</svg></div>`;}
-/* 상세 — 히어로(미디어 | 점수·진단·추이 | 같은 그룹 비교) + 하단 지표 위치 2분할.
+/* 같은 그룹 비교 — 이름들의 공통 접두를 '…'로 접고 달라지는 부분부터 표시 (토큰 경계에서 자름) */
+function prefixTrimmer(names){
+  const list=names.filter(Boolean);
+  if(list.length<2)return s=>s;
+  let p=list[0];
+  for(const n of list){let i=0;const L=Math.min(p.length,n.length);while(i<L&&p[i]===n[i])i++;p=p.slice(0,i);if(!p)break;}
+  const m=p.match(/^.*[_\-·\s./]/);const cut=m?m[0].length:0;
+  if(cut<10)return s=>s;
+  return s=>s&&s.length>cut+2?"\u2026"+s.slice(cut):s;}
+/* 상세 — 상단 [미리보기(+점수·진단) | 같은 그룹 비교] ÷ 구분선 ÷ 하단 [주차별 추이 | 지표별 위치 2열].
    행에 이미 있는 이름·뱃지·칩은 반복하지 않고, 미디어 프레임은 소재 비율(세로/정방/가로)에 따라 3종 폭으로 전환 */
 function fillIsland(ds,e,inner){const L=ds.L;
   const sp=t=>t==="g2"?"sp-g2":t==="g1"?"sp-g1":t==="m"?"sp-mid":t==="w1"?"sp-w1":t==="w2"?"sp-w2":"sp-na";
@@ -1646,13 +1649,15 @@ function fillIsland(ds,e,inner){const L=ds.L;
     const _lraw=e._m_group?grpId:adGroupLabel(grpId);
     const _lst=_lgi?(/일시중지/.test(_lgi.st||"")||/일시중지/.test(_lgi.op||"")?" · 일시중지":(/제한/.test(_lgi.op||"")||/정책/.test(_lgi.rsn||"")?" · 정책 제한":"")):"";
     listMetaN=`${_lraw?trunc(groupPrettyName(_lraw),34):"그룹 "+grpId} · ${grp.length}개${_lst}`;
+    const _gtrim=prefixTrimmer(grp.map(x=>displayNameOf(x)));
     listHTML=grp.length<=1?`<div class="fam-note">이 그룹에 다른 소재가 없습니다.</div>`:
       `<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">유형 / 이름</th><th>광고비</th><th>${effLab}</th><th>점수</th></tr></thead><tbody>`+
       grp.map(x=>{const url=previewUrlOf(x);
         const typeShort=entTypeShort(x);
         const emoji=entTypeEmoji(x);
-        return `<tr class="${x.name===e.name?"me":""} hoverable" data-nm="${escAttr(x.name)}" data-preview="${escAttr(url)}" data-label="${escAttr(typeShort+' · '+trunc(displayNameOf(x),40))}" title="클릭 → 이 소재 상세로 이동">
-        <td class="l"><span class="g-type-emoji">${emoji}</span> <span class="g-type-lab">${typeShort}</span> <span class="g-name">${displayNameOf(x)}</span></td>
+        const dn=displayNameOf(x);
+        return `<tr class="${x.name===e.name?"me":""} hoverable" data-nm="${escAttr(x.name)}" data-preview="${escAttr(url)}" data-label="${escAttr(typeShort+' · '+trunc(dn,40))}" title="${escAttr(dn)}">
+        <td class="l"><span class="g-type-emoji">${emoji}</span> <span class="g-type-lab">${typeShort}</span> <span class="g-name">${_gtrim(dn)}</span></td>
         <td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td>
         <td><span class="sp ${sp(x.tier)}">${fmtScore(x.score)}</span></td></tr>`;}).join("")+
       `</tbody></table></div></div>`;
@@ -1661,7 +1666,9 @@ function fillIsland(ds,e,inner){const L=ds.L;
     listTitle="유사 이름 시리즈";listMetaN=`${fam.length}개`;
     listHTML=fam.length<=1?`<div class="fam-note">유사 이름 시리즈가 없습니다.</div>`:
       `<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">이름</th><th>광고비</th><th>${effLab}</th><th>점수</th></tr></thead><tbody>`+
-      fam.map(x=>`<tr class="${x.name===e.name?"me":""}" data-nm="${escAttr(x.name)}" title="클릭 → 이 소재 상세로 이동"><td class="l"><span class="mb b-${x.dom==="good"?"gold":x.tier}">${tierBadge(x)}</span> ${displayNameOf(x)}</td><td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td><td><span class="sp ${sp(x.tier)}">${fmtScore(x.score)}</span></td></tr>`).join("")+
+      (()=>{const _ftrim=prefixTrimmer(fam.map(x=>displayNameOf(x)));
+      return fam.map(x=>{const dn=displayNameOf(x);
+        return `<tr class="${x.name===e.name?"me":""}" data-nm="${escAttr(x.name)}" title="${escAttr(dn)}"><td class="l"><span class="mb b-${x.dom==="good"?"gold":x.tier}">${tierBadge(x)}</span> ${_ftrim(dn)}</td><td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td><td><span class="sp ${sp(x.tier)}">${fmtScore(x.score)}</span></td></tr>`;}).join("");})()+
       `</tbody></table></div></div>`;}
   const preview=assetPreview(previewUrlOf(e),e);
   const spark=creativeTrendHTML(ds,e);
@@ -1670,21 +1677,18 @@ function fillIsland(ds,e,inner){const L=ds.L;
   const rankTxt=_tp==null?"":` · 계정 ${_tp<=50?`상위 ${Math.max(1,_tp)}%`:`하위 ${Math.max(1,101-_tp)}%`}`;
   const scoreHTML=e.score!=null?`<div class="ih-score"><span class="n num">${fmtScore(e.score)}</span><span class="s">/ 100${rankTxt}</span></div>`:"";
   const sd=`<div class="ihA-sd">${scoreHTML}${diagHTML(ds,e)}</div>`;
-  const trendB=spark?`<div class="ihA-trend">${spark}</div>`:"";
-  const cmpB=`<div class="ihA-cmp"><div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}</div>`;
+  const trendB=spark?`<div class="ib-trend">${spark}</div>`:"";
+  const cmpB=`<div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}`;
   /* 미디어 비율 클래스: 몰로코 해상도·유튜브는 즉시, 그 외 이미지는 로드 후(isleAr) 판정 */
   inner.classList.remove("ar-v","ar-h","ar-s");
   const _pu=previewUrlOf(e);
   if(ytIdOf(_pu))inner.classList.add("ar-h");
   else{const _res=e._m_res&&String(e._m_res).match(/(\d+)\s*[x×]\s*(\d+)/i);
     if(_res)applyIsleAr(inner,+_res[1],+_res[2]);else inner.classList.add("ar-s");}
-  if(e._isGroup){
-    const giPanel=groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group));
-    const giB=giPanel?`<div class="ihA-media">${giPanel}</div>`:""; /* 그룹은 보고서 정보가 미디어 자리를 사용 */
-    inner.innerHTML=`<div class="isle-hero${giB?"":" nomedia"}">${giB}${cmpB}${trendB}${sd}</div>${scorePosHTML(ds,e)}`;
-  }else{
-    const mediaB=preview?`<div class="ihA-media">${preview}</div>`:"";
-    inner.innerHTML=`<div class="isle-hero${mediaB?"":" nomedia"}">${mediaB}${cmpB}${trendB}${sd}</div>${scorePosHTML(ds,e)}`;}
+  const posB=scorePosHTML(ds,e);
+  const botB=(trendB||posB)?`<div class="isle-bot${trendB?"":" noTrend"}">${trendB}${posB}</div>`:"";
+  const sideMedia=e._isGroup?(groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group))||""):preview; /* 그룹은 보고서 정보가 미디어 자리 */
+  inner.innerHTML=`<div class="isle-top${sideMedia?"":" nomedia"}"><div class="it-side">${sideMedia}${sd}</div><div class="it-cmp">${cmpB}</div></div>${botB}`;
   const _vv=inner.querySelector(".isle-frame video");
   if(_vv)_vv.addEventListener("loadedmetadata",()=>isleAr(_vv));
   /* 유튜브 소재면 제목을 조회해 화면 곳곳의 URL 이름을 실제 제목으로 교체 (미디어 위 중복 배너 없음) */
