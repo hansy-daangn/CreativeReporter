@@ -566,33 +566,54 @@
   #bootOv .boot-in{font-size:30px;font-weight:600;color:#1D1D1F;letter-spacing:-.03em;animation:bootPulse 1.8s ease-in-out infinite}
   @keyframes bootPulse{0%,100%{opacity:.35}50%{opacity:1}}
   #landing.hidden{display:none}
-  #landing h1{margin:0 0 32px;font-size:42px;font-weight:600;letter-spacing:-.035em;line-height:1.1;color:#1D1D1F}
-  #landing .btn-row{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center}
-  #landing .btn{display:inline-flex;align-items:center;justify-content:center;padding:11px 24px;border-radius:980px;font-size:14.5px;font-weight:520;letter-spacing:-.005em;background:#F5F5F7;color:#1D1D1F;text-decoration:none;transition:background .18s,transform .1s;min-width:132px}
-  #landing .btn:hover{background:#EBEBEE}
-  #landing .btn:active{transform:scale(.98)}
-  @media(max-width:600px){#landing h1{font-size:32px;margin-bottom:26px}#landing .btn{min-width:0;padding:11px 20px;font-size:14px}}
-  #landing .pw-row{margin-top:30px;display:flex;gap:8px;justify-content:center;align-items:center}
-  #landing .pw-row input{padding:11px 18px;border:1.5px solid #E2E2E7;border-radius:980px;font-size:14.5px;width:238px;text-align:center;outline:none;background:#F5F5F7;font:inherit;letter-spacing:.12em}
-  #landing .pw-row input:focus{border-color:var(--karrot);background:#fff}
-  #landing .pw-row input.err{border-color:#C73F54;animation:pwshake .3s}
+  /* 세로 스택: Google Ads · SuperSet · 회원가입 · 비밀번호(우측 검은 화살표) */
+  #landing .lwrap{display:flex;flex-direction:column;align-items:center}
+  #landing .lmark{font-size:15px;font-weight:600;letter-spacing:-.02em;color:#86868B;margin-bottom:22px}
+  #landing .lstack{display:flex;flex-direction:column;gap:11px;width:300px;max-width:82vw}
+  #landing .lstack[hidden]{display:none}  /* display:flex가 [hidden] 기본값을 덮지 않도록 명시 */
+  #landing .lbtn{display:inline-flex;align-items:center;justify-content:center;padding:12px 20px;border-radius:980px;font-size:14.5px;font-weight:520;letter-spacing:-.005em;background:#F5F5F7;color:#1D1D1F;text-decoration:none;transition:background .18s,transform .1s;border:0;cursor:pointer;width:100%;box-sizing:border-box;font-family:inherit}
+  #landing .lbtn:hover{background:#EBEBEE}
+  #landing .lbtn:active{transform:scale(.99)}
+  #landing .lbtn.primary{background:var(--karrot);color:#fff}
+  #landing .lbtn.primary:hover{background:var(--karrot-2)}
+  /* 비밀번호 필드: 좌측 입력 + 우측 검은 화살표(로그인). 클릭·엔터 모두 로그인 */
+  #landing .pwbox{display:flex;align-items:stretch;width:300px;max-width:82vw;background:#F5F5F7;border:1.5px solid #E2E2E7;border-radius:980px;overflow:hidden;transition:border-color .15s,background .15s}
+  #landing .pwbox:focus-within{border-color:var(--karrot);background:#fff}
+  #landing .pwbox.err{border-color:#C73F54;animation:pwshake .3s}
+  #landing .pwbox input{flex:1;min-width:0;border:0;background:transparent;padding:12px 6px 12px 22px;font:inherit;font-size:14.5px;letter-spacing:.1em;text-align:center;outline:none}
+  #landing .pwgo{flex:0 0 auto;width:46px;background:#1D1D1F;color:#fff;border:0;display:grid;place-items:center;cursor:pointer;transition:background .15s}
+  #landing .pwgo:hover{background:#000}
+  #landing .pwgo svg{width:18px;height:18px}
+  #landing .pwgo.busy{opacity:.55;pointer-events:none}
+  #landing .lreg input{width:100%;box-sizing:border-box;padding:12px 18px;border:1.5px solid #E2E2E7;border-radius:980px;font:inherit;font-size:14.5px;text-align:center;outline:none;background:#F5F5F7}
+  #landing .lreg input:focus{border-color:var(--karrot);background:#fff}
+  #landing .lback{background:none;border:0;color:#86868B;font-size:13px;cursor:pointer;padding:7px;margin-top:2px;font-family:inherit}
+  #landing .lback:hover{color:#1D1D1F}
+  @media(max-width:600px){#landing .lstack,#landing .pwbox{width:82vw}}
   @keyframes pwshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-  #landing .pw-row button{border:0;background:#1D1D1F;color:#fff}
-  #landing .pw-row button:hover{background:#000}
-  #landing .pw-hint{margin-top:12px;font-size:12px;color:#86868B}
 </style>
 </head>
 <body>
 <div id="bootOv" hidden><div class="boot-in">저장소 불러오는 중</div></div>
 <div id="landing" class="hidden">
-  <div>
-    <h1>CSV 파일을<br>끌어다 놓아주세요.</h1>
-    <div class="btn-row">
-      <a class="btn" href="https://ads.google.com/aw/assetreport/associations?campaignId=22932296047&ocid=140474404&workspaceId=-1461371521&assetType=all&isLegacy=false&euid=6479159244&__u=5503618156&uscid=140474404&__c=5003988996&authuser=0&subid=kr-ko-ha-aw-bk-a-h00!o3-ahpm-0000000200-0000000002~EAIaIQobChMIyP2s4fj2kwMVuSZ7Bx2utAdNEAAYASAAEgLkSPD_BwE~147868729172~kwd-94527731~18654926781~629668488647" target="_blank" rel="noopener">Google Ads</a>
-      <a class="btn" href="https://superset.kr.wekarrot.net/superset/dashboard/1342/" target="_blank" rel="noopener">SuperSet</a>
+  <div class="lwrap">
+    <div class="lmark">Creative Reporter</div>
+    <div class="lstack" id="loginView">
+      <a class="lbtn" href="https://ads.google.com/aw/assetreport/associations?campaignId=22932296047&ocid=140474404&workspaceId=-1461371521&assetType=all&isLegacy=false&euid=6479159244&__u=5503618156&uscid=140474404&__c=5003988996&authuser=0&subid=kr-ko-ha-aw-bk-a-h00!o3-ahpm-0000000200-0000000002~EAIaIQobChMIyP2s4fj2kwMVuSZ7Bx2utAdNEAAYASAAEgLkSPD_BwE~147868729172~kwd-94527731~18654926781~629668488647" target="_blank" rel="noopener">Google Ads</a>
+      <a class="lbtn" href="https://superset.kr.wekarrot.net/superset/dashboard/1342/" target="_blank" rel="noopener">SuperSet</a>
+      <button class="lbtn" type="button" id="toRegister">회원가입</button>
+      <form class="pwbox" id="pwForm">
+        <input type="password" id="pwIn" inputmode="text" autocomplete="off" maxlength="40" placeholder="비밀번호" autofocus>
+        <button class="pwgo" type="submit" id="pwGo" aria-label="로그인"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </form>
     </div>
-    <form class="pw-row" id="pwForm"><input type="password" id="pwIn" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="비밀번호" autofocus><button class="btn" type="submit">저장된 데이터 열기</button></form>
-    <div class="pw-hint">비밀번호를 입력하면 클라우드에 쌓인 주간 성과를 바로 불러옵니다<br>파일명이 meta_ · moloco_ · google_ 로 시작하는 <b>주간</b> 리포트만 저장소에 누적됩니다</div>
+    <div class="lstack lreg" id="registerView" hidden>
+      <input type="text" id="regName" autocomplete="off" maxlength="24" placeholder="daangn name (영문)">
+      <input type="password" id="regPw" autocomplete="new-password" maxlength="40" placeholder="비밀번호">
+      <input type="password" id="regPw2" autocomplete="new-password" maxlength="40" placeholder="비밀번호 확인">
+      <button class="lbtn primary" type="button" id="doRegister">가입하기</button>
+      <button class="lback" type="button" id="toLogin">← 로그인</button>
+    </div>
   </div>
 </div>
 <div class="app">
@@ -2330,7 +2351,7 @@ function setStandalone(on,msg){standaloneMode=on;
   const bar=$("#fmtBar");if(!bar)return;bar.hidden=!on;
   const m=$("#fmtBarMsg");if(on&&m)m.innerHTML=msg||"";}
 async function cloudRestore(){
-  if(!cloudPw){const v=prompt("저장소 비밀번호");if(v&&v.trim())await cloudUnlock(v.trim());updateLandingVisibility();return;}
+  if(!cloudPw){const v=prompt("저장소 비밀번호");if(v&&v.trim())await attemptLogin(v.trim());updateLandingVisibility();return;}
   const _cl=$("#cloudLine");if(_cl)_cl.textContent="☁️ 불러오는 중…";
   try{const rows=await sbRpc("cr_load",{pw:cloudPw});
     await loadNameMap(cloudPw);
@@ -2366,8 +2387,9 @@ async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
     await loadNameMap(pw);
     if(rows.length){loadCloudRows(rows);toast(`☁️ 저장소 열림 — 소재 ${new Set(rows.map(r=>r.ad_name)).size.toLocaleString()}개 · 주간 기록 ${rows.length.toLocaleString()}건`);}
     else if(!silent)toast("☁️ 연결됨 — 저장된 데이터가 아직 없습니다. 주간 CSV를 드롭하면 쌓입니다.");
-    /* 서명된 기기(/hansy)는 탭 세션당 1회 인사 — localStorage 서명은 재부팅·네트워크 변경과 무관하게 유지 */
-    if(uploaderId&&!sessionStorage.getItem("crHi")){sessionStorage.setItem("crHi","1");setTimeout(()=>toast(`👋 Hi ${uploaderId.toUpperCase()}!`),2800);}
+    /* 로그인한 daangn name으로 탭 세션당 1회 환영 인사 (자동 재접속 시엔 sessionStorage crname 사용) */
+    const greet=(opts&&opts.name)||sessionStorage.getItem("crname")||uploaderId;
+    if(greet&&!sessionStorage.getItem("crHi")){sessionStorage.setItem("crHi","1");setTimeout(()=>toast(`👋 안녕하세요 ${greet.toUpperCase()}!`),1200);}
     refreshCloudLine();return true;
   }catch(err){
     /* 저장된 비밀번호가 더는 안 맞으면 지워서 다음 새로고침에 바로 입력 화면이 뜨게 */
@@ -2922,15 +2944,58 @@ function updateLandingVisibility(){const el=document.getElementById("landing");i
 $$("#mtabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.t));
 renderGlossary();renderFooter();refreshAll();updateLandingVisibility();
 /* 클라우드 저장소 UI 배선 */
+/* 로그인 — 비밀번호만으로 사용자 식별. cr_login이 {found,name,status} 반환:
+   승인됨=데이터 열고 환영 · 신청함=승인 대기 안내 · 거절됨=거절 안내 · 미존재=흔들기 */
+async function attemptLogin(pw){
+  pw=(pw||"").trim();if(!pw)return "empty";
+  let info;
+  try{info=await sbRpc("cr_login",{p_pw:pw});}
+  catch(e){toast("로그인 확인 실패: "+(e.message||""));return "error";}
+  if(!info||!info.found){toast("비밀번호가 틀렸습니다");return "wrong";}
+  if(info.status==="신청함"){toast("관리자 승인 대기중입니다");return "pending";}
+  if(info.status==="거절됨"){toast("가입이 거절된 계정입니다 · 관리자에게 문의해 주세요");return "rejected";}
+  /* 승인됨 → 이 사용자 이름으로 서명하고 저장소 오픈 */
+  const name=info.name||"";
+  uploaderId=name;try{localStorage.setItem("cr_uploader",name);}catch(_){}
+  try{sessionStorage.setItem("crname",name);}catch(_){}
+  const ok=await cloudUnlock(pw,{name});
+  return ok?"ok":"error";}
 const _pwForm=$("#pwForm");
 if(_pwForm)_pwForm.addEventListener("submit",async e=>{e.preventDefault();
-  const inp=$("#pwIn"),v=(inp.value||"").trim();if(!v)return;
-  const btn=_pwForm.querySelector("button");const bt=btn?btn.textContent:"";
-  if(btn){btn.disabled=true;btn.textContent="여는 중…";}
-  const ok=await cloudUnlock(v);
-  if(btn){btn.disabled=false;btn.textContent=bt;}
-  if(!ok){inp.classList.remove("err");void inp.offsetWidth;inp.classList.add("err");inp.select();}
-  else{updateLandingVisibility();}});
+  const inp=$("#pwIn"),box=$("#pwForm"),go=$("#pwGo"),v=(inp.value||"").trim();if(!v)return;
+  if(go)go.classList.add("busy");
+  const res=await attemptLogin(v);
+  if(go)go.classList.remove("busy");
+  if(res==="ok"){updateLandingVisibility();}
+  else if(res==="wrong"){box.classList.remove("err");void box.offsetWidth;box.classList.add("err");inp.select();}
+  else{inp.select();}});
+/* 회원가입 뷰 토글 */
+const _toReg=$("#toRegister"),_toLogin=$("#toLogin"),_loginView=$("#loginView"),_regView=$("#registerView");
+if(_toReg)_toReg.onclick=()=>{_loginView.hidden=true;_regView.hidden=false;setTimeout(()=>{const n=$("#regName");if(n)n.focus();},0);};
+if(_toLogin)_toLogin.onclick=()=>{_regView.hidden=true;_loginView.hidden=false;setTimeout(()=>{const p=$("#pwIn");if(p)p.focus();},0);};
+/* daangn name은 영문·숫자만 입력 가능(첫 글자 영문은 제출 시 검증) */
+const _regName=$("#regName");
+if(_regName)_regName.addEventListener("input",e=>{const c=e.target.selectionStart;e.target.value=e.target.value.replace(/[^A-Za-z0-9]/g,"");try{e.target.setSelectionRange(c,c);}catch(_){}});
+async function doRegister(){
+  const name=($("#regName").value||"").trim(),pw=$("#regPw").value||"",pw2=$("#regPw2").value||"";
+  if(!/^[A-Za-z][A-Za-z0-9]{1,23}$/.test(name)){toast("daangn name은 영문으로 시작하는 2~24자 영문·숫자여야 합니다");$("#regName").focus();return;}
+  if(pw.length<4){toast("비밀번호는 4자 이상이어야 합니다");$("#regPw").focus();return;}
+  if(pw!==pw2){toast("비밀번호와 비밀번호 확인이 일치하지 않습니다");$("#regPw2").focus();return;}
+  const btn=$("#doRegister"),bt=btn.textContent;btn.disabled=true;btn.textContent="신청 중…";
+  try{
+    await sbRpc("cr_register",{p_name:name,p_pw:pw});
+    toast("관리자 확인 후 가입이 승인됩니다");
+    $("#regName").value="";$("#regPw").value="";$("#regPw2").value="";
+    _regView.hidden=true;_loginView.hidden=false;setTimeout(()=>{const p=$("#pwIn");if(p)p.focus();},0);
+  }catch(err){const m=(err&&err.message)||"";
+    toast(m==="name_taken"?"이미 사용 중인 이름입니다":
+          m==="pw_taken"?"이미 사용 중인 비밀번호입니다 · 다른 비밀번호를 선택해 주세요":
+          m==="name_invalid"?"daangn name 형식이 올바르지 않습니다 (영문 시작, 2~24자)":
+          m==="pw_weak"?"비밀번호는 4자 이상이어야 합니다":
+          "가입 신청 실패: "+m);
+  }finally{btn.disabled=false;btn.textContent=bt;}}
+const _doReg=$("#doRegister");if(_doReg)_doReg.onclick=doRegister;
+["regName","regPw","regPw2"].forEach(id=>{const el=$("#"+id);if(el)el.addEventListener("keydown",ev=>{if(ev.key==="Enter"){ev.preventDefault();doRegister();}});});
 const _cloudLine=$("#cloudLine");
 if(_cloudLine)_cloudLine.addEventListener("click",cloudRestore);
 const _fmtBack=$("#fmtBarBack");
