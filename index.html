@@ -112,12 +112,6 @@
   .gi-r{display:flex;justify-content:space-between;gap:10px;font-size:12px;border-bottom:1px dashed var(--surface-3);padding:3px 0;min-width:0}
   .gi-r.wide{grid-column:1/-1}
   .gi-k{color:var(--muted);white-space:nowrap} .gi-v{color:var(--ink);font-weight:650;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .gi-fun{margin-top:12px;max-width:520px}
-  .gi-fun-t{font-size:11.5px;font-weight:700;margin-bottom:6px} .gi-fun-t span{color:var(--faint);font-weight:500;margin-left:6px;font-size:10.5px}
-  .gi-fr{display:grid;grid-template-columns:34px 1fr 56px;align-items:center;gap:8px;margin:3px 0;font-size:11px;color:var(--muted)}
-  .gi-ft{height:9px;background:var(--surface-3);border-radius:5px;overflow:hidden}
-  .gi-ft i{display:block;height:100%;background:var(--karrot);border-radius:5px}
-  .gi-fr b{text-align:right;color:var(--ink)}
   .lcard.gold .chip,.lcard.bad .chip{background:rgba(255,255,255,.55)}
   .chip.fo{background:var(--g1-f);color:var(--g1)} .lcard.gold .chip.fo,.lcard.bad .chip.fo{background:rgba(255,255,255,.6)}
   .lfoot{display:flex;align-items:center;gap:9px;margin-top:1px}
@@ -378,6 +372,22 @@
   .ispark-h .lgd{display:inline-block;width:7px;height:7px;border-radius:2px;margin:0 3px 0 7px;vertical-align:-0.5px}
   .ispark-svg{width:100%;height:auto;max-height:122px;display:block;margin:0 auto}
   .ispk-b{cursor:pointer}.ispk-b:hover{fill-opacity:.85}
+  /* 상세 가운데(그래프) 열 탭 — [주차별 추이|영상 시청|포지셔닝]. 선택은 소재를 옮겨 다녀도 유지 */
+  .gtabs{margin:0 0 12px}
+  .gtab-body{min-width:0}
+  .gtab-body section+section{margin-top:16px}
+  /* 영상 구간별 시청 유지 곡선 */
+  .vret-svg{width:100%;height:auto;display:block}
+  .vret-svg .vp{cursor:help}
+  .vret-cap{font-size:10.5px;color:var(--faint);margin-top:5px;line-height:1.5}
+  .vret-cap b{color:var(--muted);font-weight:650}
+  .vret-big{display:flex;align-items:baseline;gap:8px;margin:2px 0 4px}
+  .vret-big b{font-size:26px;font-weight:740;letter-spacing:-.02em}
+  .vret-big span{font-size:11px;color:var(--muted)}
+  /* 포지셔닝 미니 산점도 */
+  .iposc-svg{width:100%;height:auto;display:block}
+  .iposc-svg circle[data-nm]{cursor:pointer}
+  .iposc-svg circle[data-nm]:hover{fill-opacity:.9}
   /* island score breakdown */
   .sb{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:7px 26px}
   .sb-row{display:flex;align-items:center;gap:8px;font-size:11.5px;min-width:0}
@@ -902,10 +912,12 @@ function mCtypeLabel(t){if(!t)return"";const s=String(t).toUpperCase();
   if(s==="NATIVE_VIDEO")return"네이티브 영상";if(s==="VIDEO")return"영상";
   if(s==="NATIVE_IMAGE")return"네이티브 이미지";if(s==="IMAGE")return"이미지";
   if(s==="BANNER")return"배너";return t;}
-function entTypeShort(x){if(x._g_assetType)return assetShortType(x._g_assetType);
+function entTypeShort(x){if(x&&x._foFix)return "이미지(영상 등록)"; /* 네이티브 영상 등록이지만 실제 첨부·성과가 이미지인 소재 */
+  if(x._g_assetType)return assetShortType(x._g_assetType);
   if(x._m_ctype)return mCtypeLabel(x._m_ctype);
   return (x.tags&&x.tags.fo)||"";}
-function entTypeEmoji(x){const s=entTypeShort(x);
+function entTypeEmoji(x){if(x&&x._foFix)return "🖼️";
+  const s=entTypeShort(x);
   if(/영상/.test(s))return "🎬";if(/세로/.test(s))return "📱";return "🖼️";}
 function previewUrlOf(e){return e._m_url||e._g_url||(/^https?:/.test(e.name||"")?e.name:"")||"";}
 /* 일반 CSV(메타 등)에도 썸네일/미리보기 URL 컬럼이 있으면 자동 인식 — 컬럼만 추가하면 미리보기가 붙는다 */
@@ -917,6 +929,18 @@ function attachPreviewCol(headers,data){
     let m=p.match(/href="([^"]+)"/);if(!m)m=p.match(/https?:\/\/[^\s"'<>]+/);
     if(m){o._m_url=(m[1]!==undefined?m[1]:m[0]);n++;}}
   return n>0;}
+/* 일반 CSV(메타 등)에 동영상 구간별 재생수 컬럼이 있으면 자동 인식(_v25~_v100) — 상세 '영상 시청' 탭의 유지 곡선 데이터.
+   주간 합산이 가능해야 하므로 '횟수' 컬럼만 취급: 율·평균·시간·비용류 헤더는 제외 */
+function attachVideoFunnelCols(headers,data){
+  const found={};
+  for(const h of headers||[]){const s=String(h).trim();
+    if(!/동영상|video/i.test(s))continue;
+    if(/율|평균|비용|시간|cost|avg|average|rate|time/i.test(s))continue;
+    const m=s.match(/(?:^|\D)(25|50|75|95|100)\s*%/);
+    if(m)found["_v"+m[1]]=h;}
+  const ks=Object.keys(found);if(!ks.length)return false;
+  for(const o of data)for(const k of ks){const v=num(o[found[k]]);if(v!=null)o[k]=v;}
+  return true;}
 /* 구글 광고그룹/캠페인 ID → 이름 매핑 (매핑 CSV 업로드로 축적, 클라우드 kv에 보관) */
 let gNameMap={adgroup:{},campaign:{},asset:{}};
 let gInfoMap={}; /* 광고그룹 보고서 스냅샷 — {광고그룹ID:{nm,cpNm,st,op,rsn,tcpa,cost,…,from,to}} */
@@ -1032,7 +1056,7 @@ function aggregate(data,L){const map=new Map();
     const e=map.get(nm);for(const c of["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e[c]+=v;}
     const _cv=num(r["비용"]);if(_cv!=null&&_cv>0){if(!e._wkSet)e._wkSet=new Set();e._wkSet.add(r.date);}
     for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_adGroupId","_g_campaignId","_m_url","_m_ctype","_m_res","_m_group"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
-    for(const k of["_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue","_m_installs","신규+재활성 유저 수","_vcrNum","_vcrDen"]){const v=num(r[k]);if(v!=null)e[k]=(e[k]||0)+v;}
+    for(const k of["_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue","_m_installs","신규+재활성 유저 수","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100"]){const v=num(r[k]);if(v!=null)e[k]=(e[k]||0)+v;}
     const w=r.date;if(e.weeks[w])for(const c of["비용","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e.weeks[w][c]+=v;}}
   const arr=[...map.values()].map(e=>{e.CPC=e["클릭 수"]>0?e.비용/e["클릭 수"]:null;e.CTR=e["노출 수"]>0?e["클릭 수"]/e["노출 수"]:null;e.CPM=e["노출 수"]>0?e.비용/e["노출 수"]*1000:null;e.eCPI=e["어트리뷰션 수"]>0?e.비용/e["어트리뷰션 수"]:null;e["활성 유저 eCPA"]=e["활성 유저 수"]>0?e.비용/e["활성 유저 수"]:null;
     if((e._vcrDen||0)>0)e["영상 완주율"]=e._vcrNum/e._vcrDen;
@@ -1047,6 +1071,12 @@ function aggregate(data,L){const map=new Map();
       e["_g_convValuePerConv"]=(e["_g_convValue"]||0)>0&&(e["_g_allConv"]||0)>0?e["_g_convValue"]/e["_g_allConv"]:null;}
     e._wkCnt=e._wkSet?e._wkSet.size:0;e._wkSet=null;
     e.tags=tagEntity(e.name,e);return e;});
+  /* 몰로코 '네이티브 영상' 오등록 보정 — 이 리포트가 완주율을 제공하는데(영상이면 값이 찍혀야 함)
+     첨부 미리보기가 이미지 파일이고 완주율이 전 기간 비어 있으면 실제 노출물을 이미지로 보고 재분류.
+     완주율이 찍혀 있으면 미리보기만 썸네일인 진짜 영상이므로 유지, 리포트에 완주율 컬럼 자체가 없으면 판단 보류 */
+  if(arr.some(x=>(x._vcrDen||0)>0))for(const x of arr){
+    if(x._m_ctype&&/VIDEO/.test(x._m_ctype)&&(x._vcrDen||0)<=0&&/\.(png|jpe?g|gif|webp)(\?|$)/i.test(String(x._m_url||""))){
+      x.tags.fo="이미지";x._foFix=1;}}
   arr.sort((a,b)=>b.비용-a.비용);return arr;}
 /* '학습중' — 집행 2주 미만이거나 전환 표본 30건 미만: 지표 변동성이 커서 점수·티어가 아직 흔들리는 소재 */
 function isLearning(e){if(!e||e._isGroup||(e.비용||0)<=0)return false;
@@ -1238,7 +1268,10 @@ function sdelta(dd){if(dd==null)return"<span>지난주 –</span>";const c=Math.
 /* 이름 아래 태그 칩 — 표에서는 클릭하면 그 값으로 필터 (data-ck 있는 칩만) */
 function chipsHTML(t,e){
   const mk=(k,v,cls,lab)=>`<span class="chip${cls?" "+cls:""}" data-ck="${k}" data-cv="${escAttr(v)}" title="클릭 = ${escAttr(lab||v)}만 보기">${lab||v}</span>`;
-  const arr=[t.ve&&mk("ve",t.ve),t.fo&&mk("fo",t.fo,"fo"),t.nat==="네이티브"&&mk("nat","네이티브"),t.size&&mk("size",t.size)];
+  const foChip=t.fo&&(e&&e._foFix
+    ?`<span class="chip fo" data-ck="fo" data-cv="${escAttr(t.fo)}" title="리포트 유형은 '네이티브 영상'이지만 첨부 파일이 이미지이고 완주율 데이터가 전 기간 없어 이미지로 분류했습니다 · 클릭 = 이미지만 보기">${t.fo}*</span>`
+    :mk("fo",t.fo,"fo"));
+  const arr=[t.ve&&mk("ve",t.ve),foChip,t.nat==="네이티브"&&mk("nat","네이티브"),t.size&&mk("size",t.size)];
   if(e&&e._isGroup){
     /* 그룹 행: 이름 분절 칩 — 접두(Google UA 등)·날짜·수식어. 서비스(ve)는 위 공통 경로로 이미 표시 */
     if(t.pre)arr.unshift(mk("gpre",t.pre));
@@ -1447,7 +1480,7 @@ function applyTFilter(rows,ds){
   return rows;}
 function renderTFilter(ds){/* filter popup removed */}
 let tableShowAll=false;
-let curDS=null; const ISLE={name:null,metric:null};
+let curDS=null; const ISLE={name:null,metric:null,gtab:"trend"}; /* gtab: 상세 그래프 탭 — 소재를 옮겨 다녀도 유지 */
 function escAttr(s){return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;");}
 function familyKey(name){let s=String(name);
   s=s.replace(/(\d{3,4})\s*[x×]\s*(\d{3,4})/gi,"");
@@ -1505,7 +1538,8 @@ function fmtSpecVal(k,v){if(v==null)return"–";
   if(k==="CTR"||k==="영상 완주율"||k.endsWith("Rate"))return fmtPct(v);
   return fmtWon(v);}
 /* 광고그룹 상세 — 광고그룹 보고서(ginfo) 스냅샷 패널.
-   표·상태 칩에서 이미 보이는 값(상태·광고비·노출·클릭·전환류)은 넣지 않는다: 여기엔 보고서에만 있는 정보만 */
+   표·상태 칩에서 이미 보이는 값(상태·광고비·노출·클릭·전환류)은 넣지 않는다: 여기엔 보고서에만 있는 정보만.
+   동영상 재생 퍼널(v25~v100)은 여기가 아니라 가운데 그래프 열의 '영상 시청' 탭이 그린다 */
 function groupInfoHTML(gi){if(!gi)return "";
   const cells=[];
   const add=(k,v,tip,wide)=>{if(v!=null&&v!=="")cells.push(`<div class="gi-r${wide?" wide":""}" ${tip?`title="${escAttr(tip)}"`:""}><span class="gi-k">${k}</span><b class="gi-v num">${v}</b></div>`);};
@@ -1515,12 +1549,8 @@ function groupInfoHTML(gi){if(!gi)return "";
   add("설치 시작 first_open",gi.fopen!=null?fmtInt(gi.fopen):null);
   add("홈 진입 home",gi.home!=null?fmtInt(gi.home):null);
   add("평균 시청 시간/노출",gi.watch!=null?gi.watch:null);
-  let fun="";
-  if(gi.v25!=null){
-    const seg=[["25%",gi.v25],["50%",gi.v50],["75%",gi.v75],["100%",gi.v100]].filter(s=>s[1]!=null);
-    fun=`<div class="gi-fun"><div class="gi-fun-t">동영상 재생 퍼널 <span>노출 대비 재생 도달률</span></div>${seg.map(([l,v])=>`<div class="gi-fr"><span>${l}</span><div class="gi-ft"><i style="width:${Math.min(100,v)}%"></i></div><b class="num">${v}%</b></div>`).join("")}</div>`;}
-  if(!cells.length&&!fun)return "";
-  return `<section><div class="ish">보고서 추가 정보 <span class="n">광고그룹 보고서${gi.from?` · ${gi.from}~${gi.to||""}`:""} 누적</span></div><div class="gi-grid">${cells.join("")}</div>${fun}</section>`;}
+  if(!cells.length)return "";
+  return `<section><div class="ish">보고서 추가 정보 <span class="n">광고그룹 보고서${gi.from?` · ${gi.from}~${gi.to||""}`:""} 누적</span></div><div class="gi-grid">${cells.join("")}</div></section>`;}
 function scorePosHTML(ds,e){const S=ds.S;
   if(e.score==null||!S||!S.specs||!e._specPct)return"";
   const rows=S.specs.filter(s=>e._specPct[s.k]).map(s=>{const sp=e._specPct[s.k];
@@ -1544,10 +1574,11 @@ function weeklyAggOf(ds,e){
   else rows=ds.data.filter(r=>r[nameCol]===e.name);
   const wkMap=new Map();
   for(const r of rows){const d=String(r.date||"").slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;
-    let o=wkMap.get(d);if(!o){o={c:0,imp:0,clk:0,attr:0,act:0,conv:0,cval:0};wkMap.set(d,o);}
+    let o=wkMap.get(d);if(!o){o={c:0,imp:0,clk:0,attr:0,act:0,conv:0,cval:0,vn:0,vd:0,tv:0};wkMap.set(d,o);}
     o.c+=num(r["비용"])||0;o.imp+=num(r["노출 수"])||0;o.clk+=num(r["클릭 수"])||0;
     o.attr+=num(r["어트리뷰션 수"])||0;o.act+=num(r["활성 유저 수"])||0;
-    o.conv+=num(r["_g_conversions"])||0;o.cval+=num(r["_g_convValue"])||0;}
+    o.conv+=num(r["_g_conversions"])||0;o.cval+=num(r["_g_convValue"])||0;
+    o.vn+=num(r["_vcrNum"])||0;o.vd+=num(r["_vcrDen"])||0;o.tv+=num(r["_g_trueViews"])||0;}
   const ws=[...wkMap.keys()].sort();
   return{ws,os:ws.map(w=>wkMap.get(w))};}
 function creativeTrendHTML(ds,e){
@@ -1598,6 +1629,112 @@ function creativeTrendHTML(ds,e){
     s+=`<path d="${p}" fill="none" stroke="${ln.col}" stroke-width="1.5" stroke-opacity="0.95"/>${dots}`;}
   const leg=lines.map(ln=>`<i class="lgd" style="background:${ln.col}"></i>${ln.lab} <b>${ln.last!=null?ln.fmt(ln.last):"–"}</b>`).join(" ");
   return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · 막대 광고비 ${leg}</span></div><svg class="ispark-svg" viewBox="0 0 ${W} ${H}">${s}</svg></div>`;}
+/* 상세 '영상 시청' — 어디까지 많이 보고 어디서 이탈했는지 (영상 소재만).
+   구간 도달 곡선 데이터 우선순위: ① 소재 자체 구간별 재생수(_v25~_v100 ÷ 노출, 선택 기간)
+   ② 구글 광고그룹 보고서 누적 퍼널 v25~v100(소재별 데이터가 없어 그룹 단위임을 캡션에 명시).
+   구간 데이터가 아예 없는 매체(몰로코 등)는 완주율 큰 값으로 폴백하고,
+   완주율·TrueView 조회율이 주차별로 있으면 추이 선을 함께 그린다 */
+function videoRetentionHTML(ds,e){
+  const isVid=(e.tags&&e.tags.fo==="영상")||(e._isGroup&&(e._members||[]).some(m=>m.tags&&m.tags.fo==="영상"));
+  if(!isVid)return "";
+  /* 같은 보기 레벨 영상 코호트의 완주율 중앙값 — 폴백 블록·추이 기준선 공용 */
+  const pool=(e._isGroup?(ds._aggGrpCache||[]):ds.agg);
+  const cvals=pool.filter(p=>p.name!==e.name&&p.tags&&p.tags.fo==="영상"&&p["영상 완주율"]!=null).map(p=>p["영상 완주율"]).sort((a,b)=>a-b);
+  const med=cvals.length>=5?quantile(cvals,0.5):null;
+  let s="";
+  const imp=e["노출 수"]||0;
+  let seq=null,src="";
+  const own=[["25%",e._v25],["50%",e._v50],["75%",e._v75],["95%",e._v95],["100%",e._v100]].filter(x=>x[1]!=null);
+  if(imp>0&&own.length>=2){
+    seq=own.map(([l,v])=>[l,Math.max(0,Math.min(100,v/imp*100))]);
+    src="이 소재 · 선택 기간 · 노출 대비 도달률";}
+  else{const gi=groupInfoOf(e._g_adGroupId||e._m_group);
+    if(gi&&gi.v25!=null){
+      seq=[["25%",gi.v25],["50%",gi.v50],["75%",gi.v75],["100%",gi.v100]].filter(x=>x[1]!=null).map(([l,v])=>[l,Math.max(0,Math.min(100,v))]);
+      src=`광고그룹 보고서 누적${gi.from?` ${gi.from}~${gi.to||""}`:""}${e._isGroup?"":" · 소재별 구간 데이터가 없어 같은 광고그룹 단위"}`;}}
+  if(seq){
+    seq=[["노출",100]].concat(seq);
+    const W=300,H=138,pl=17,pr=17,pt=18,pb=19,iw=W-pl-pr,ih=H-pt-pb;
+    const X=i=>pl+i/(seq.length-1)*iw,Y=v=>pt+(1-v/100)*ih;
+    let big=1;for(let i=2;i<seq.length;i++)if(seq[i-1][1]-seq[i][1]>seq[big-1][1]-seq[big][1])big=i;
+    let g=`<rect x="${X(big-1).toFixed(1)}" y="${pt}" width="${(X(big)-X(big-1)).toFixed(1)}" height="${ih}" fill="var(--w2)" fill-opacity="0.07"/>`;
+    let ln=`M ${X(0)} ${Y(100).toFixed(1)}`;for(let i=1;i<seq.length;i++)ln+=` L ${X(i).toFixed(1)} ${Y(seq[i][1]).toFixed(1)}`;
+    g+=`<path d="${ln} L ${X(seq.length-1)} ${H-pb} L ${pl} ${H-pb} Z" fill="var(--karrot)" fill-opacity="0.1"/><path d="${ln}" fill="none" stroke="var(--karrot)" stroke-width="2"/>`;
+    seq.forEach(([l,v],i)=>{
+      const drop=i?seq[i-1][1]-v:0;
+      const tip=i?`<b>${l} 지점 도달 ${v.toFixed(1)}%</b><br>직전 구간 이탈 −${drop.toFixed(1)}%p`:`<b>노출 100%</b><br>여기서부터 시청이 시작됩니다`;
+      g+=`<circle class="vp" data-tip="${escAttr(tip)}" cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="3.4" fill="var(--karrot)" stroke="#fff" stroke-width="1.4"/><text x="${X(i).toFixed(1)}" y="${(Y(v)-7).toFixed(1)}" text-anchor="middle" font-size="8.4" font-weight="650" fill="var(--ink)">${v.toFixed(0)}%</text><text x="${X(i).toFixed(1)}" y="${H-4.5}" text-anchor="middle" font-size="7.6" fill="var(--faint)">${l}</text>`;
+      if(i&&drop>=1.5){const mx=(X(i-1)+X(i))/2,my=(Y(seq[i-1][1])+Y(v))/2+9;
+        g+=`<text x="${mx.toFixed(1)}" y="${Math.min(H-pb-3,my).toFixed(1)}" text-anchor="middle" font-size="7.4" font-weight="${i===big?"800":"500"}" fill="${i===big?"var(--w2)":"var(--faint)"}">−${drop.toFixed(0)}%p</text>`;}});
+    s+=`<section><div class="ish">구간별 시청 유지 <span class="n">노출=100 기준 · 이탈 최대 구간 음영</span></div><svg class="vret-svg" viewBox="0 0 ${W} ${H}">${g}</svg><div class="vret-cap">최대 이탈: <b>${seq[big-1][0]}→${seq[big][0]} 구간 −${(seq[big-1][1]-seq[big][1]).toFixed(1)}%p</b> · ${src}</div></section>`;
+  }else if(e["영상 완주율"]!=null){
+    const d=med!=null?(e["영상 완주율"]-med)*100:null;
+    s+=`<section><div class="ish">영상 완주율 <span class="n">이 매체 리포트에는 25·50·75% 구간 데이터가 없습니다</span></div><div class="vret-big"><b class="num">${fmtPct(e["영상 완주율"])}</b><span>노출 대비 끝까지 본 비율</span></div>${d!=null?`<div class="vret-cap">같은 화면 영상 소재 ${cvals.length+1}개 중앙값 <b>${fmtPct(med)}</b> 대비 <b style="color:${d>=0?"var(--g1)":"var(--w2)"}">${d>=0?"+":""}${d.toFixed(1)}%p</b></div>`:""}</section>`;}
+  /* 주차별 시청 추이 — 완주율(몰로코 등) 우선, 없으면 TrueView 조회율(구글) */
+  const wa=weeklyAggOf(ds,e);
+  const mk=(lab,of,help)=>{const vals=wa.os.map(of);return vals.filter(v=>v!=null).length>=2?{lab,vals,help}:null;};
+  const wl=mk("완주율",o=>o.vd>0?o.vn/o.vd:null,"영상을 끝까지 본 비율")
+        ||mk("TrueView 조회율",o=>o.imp>0&&o.tv>0?o.tv/o.imp:null,"노출 대비 TrueView 조회(30초/전체 시청)");
+  if(wl){
+    const ws=wa.ws.slice(-13),vals=wl.vals.slice(-13);
+    const W=300,H=80,pl=8,pr=8,pt=12,pb=15,iw=W-pl-pr,ih=H-pt-pb;
+    const medRef=wl.lab==="완주율"?med:null;
+    const mx=Math.max(...vals.filter(v=>v!=null).concat(medRef!=null?[medRef]:[]))*1.15||1;
+    const slot=iw/ws.length,xat=i=>pl+(i+0.5)*slot,yat=v=>pt+(1-v/mx)*ih;
+    let g="",p="",st=false,prevMon="",last=null;
+    if(medRef!=null)g+=`<line x1="${pl}" y1="${yat(medRef).toFixed(1)}" x2="${W-pr}" y2="${yat(medRef).toFixed(1)}" stroke="var(--faint)" stroke-dasharray="3 3" stroke-opacity=".55"/><text x="${W-pr}" y="${(yat(medRef)-3).toFixed(1)}" text-anchor="end" font-size="7" fill="var(--faint)">영상 중앙값 ${fmtPct(medRef)}</text>`;
+    ws.forEach((w,i)=>{
+      const mon=w.slice(0,7);
+      if(mon!==prevMon){prevMon=mon;g+=`<text x="${xat(i).toFixed(1)}" y="${H-3}" font-size="7.2" fill="var(--faint)" text-anchor="middle">${w.slice(2,4)}-${parseInt(w.slice(5,7),10)}</text>`;}
+      const v=vals[i];if(v==null)return;
+      const x=xat(i),y=yat(v);last=v;
+      p+=st?` L ${x.toFixed(1)} ${y.toFixed(1)}`:`M ${x.toFixed(1)} ${y.toFixed(1)}`;st=true;
+      g+=`<circle class="vp" data-tip="${escAttr(`<b>${w.slice(5).replace("-","/")} 주</b><br>${wl.lab} ${fmtPct(v)}`)}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.3" fill="var(--g2)"/>`;});
+    s+=`<section><div class="ish">${wl.lab} 주차별 추이 <span class="n">${wl.help} · 최근 <b>${fmtPct(last)}</b></span></div><svg class="vret-svg" viewBox="0 0 ${W} ${H}"><path d="${p}" fill="none" stroke="var(--g2)" stroke-width="1.6"/>${g}</svg></section>`;}
+  return s;}
+/* 상세 '포지셔닝' — 타 소재 대비 이 소재가 어디쯤인지 한 장의 산점도로.
+   축은 효율 지도 기본 픽과 같은 규칙(가로 CTR류·세로 효율류), 회색=비교군·파랑=같은 그룹·주황=이 소재.
+   이상치가 판을 짓누르지 않게 축을 95퍼센타일에서 캡하고 벗어난 점은 가장자리에 고정.
+   아래에는 채점이 쓰는 지표별 광고비 가중 백분위 막대(scorePosHTML)를 함께 둔다 */
+function positioningHTML(ds,e){
+  const bars=scorePosHTML(ds,e);
+  const pool=(e._isGroup?(ds._aggGrpCache||[]):ds.agg).filter(p=>(p.비용||0)>0);
+  const mets=quadMetricsFor(ds);
+  const pick=prefs=>{for(const k of prefs){const m=mets.find(x=>x.k===k);if(m&&e[m.k]!=null&&e[m.k]>0)return m;}return null;};
+  const xM=pick(["CTR","_g_interactionRate","영상 완주율","CPC"]);
+  let yM=pick(["_g_ROAS","eCPI","활성 유저 eCPA","_g_costPerConv","CPM","CPC"]);
+  if(yM&&xM&&yM.k===xM.k)yM=null;
+  if(!xM||!yM)return bars;
+  let pts=pool.filter(p=>p[xM.k]!=null&&p[xM.k]>0&&p[yM.k]!=null&&p[yM.k]>0);
+  if(!pts.find(p=>p.name===e.name)||pts.length<6)return bars;
+  const gid=e._isGroup?null:(e._g_adGroupId||e._m_group);
+  const inGrp=p=>!!gid&&(p._g_adGroupId===gid||p._m_group===gid)&&p.name!==e.name;
+  /* 광고비 상위 140개만 그리되 본인·같은 그룹은 항상 포함 */
+  pts.sort((a,b)=>(b.비용||0)-(a.비용||0));
+  const kept=new Set(pts.slice(0,140));
+  pts.forEach(p=>{if(p.name===e.name||inGrp(p))kept.add(p);});
+  pts=[...kept];
+  const xs=pts.map(p=>p[xM.k]).sort((a,b)=>a-b),ys=pts.map(p=>p[yM.k]).sort((a,b)=>a-b);
+  const xCap=Math.max(quantile(xs,0.95)*1.08,e[xM.k]*1.04),yCap=Math.max(quantile(ys,0.95)*1.08,e[yM.k]*1.04);
+  const W=320,H=216,pad={l:10,r:10,t:12,b:22};
+  const X=v=>pad.l+Math.min(1,v/xCap)*(W-pad.l-pad.r),Y=v=>H-pad.b-Math.min(1,v/yCap)*(H-pad.t-pad.b);
+  const xmed=quantile(xs,0.5),ymed=quantile(ys,0.5);
+  const cmax=Math.max(...pts.map(p=>p.비용))||1,R=v=>2.6+Math.sqrt((v||0)/cmax)*4.5;
+  let g=`<rect x="${pad.l}" y="${pad.t}" width="${W-pad.l-pad.r}" height="${H-pad.t-pad.b}" rx="9" fill="var(--surface-2)"/>`;
+  g+=`<line x1="${X(xmed).toFixed(1)}" y1="${pad.t}" x2="${X(xmed).toFixed(1)}" y2="${H-pad.b}" stroke="#D8D6CC" stroke-dasharray="3 3"/><line x1="${pad.l}" y1="${Y(ymed).toFixed(1)}" x2="${W-pad.r}" y2="${Y(ymed).toFixed(1)}" stroke="#D8D6CC" stroke-dasharray="3 3"/>`;
+  const tipOf=p=>`<b>${trunc(displayNameOf(p),46)}</b><br>${xM.lab} ${xM.fmt(p[xM.k])}<br>${yM.lab} ${yM.fmt(p[yM.k])}<br>광고비 ${fmtWon(p.비용)}`;
+  const dot=(p,fill,op,rr,extra)=>`<circle ${extra||""} data-tip="${escAttr(tipOf(p))}" cx="${X(p[xM.k]).toFixed(1)}" cy="${Y(p[yM.k]).toFixed(1)}" r="${rr.toFixed(1)}" fill="${fill}" fill-opacity="${op}"/>`;
+  let nOther=0,nGrp=0;
+  for(const p of pts){if(p.name===e.name||inGrp(p))continue;nOther++;g+=dot(p,"var(--mid)",0.34,R(p.비용),e._isGroup?"":`data-nm="${escAttr(p.name)}"`);}
+  for(const p of pts){if(!inGrp(p))continue;nGrp++;g+=dot(p,"var(--g2)",0.75,Math.max(3.2,R(p.비용)),`data-nm="${escAttr(p.name)}"`);}
+  const ex=X(e[xM.k]),ey=Y(e[yM.k]);
+  g+=`<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="9.5" fill="none" stroke="var(--karrot)" stroke-opacity=".5" stroke-width="2"/>`+dot(e,"var(--karrot)",1,5.4,`stroke="#fff" stroke-width="1.6"`);
+  g+=`<text x="${Math.max(pad.l+22,Math.min(W-pad.r-22,ex)).toFixed(1)}" y="${(ey>pad.t+30?ey-14:ey+23).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="800" fill="var(--karrot)">이 소재</text>`;
+  g+=`<text x="${W-pad.r-5}" y="${H-pad.b-5}" text-anchor="end" font-size="7.6" fill="var(--faint)">${xM.lab} ${xM.dir<0?"← 낮을수록 좋음":"높을수록 좋음 →"}</text>`;
+  g+=`<text x="${pad.l+5}" y="${pad.t+11}" font-size="7.6" fill="var(--faint)">${yM.lab} ${yM.dir<0?"↓ 낮을수록 좋음":"↑ 높을수록 좋음"}</text>`;
+  const xg=xM.dir<0?1-pctRank(xs,e[xM.k]):pctRank(xs,e[xM.k]),yg=yM.dir<0?1-pctRank(ys,e[yM.k]):pctRank(ys,e[yM.k]);
+  const top=v=>`상위 ${Math.max(1,Math.round((1-v)*100))}%`;
+  return `<section><div class="ish">타 소재 대비 포지셔닝 <span class="n">${xM.lab} <b>${top(xg)}</b> · ${yM.lab} <b>${top(yg)}</b></span></div><svg class="iposc-svg" viewBox="0 0 ${W} ${H}">${g}</svg><div class="vret-cap">비교군 ${nOther+nGrp+1}개 중 이 소재(주황)의 위치${nGrp?` · <b style="color:var(--g2)">파랑</b>=같은 그룹 ${nGrp}개`:""} · 점 크기=광고비 · 점선=중앙값${e._isGroup?"":" · 점 클릭=해당 소재로 이동"}</div></section>`+bars;}
 /* 같은 그룹 비교 — 이름들의 공통 접두를 '…'로 접고 달라지는 부분부터 표시 (토큰 경계에서 자름) */
 function prefixTrimmer(names){
   const list=names.filter(Boolean);
@@ -1607,7 +1744,23 @@ function prefixTrimmer(names){
   const m=p.match(/^.*[_\-·\s./]/);const cut=m?m[0].length:0;
   if(cut<10)return s=>s;
   return s=>s&&s.length>cut+2?"\u2026"+s.slice(cut):s;}
-/* 상세 — 상단 [미리보기(+점수·진단) | 같은 그룹 비교] ÷ 구분선 ÷ 하단 [주차별 추이 | 지표별 위치 2열].
+/* 상세 가운데(그래프) 열 — [주차별 추이 | 영상 시청 | 포지셔닝] 탭.
+   있는 데이터만 탭으로 노출(1개뿐이면 탭 줄 숨김). 선택 탭은 ISLE.gtab에 남겨
+   ←/→·비교 클릭으로 소재를 옮겨 다녀도 같은 그래프로 이어 본다(그 소재에 없는 탭이면 첫 탭 폴백) */
+function renderIsleMid(ds,e,mid){if(!mid)return;
+  const tabs=[{k:"trend",lab:"주차별 추이",html:creativeTrendHTML(ds,e)||`<div class="fam-note">주차 데이터가 2주 이상 쌓이면 추이가 표시됩니다.</div>`}];
+  const vh=videoRetentionHTML(ds,e);if(vh)tabs.push({k:"video",lab:"영상 시청",html:vh});
+  const ph=positioningHTML(ds,e);if(ph)tabs.push({k:"pos",lab:"포지셔닝",html:ph});
+  const cur=tabs.find(t=>t.k===ISLE.gtab)||tabs[0];
+  mid.innerHTML=(tabs.length>1?`<div class="dtog gtabs">${tabs.map(t=>`<button data-gt="${t.k}" class="${t.k===cur.k?"on":""}">${t.lab}</button>`).join("")}</div>`:"")+`<div class="gtab-body">${cur.html}</div>`;
+  mid.querySelectorAll(".gtabs button").forEach(b=>b.onclick=()=>{ISLE.gtab=b.dataset.gt;renderIsleMid(ds,e,mid);});
+  /* 그래프 요소 공통 툴팁(data-tip) — 추이 막대·유지 곡선 점·산점도 점이 함께 쓴다 */
+  mid.querySelectorAll("[data-tip]").forEach(el=>{
+    el.addEventListener("mousemove",ev=>showTip(el.dataset.tip||"",ev.clientX,ev.clientY));
+    el.addEventListener("mouseleave",hideTip);});
+  mid.querySelectorAll(".iposc-svg [data-nm]").forEach(el=>{
+    el.addEventListener("click",()=>{const nm=el.dataset.nm;if(nm&&nm!==e.name){hideTip();goToIslandFromQuad(nm);}});});}
+/* 상세 — 한 줄 3열 [미리보기 | 그래프 탭(추이·영상 시청·포지셔닝) | 같은 그룹 비교].
    행에 이미 있는 이름·뱃지·칩은 반복하지 않고, 미디어 프레임은 소재 비율(세로/정방/가로)에 따라 3종 폭으로 전환 */
 function fillIsland(ds,e,inner){const L=ds.L;
   const sp=t=>t==="g2"?"sp-g2":t==="g1"?"sp-g1":t==="m"?"sp-mid":t==="w1"?"sp-w1":t==="w2"?"sp-w2":"sp-na";
@@ -1644,7 +1797,6 @@ function fillIsland(ds,e,inner){const L=ds.L;
         return `<tr class="${x.name===e.name?"me":""}" data-nm="${escAttr(x.name)}" title="${escAttr(dn)}"><td class="l"><span class="mb b-${x.dom==="good"?"gold":x.tier}">${tierBadge(x)}</span> ${_ftrim(dn)}</td><td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td><td><span class="sp ${sp(x.tier)}">${fmtScore(x.score)}</span></td></tr>`;}).join("");})()+
       `</tbody></table></div></div>`;}
   const preview=assetPreview(previewUrlOf(e),e);
-  const spark=creativeTrendHTML(ds,e);
   const cmpB=`<div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}`;
   /* 미디어 비율 클래스: 몰로코 해상도·유튜브는 즉시, 그 외 이미지는 로드 후(isleAr) 판정 */
   inner.classList.remove("ar-v","ar-h","ar-s");
@@ -1653,15 +1805,13 @@ function fillIsland(ds,e,inner){const L=ds.L;
   else{const _res=e._m_res&&String(e._m_res).match(/(\d+)\s*[x×]\s*(\d+)/i);
     if(_res)applyIsleAr(inner,+_res[1],+_res[2]);else inner.classList.add("ar-s");}
   const sideMedia=e._isGroup?(groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group))||""):preview; /* 그룹은 보고서 정보가 미디어 자리 */
-  inner.innerHTML=`<div class="isle-row3${sideMedia?"":" nomedia"}">${sideMedia?`<div class="ir-media">${sideMedia}</div>`:""}<div class="ir-mid">${spark}${scorePosHTML(ds,e)}</div><div class="ir-cmp">${cmpB}</div></div>`;
+  inner.innerHTML=`<div class="isle-row3${sideMedia?"":" nomedia"}">${sideMedia?`<div class="ir-media">${sideMedia}</div>`:""}<div class="ir-mid"></div><div class="ir-cmp">${cmpB}</div></div>`;
+  renderIsleMid(ds,e,inner.querySelector(".ir-mid"));
   const _vv=inner.querySelector(".isle-frame video");
   if(_vv)_vv.addEventListener("loadedmetadata",()=>isleAr(_vv));
   /* 유튜브 소재면 제목을 조회해 화면 곳곳의 URL 이름을 실제 제목으로 교체 (미디어 위 중복 배너 없음) */
   const _ytid=ytIdOf(previewUrlOf(e));
   if(_ytid&&_ytTitles[_ytid]===undefined)fetchYtTitle(_ytid).then(t=>{if(t)refreshDisplayNames();});
-  inner.querySelectorAll(".ispk-b").forEach(rc=>{
-    rc.addEventListener("mousemove",ev=>showTip(rc.dataset.tip||"",ev.clientX,ev.clientY));
-    rc.addEventListener("mouseleave",hideTip);});
   inner.querySelectorAll(".fam tr[data-nm]").forEach(tr=>{
     const nm=tr.dataset.nm,url=tr.dataset.preview,lab=tr.dataset.label||"";
     tr.style.cursor="pointer";
@@ -1740,7 +1890,7 @@ function buildAdGroupAgg(ds){
   for(const e of ds.agg){const id=e._g_adGroupId||e._m_group;if(!id)continue;
     let g=grp.get(id);if(!g){g={_g_adGroupId:e._g_adGroupId||null,_m_group:e._m_group||null,_g_campaignId:e._g_campaignId,name:e._m_group?id:(adGroupLabel(id)||("광고그룹 "+id)),tags:{},_isGroup:true,_members:[]};grp.set(id,g);}
     g._members.push(e);
-    for(const k of ["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue","_m_installs","신규+재활성 유저 수","_vcrNum","_vcrDen"]){
+    for(const k of ["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue","_m_installs","신규+재활성 유저 수","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100"]){
       if(e[k]!=null){g[k]=(g[k]||0)+(+e[k]||0);}}}
   const rows=[...grp.values()].filter(g=>g._members.length>0);
   rows.forEach(g=>{
@@ -2109,7 +2259,7 @@ async function sbRpc(fn,body){
     const err=new Error(msg);err.status=res.status;throw err;}
   return res.json();}
 /* 저장 페이로드: (매체, 주 시작일, 소재) 그레인으로 원본 수치 합산 — 파생 지표는 로드시 재계산 */
-const SAVE_NUM_KEYS=["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수","_m_installs","_vcrNum","_vcrDen","_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue"];
+const SAVE_NUM_KEYS=["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수","_m_installs","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100","_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue"];
 const SAVE_STR_KEYS=["_m_url","_m_ctype","_m_res","_m_group","_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_adGroupId","_g_campaignId"];
 function buildSaveRows(data,channel){const map=new Map();
   for(const r of data){const nm=String(r.ad_name||"").trim(),wk=String(r.date||"").slice(0,10);
@@ -2642,7 +2792,7 @@ function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(
       }else{const r=parseCSV(raw);
         if(isMolocoReport(r.headers)){const m=prepMoloco(r);parsed.push({headers:m.headers,data:m.data,fname:f.name,forceCh:"Moloco",kind:m.kind});}
         else{const k=detect(r.headers);
-        if(k){attachPreviewCol(r.headers,r.data);
+        if(k){attachPreviewCol(r.headers,r.data);attachVideoFunnelCols(r.headers,r.data);
           parsed.push({headers:r.headers,data:r.data,fname:f.name,kind:dateKindOf(r.data.map(x=>x.date)).kind});}
         else{const gr=parseGroupReport(raw);
         if(gr){groupInfos.push(gr);}
