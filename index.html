@@ -395,17 +395,18 @@
   .isle-row>td{padding:0!important;background:var(--surface-2);border-bottom:1px solid #E6E5DE}
   /* 상세(B안): 히어로 [미디어 | 점수·진단·추이 | 같은 그룹] + 하단 지표 위치 2열.
      미디어 프레임은 소재 비율에 따라 3종(ar-v 세로 / ar-s 정방 / ar-h 가로)으로 폭·높이 전환 */
-  .isle{position:sticky;left:0;box-sizing:border-box;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
-  /* 상단 2분할 [미리보기(+점수·진단) | 같은 그룹 비교] ÷ 구분선 ÷ 하단 3분할 [주차별 추이 | 지표별 위치 2열] */
-  .isle-top{display:grid;gap:26px;grid-template-columns:280px minmax(0,1fr);align-items:start}
-  .isle.ar-v .isle-top{grid-template-columns:232px minmax(0,1fr)}
-  .isle.ar-h .isle-top{grid-template-columns:400px minmax(0,1fr)}
-  .isle-top.nomedia{grid-template-columns:minmax(220px,1fr) minmax(0,2.4fr)}
-  .isle-top>*{min-width:0}
-  .it-side{display:flex;flex-direction:column;gap:14px;min-width:0}
-  .isle-bot{display:grid;gap:26px;grid-template-columns:minmax(0,1fr) minmax(0,2fr);align-items:start;border-top:1px solid #E1DFD7;padding-top:15px}
-  .isle-bot>*{min-width:0}
-  .isle-bot.noTrend{grid-template-columns:1fr}
+  .isle{position:sticky;left:0;box-sizing:border-box;padding:20px;min-width:0}
+  /* 한 줄 3열: [미리보기 | 주차별 추이+지표별 위치(세로) | 같은 그룹 비교] — 모바일은 중요도 순 스택 */
+  .isle-row3{display:grid;gap:26px;align-items:start;
+    grid-template-columns:280px minmax(0,1fr) minmax(0,1.25fr);
+    grid-template-areas:"media mid cmp"}
+  .isle.ar-v .isle-row3{grid-template-columns:232px minmax(0,1fr) minmax(0,1.25fr)}
+  .isle.ar-h .isle-row3{grid-template-columns:400px minmax(0,1fr) minmax(0,1.15fr)}
+  .isle-row3.nomedia{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);grid-template-areas:"mid cmp"}
+  .isle-row3>*{min-width:0}
+  .ir-media{grid-area:media;display:flex;flex-direction:column;gap:6px;min-width:0}
+  .ir-mid{grid-area:mid;display:flex;flex-direction:column;gap:16px;min-width:0}
+  .ir-cmp{grid-area:cmp}
   .isle-frame{width:100%;height:280px;background:var(--surface-3);border-radius:12px;display:grid;place-items:center;overflow:hidden;position:relative}
   .isle.ar-v .isle-frame{height:396px}
   .isle.ar-h .isle-frame{height:250px}
@@ -413,26 +414,18 @@
   .isle-frame video{width:100%;height:100%;object-fit:contain;display:block;background:#141410;border-radius:12px}
   .isle-frame .asset-yt{width:100%;height:100%;border:0}
   .isle-frame .asset-err{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:11px;color:var(--muted)}
-  .ihA-sd{display:flex;flex-direction:column;gap:8px}
-  .ih-score{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-  .ih-score .n{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1}
-  .ih-score .s{font-size:11px;font-weight:700;color:var(--faint)}
-  .ib-trend .ispark{margin:0;max-width:100%}
-  .ipos .sb2{columns:2;column-gap:36px}
-  .ipos .sb2 .sb-row{break-inside:avoid}
-  /* 좁은 폭: 1열 스택(미리보기→비교→추이→지표), 프레임 폭 캡으로 회색 여백 방지 */
+  .ir-mid .ispark{margin:0;max-width:100%}
+  @media(max-width:1200px){.isle-row3{gap:20px}
+    .isle-row3,.isle.ar-v .isle-row3{grid-template-columns:260px minmax(0,1fr) minmax(0,1.25fr)}
+    .isle.ar-h .isle-row3{grid-template-columns:320px minmax(0,1fr) minmax(0,1.15fr)}}
+  /* 좁은 폭: 미리보기 → 비교 → 추이·지표 순 1열, 프레임 폭 캡으로 회색 여백 방지 */
   @media(max-width:860px){
     .isle{padding:16px 14px}
-    .isle-top,.isle.ar-v .isle-top,.isle.ar-h .isle-top,.isle-top.nomedia{grid-template-columns:1fr;gap:18px}
-    .isle-bot,.isle-bot.noTrend{grid-template-columns:1fr;gap:18px}
-    .it-side .isle-frame{max-width:320px;margin:0 auto}
-    .isle.ar-h .it-side .isle-frame{max-width:420px}
-    .it-side .asset-src{text-align:center}
-    .ipos .sb2{columns:1}}
-  .diag{font-size:11.5px;color:var(--muted);line-height:2;text-align:left}
-  .diag .dg-k{background:var(--surface-2);border-radius:5px;padding:1.5px 7px;font-size:10px;font-weight:700;color:var(--faint);margin-right:5px}
-  .diag .dg-sep{display:inline-block;width:14px}
-  .diag .dg-warn{color:var(--w2);font-weight:700}
+    .isle-row3,.isle.ar-v .isle-row3,.isle.ar-h .isle-row3{grid-template-columns:1fr;gap:18px;grid-template-areas:"media" "cmp" "mid"}
+    .isle-row3.nomedia{grid-template-columns:1fr;grid-template-areas:"cmp" "mid"}
+    .ir-media .isle-frame{max-width:320px;margin:0 auto}
+    .isle.ar-h .ir-media .isle-frame{max-width:420px}
+    .ir-media .asset-src{text-align:center}}
   .ish{font-size:12px;font-weight:700;color:var(--muted);margin:0 0 11px;display:flex;align-items:baseline;gap:7px}
   .ish .n{font-size:11px;color:var(--faint);font-weight:500}
   .fam{background:var(--surface);border-radius:10px;overflow:hidden}
@@ -1528,26 +1521,6 @@ function groupInfoHTML(gi){if(!gi)return "";
     fun=`<div class="gi-fun"><div class="gi-fun-t">동영상 재생 퍼널 <span>노출 대비 재생 도달률</span></div>${seg.map(([l,v])=>`<div class="gi-fr"><span>${l}</span><div class="gi-ft"><i style="width:${Math.min(100,v)}%"></i></div><b class="num">${v}%</b></div>`).join("")}</div>`;}
   if(!cells.length&&!fun)return "";
   return `<section><div class="ish">보고서 추가 정보 <span class="n">광고그룹 보고서${gi.from?` · ${gi.from}~${gi.to||""}`:""} 누적</span></div><div class="gi-grid">${cells.join("")}</div>${fun}</section>`;}
-/* 진단 한 줄 — 점수 구성 백분위를 해석(강점·보완)하고 수명(운영 주차)·피로 징후를 덧붙임.
-   표본보정된 지표는 주장에서 제외, 강점은 상위 30% 이내·보완은 하위 30% 이내만,
-   피로는 최근 4주 CTR 연속 하락 + 마지막 주 집행 유지일 때만 판정(보수적) */
-function diagHTML(ds,e){
-  const S=ds.S;if(e.score==null||!S||!S.specs||!e._specPct)return"";
-  const items=S.specs.filter(s=>e._specPct[s.k]&&e._specPct[s.k].w>=0.8).map(s=>({lab:s.lab,p:Math.round(e._specPct[s.k].g*100)}));
-  const ups=items.filter(x=>x.p>=70).sort((a,b)=>b.p-a.p).slice(0,2);
-  const dns=items.filter(x=>x.p<=30).sort((a,b)=>a.p-b.p).slice(0,1);
-  const {ws,os}=weeklyAggOf(ds,e);
-  const spent=ws.filter((w,i)=>os[i].c>0);
-  let fat=null;
-  if(os.length>=4){const L4=os.slice(-4),ctr=L4.map(o=>o.imp>0?o.clk/o.imp:null);
-    if(ctr.every(v=>v!=null)&&ctr[1]<ctr[0]&&ctr[2]<ctr[1]&&ctr[3]<ctr[2]&&L4[3].c>0)fat="CTR 3주 연속 하락, 소재 리프레시 검토";}
-  const seg=[];
-  if(ups.length)seg.push(`<span class="dg-k">강점</span>${ups.map(x=>`${x.lab} 상위 ${100-x.p}%`).join(" · ")}`);
-  if(dns.length)seg.push(`<span class="dg-k">보완</span>${dns.map(x=>`${x.lab} 하위 ${x.p}%`).join(" · ")}`);
-  if(spent.length)seg.push(`<span class="dg-k">운영</span><span title="광고비가 집행된 주 수 (전체 기록 기준) · 첫 집행 주 ${spent[0]}">${spent.length}주차</span>`);
-  if(fat)seg.push(`<b class="dg-warn">피로 징후 · ${fat}</b>`);
-  if(!seg.length)return"";
-  return `<div class="diag">${seg.join('<span class="dg-sep"></span>')}</div>`;}
 function scorePosHTML(ds,e){const S=ds.S;
   if(e.score==null||!S||!S.specs||!e._specPct)return"";
   const rows=S.specs.filter(s=>e._specPct[s.k]).map(s=>{const sp=e._specPct[s.k];
@@ -1557,7 +1530,7 @@ function scorePosHTML(ds,e){const S=ds.S;
     return `<div class="sb-row"><span class="sb-k">${s.lab}</span><span class="sb-raw num">${fmtSpecVal(s.k,e[s.k])}</span><div class="sb-bar"><i style="width:${pctv}%;background:${col}"></i></div><span class="sb-p num" style="color:${col}">${pctv}</span>${shr}</div>`;}).join("");
   if(!rows)return"";
   /* 계산식·가중치·원점수는 노출하지 않는다(암산 강요 금지) — 지표별 위치 막대만, 2열로 세로 최소화. 산정 방식은 푸터에 */
-  return `<section class="ipos"><div class="ish">지표별 계정 내 위치 <span class="n">막대 = 광고비 가중 백분위(50=계정 평균 · 길수록 좋음) · 중요한 지표 순</span></div><div class="sb sb2">${rows}</div></section>`;}
+  return `<section class="ipos"><div class="ish">지표별 계정 내 위치 <span class="n">50=계정 평균 · 길수록 좋음</span></div><div class="sb">${rows}</div></section>`;}
 /* 소재(또는 그룹)의 주차별 광고비·핵심지표 미니 차트 — 상세 뷰 미리보기 아래 표시.
    막대=광고비(투입). 선은 매체 데이터에 맞춰 자동 선택, 각 선은 자체 최대값으로 정규화(모양=추세, 절대값은 범례 최신값·호버).
    · 구글(전환 데이터 보유): ROAS + 전환당 비용 2선 — 수익성·전환효율이 채점의 55%라 이 둘이면 성패가 보임
@@ -1672,12 +1645,6 @@ function fillIsland(ds,e,inner){const L=ds.L;
       `</tbody></table></div></div>`;}
   const preview=assetPreview(previewUrlOf(e),e);
   const spark=creativeTrendHTML(ds,e);
-  /* 점수 대형 + 회색 순위 주석 (계정 상위/하위 %) */
-  const S=ds.S,_tp=(e.rank&&S&&S.eligCount)?Math.round(e.rank/S.eligCount*100):null;
-  const rankTxt=_tp==null?"":` · 계정 ${_tp<=50?`상위 ${Math.max(1,_tp)}%`:`하위 ${Math.max(1,101-_tp)}%`}`;
-  const scoreHTML=e.score!=null?`<div class="ih-score"><span class="n num">${fmtScore(e.score)}</span><span class="s">/ 100${rankTxt}</span></div>`:"";
-  const sd=`<div class="ihA-sd">${scoreHTML}${diagHTML(ds,e)}</div>`;
-  const trendB=spark?`<div class="ib-trend">${spark}</div>`:"";
   const cmpB=`<div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}`;
   /* 미디어 비율 클래스: 몰로코 해상도·유튜브는 즉시, 그 외 이미지는 로드 후(isleAr) 판정 */
   inner.classList.remove("ar-v","ar-h","ar-s");
@@ -1685,10 +1652,8 @@ function fillIsland(ds,e,inner){const L=ds.L;
   if(ytIdOf(_pu))inner.classList.add("ar-h");
   else{const _res=e._m_res&&String(e._m_res).match(/(\d+)\s*[x×]\s*(\d+)/i);
     if(_res)applyIsleAr(inner,+_res[1],+_res[2]);else inner.classList.add("ar-s");}
-  const posB=scorePosHTML(ds,e);
-  const botB=(trendB||posB)?`<div class="isle-bot${trendB?"":" noTrend"}">${trendB}${posB}</div>`:"";
   const sideMedia=e._isGroup?(groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group))||""):preview; /* 그룹은 보고서 정보가 미디어 자리 */
-  inner.innerHTML=`<div class="isle-top${sideMedia?"":" nomedia"}"><div class="it-side">${sideMedia}${sd}</div><div class="it-cmp">${cmpB}</div></div>${botB}`;
+  inner.innerHTML=`<div class="isle-row3${sideMedia?"":" nomedia"}">${sideMedia?`<div class="ir-media">${sideMedia}</div>`:""}<div class="ir-mid">${spark}${scorePosHTML(ds,e)}</div><div class="ir-cmp">${cmpB}</div></div>`;
   const _vv=inner.querySelector(".isle-frame video");
   if(_vv)_vv.addEventListener("loadedmetadata",()=>isleAr(_vv));
   /* 유튜브 소재면 제목을 조회해 화면 곳곳의 URL 이름을 실제 제목으로 교체 (미디어 위 중복 배너 없음) */
