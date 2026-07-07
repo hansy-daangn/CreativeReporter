@@ -84,7 +84,7 @@ end $$;
 -- 비밀번호 열람/관리: cr_users.pw_enc bytea(pgcrypto pgp_sym로 암호화, 키는 함수 본문). 가입·생성·변경 시 hash와 함께 저장.
 --   cr_admin_list가 pgp_sym_decrypt로 복호화해 pw 반환(관리자만). cr_admin_create(이름·비번·권한→승인됨 생성)·cr_admin_setpw(hash·enc 동시 갱신).
 -- 관리자 게이트(_cr_check_admin, 별도 시크릿) + cr_register/cr_login/cr_admin_list/cr_admin_set.
--- 비번 규칙 _cr_pwok(p): p ~ '^[A-Za-z0-9]{6,}$' and 영문·숫자 각 1+ (영문+숫자 조합 6자+). register·admin_create·setpw 공통.
+-- 비번 규칙 _cr_pwok(p): length(p) >= 4 (복잡도 없음). register·admin_create·setpw 공통. 중복은 pw_taken, 예약 0715 별도 거부.
 -- cr_pending_count(pw): perform _cr_check_pw(pw) 후 신청함 수 반환(admin.html 알림용).
 -- cr_admin_set에 p_name(이름 변경) 추가. 관리자 로그인 계정 admin/7132(editor) 시드(정책 우회 직접 insert).
 -- 즐겨찾기/내 소재: cr_user_marks(user_name,channel,ad_name,kind in (fav,mine), unique 4개조). RLS deny-all.
