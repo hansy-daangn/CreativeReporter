@@ -62,9 +62,10 @@
   .rbtn:hover{color:var(--ink)}
   .rbtn.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
   .rbtn.on[data-role="editor"]{color:#1E6FD9}
-  .rbtn.on[data-role="admin"]{color:var(--karrot)}
+  .roletag{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:7px;white-space:nowrap}
+  .roletag.adm{background:var(--karrot-f,#FFEDDF);color:var(--karrot)}
   table{width:100%;border-collapse:separate;border-spacing:0;background:var(--surface);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-  th,td{padding:11px 14px;text-align:left;font-size:13px;border-bottom:1px solid var(--line)}
+  th,td{padding:11px 14px;text-align:left;font-size:13px;border-bottom:1px solid var(--line);white-space:nowrap}
   th{background:var(--surface-2);color:var(--muted);font-weight:650;font-size:12px;position:sticky;top:0}
   tr:last-child td{border-bottom:0}
   td.name{font-weight:650}
@@ -80,7 +81,15 @@
   .empty{padding:40px;text-align:center;color:var(--faint);font-size:13px}
   #toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:11px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:40;max-width:90vw;text-align:center}
   #toast.show{opacity:.96}
-  @media(max-width:560px){td.meta.rvw{display:none}th.rvw{display:none}}
+  /* 신청일·처리는 '상세 보기'를 켰을 때만 노출 */
+  .det{display:none}
+  body.show-detail .det{display:table-cell}
+  .chk2{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
+  .chk2 input{width:15px;height:15px;accent-color:var(--karrot);cursor:pointer}
+  /* 좁아지면 우선순위 낮은 열부터 숨김 — 이름·상태·승인/거절이 최우선, 그다음 권한 */
+  @media(max-width:860px){ th.pwcol,td.pwcell{display:none} }
+  @media(max-width:660px){ .abtn.pw,.rename{display:none} }
+  @media(max-width:520px){ th.rolecol,td.rolecell{display:none} }
 </style>
 </head>
 <body>
@@ -100,6 +109,7 @@
 
   <div class="topbar">
     <span class="hint">비밀번호는 마우스를 올리면 보여요 · 이름 옆 ✎로 수정</span>
+    <label class="chk2"><input type="checkbox" id="detToggle">상세 보기<span class="hint" style="margin-left:2px">(신청일·처리)</span></label>
     <div class="spacer"></div>
     <button class="btn" id="addBtn" type="button">＋ 계정 추가</button>
     <button class="btn" id="refreshBtn" type="button">새로고침</button>
@@ -110,7 +120,7 @@
   <div class="addbox" id="addBox" hidden>
     <input class="af" type="text" id="afName" placeholder="daangn name (영문)" maxlength="24">
     <input class="af" type="text" id="afPw" placeholder="비밀번호 (4자+)" maxlength="40">
-    <select class="af" id="afRole"><option value="viewer">뷰어</option><option value="editor">에디터</option><option value="admin">관리자</option></select>
+    <select class="af" id="afRole"><option value="viewer">뷰어</option><option value="editor">에디터</option></select>
     <button class="btn pri" id="afGo" type="button">추가</button>
     <button class="btn" id="afCancel" type="button">닫기</button>
   </div>
@@ -118,7 +128,7 @@
   <div class="counts" id="counts"></div>
   <table>
     <thead><tr>
-      <th>daangn name</th><th>상태</th><th>권한</th><th>비밀번호</th><th>신청일</th><th class="rvw">처리</th><th style="text-align:right">액션</th>
+      <th>이름</th><th>상태</th><th class="rolecol">권한</th><th class="pwcol">비밀번호</th><th class="det">신청일</th><th class="det">처리</th><th style="text-align:right">액션</th>
     </tr></thead>
     <tbody id="rows"><tr><td colspan="7" class="empty">관리자 비밀번호를 입력해 주세요.</td></tr></tbody>
   </table>
@@ -167,25 +177,26 @@ function render(){
     const st=STT[u.status]||["","?"];
     const ap=u.status==="승인됨",rj=u.status==="거절됨",pd=u.status==="신청함";
     const role=u.role==="admin"?"admin":u.role==="editor"?"editor":"viewer";
+    /* 권한: 관리자 계정은 태그로만 표시(콘솔에서 관리자 부여·강등 불가) · 그 외 뷰어/에디터 토글(승인 기본값 뷰어) */
+    const roleCell=role==="admin"
+      ?`<span class="roletag adm" title="관리자 — 콘솔에서 변경 불가">관리자</span>`
+      :`<div class="rtog" title="이 사용자의 권한 — 에디터만 저장·수정 가능">
+          <button class="rbtn ${role==="viewer"?"on":""}" data-id="${u.id}" data-role="viewer">뷰어</button>
+          <button class="rbtn ${role==="editor"?"on":""}" data-id="${u.id}" data-role="editor">에디터</button>
+        </div>`;
     return `<tr>
       <td class="name">${esc(u.name)} <button class="rename" data-id="${u.id}" title="이름 수정">✎</button></td>
       <td><span class="stt ${st[0]}">${st[1]}</span></td>
-      <td class="rolecell">
-        <div class="rtog" title="이 사용자의 권한 — 에디터는 저장·수정, 관리자는 소재 이름 변경까지">
-          <button class="rbtn ${role==="viewer"?"on":""}" data-id="${u.id}" data-role="viewer">뷰어</button>
-          <button class="rbtn ${role==="editor"?"on":""}" data-id="${u.id}" data-role="editor">에디터</button>
-          <button class="rbtn ${role==="admin"?"on":""}" data-id="${u.id}" data-role="admin">관리자</button>
-        </div></td>
+      <td class="rolecell">${roleCell}</td>
       <td class="pwcell">${pwCell(u.pw)}</td>
-      <td class="meta">${fmtDate(u.created_at)}</td>
-      <td class="meta rvw">${u.reviewed_at?fmtDate(u.reviewed_at):"–"}</td>
+      <td class="meta det">${fmtDate(u.created_at)}</td>
+      <td class="meta det">${u.reviewed_at?fmtDate(u.reviewed_at):"–"}</td>
       <td class="act">
         <button class="abtn ap" data-id="${u.id}" data-s="승인됨" ${ap?"disabled":""}>승인</button>
         <button class="abtn rj" data-id="${u.id}" data-s="거절됨" ${rj?"disabled":""}>거절</button>
-        <button class="abtn pd" data-id="${u.id}" data-s="신청함" ${pd?"disabled":""}>대기</button>
         <button class="abtn pw" data-id="${u.id}">비번변경</button>
       </td></tr>`;}).join("");
-  tb.querySelectorAll(".abtn.ap,.abtn.rj,.abtn.pd").forEach(b=>b.onclick=()=>setStatus(+b.dataset.id,b.dataset.s));
+  tb.querySelectorAll(".abtn.ap,.abtn.rj").forEach(b=>b.onclick=()=>setStatus(+b.dataset.id,b.dataset.s));
   tb.querySelectorAll(".abtn.pw").forEach(b=>b.onclick=()=>changePw(+b.dataset.id));
   tb.querySelectorAll(".rename").forEach(b=>b.onclick=()=>renameUser(+b.dataset.id));
   tb.querySelectorAll(".rbtn").forEach(b=>b.onclick=()=>{if(!b.classList.contains("on"))setRole(+b.dataset.id,b.dataset.role);});
@@ -285,6 +296,7 @@ $("#gateForm").addEventListener("submit",async e=>{e.preventDefault();
     if(!(err.status===400||err.status===403||/denied/i.test(err.message||"")))toast("연결에 실패했어요 · "+(err.message||""));}});
 $("#refreshBtn").onclick=load;
 $("#logoutBtn").onclick=lock;
+$("#detToggle").onchange=e=>document.body.classList.toggle("show-detail",e.target.checked); /* 상세 보기 — 신청일·처리 열 */
 $("#addBtn").onclick=()=>{const b=$("#addBox");b.hidden=!b.hidden;if(!b.hidden)$("#afName").focus();};
 $("#afCancel").onclick=()=>{$("#addBox").hidden=true;};
 $("#afGo").onclick=addAccount;
