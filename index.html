@@ -106,10 +106,11 @@
   .chip.grp{background:#E9E4F2;color:#6B5B95;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .chip.gdt{background:#E3EDF6;color:var(--c2)}
   .ocr-mark{font-size:8.5px;font-weight:800;letter-spacing:.04em;padding:1px 5px;border-radius:4px;margin-left:5px;background:var(--surface-3);color:var(--faint);vertical-align:1.5px}
+  .asset-src .ocr-mark{margin-left:0;margin-right:6px;vertical-align:0}
   .gst{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:5px;margin-left:6px;vertical-align:1px;white-space:nowrap}
   .gst.lim{background:var(--w1-f);color:var(--w1)}
-  .lvb{font-size:9.5px;font-weight:800;color:var(--g1);margin-left:6px;vertical-align:1px;white-space:nowrap;letter-spacing:.2px}
-  .lvb::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--g1);margin-right:3px;vertical-align:.5px}
+  .lvb{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:800;color:var(--g1);background:var(--g1-f);padding:1.5px 8px 1.5px 7px;border-radius:999px;margin-left:6px;vertical-align:1px;white-space:nowrap;letter-spacing:.2px}
+  .lvb::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--g1);vertical-align:.5px}
   .gi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px 18px;margin-top:8px}
   .gi-r{display:flex;justify-content:space-between;gap:10px;font-size:12px;border-bottom:1px dashed var(--surface-3);padding:3px 0;min-width:0}
   .gi-r.wide{grid-column:1/-1}
@@ -607,8 +608,11 @@
   @keyframes pwshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
   /* 즐겨찾기 / 내 소재 별 버튼 — 이름 바로 우측, 호버 시에만 회색으로 노출(추가 공간 없음). 상태는 칩으로 상시 표시 */
   .mark-btns{display:inline-flex;gap:1px;vertical-align:-3px;margin-left:5px}
+  .cmp-mark{display:inline-flex;vertical-align:-2px}
+  .cmp-mark .mark-btns{margin-left:4px}
   .mark-btn{opacity:0;padding:1px;line-height:0;background:none;border:0;cursor:pointer;transition:opacity .12s,transform .1s;color:#C6C6C6}
-  tr.row:hover .mark-btn{opacity:1}
+  tr.row:hover .mark-btn,.fam tr:hover .mark-btn{opacity:1}
+  .mark-btn.on{opacity:1}
   .mark-btn:hover{transform:scale(1.18)}
   .mark-btn svg{width:16px;height:16px;display:block;fill:currentColor}
   .mark-btn.fav.on{color:#F5C518}
@@ -619,6 +623,19 @@
   .chip.mine-chip svg,.chip.fav-chip svg{width:11px;height:11px;vertical-align:-2px;margin-right:3px}
   .chip.mine-chip svg{fill:#2478C7}.chip.mine-chip .mchk{fill:none}
   .chip.fav-chip svg{fill:#B0870F}
+  /* 소재 이름 수동 변경(관리자) */
+  .nm-text.editing{display:inline-block;min-width:24px;outline:2px dashed var(--karrot);outline-offset:2px;border-radius:3px;padding:0 4px;background:var(--karrot-f);color:var(--ink);cursor:text;white-space:pre-wrap;font-weight:700}
+  .nm-text.editing:focus{outline-color:var(--karrot-2);background:#fff}
+  body.rename-on tr.row .caret{display:none}
+  body.rename-on tr.row{cursor:default}
+  body.rename-on .tthumb{pointer-events:none}
+  #renameBar{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:99999;background:#2B2B2B;color:#fff;font-size:12px;font-weight:650;padding:9px 18px;border-radius:999px;box-shadow:0 8px 28px rgba(0,0,0,.28);letter-spacing:.01em}
+  #renameBar b{color:var(--karrot-2);font-weight:800}
+  /* 서비스별 드롭다운 필터 */
+  .svc-sel{height:32px;border:1px solid var(--surface-3);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:12.5px;font-weight:650;padding:0 26px 0 11px;cursor:pointer;
+    -webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%2374726A' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");background-repeat:no-repeat;background-position:right 9px center}
+  .svc-sel:hover{border-color:var(--karrot)}
+  .svc-sel.on{border-color:var(--karrot);color:var(--karrot);background-color:var(--karrot-f)}
 </style>
 </head>
 <body>
@@ -724,6 +741,7 @@
       <section class="card" id="tabTable" hidden>
         <div class="tbar">
           <input type="search" id="search" placeholder="이름으로 검색">
+          <select id="svcFilter" class="svc-sel" title="서비스별로 모아 보기"><option value="">전체 서비스</option></select>
           <div class="qfo" id="qfoWrap" hidden>
             <button class="qfo-btn qfo-txt" id="chipFil" type="button" title="칩 필터 해제" hidden></button>
             <button class="qfo-btn qfo-txt" id="qfoLive" type="button" title="최신 집행 주에 광고비가 나간 소재만" aria-label="라이브만 보기">Live</button>
@@ -1013,6 +1031,10 @@ function attachVideoFunnelCols(headers,data){
 let gNameMap={adgroup:{},campaign:{},asset:{}};
 let gInfoMap={}; /* 광고그룹 보고서 스냅샷 — {광고그룹ID:{nm,cpNm,st,op,rsn,tcpa,cost,…,from,to}} */
 let gOcrMap={}; /* 이미지 소재 OCR 추출 텍스트 — {애셋ID:텍스트}. 별도 kv(ocr) 저장: 마음에 안 들면 키 삭제만으로 전체 취소 */
+/* 소재 이름 수동 변경(관리자 전용) — kv(nameovr)에 {markKey(매체,원본명):새이름} 저장. 표시 최우선.
+   NAME_PENDING = /namechange 편집 중 미저장분(''=기본명으로 되돌림). renameMode = 편집 활성 여부 */
+let NAME_OVR={}, NAME_PENDING={}, renameMode=false, renameDirty=false;
+const nameOvrKey=(e)=>(e&&!e._isGroup&&curDS&&e.name!=null)?markKey(curDS.media,e.name):null;
 function adGroupLabel(id){return (gNameMap&&gNameMap.adgroup&&gNameMap.adgroup[String(id)])||(gInfoMap[String(id)]&&gInfoMap[String(id)].nm)||null;}
 function groupInfoOf(id){return id!=null?gInfoMap[String(id)]||null:null;}
 /* 광고그룹 이름 분절 — '구분_서비스_수식어_날짜' 관례를 칩으로.
@@ -1049,6 +1071,10 @@ function liveBadge(ds,e){if(!ds||standaloneMode||!ds.liveWeek)return "";
    내부 식별 키(data-name, 저장, 병합)는 항상 원본 name을 그대로 쓴다 */
 function displayNameOf(e){if(!e)return "";
   if(e._isGroup)return groupPrettyName(e.name); /* 그룹 행은 분절형 이름으로 표시 */
+  const _ok=nameOvrKey(e); /* 0순위: 관리자가 손으로 바꾼 이름(편집 중이면 미저장분 우선, ''=기본명 복원) */
+  if(_ok!=null){
+    if(Object.prototype.hasOwnProperty.call(NAME_PENDING,_ok)){if(NAME_PENDING[_ok]!=="")return NAME_PENDING[_ok];}
+    else if(NAME_OVR[_ok]&&NAME_OVR[_ok]!=="")return NAME_OVR[_ok];}
   if(e._g_assetId){
     const nm=gNameMap.asset&&gNameMap.asset[String(e._g_assetId)];if(nm)return nm; /* 1순위: 공식 애셋 이름 */
     const oc=gOcrMap[String(e._g_assetId)];if(oc)return oc;                        /* 2순위: 이미지 OCR 텍스트 */
@@ -1086,7 +1112,9 @@ async function loadNameMap(pw){
   try{const oc=await sbRpc("cr_kv_get",{pw,key:"ocr"});
     if(oc&&typeof oc==="object")gOcrMap=oc;}catch(e){}
   try{const yt=await sbRpc("cr_kv_get",{pw,key:"ytt"});
-    if(yt&&typeof yt==="object")for(const id in yt){if(typeof yt[id]==="string"&&yt[id]&&_ytTitles[id]===undefined)_ytTitles[id]=yt[id];}}catch(e){}}
+    if(yt&&typeof yt==="object")for(const id in yt){if(typeof yt[id]==="string"&&yt[id]&&_ytTitles[id]===undefined)_ytTitles[id]=yt[id];}}catch(e){}
+  try{const no=await sbRpc("cr_kv_get",{pw,key:"nameovr"});
+    if(no&&typeof no==="object")NAME_OVR=no;}catch(e){}}
 /* 모든 유튜브 소재 제목을 로드 직후 백그라운드 일괄 조회(동시 4) — 클릭 없이 자동 표시, kv(ytt)로 기기 간 공유 */
 let _yttRan=false;
 async function hydrateAllYtTitles(){
@@ -1349,12 +1377,11 @@ function chipsHTML(t,e){
     if(gid){const raw=e._m_group?gid:adGroupLabel(gid);
       const glab=raw?groupPrettyName(raw):"그룹 …"+String(gid).slice(-4);
       arr.push(mk("grp",gid,"grp",trunc(glab,24)));}}
-  /* 내 소재 칩(등록자 이름, 전원 공개) · 즐겨찾기 칩(본인 계정에서만) — 칩 위치에 추가 */
+  /* 내 소재 칩(등록자 이름, 전원 공개) — 즐겨찾기는 칩이 아니라 소재명 우측 노란 별로만 표시 */
   if(e&&!e._isGroup){const ch=(t&&t.ch)||(curDS&&curDS.media)||"";const k=markKey(ch,e.name);
     const mineNames=MARKS.mineByKey.get(k);
     if(mineNames&&mineNames.length)for(const nm of mineNames)
-      arr.push(`<span class="chip mine-chip" title="내 소재로 등록: ${escAttr(nm)}">${SEAL_SVG} ${escHtml(nm)}</span>`);
-    if(MARKS.fav.has(k))arr.push(`<span class="chip fav-chip" title="내 즐겨찾기">${STAR_SVG} 즐겨찾기</span>`);}
+      arr.push(`<span class="chip mine-chip" title="내 소재로 등록: ${escAttr(nm)}">${SEAL_SVG} ${escHtml(nm)}</span>`);}
   return arr.filter(Boolean).join("");}
 /* key summary tiles */
 function renderKeyrow(ds){const L=ds.L,a=ds.agg,tiles=[];
@@ -1538,6 +1565,22 @@ let tGroupBy=false; /* true → aggregate table rows by 광고그룹 ID */
 let tLiveOnly=true; /* 기본 ON — 스코프 최신 집행 주에 광고비>0인 소재만 (전체 목록 한정) */
 let tChip=null; /* 칩 클릭 필터 {k:"ve|fo|nat|size|grp", v, lab} — 한 번에 하나, 다시 클릭·✕로 해제 */
 let tMarkView="all"; /* 전체 / 내 소재(mine) / 즐겨찾기(fav) — 좌측 nav 세그먼트 */
+let tService=""; /* 서비스별 드롭다운 필터 — ""=전체, "중고거래"·"브랜딩"·… 또는 "기타"(미분류) */
+/* 서비스 분류 — 이름·서비스태그·그룹명 안의 키워드로 6개 서비스 버킷에 배정. 첫 일치가 우선.
+   중고거래 · 브랜딩(브랜딩·보검) · 부동산 · 알바 · 비즈니스(로컬애즈·비즈) · 페이(픽업·래플) */
+const SVC_DEFS=[
+  ["중고거래",/중고거래|중고나라|fleamarket|flemarket|중고|sellitems|declutter|nocommission|simbatdan/i],
+  ["브랜딩",/브랜딩|보검|branding|\bbrand/i],
+  ["부동산",/부동산|realty|rentkarrot|lifedaangn/i],
+  ["알바",/알바|아르바이트|\bjobs?\b|baro_running/i],
+  ["비즈니스",/비즈니스|로컬\s?애즈|localads|localbiz|\bbiz\b|biz[_-]|비즈|동네업체|동네장사/i],
+  ["페이",/페이|픽업|pickup|래플|raffle|karrotpay|당근페이/i],
+];
+function svcOf(e){
+  if(!e)return null;
+  const hay=[displayNameOf(e),e.name,(e.tags&&e.tags.ve)||"",e._m_group||"",adGroupLabel(e._g_adGroupId)||""].join("  ");
+  for(const[k,re]of SVC_DEFS)if(re.test(hay))return k;
+  return null; /* 미분류 → 기타 */}
 let tExp=new Set(); /* 펼쳐진 컬럼 그룹(cost/inst/act/clk/g) — 기본은 대표 컬럼만 */
 function isInactive(e){if(!e)return true;
   if((e.비용||0)<=0)return true;
@@ -1555,8 +1598,24 @@ function applyTFilter(rows,ds){
     if(tChip.k==="gdt")return !!(e.tags&&e.tags.dt===tChip.v);
     if(tChip.k==="gxt")return !!(e.tags&&Array.isArray(e.tags.xt)&&e.tags.xt.includes(tChip.v));
     return !!(e.tags&&e.tags[tChip.k]===tChip.v);});
+  if(tService)rows=rows.filter(e=>{const s=svcOf(e);return tService==="기타"?!s:s===tService;});
   return rows;}
 function renderTFilter(ds){/* filter popup removed */}
+/* 서비스 드롭다운 — 현재 화면(개별/그룹) 기준으로 서비스별 개수를 세어 옵션 구성 */
+function renderSvcFilter(ds){
+  const sel=$("#svcFilter");if(!sel)return;
+  const base=getRowsForTable(ds);
+  const cnt={};let other=0;
+  for(const e of base){const s=svcOf(e);if(s)cnt[s]=(cnt[s]||0)+1;else other++;}
+  if(tService&&tService!=="기타"&&!cnt[tService])tService="";
+  if(tService==="기타"&&!other)tService="";
+  const opts=[`<option value="">전체 서비스</option>`];
+  for(const[k]of SVC_DEFS)if(cnt[k])opts.push(`<option value="${escAttr(k)}">${escHtml(k)} (${cnt[k]})</option>`);
+  if(other)opts.push(`<option value="기타">기타 (${other})</option>`);
+  sel.innerHTML=opts.join("");
+  sel.value=tService;
+  sel.classList.toggle("on",!!tService);
+  sel.onchange=()=>{tService=sel.value;tPage=1;renderTable(ds);};}
 let tableShowAll=false;
 let curDS=null; const ISLE={name:null,metric:null,gtab:"trend",posX:null,posY:null}; /* gtab: 상세 그래프 탭, posX/posY: 포지셔닝 축 지표 — 소재를 옮겨 다녀도 유지 */
 function escAttr(s){return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;");}
@@ -1584,7 +1643,8 @@ function isleAr(el){const isle=el&&el.closest?el.closest(".isle"):null;if(!isle)
   applyIsleAr(isle,el.naturalWidth||el.videoWidth||0,el.naturalHeight||el.videoHeight||0);}
 /* 미리보기 — 고정 프레임(.isle-frame) 안에 비율 유지로 수납. 프레임 크기는 .isle의 ar-* 클래스가 결정 */
 function assetPreview(url,ent){if(!url)return "";
-  const srcLine=(note)=>`<div class="asset-src">${note?note+" · ":""}<a href="${url}" target="_blank" rel="noopener">${trunc(url,60)}</a></div>`;
+  const ocrM=isOcrName(ent)?`<span class="ocr-mark" title="이미지에서 자동 추출한 텍스트(OCR) — 공식 애셋 이름을 등록하면 대체됩니다">OCR</span>`:"";
+  const srcLine=(note)=>`<div class="asset-src">${ocrM}${note?note+" · ":""}<a href="${url}" target="_blank" rel="noopener">${trunc(url,60)}</a></div>`;
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
   if(yt)return `<div class="isle-frame"><iframe class="asset-yt" src="https://www.youtube.com/embed/${yt[1]}" frameborder="0" allow="encrypted-media" allowfullscreen></iframe></div>${srcLine()}`;
   if(isVideoUrl(url))return `<div class="isle-frame"><video class="asset-vid" src="${url}" controls muted playsinline preload="metadata"></video></div>${srcLine()}`;
@@ -1899,7 +1959,7 @@ function fillIsland(ds,e,inner){const L=ds.L;
         const emoji=entTypeEmoji(x);
         const dn=displayNameOf(x);
         return `<tr class="${x.name===e.name?"me":""} hoverable" data-nm="${escAttr(x.name)}" data-preview="${escAttr(url)}" data-label="${escAttr(typeShort+' · '+trunc(dn,40))}" title="${escAttr(dn)}">
-        <td class="l"><span class="g-type-emoji">${emoji}</span> <span class="g-type-lab">${typeShort}</span> <span class="g-name">${_gtrim(dn)}</span></td>
+        <td class="l"><span class="g-type-emoji">${emoji}</span> <span class="g-type-lab">${typeShort}</span> <span class="g-name">${_gtrim(dn)}</span><span class="cmp-mark">${markBtnsHTML(ds.media,x)}</span></td>
         <td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td>
         <td><span class="sp ${sp(x.tier)}">${fmtScore(x.score)}</span></td></tr>`;}).join("")+
       `</tbody></table></div></div>`;
@@ -1931,7 +1991,10 @@ function fillIsland(ds,e,inner){const L=ds.L;
   inner.querySelectorAll(".fam tr[data-nm]").forEach(tr=>{
     const nm=tr.dataset.nm,url=tr.dataset.preview,lab=tr.dataset.label||"";
     tr.style.cursor="pointer";
-    tr.addEventListener("click",ev=>{ev.stopPropagation();if(nm&&nm!==e.name){hideTip();goToIslandFromQuad(nm);}});
+    tr.addEventListener("click",ev=>{ev.stopPropagation();
+      const mb=ev.target.closest(".mark-btn");
+      if(mb){hideTip();markToggle((curDS&&curDS.media)||"",findRow(curDS,nm),mb.dataset.mk);return;}
+      if(nm&&nm!==e.name){hideTip();goToIslandFromQuad(nm);}});
     if(!url)return;
     tr.addEventListener("mouseenter",ev=>{const h=assetPreviewTipHTML(url,lab);if(h)showTip(h,ev.clientX,ev.clientY,true);});
     tr.addEventListener("mousemove",ev=>{if(tip.style.opacity!=="0")placeTip(ev.clientX,ev.clientY);});
@@ -2067,6 +2130,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
     const hasSubs=c.lead&&allCols.some(x=>x.sub&&x.grp===c.grp);
     const xp=hasSubs?`<span class="colx" data-g="${c.grp}" title="${tExp.has(c.grp)?"세부 지표 접기":"세부 지표 펼치기"}">${tExp.has(c.grp)?"−":"+"}</span>`:"";
     return `<th class="${cl.trim()}" data-k="${c.k}" ${c.help?`title="${c.help}"`:""}>${c.t} <span class="arr">${arr}</span>${xp}</th>`;}).join("")+"</tr>";
+  renderSvcFilter(ds); /* 서비스 필터 옵션·유효성 먼저 확정 → 아래 필터링과 드롭다운 표시가 어긋나지 않게 */
   const rows=orderedRowsForTable(ds);
   renderTFilter(ds);
   const colSorted={};
@@ -2084,9 +2148,11 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
     return `<tr class="row" data-name="${escAttr(r.name)}">`+cols.map(c=>{if(c.k==="_b")return `<td class="bdg">${tierBadge(r)}</td>`;
       if(c.k==="name"){const th=thumbHTML(r);const dn=displayNameOf(r);
         const gst=r._isGroup?giStatusChip(groupInfoOf(r._g_adGroupId||r._m_group)):"";
-        const om=isOcrName(r)?`<span class="ocr-mark" title="이미지에서 자동 추출한 텍스트(OCR) — 공식 애셋 이름을 등록하면 대체됩니다">OCR</span>`:"";
-        const mb=r._isGroup?"":markBtnsHTML(ds.media,r.name);
-        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}>${trunc(dn,60)}${mb}${om}${liveBadge(ds,r)}${gst}${lrnBadge(r)}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
+        const mb=markBtnsHTML(ds.media,r);
+        const nmHtml=(renameMode&&!r._isGroup)
+          ? `<span class="nm-text editing" contenteditable="true" spellcheck="false" data-nm="${escAttr(r.name)}">${escHtml(dn)}</span>`
+          : `<span class="nm-text">${trunc(dn,60)}</span>`;
+        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}>${nmHtml}${mb}${liveBadge(ds,r)}${gst}${lrnBadge(r)}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
       if(c.k==="score")return `<td>${score}</td>`;
       const dir=COL_DIR[c.k]||0;
       const t=dir?cellTier(r[c.k],colSorted[c.k],dir):"m";
@@ -2361,6 +2427,7 @@ let cloudBooting=!!cloudPw; /* 자동 재접속 중 — 랜딩(비밀번호 화�
    "/logout" 으로 해제. 인증 안 된 업로드는 저장소에 uploaded_by='unknown'으로 기록됨 */
 let uploaderId=localStorage.getItem("cr_uploader")||null;
 let canEdit=(sessionStorage.getItem("crcan")==="1"); /* 에디터 권한 — 저장·수정 가능. 뷰어·0715는 false */
+let isAdmin=(sessionStorage.getItem("crrole")==="admin"); /* 관리자 권한(에디터 상위) — 소재 이름 변경 가능. 현재 hansy만 */
 (function(){let buf="";
   addEventListener("keydown",e=>{
     if(e.key==="Enter"){
@@ -2448,7 +2515,20 @@ async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
     if(rows.length){loadCloudRows(rows);toast(`☁️ 저장소를 열었어요 · 소재 ${new Set(rows.map(r=>r.ad_name)).size.toLocaleString()}개 · 주간 기록 ${rows.length.toLocaleString()}건`);}
     else if(!silent)toast("☁️ 연결됐어요 · 아직 데이터가 없어요. 주간 CSV를 올리면 여기 쌓여요");
     /* 탭 세션당 1회 환영 인사 — 권한별 문구. 자동 재접속 시엔 sessionStorage 값 사용 */
-    const gv=(opts&&"viewer"in opts)?opts:{viewer:sessionStorage.getItem("crviewer")==="1",name:sessionStorage.getItem("crname")||"",editor:sessionStorage.getItem("crcan")==="1"};
+    /* 자동 재접속(restore) 경로면 서버에서 최신 이름·권한을 다시 받아 반영 —
+       관리자가 admin에서 daangn name/권한을 바꿔도 본 페이지 닉네임·서명·권한이 새로고침만으로 갱신 */
+    let idOpts=opts;
+    if(!(opts&&"viewer"in opts)){
+      try{const info=await sbRpc("cr_login",{p_pw:pw});
+        if(info&&info.found&&info.status==="승인됨"){
+          const viewer=!!info.viewer,name=viewer?"":(info.name||""),role=(info.role||"viewer"),editor=(role==="editor"||role==="admin");
+          canEdit=editor;isAdmin=(role==="admin");uploaderId=name||null;
+          try{if(name)localStorage.setItem("cr_uploader",name);else localStorage.removeItem("cr_uploader");
+            sessionStorage.setItem("crname",name);sessionStorage.setItem("crviewer",viewer?"1":"0");sessionStorage.setItem("crcan",editor?"1":"0");sessionStorage.setItem("crrole",role);}catch(_){}
+          idOpts={viewer,name,editor};
+        }
+      }catch(_){}}
+    const gv=(idOpts&&"viewer"in idOpts)?idOpts:{viewer:sessionStorage.getItem("crviewer")==="1",name:sessionStorage.getItem("crname")||"",editor:sessionStorage.getItem("crcan")==="1"};
     if(!sessionStorage.getItem("crHi")){sessionStorage.setItem("crHi","1");
       const nm=(gv.name||"").toUpperCase();
       /* 환영 토스트는 환영 문구만. 0715 뷰어는 로그인 안내만(환영 문구 없음) */
@@ -2953,7 +3033,14 @@ document.addEventListener("dragenter",e=>{if(!_hasFiles(e))return;e.preventDefau
 document.addEventListener("dragover",e=>{if(!_hasFiles(e))return;e.preventDefault();_updateHot(e);});
 document.addEventListener("dragleave",e=>{if(!_hasFiles(e))return;_dragDepth--;if(_dragDepth<=0){_dragDepth=0;if(dropOv)dropOv.classList.remove("show");}});
 document.addEventListener("drop",e=>{e.preventDefault();_dragDepth=0;if(dropOv)dropOv.classList.remove("show");if(e.dataTransfer&&e.dataTransfer.files.length){const z=dropZone(e);handleFiles(e.dataTransfer.files,z);}});
-let _sq;$("#search").addEventListener("input",e=>{const v=e.target.value;clearTimeout(_sq);_sq=setTimeout(()=>{tState.q=v;tPage=1;if(active)renderTable(DATASETS[active]);},120);});
+let _sq;$("#search").addEventListener("input",e=>{const v=e.target.value;clearTimeout(_sq);
+  if(v.trim().charAt(0)==="/")return; /* 슬래시 명령 입력 중엔 필터하지 않음 */
+  _sq=setTimeout(()=>{tState.q=v;tPage=1;if(active)renderTable(DATASETS[active]);},120);});
+/* 관리자 슬래시 명령 — /namechange 로 소재 이름 편집 켜기·저장 토글 */
+$("#search").addEventListener("keydown",e=>{
+  if(e.key!=="Enter")return;
+  const v=(e.target.value||"").trim().toLowerCase();
+  if(v==="/namechange"&&isAdmin){e.preventDefault();e.target.value="";clearTimeout(_sq);toggleRenameMode();}});
 /* 상세가 열려 있을 때 ← → 로 이전/다음 소재, Esc 로 닫기 (입력창 포커스 중엔 무시) */
 document.addEventListener("keydown",ev=>{
   if(!ISLE.name||!curDS)return;
@@ -2965,10 +3052,13 @@ document.addEventListener("keydown",ev=>{
     if(tr)toggleIsland(curDS,ISLE.name,tr);
     else{const ir=document.querySelector(".isle-row");if(ir)ir.remove();ISLE.name=null;}}});
 $("#showAll").addEventListener("change",e=>{tableShowAll=e.target.checked;tPage=1;if(active)renderTable(DATASETS[active]);});
+$("#table tbody").addEventListener("input",_renameInput);
 $("#table tbody").addEventListener("click",e=>{
-  /* 즐겨찾기 / 내 소재 별 클릭 (행 펼침·필터와 분리) */
+  /* 이름 편집 모드에선 소재명 클릭이 커서만 두게 하고 행 펼침·별·칩 클릭은 막는다 */
+  if(renameMode)return;
+  /* 즐겨찾기 / 내 소재 별 클릭 (행 펼침·필터와 분리) — 그룹 행이면 일괄 토글 */
   const mbtn=e.target.closest(".mark-btn");
-  if(mbtn&&curDS){e.stopPropagation();toggleMark(curDS.media||"",mbtn.dataset.ad,mbtn.dataset.mk);return;}
+  if(mbtn&&curDS){e.stopPropagation();markToggle(curDS.media||"",findRow(curDS,mbtn.dataset.nm),mbtn.dataset.mk);return;}
   /* 칩 클릭 = 그 값으로 필터 토글 (행 펼침과 분리) */
   const chip=e.target.closest(".chip[data-ck]");
   if(chip&&curDS){const k=chip.dataset.ck,v=chip.dataset.cv;
@@ -3036,27 +3126,108 @@ async function loadMarks(){
     for(const x of (r&&r.mine)||[]){const k=markKey(x.c,x.a);let a=mineByKey.get(k);if(!a){a=[];mineByKey.set(k,a);}a.push(x.n);if(me&&x.n===me)myMine.add(k);}
     MARKS={me,fav,myMine,mineByKey};
   }catch(e){}}
-function markBtnsHTML(ch,ad){
-  if(!MARKS.me)return "";
-  const k=markKey(ch,ad),faved=MARKS.fav.has(k),mined=MARKS.myMine.has(k);
+/* 별 버튼 — 개별 소재는 자기 상태, 그룹 행은 파생 상태(멤버 전원 표시 시 그룹도 표시).
+   ch=현재 매체 · ent=행/멤버 엔티티(개별) 또는 그룹 엔티티(_isGroup) · 버튼 data-nm으로 대상 식별 */
+function groupMemberNames(ent){return ent&&ent._isGroup?(ent._members||[]).map(m=>m&&m.name).filter(n=>n!=null&&n!==""):[];}
+function markStateFor(ch,ent){
+  if(ent&&ent._isGroup){const names=groupMemberNames(ent);
+    const all=s=>names.length>0&&names.every(n=>s.has(markKey(ch,n)));
+    return{grp:true,faved:all(MARKS.fav),mined:all(MARKS.myMine)};}
+  const k=markKey(ch,ent&&ent.name);
+  return{grp:false,faved:MARKS.fav.has(k),mined:MARKS.myMine.has(k)};}
+function markBtnsHTML(ch,ent){
+  if(!MARKS.me||!ent)return "";
+  const st=markStateFor(ch,ent),g=st.grp,nm=`data-nm="${escAttr(ent.name)}"`;
+  const favT=g?(st.faved?"그룹 즐겨찾기 해제":"그룹 전체 즐겨찾기"):(st.faved?"즐겨찾기 해제":"즐겨찾기");
+  const mineT=g?(st.mined?"그룹 내 소재 해제":"그룹 전체 내 소재로 등록"):(st.mined?"내 소재 해제":"내 소재로 등록");
   return `<span class="mark-btns">`+
-    `<button type="button" class="mark-btn fav${faved?" on":""}" data-mk="fav" data-ad="${escAttr(ad)}" title="${faved?"즐겨찾기 해제":"즐겨찾기"}" aria-label="즐겨찾기">${STAR_SVG}</button>`+
-    `<button type="button" class="mark-btn mine${mined?" on":""}" data-mk="mine" data-ad="${escAttr(ad)}" title="${mined?"내 소재 해제":"내 소재로 등록"}" aria-label="내 소재">${SEAL_SVG}</button>`+
+    `<button type="button" class="mark-btn fav${st.faved?" on":""}" data-mk="fav" ${nm} title="${favT}" aria-label="즐겨찾기">${STAR_SVG}</button>`+
+    `<button type="button" class="mark-btn mine${st.mined?" on":""}" data-mk="mine" ${nm} title="${mineT}" aria-label="내 소재">${SEAL_SVG}</button>`+
     `</span>`;}
-async function toggleMark(ch,ad,kind){
-  if(!MARKS.me){toast("로그인한 계정에서만 즐겨찾기·내 소재를 쓸 수 있어요");return;}
-  const k=markKey(ch,ad),set=kind==="fav"?MARKS.fav:MARKS.myMine,on=!set.has(k);
+/* 로컬 마크 상태 반영(서버 왕복 없이 즉시 UI 갱신용) */
+function _applyMark(k,kind,on){
+  const set=kind==="fav"?MARKS.fav:MARKS.myMine;
   if(on){set.add(k);if(kind==="mine"){let a=MARKS.mineByKey.get(k);if(!a){a=[];MARKS.mineByKey.set(k,a);}if(!a.includes(MARKS.me))a.push(MARKS.me);}}
-  else{set.delete(k);if(kind==="mine"){const a=(MARKS.mineByKey.get(k)||[]).filter(n=>n!==MARKS.me);if(a.length)MARKS.mineByKey.set(k,a);else MARKS.mineByKey.delete(k);}}
-  updateMarkRow(ch,ad);
-  if(kind==="fav"&&tMarkView==="fav"||kind==="mine"&&tMarkView==="mine"){if(curDS)renderTable(curDS);}
+  else{set.delete(k);if(kind==="mine"){const a=(MARKS.mineByKey.get(k)||[]).filter(n=>n!==MARKS.me);if(a.length)MARKS.mineByKey.set(k,a);else MARKS.mineByKey.delete(k);}}}
+/* 표·비교 목록의 별 상태를 제자리에서 갱신(전체 렌더 없이 → 열린 상세가 닫히지 않음) */
+function refreshMarksUI(){
+  if(!curDS)return;const ch=curDS.media||"";
+  document.querySelectorAll("#table tbody tr.row").forEach(tr=>{
+    const nm=tr.getAttribute("data-name");if(nm==null)return;const e=findRow(curDS,nm);if(!e)return;
+    const box=tr.querySelector(".mark-btns");if(box)box.outerHTML=markBtnsHTML(ch,e);
+    const chips=tr.querySelector(".chips");if(chips)chips.innerHTML=chipsHTML(e.tags,e);});
+  refreshIslandMarks();}
+function refreshIslandMarks(){
+  if(!curDS)return;const ch=curDS.media||"";
+  document.querySelectorAll(".isle-row .cmp-mark").forEach(box=>{
+    const tr=box.closest("tr[data-nm]");const nm=tr&&tr.getAttribute("data-nm");if(nm==null)return;
+    const e=findRow(curDS,nm);box.innerHTML=e?markBtnsHTML(ch,e):"";});}
+/* 별 클릭 진입점 — 그룹이면 일괄 토글, 개별이면 단건 토글 */
+async function markToggle(ch,ent,kind){
+  if(!MARKS.me){toast("로그인한 계정에서만 즐겨찾기·내 소재를 쓸 수 있어요");return;}
+  if(!ent)return;
+  if(ent._isGroup)return toggleGroupMark(ch,ent,kind);
+  const ad=ent.name;if(ad==null)return;
+  const k=markKey(ch,ad),on=!(kind==="fav"?MARKS.fav:MARKS.myMine).has(k);
+  _applyMark(k,kind,on);refreshMarksUI();
+  if((kind==="fav"&&tMarkView==="fav")||(kind==="mine"&&tMarkView==="mine")){if(curDS)renderTable(curDS);}
   try{await sbRpc("cr_mark_set",{pw:cloudPw,p_channel:ch,p_ad:ad,p_kind:kind,p_on:on});}
   catch(e){await loadMarks();if(curDS)renderTable(curDS);toast("저장하지 못했어요 · "+(e.message||""));}}
-function updateMarkRow(ch,ad){
-  const tr=[...document.querySelectorAll("#table tbody tr.row")].find(t=>t.getAttribute("data-name")===ad);
-  if(!tr||!curDS)return;const e=findRow(curDS,ad);
-  const box=tr.querySelector(".mark-btns");if(box)box.outerHTML=markBtnsHTML(ch,ad);
-  const chips=tr.querySelector(".chips");if(chips&&e)chips.innerHTML=chipsHTML(e.tags,e);}
+/* 그룹 일괄 토글 — 전원 표시면 전원 해제, 아니면 전원 표시(개별 해제로 파생 상태 자동 해제) */
+async function toggleGroupMark(ch,ent,kind){
+  const names=groupMemberNames(ent);if(!names.length){toast("이 그룹에 담을 소재가 없어요");return;}
+  const set=kind==="fav"?MARKS.fav:MARKS.myMine;
+  const on=!names.every(n=>set.has(markKey(ch,n)));
+  for(const n of names)_applyMark(markKey(ch,n),kind,on);
+  refreshMarksUI();
+  if((kind==="fav"&&tMarkView==="fav")||(kind==="mine"&&tMarkView==="mine")){if(curDS)renderTable(curDS);}
+  const lab=kind==="fav"?"즐겨찾기":"내 소재";
+  try{await sbRpc("cr_mark_set_many",{pw:cloudPw,p_channel:ch,p_ads:names,p_kind:kind,p_on:on});
+    toast(on?`그룹 소재 ${names.length}개를 ${lab}에 담았어요`:`그룹 ${lab}를 해제했어요`);}
+  catch(e){await loadMarks();if(curDS)renderTable(curDS);toast("저장하지 못했어요 · "+(e.message||""));}}
+/* ── 소재 이름 수동 변경(관리자 전용) ─────────────────────────────────────
+   검색창에 /namechange 입력·엔터 → 편집 활성(모든 소재명 편집 가능). 소재명을 눌러
+   커서를 두고 수정 → 다시 /namechange 치면 저장. 저장 전 새로고침·이탈 시도는 확인창으로
+   붙잡아, '머무르기' 없이 닫히면 저장되지 않는다. 변경은 kv(nameovr)에 매체+원본명 키로 보관 */
+function toggleRenameMode(){ if(renameMode)saveRenames(); else enterRenameMode(); }
+function enterRenameMode(){
+  if(!isAdmin){toast("소재 이름 변경은 관리자만 할 수 있어요");return;}
+  if(renameMode)return;
+  renameMode=true;NAME_PENDING={};renameDirty=false;
+  document.body.classList.add("rename-on");renameBanner();
+  if(curDS){if(mainTab==="table")renderTable(curDS);else switchTab("table");}
+  toast("이름 변경이 활성화되었어요 · 소재명을 눌러 고치고, 다시 /namechange 치면 저장돼요");}
+async function saveRenames(){
+  const keys=Object.keys(NAME_PENDING);
+  if(!keys.length){exitRenameMode();toast("바뀐 이름이 없어요");return;}
+  const map={};keys.forEach(k=>{map[k]=NAME_PENDING[k];});
+  try{await sbRpc("cr_names_merge",{pw:cloudPw,p_map:map});
+    keys.forEach(k=>{if(NAME_PENDING[k]==="")delete NAME_OVR[k];else NAME_OVR[k]=NAME_PENDING[k];});
+    NAME_PENDING={};renameDirty=false;exitRenameMode();
+    toast(`소재 이름 ${keys.length}개를 저장했어요`);
+  }catch(err){toast("이름을 저장하지 못했어요 · "+(err.message||""));}}
+function exitRenameMode(){
+  renameMode=false;renameDirty=false;
+  document.body.classList.remove("rename-on");renameBanner();detachRenameGuard();
+  if(curDS&&mainTab==="table")renderTable(curDS);}
+/* 편집 입력 캡처(위임) — 매 입력마다 미저장 맵 갱신, ''는 저장 시 기본명으로 복원 */
+function _renameInput(ev){
+  if(!renameMode||!curDS)return;
+  const sp=ev.target&&ev.target.closest&&ev.target.closest(".nm-text.editing");if(!sp)return;
+  const nm=sp.getAttribute("data-nm");if(nm==null)return;
+  const key=markKey(curDS.media||"",nm);
+  NAME_PENDING[key]=(sp.textContent||"").replace(/\s+/g," ").replace(/^\s+|\s+$/g,"");
+  renameDirty=Object.keys(NAME_PENDING).length>0;attachRenameGuard();}
+/* 이탈 방지 — 미저장 편집이 있으면 새로고침·닫기를 브라우저 확인창으로 붙잡음 */
+function _beforeRename(e){ if(renameMode&&renameDirty){e.preventDefault();e.returnValue="";return "";} }
+let _renameGuardOn=false;
+function attachRenameGuard(){ if(!_renameGuardOn){window.addEventListener("beforeunload",_beforeRename);_renameGuardOn=true;} }
+function detachRenameGuard(){ if(_renameGuardOn){window.removeEventListener("beforeunload",_beforeRename);_renameGuardOn=false;} }
+function renameBanner(){
+  let b=document.getElementById("renameBar");
+  if(renameMode){ if(!b){b=document.createElement("div");b.id="renameBar";document.body.appendChild(b);}
+    b.innerHTML=`✏️ 이름 변경 중 — 소재명을 눌러 고치고, 다시 <b>/namechange</b> 치면 저장돼요`;b.hidden=false; }
+  else if(b){b.remove();}}
 /* 로그인 — 비밀번호만으로 사용자 식별. cr_login이 {found,name,status,role,viewer} 반환:
    승인됨=데이터 열고 환영(권한별) · 신청함=승인 대기 · 거절됨=거절 안내 · 미존재=흔들기.
    0715=이름 없는 뷰어 · role=editor만 저장·수정 가능(canEdit) */
@@ -3069,10 +3240,11 @@ async function attemptLogin(pw){
   if(info.status==="신청함"){toast("아직 관리자 승인 대기 중이에요");return "pending";}
   if(info.status==="거절됨"){toast("가입이 거절된 계정이에요 · 관리자에게 문의해 주세요");return "rejected";}
   /* 승인됨 → 권한·이름 확정 (0715 뷰어는 이름 없음) */
-  const viewer=!!info.viewer, name=viewer?"":(info.name||""), editor=(info.role==="editor");
-  canEdit=editor;
+  const viewer=!!info.viewer, name=viewer?"":(info.name||""), role=(info.role||"viewer");
+  const editor=(role==="editor"||role==="admin"); /* 관리자는 에디터 권한 포함 */
+  canEdit=editor; isAdmin=(role==="admin");
   uploaderId=name||null;try{if(name)localStorage.setItem("cr_uploader",name);else localStorage.removeItem("cr_uploader");}catch(_){}
-  try{sessionStorage.setItem("crname",name);sessionStorage.setItem("crviewer",viewer?"1":"0");sessionStorage.setItem("crcan",editor?"1":"0");}catch(_){}
+  try{sessionStorage.setItem("crname",name);sessionStorage.setItem("crviewer",viewer?"1":"0");sessionStorage.setItem("crcan",editor?"1":"0");sessionStorage.setItem("crrole",role);}catch(_){}
   const ok=await cloudUnlock(pw,{name,viewer,editor});
   return ok?"ok":"error";}
 const _pwForm=$("#pwForm");
