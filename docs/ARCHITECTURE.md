@@ -17,8 +17,9 @@
 ┌──────────────────────────────────────────────────────┐
 │  Supabase (Postgres)                                  │
 │  weekly_creative_stats  ← 주간 성과 원본 (JSONB)        │
-│  cr_kv                  ← gmap·ginfo·ocr·ytt           │
-│  cr_users               ← 사용자 계정·승인 상태          │
+│  cr_kv                  ← gmap·ginfo·ocr·ytt·nameovr    │
+│  cr_users               ← 사용자 계정·승인 상태·권한       │
+│  cr_user_marks          ← 즐겨찾기·내 소재 (계정 단위)     │
 └──────────────────────────────────────────────────────┘
 
 배포: GitHub Pages (main 머지 → Actions 자동 배포, 실패 시 백오프 재시도 3회)
@@ -65,12 +66,12 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 | pw_hash | text **unique** | 비밀번호 sha256 해시. 로그인·게이트가 비번만으로 사용자를 식별하므로 전역 유일 |
 | pw_enc | bytea | 비밀번호 **복호화 가능 암호문**(pgcrypto pgp_sym, 키는 서버 함수 본문에만). 관리자가 비번을 열람·관리하기 위한 용도 — 관리자 게이트 RPC 안에서만 복호화 |
 | status | text | `신청함`(가입 신청, 로그인 불가) · `승인됨`(로그인·데이터 접근 가능) · `거절됨`(로그인 불가, 기록 보존·재승인 가능) |
-| **role** | text | `viewer`(보기 전용, 기본값) · `editor`(저장·수정 가능). 관리자가 admin.html에서 지정 |
+| **role** | text | `viewer`(보기 전용, 기본값) · `editor`(저장·수정 가능) · `admin`(에디터 상위 — 소재 이름 변경까지). 관리자가 admin.html에서 지정. 현재 admin은 hansy만 |
 | created_at·reviewed_at·reviewed_by | | 신청 시각 · 승인/거절/권한 처리 시각·처리자 |
 
 - **비밀번호만으로 로그인**: 입력 비번의 sha256 해시로 사용자를 찾아 이름·상태·권한을 반환(`cr_login`). 그래서 pw_hash를 전역 유일로 강제(가입 시 중복 비번 거부).
 - **레거시 `0715`는 이름 없는 뷰어 하드코딩 로그인** — cr_login이 `{viewer:true}`를 반환(이름 없음), 데이터는 읽되 저장·수정은 불가. cr_users 행이 아니므로 가입 시 예약 비번 `0715`는 거부.
-- 권한 모델: **뷰어**(0715 또는 role=viewer 사용자) = 읽기 전용 · **에디터**(승인됨 + role=editor) = 저장·수정 가능. 소유자는 계정을 만들어 admin.html에서 자신을 에디터로 승인. 관리자용 로그인 계정 `admin`(editor) 시드.
+- 권한 모델: **뷰어**(0715 또는 role=viewer 사용자) = 읽기 전용 · **에디터**(승인됨 + role=editor) = 저장·수정 가능 · **관리자**(승인됨 + role=admin) = 에디터 권한 + 소재 이름 수동 변경(`/namechange`). 관리자는 에디터 권한을 포함(canEdit=true). 소유자는 계정을 만들어 admin.html에서 자신을 에디터/관리자로 승인. 관리자용 로그인 계정 `admin`(editor) 시드. **관리자 권한(admin role)은 admin.html 마스터 게이트(별도 시크릿)와 다른 개념** — role=admin은 앱 내 최상위 사용자 등급, `_cr_check_admin`은 계정 관리 콘솔용 마스터 비번.
 
 ### cr_user_marks — 즐겨찾기 / 내 소재 (개별 계정 단위)
 | 컬럼 | 설명 |
@@ -100,7 +101,11 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 - **비밀번호 규칙**(`_cr_pwok`): **4자 이상**(복잡도 요구 없음). **같은 비밀번호로 다른 계정 생성 금지**(pw_hash 전역 유일 → register·admin_create·setpw 모두 `pw_taken`로 차단 → "다른 걸로 정해 주세요"). 예약비번 `0715`만 별도 거부.
 - **새 가입 신청 알림**(관리자 전용): admin.html이 열려 있는 동안 15초 폴링해 새 신청 시 토스트+브라우저 알림, **거절은 확인창 없이 즉시**. (메인 화면에는 알림 없음 — 관리자만 봐야 하므로)
 - **관리자 페이지**: 비밀번호 열은 평소 ●●●, **마우스 호버 시 표시**(클릭 복사). daangn name **✎로 수정**(cr_admin_set p_name). 처리 열은 날짜만(처리자 'admin' 미표기). ＋계정 추가·비번변경.
-- **즐겨찾기 / 내 소재**(로그인 계정, 뷰어 포함 · 0715 제외): 전체 목록에서 소재 이름 우측에 별 버튼 2종(호버 시에만 회색 노출) — ★ 즐겨찾기(켜면 노랑) · 체크 인장 내 소재(켜면 하늘색). 상태는 칩으로 상시 표시 — 내 소재는 등록자 이름 칩(전원 공개), 즐겨찾기 칩은 본인만. 좌측 nav "보기": 전체 / 내 소재 / 즐겨찾기 필터(기간 아래).
+- **즐겨찾기 / 내 소재**(로그인 계정, 뷰어 포함 · 0715 제외): 소재 이름 우측 별 버튼 2종 — ★ 즐겨찾기(켜면 노랑) · 체크 인장 내 소재(켜면 하늘색). **표시 시(on) 별은 호버 없이 상시 노출**, 미표시는 호버 시에만 회색. **즐겨찾기는 별만**(칩·글자 없음) · **내 소재는 등록자 이름 칩(전원 공개)**. 별은 **전체 목록·그룹 행·상세의 "같은 그룹 내 비교" 목록** 모두에 표시. 좌측 nav "보기": 전체 / 내 소재 / 즐겨찾기 필터.
+- **그룹 마크(파생·일괄)**: 그룹뷰에서 그룹 별을 누르면 멤버 전원을 일괄 토글(`cr_mark_set_many`). 그룹 상태는 **저장하지 않고 멤버에서 파생** — 멤버 전원이 표시면 그룹도 표시로 보이고, 멤버 하나를 개별 해제하면 그룹 표시도 자동 해제. 표·비교 목록은 전체 재렌더 없이 제자리 갱신(`refreshMarksUI`)해 열린 상세가 닫히지 않는다.
+- **소재 이름 수동 변경(관리자, `/namechange`)**: 관리자가 검색창에 `/namechange`+엔터 → 편집 활성(토스트, 모든 소재명 contenteditable). 이름을 눌러 커서를 두고 수정 → 다시 `/namechange`로 저장(`cr_names_merge`, kv `nameovr`에 매체+원본명 키로 보관, ''=기본명 복원). 저장 전 새로고침·이탈은 `beforeunload`로 붙잡아 '머무르기' 없이 닫히면 저장 안 됨. 표시 우선순위 최상위(공식 애셋 이름·OCR보다 우선).
+- **서비스별 드롭다운 필터**: 툴바에 `전체 서비스` 드롭다운. 이름·서비스태그·그룹명 키워드로 6개 버킷 분류 — 중고거래 · 브랜딩(브랜딩·보검) · 부동산 · 알바 · 비즈니스(로컬애즈·비즈) · 페이(픽업·래플) + 기타. 선택 시 해당 서비스만, 개수는 현재 화면(개별/그룹) 기준.
+- **OCR 마크**: 소재명 옆이 아니라 **상세보기 미리보기의 애셋 URL 왼쪽**에 표시. **Live**는 초록 점+글자를 감싼 **칩** 형태.
 
 ### RPC 목록
 | 함수 | 역할 |
@@ -115,10 +120,13 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 | `cr_admin_create(admin_pw, p_name, p_pw, p_role, reviewer)` | 관리자가 계정 직접 추가(승인됨으로 생성, 형식·중복 검증) |
 | `cr_admin_setpw(admin_pw, p_id, p_new_pw, reviewer)` | 관리자가 비밀번호 변경(hash·enc 동시 갱신, 규칙·예약비번·중복 금지) |
 | `cr_pending_count(pw)` | 대기(신청함) 수 반환 — admin.html 알림용 |
-| `cr_admin_set(...,p_name)` | 상태·권한·**이름(daangn_name)** 변경 (모두 nullable) |
+| `cr_admin_set(...,p_name)` | 상태·권한(viewer/editor/admin)·**이름(daangn_name)** 변경 (모두 nullable). **이름 변경 시 `cr_user_marks.user_name`·`weekly_creative_stats.uploaded_by`까지 연쇄 갱신** → 본 페이지 닉네임(내 소재 등록자·업로드 서명)·본인 마크 매칭 유지 |
 | `cr_admin_create` / `cr_admin_setpw` | 계정 추가 / 비번 변경 (규칙·중복 검증) |
 | `cr_mark_set(pw, ch, ad, kind, on)` | 즐겨찾기/내 소재 토글 (비번→사용자 도출, 0715 거부) |
+| `cr_mark_set_many(pw, ch, p_ads[], kind, on)` | 그룹 일괄 토글 — 멤버 ad 배열을 한 번에 on/off (`ON CONFLICT DO NOTHING`) |
 | `cr_marks_load(pw)` | 내 소재(전원 공개)+내 즐겨찾기(비공개) 반환 |
+| `_cr_is_admin(pw)` | role=admin 승인 계정 여부(boolean) — 이름 변경 게이트 |
+| `cr_names_merge(pw, p_map)` | **관리자 전용** 소재 이름 오버라이드 병합 → kv `nameovr` (''=키 삭제). `_cr_is_admin` 게이트 |
 | `cr_load(pw)` | 전 기록을 단일 jsonb 배열로 반환 (PostgREST 1,000행 페이지네이션 우회) |
 | `cr_save(pw, rows, uploader)` | 주간 기록 벌크 저장. 서버 가드: 채널 공백/'기타' 거부, 이름 필수, **비용 ₩1,500 미만 거부**, 중복은 `ON CONFLICT DO NOTHING` |
 | `cr_status(pw)` | rows·ads(고유 소재)·weeks·channels·기간·unsigned_rows·**uploaders 분포·last_upload** |
