@@ -631,11 +631,46 @@
   body.rename-on .tthumb{pointer-events:none}
   #renameBar{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:99999;background:#2B2B2B;color:#fff;font-size:12px;font-weight:650;padding:9px 18px;border-radius:999px;box-shadow:0 8px 28px rgba(0,0,0,.28);letter-spacing:.01em}
   #renameBar b{color:var(--karrot-2);font-weight:800}
-  /* 서비스별 드롭다운 필터 */
-  .svc-sel{height:32px;border:1px solid var(--surface-3);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:12.5px;font-weight:650;padding:0 26px 0 11px;cursor:pointer;
-    -webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%2374726A' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");background-repeat:no-repeat;background-position:right 9px center}
-  .svc-sel:hover{border-color:var(--karrot)}
-  .svc-sel.on{border-color:var(--karrot);color:var(--karrot);background-color:var(--karrot-f)}
+  /* 서비스·제작자 복수선택 드롭다운 */
+  .msel{position:relative;display:inline-block}
+  .msel-btn{height:32px;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--surface-3);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:12.5px;font-weight:650;padding:0 11px;cursor:pointer;white-space:nowrap}
+  .msel-btn:hover{border-color:var(--karrot)}
+  .msel-btn.on{border-color:var(--karrot);color:var(--karrot);background:var(--karrot-f)}
+  .msel-car{font-size:9px;color:var(--faint)}
+  .msel-btn.on .msel-car{color:var(--karrot)}
+  .msel-pop{position:absolute;top:37px;left:0;z-index:200;min-width:190px;max-height:340px;overflow:auto;background:var(--surface);border:1px solid var(--surface-3);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.16);padding:6px}
+  .msel-opt{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:12.5px;cursor:pointer;white-space:nowrap}
+  .msel-opt:hover{background:var(--surface-2)}
+  .msel-opt input{cursor:pointer;accent-color:var(--karrot);width:14px;height:14px}
+  .msel-lab{flex:1}
+  .msel-n{color:var(--faint);font-size:11px}
+  .msel-clear{width:100%;margin-top:5px;padding:6px;border:0;border-top:1px solid var(--surface-3);background:none;color:var(--muted);font:inherit;font-size:11.5px;cursor:pointer}
+  .msel-clear:hover{color:var(--karrot)}
+  /* 연필 편집 팝오버 + 관리자 서비스 지정 칩 */
+  .mark-btn.edit:hover{color:var(--karrot)}
+  .chip.svc-ovr{background:#FFE4CF;color:var(--karrot);font-weight:700}
+  .edit-pop{position:absolute;z-index:9999;width:302px;background:var(--surface);border:1px solid var(--surface-3);border-radius:12px;box-shadow:0 16px 44px rgba(0,0,0,.24);padding:14px}
+  .ep-ttl{font-weight:800;font-size:13px;margin-bottom:11px;color:var(--ink)}
+  .ep-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+  .ep-lab{width:46px;flex:none;color:var(--muted);font-weight:650;font-size:11.5px}
+  .ep-name,.ep-svc,.ep-cin{flex:1;min-width:0;height:31px;border:1px solid var(--surface-3);border-radius:7px;padding:0 9px;font:inherit;font-size:12.5px;background:var(--surface);color:var(--ink)}
+  .ep-name:focus,.ep-svc:focus,.ep-cin:focus{border-color:var(--karrot);outline:none}
+  .ep-crow{align-items:flex-start}
+  .ep-cwrap{flex:1;min-width:0}
+  .ep-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px}
+  .ep-chip{display:inline-flex;align-items:center;gap:3px;background:#E3F1FB;color:#2478C7;font-weight:650;font-size:11px;padding:2px 5px 2px 9px;border-radius:11px}
+  .ep-x{border:0;background:none;color:#2478C7;cursor:pointer;font-size:14px;line-height:1;padding:0}
+  .ep-x:hover{color:var(--w2)}
+  .ep-empty{color:var(--faint);font-size:11px}
+  .ep-cadd{display:flex;gap:6px}
+  .ep-cbtn{flex:none;height:31px;padding:0 12px;border:1px solid var(--surface-3);border-radius:7px;background:var(--surface-2);color:var(--ink);font:inherit;font-size:12px;font-weight:650;cursor:pointer}
+  .ep-cbtn:hover{border-color:var(--karrot);color:var(--karrot)}
+  .ep-act{display:flex;justify-content:flex-end;gap:8px;margin-top:13px}
+  .ep-cancel,.ep-save{height:32px;padding:0 16px;border-radius:8px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid var(--surface-3)}
+  .ep-cancel{background:var(--surface);color:var(--muted)}
+  .ep-cancel:hover{color:var(--ink)}
+  .ep-save{background:var(--karrot);color:#fff;border-color:var(--karrot)}
+  .ep-save:hover{background:var(--karrot-2)}
 </style>
 </head>
 <body>
@@ -741,7 +776,8 @@
       <section class="card" id="tabTable" hidden>
         <div class="tbar">
           <input type="search" id="search" placeholder="이름으로 검색">
-          <select id="svcFilter" class="svc-sel" title="서비스별로 모아 보기"><option value="">전체 서비스</option></select>
+          <div class="msel" id="svcMsel" title="서비스별로 모아 보기 (복수 선택)"></div>
+          <div class="msel" id="creatorMsel" title="내 소재 제작자별로 보기 (복수 선택)" hidden></div>
           <div class="qfo" id="qfoWrap" hidden>
             <button class="qfo-btn qfo-txt" id="chipFil" type="button" title="칩 필터 해제" hidden></button>
             <button class="qfo-btn qfo-txt" id="qfoLive" type="button" title="최신 집행 주에 광고비가 나간 소재만" aria-label="라이브만 보기">Live</button>
@@ -1034,7 +1070,10 @@ let gOcrMap={}; /* 이미지 소재 OCR 추출 텍스트 — {애셋ID:텍스트
 /* 소재 이름 수동 변경(관리자 전용) — kv(nameovr)에 {markKey(매체,원본명):새이름} 저장. 표시 최우선.
    NAME_PENDING = /namechange 편집 중 미저장분(''=기본명으로 되돌림). renameMode = 편집 활성 여부 */
 let NAME_OVR={}, NAME_PENDING={}, renameMode=false, renameDirty=false;
+let SVC_OVR={}; /* 관리자가 수동 지정한 서비스 분류 — {markKey(매체,원본명):서비스명 또는 "기타"}. kv 'svcovr' */
 const nameOvrKey=(e)=>(e&&!e._isGroup&&curDS&&e.name!=null)?markKey(curDS.media,e.name):null;
+/* 이 소재에 관리자가 지정한 서비스(없으면 null). 그룹 제외 */
+function svcOverrideFor(e){const k=nameOvrKey(e);if(k==null)return null;return Object.prototype.hasOwnProperty.call(SVC_OVR,k)?(SVC_OVR[k]||"기타"):null;}
 function adGroupLabel(id){return (gNameMap&&gNameMap.adgroup&&gNameMap.adgroup[String(id)])||(gInfoMap[String(id)]&&gInfoMap[String(id)].nm)||null;}
 function groupInfoOf(id){return id!=null?gInfoMap[String(id)]||null:null;}
 /* 광고그룹 이름 분절 — '구분_서비스_수식어_날짜' 관례를 칩으로.
@@ -1114,7 +1153,9 @@ async function loadNameMap(pw){
   try{const yt=await sbRpc("cr_kv_get",{pw,key:"ytt"});
     if(yt&&typeof yt==="object")for(const id in yt){if(typeof yt[id]==="string"&&yt[id]&&_ytTitles[id]===undefined)_ytTitles[id]=yt[id];}}catch(e){}
   try{const no=await sbRpc("cr_kv_get",{pw,key:"nameovr"});
-    if(no&&typeof no==="object")NAME_OVR=no;}catch(e){}}
+    if(no&&typeof no==="object")NAME_OVR=no;}catch(e){}
+  try{const so=await sbRpc("cr_kv_get",{pw,key:"svcovr"});
+    if(so&&typeof so==="object")SVC_OVR=so;}catch(e){}}
 /* 모든 유튜브 소재 제목을 로드 직후 백그라운드 일괄 조회(동시 4) — 클릭 없이 자동 표시, kv(ytt)로 기기 간 공유 */
 let _yttRan=false;
 async function hydrateAllYtTitles(){
@@ -1367,7 +1408,10 @@ function chipsHTML(t,e){
   const foChip=t.fo&&(e&&e._foFix
     ?`<span class="chip fo" data-ck="fo" data-cv="${escAttr(t.fo)}" title="리포트 유형은 '네이티브 영상'이지만 첨부 파일이 이미지이고 완주율 데이터가 전 기간 없어 이미지로 분류했습니다 · 클릭 = 이미지만 보기">${t.fo}*</span>`
     :mk("fo",t.fo,"fo"));
-  const arr=[t.ve&&mk("ve",t.ve),foChip,t.nat==="네이티브"&&mk("nat","네이티브"),t.size&&mk("size",t.size)];
+  /* 서비스 칩 — 관리자가 수동 지정했으면 그 값(주황 강조), 아니면 자동(ve) */
+  const _svcOv=svcOverrideFor(e);
+  const veChip=_svcOv?`<span class="chip svc-ovr" title="관리자가 지정한 서비스">${escHtml(_svcOv)}</span>`:(t.ve&&mk("ve",t.ve));
+  const arr=[veChip,foChip,t.nat==="네이티브"&&mk("nat","네이티브"),t.size&&mk("size",t.size)];
   if(e&&e._isGroup){
     /* 그룹 행: 이름 분절 칩 — 접두(Google UA 등)·날짜·수식어. 서비스(ve)는 위 공통 경로로 이미 표시 */
     if(t.pre)arr.unshift(mk("gpre",t.pre));
@@ -1377,11 +1421,13 @@ function chipsHTML(t,e){
     if(gid){const raw=e._m_group?gid:adGroupLabel(gid);
       const glab=raw?groupPrettyName(raw):"그룹 …"+String(gid).slice(-4);
       arr.push(mk("grp",gid,"grp",trunc(glab,24)));}}
-  /* 내 소재 칩(등록자 이름, 전원 공개) — 즐겨찾기는 칩이 아니라 소재명 우측 노란 별로만 표시 */
+  /* 내 소재 칩(등록자 이름) — 남이 등록한 것만 칩으로. 본인 것은 켜진 하늘색 별로 충분하므로 칩 생략.
+     즐겨찾기는 칩 없이 소재명 우측 노란 별로만 표시 */
   if(e&&!e._isGroup){const ch=(t&&t.ch)||(curDS&&curDS.media)||"";const k=markKey(ch,e.name);
     const mineNames=MARKS.mineByKey.get(k);
-    if(mineNames&&mineNames.length)for(const nm of mineNames)
-      arr.push(`<span class="chip mine-chip" title="내 소재로 등록: ${escAttr(nm)}">${SEAL_SVG} ${escHtml(nm)}</span>`);}
+    if(mineNames&&mineNames.length)for(const nm of mineNames){
+      if(nm===MARKS.me)continue;
+      arr.push(`<span class="chip mine-chip" title="내 소재로 등록: ${escAttr(nm)}">${SEAL_SVG} ${escHtml(nm)}</span>`);}}
   return arr.filter(Boolean).join("");}
 /* key summary tiles */
 function renderKeyrow(ds){const L=ds.L,a=ds.agg,tiles=[];
@@ -1565,7 +1611,14 @@ let tGroupBy=false; /* true → aggregate table rows by 광고그룹 ID */
 let tLiveOnly=true; /* 기본 ON — 스코프 최신 집행 주에 광고비>0인 소재만 (전체 목록 한정) */
 let tChip=null; /* 칩 클릭 필터 {k:"ve|fo|nat|size|grp", v, lab} — 한 번에 하나, 다시 클릭·✕로 해제 */
 let tMarkView="all"; /* 전체 / 내 소재(mine) / 즐겨찾기(fav) — 좌측 nav 세그먼트 */
-let tService=""; /* 서비스별 드롭다운 필터 — ""=전체, "중고거래"·"브랜딩"·… 또는 "기타"(미분류) */
+let tServices=new Set(); /* 서비스 복수선택 필터 — 비면 전체, 아니면 선택 서비스만("기타"=미분류) */
+let tCreators=new Set(); /* 제작자(내 소재 등록자) 복수선택 필터 — 비면 전체 */
+/* 이 소재(또는 그룹의 멤버들)를 내 소재로 등록한 사람들 */
+function mineCreatorsOf(e){
+  if(!e||!curDS)return [];
+  const ch=curDS.media||"";
+  if(e._isGroup){const s=new Set();for(const m of (e._members||[])){const a=MARKS.mineByKey.get(markKey(ch,m&&m.name));if(a)a.forEach(n=>s.add(n));}return [...s];}
+  return MARKS.mineByKey.get(markKey(ch,e.name))||[];}
 /* 서비스 분류 — 이름·서비스태그·그룹명 안의 키워드로 6개 서비스 버킷에 배정. 첫 일치가 우선.
    중고거래 · 브랜딩(브랜딩·보검) · 부동산 · 알바 · 비즈니스(로컬애즈·비즈) · 페이(픽업·래플) */
 const SVC_DEFS=[
@@ -1578,6 +1631,8 @@ const SVC_DEFS=[
 ];
 function svcOf(e){
   if(!e)return null;
+  const ov=svcOverrideFor(e); /* 관리자 수동 지정 우선 — "기타"는 미분류로 처리 */
+  if(ov!=null)return ov==="기타"?null:ov;
   const hay=[displayNameOf(e),e.name,(e.tags&&e.tags.ve)||"",e._m_group||"",adGroupLabel(e._g_adGroupId)||""].join("  ");
   for(const[k,re]of SVC_DEFS)if(re.test(hay))return k;
   return null; /* 미분류 → 기타 */}
@@ -1598,24 +1653,48 @@ function applyTFilter(rows,ds){
     if(tChip.k==="gdt")return !!(e.tags&&e.tags.dt===tChip.v);
     if(tChip.k==="gxt")return !!(e.tags&&Array.isArray(e.tags.xt)&&e.tags.xt.includes(tChip.v));
     return !!(e.tags&&e.tags[tChip.k]===tChip.v);});
-  if(tService)rows=rows.filter(e=>{const s=svcOf(e);return tService==="기타"?!s:s===tService;});
+  if(tServices.size)rows=rows.filter(e=>tServices.has(svcOf(e)||"기타"));
+  if(tCreators.size)rows=rows.filter(e=>mineCreatorsOf(e).some(n=>tCreators.has(n)));
   return rows;}
 function renderTFilter(ds){/* filter popup removed */}
-/* 서비스 드롭다운 — 현재 화면(개별/그룹) 기준으로 서비스별 개수를 세어 옵션 구성 */
-function renderSvcFilter(ds){
-  const sel=$("#svcFilter");if(!sel)return;
+/* 복수선택 드롭다운 하나 구성 — 상호작용(체크·해제)은 제자리 갱신해 팝업이 닫히지 않는다 */
+function closeAllMsel(){document.querySelectorAll(".msel-pop").forEach(p=>{p.hidden=true;});}
+function buildMsel(host,allLabel,items,selected,onChange){
+  if(!host)return;
+  host.innerHTML=
+    `<button type="button" class="msel-btn"><span class="msel-txt"></span><span class="msel-car">▾</span></button>`+
+    `<div class="msel-pop" hidden>`+
+      items.map(it=>`<label class="msel-opt"><input type="checkbox" value="${escAttr(it.v)}"${selected.has(it.v)?" checked":""}><span class="msel-lab">${escHtml(it.label)}</span><span class="msel-n">${it.n}</span></label>`).join("")+
+      `<button type="button" class="msel-clear">모두 해제</button>`+
+    `</div>`;
+  const btn=host.querySelector(".msel-btn"),txt=host.querySelector(".msel-txt"),pop=host.querySelector(".msel-pop"),clr=host.querySelector(".msel-clear");
+  const refresh=()=>{const n=selected.size;
+    txt.textContent=n===0?allLabel:(n===1?[...selected][0]:`${(items.find(it=>selected.has(it.v))||{}).label||[...selected][0]} 외 ${n-1}`);
+    btn.classList.toggle("on",n>0);clr.style.display=n>0?"":"none";};
+  refresh();
+  btn.onclick=e=>{e.stopPropagation();const willOpen=pop.hidden;closeAllMsel();pop.hidden=!willOpen;};
+  pop.onclick=e=>e.stopPropagation();
+  host.querySelectorAll(".msel-opt input").forEach(cb=>cb.onchange=()=>{if(cb.checked)selected.add(cb.value);else selected.delete(cb.value);refresh();onChange();});
+  clr.onclick=()=>{selected.clear();host.querySelectorAll(".msel-opt input").forEach(cb=>{cb.checked=false;});refresh();onChange();};}
+/* 서비스·제작자 드롭다운 — 옵션 목록이 바뀔 때만 재구성(선택 토글 중엔 팝업 유지) */
+let _mselSig={svc:"",cr:""};
+function renderFilters(ds){
   const base=getRowsForTable(ds);
-  const cnt={};let other=0;
-  for(const e of base){const s=svcOf(e);if(s)cnt[s]=(cnt[s]||0)+1;else other++;}
-  if(tService&&tService!=="기타"&&!cnt[tService])tService="";
-  if(tService==="기타"&&!other)tService="";
-  const opts=[`<option value="">전체 서비스</option>`];
-  for(const[k]of SVC_DEFS)if(cnt[k])opts.push(`<option value="${escAttr(k)}">${escHtml(k)} (${cnt[k]})</option>`);
-  if(other)opts.push(`<option value="기타">기타 (${other})</option>`);
-  sel.innerHTML=opts.join("");
-  sel.value=tService;
-  sel.classList.toggle("on",!!tService);
-  sel.onchange=()=>{tService=sel.value;tPage=1;renderTable(ds);};}
+  const svcCnt={};let other=0,anyCreator=false;
+  const crCnt={};
+  for(const e of base){const s=svcOf(e);if(s)svcCnt[s]=(svcCnt[s]||0)+1;else other++;
+    for(const nm of mineCreatorsOf(e)){crCnt[nm]=(crCnt[nm]||0)+1;anyCreator=true;}}
+  const svcItems=[];for(const[k]of SVC_DEFS)if(svcCnt[k])svcItems.push({v:k,label:k,n:svcCnt[k]});
+  if(other)svcItems.push({v:"기타",label:"기타",n:other});
+  const crItems=Object.keys(crCnt).sort((a,b)=>a.localeCompare(b)).map(nm=>({v:nm,label:nm,n:crCnt[nm]}));
+  /* 사라진 선택지는 자동 해제 */
+  for(const v of [...tServices])if(!svcItems.some(it=>it.v===v))tServices.delete(v);
+  for(const v of [...tCreators])if(!crItems.some(it=>it.v===v))tCreators.delete(v);
+  const svcSig=JSON.stringify(svcItems),crSig=JSON.stringify(crItems);
+  if(svcSig!==_mselSig.svc){_mselSig.svc=svcSig;buildMsel($("#svcMsel"),"전체 서비스",svcItems,tServices,()=>{tPage=1;renderTable(ds);});}
+  const crHost=$("#creatorMsel");if(crHost)crHost.hidden=crItems.length===0;
+  if(crSig!==_mselSig.cr){_mselSig.cr=crSig;buildMsel(crHost,"전체 제작자",crItems,tCreators,()=>{tPage=1;renderTable(ds);});}}
+document.addEventListener("click",closeAllMsel); /* 바깥 클릭 시 드롭다운 닫기 */
 let tableShowAll=false;
 let curDS=null; const ISLE={name:null,metric:null,gtab:"trend",posX:null,posY:null}; /* gtab: 상세 그래프 탭, posX/posY: 포지셔닝 축 지표 — 소재를 옮겨 다녀도 유지 */
 function escAttr(s){return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;");}
@@ -1993,7 +2072,9 @@ function fillIsland(ds,e,inner){const L=ds.L;
     tr.style.cursor="pointer";
     tr.addEventListener("click",ev=>{ev.stopPropagation();
       const mb=ev.target.closest(".mark-btn");
-      if(mb){hideTip();markToggle((curDS&&curDS.media)||"",findRow(curDS,nm),mb.dataset.mk);return;}
+      if(mb){hideTip();const cent=findRow(curDS,nm);
+        if(mb.dataset.mk==="edit"){openEditPop((curDS&&curDS.media)||"",cent,mb);return;}
+        markToggle((curDS&&curDS.media)||"",cent,mb.dataset.mk);return;}
       if(nm&&nm!==e.name){hideTip();goToIslandFromQuad(nm);}});
     if(!url)return;
     tr.addEventListener("mouseenter",ev=>{const h=assetPreviewTipHTML(url,lab);if(h)showTip(h,ev.clientX,ev.clientY,true);});
@@ -2130,7 +2211,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
     const hasSubs=c.lead&&allCols.some(x=>x.sub&&x.grp===c.grp);
     const xp=hasSubs?`<span class="colx" data-g="${c.grp}" title="${tExp.has(c.grp)?"세부 지표 접기":"세부 지표 펼치기"}">${tExp.has(c.grp)?"−":"+"}</span>`:"";
     return `<th class="${cl.trim()}" data-k="${c.k}" ${c.help?`title="${c.help}"`:""}>${c.t} <span class="arr">${arr}</span>${xp}</th>`;}).join("")+"</tr>";
-  renderSvcFilter(ds); /* 서비스 필터 옵션·유효성 먼저 확정 → 아래 필터링과 드롭다운 표시가 어긋나지 않게 */
+  renderFilters(ds); /* 서비스·제작자 드롭다운 옵션·유효성 먼저 확정 → 아래 필터링과 어긋나지 않게 */
   const rows=orderedRowsForTable(ds);
   renderTFilter(ds);
   const colSorted={};
@@ -3056,9 +3137,11 @@ $("#table tbody").addEventListener("input",_renameInput);
 $("#table tbody").addEventListener("click",e=>{
   /* 이름 편집 모드에선 소재명 클릭이 커서만 두게 하고 행 펼침·별·칩 클릭은 막는다 */
   if(renameMode)return;
-  /* 즐겨찾기 / 내 소재 별 클릭 (행 펼침·필터와 분리) — 그룹 행이면 일괄 토글 */
+  /* 즐겨찾기 / 내 소재 별 · 연필(관리자 편집) 클릭 (행 펼침·필터와 분리) — 그룹 행이면 일괄 토글 */
   const mbtn=e.target.closest(".mark-btn");
-  if(mbtn&&curDS){e.stopPropagation();markToggle(curDS.media||"",findRow(curDS,mbtn.dataset.nm),mbtn.dataset.mk);return;}
+  if(mbtn&&curDS){e.stopPropagation();const ent=findRow(curDS,mbtn.dataset.nm);
+    if(mbtn.dataset.mk==="edit"){openEditPop(curDS.media||"",ent,mbtn);return;}
+    markToggle(curDS.media||"",ent,mbtn.dataset.mk);return;}
   /* 칩 클릭 = 그 값으로 필터 토글 (행 펼침과 분리) */
   const chip=e.target.closest(".chip[data-ck]");
   if(chip&&curDS){const k=chip.dataset.ck,v=chip.dataset.cv;
@@ -3114,6 +3197,7 @@ const pwOk=p=>String(p||"").length>=4;
    fav=본인 것만 로드(비공개) · mine=전체 로드(등록자 이름 공개). 채널=현재 매체(ds.media) */
 const STAR_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.3l2.83 5.73 6.32.92-4.57 4.46 1.08 6.3L12 16.93 6.34 19.9l1.08-6.3L2.85 8.95l6.32-.92z"/></svg>`;
 const SEAL_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M 12 1.4 L 14.25 3.6 L 17.3 2.82 L 18.15 5.85 L 21.18 6.7 L 20.4 9.75 L 22.6 12 L 20.4 14.25 L 21.18 17.3 L 18.15 18.15 L 17.3 21.18 L 14.25 20.4 L 12 22.6 L 9.75 20.4 L 6.7 21.18 L 5.85 18.15 L 2.82 17.3 L 3.6 14.25 L 1.4 12 L 3.6 9.75 L 2.82 6.7 L 5.85 5.85 L 6.7 2.82 L 9.75 3.6 Z"/><path class="mchk" d="M8.4 12.0l2.5 2.5 4.7-5.1" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const PENCIL_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 000-1.42l-2.34-2.34a1.003 1.003 0 00-1.42 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
 let MARKS={me:null,fav:new Set(),myMine:new Set(),mineByKey:new Map()};
 const markKey=(ch,ad)=>String(ch||"")+""+String(ad||"");
 const canMark=()=>!!MARKS.me;
@@ -3140,9 +3224,12 @@ function markBtnsHTML(ch,ent){
   const st=markStateFor(ch,ent),g=st.grp,nm=`data-nm="${escAttr(ent.name)}"`;
   const favT=g?(st.faved?"그룹 즐겨찾기 해제":"그룹 전체 즐겨찾기"):(st.faved?"즐겨찾기 해제":"즐겨찾기");
   const mineT=g?(st.mined?"그룹 내 소재 해제":"그룹 전체 내 소재로 등록"):(st.mined?"내 소재 해제":"내 소재로 등록");
+  /* 관리자 전용 연필 — 개별 소재 이름을 그 자리에서 바로 변경 (그룹 제외) */
+  const editBtn=(isAdmin&&!g)?`<button type="button" class="mark-btn edit" data-mk="edit" ${nm} title="이름 바꾸기" aria-label="이름 바꾸기">${PENCIL_SVG}</button>`:"";
   return `<span class="mark-btns">`+
     `<button type="button" class="mark-btn fav${st.faved?" on":""}" data-mk="fav" ${nm} title="${favT}" aria-label="즐겨찾기">${STAR_SVG}</button>`+
     `<button type="button" class="mark-btn mine${st.mined?" on":""}" data-mk="mine" ${nm} title="${mineT}" aria-label="내 소재">${SEAL_SVG}</button>`+
+    editBtn+
     `</span>`;}
 /* 로컬 마크 상태 반영(서버 왕복 없이 즉시 UI 갱신용) */
 function _applyMark(k,kind,on){
@@ -3228,6 +3315,65 @@ function renameBanner(){
   if(renameMode){ if(!b){b=document.createElement("div");b.id="renameBar";document.body.appendChild(b);}
     b.innerHTML=`✏️ 이름 변경 중 — 소재명을 눌러 고치고, 다시 <b>/namechange</b> 치면 저장돼요`;b.hidden=false; }
   else if(b){b.remove();}}
+/* ── 연필 편집 팝오버(관리자) — 소재 이름·서비스 분류·제작자(내 소재 등록자)를 한 곳에서 수정 ── */
+let _editPop=null;
+function _editPopEsc(e){if(e.key==="Escape"){e.preventDefault();closeEditPop();}}
+function closeEditPop(){if(_editPop){_editPop.remove();_editPop=null;document.removeEventListener("keydown",_editPopEsc,true);}}
+/* 이름·서비스 변경 반영: 전체 재렌더 + 열려 있던 상세는 다시 열기(필터 개수도 갱신) */
+function renderInlineRefresh(){
+  if(!curDS)return;const openName=ISLE.name;_mselSig={svc:"",cr:""};
+  renderTable(curDS);
+  if(openName){const tr=[...document.querySelectorAll("#table tbody tr.row")].find(t=>t.getAttribute("data-name")===openName);if(tr)toggleIsland(curDS,openName,tr);}}
+/* 특정인 mine 마크를 로컬 상태에 즉시 반영(제작자 칩) */
+function _localMineSet(key,name,on){
+  if(on){let a=MARKS.mineByKey.get(key);if(!a){a=[];MARKS.mineByKey.set(key,a);}if(!a.includes(name))a.push(name);if(name===MARKS.me)MARKS.myMine.add(key);}
+  else{const a=(MARKS.mineByKey.get(key)||[]).filter(n=>n!==name);if(a.length)MARKS.mineByKey.set(key,a);else MARKS.mineByKey.delete(key);if(name===MARKS.me)MARKS.myMine.delete(key);}}
+function openEditPop(ch,ent,anchor){
+  if(!isAdmin||!ent||ent._isGroup||!anchor)return;
+  closeEditPop();
+  const key=markKey(ch,ent.name),curName=displayNameOf(ent),ovSvc=svcOverrideFor(ent)||"";
+  const svcOpts=[`<option value="">자동 분류</option>`]
+    .concat(SVC_DEFS.map(([k])=>`<option value="${escAttr(k)}"${ovSvc===k?" selected":""}>${escHtml(k)}</option>`))
+    .concat([`<option value="기타"${ovSvc==="기타"?" selected":""}>기타</option>`]).join("");
+  const orig=new Set(mineCreatorsOf(ent)),cur=new Set(orig);
+  const pop=document.createElement("div");pop.className="edit-pop";
+  pop.innerHTML=
+    `<div class="ep-ttl">소재 편집</div>`+
+    `<label class="ep-row"><span class="ep-lab">이름</span><input class="ep-name" type="text" spellcheck="false"></label>`+
+    `<label class="ep-row"><span class="ep-lab">서비스</span><select class="ep-svc">${svcOpts}</select></label>`+
+    `<div class="ep-row ep-crow"><span class="ep-lab">제작자</span><div class="ep-cwrap"><div class="ep-chips"></div><div class="ep-cadd"><input class="ep-cin" type="text" placeholder="이름 입력 후 Enter" spellcheck="false"><button type="button" class="ep-cbtn">추가</button></div></div></div>`+
+    `<div class="ep-act"><button type="button" class="ep-cancel">취소</button><button type="button" class="ep-save">저장</button></div>`;
+  document.body.appendChild(pop);_editPop=pop;
+  const nameIn=pop.querySelector(".ep-name");nameIn.value=curName;
+  const svcSel=pop.querySelector(".ep-svc"),chipsBox=pop.querySelector(".ep-chips"),cin=pop.querySelector(".ep-cin");
+  const renderChips=()=>{chipsBox.innerHTML=cur.size?[...cur].map(n=>`<span class="ep-chip">${escHtml(n)}<button type="button" class="ep-x" data-n="${escAttr(n)}">×</button></span>`).join(""):`<span class="ep-empty">없음</span>`;
+    chipsBox.querySelectorAll(".ep-x").forEach(b=>b.onclick=()=>{cur.delete(b.dataset.n);renderChips();});};
+  renderChips();
+  const addCreator=()=>{const v=(cin.value||"").replace(/\s+/g," ").trim();if(!v)return;cur.add(v);cin.value="";renderChips();cin.focus();};
+  pop.querySelector(".ep-cbtn").onclick=addCreator;
+  cin.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addCreator();}};
+  pop.onclick=e=>e.stopPropagation();
+  const r=anchor.getBoundingClientRect();
+  pop.style.top=(r.bottom+6+window.scrollY)+"px";
+  pop.style.left=Math.max(8,Math.min(r.left+window.scrollX,window.scrollX+window.innerWidth-pop.offsetWidth-10))+"px";
+  setTimeout(()=>{try{nameIn.focus();nameIn.select();}catch(_){}} ,0);
+  document.addEventListener("keydown",_editPopEsc,true);
+  pop.querySelector(".ep-cancel").onclick=()=>closeEditPop();
+  pop.querySelector(".ep-save").onclick=async ()=>{
+    const nv=(nameIn.value||"").replace(/\s+/g," ").trim(),sv=svcSel.value;
+    const nameMap={},svcMap={},markCalls=[];
+    if(nv!==curName){if(nv===""){if(NAME_OVR[key]!==undefined){delete NAME_OVR[key];nameMap[key]="";}}else{NAME_OVR[key]=nv;nameMap[key]=nv;}}
+    if(sv!==ovSvc){if(sv===""){if(SVC_OVR[key]!==undefined){delete SVC_OVR[key];svcMap[key]="";}}else{SVC_OVR[key]=sv;svcMap[key]=sv;}}
+    for(const n of cur)if(!orig.has(n)){_localMineSet(key,n,true);markCalls.push([n,true]);}
+    for(const n of orig)if(!cur.has(n)){_localMineSet(key,n,false);markCalls.push([n,false]);}
+    closeEditPop();renderInlineRefresh();
+    try{
+      if(Object.keys(nameMap).length)await sbRpc("cr_names_merge",{pw:cloudPw,p_map:nameMap});
+      if(Object.keys(svcMap).length)await sbRpc("cr_svc_merge",{pw:cloudPw,p_map:svcMap});
+      for(const [n,on] of markCalls)await sbRpc("cr_admin_mark_set",{pw:cloudPw,p_channel:ch,p_ad:ent.name,p_user:n,p_kind:"mine",p_on:on});
+      if(Object.keys(nameMap).length||Object.keys(svcMap).length||markCalls.length)toast("소재 정보를 바꿨어요");
+    }catch(e){toast("일부 저장에 실패했어요 · "+(e.message||""));await loadMarks();renderInlineRefresh();}};}
+document.addEventListener("click",()=>closeEditPop()); /* 바깥 클릭 시 편집 팝오버 닫기 */
 /* 로그인 — 비밀번호만으로 사용자 식별. cr_login이 {found,name,status,role,viewer} 반환:
    승인됨=데이터 열고 환영(권한별) · 신청함=승인 대기 · 거절됨=거절 안내 · 미존재=흔들기.
    0715=이름 없는 뷰어 · role=editor만 저장·수정 가능(canEdit) */
