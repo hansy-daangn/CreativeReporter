@@ -62,7 +62,8 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 | id | bigint identity | PK |
 | daangn_name | text | 사용자명(영문 시작 2~24자 영문·숫자). 앞으로 수정·제작·즐겨찾기 등 행위의 서명(수정자) 값 |
 | name_lower | text **generated** unique | `lower(daangn_name)` — 대소문자 무관 유일성(사칭 방지) |
-| pw_hash | text **unique** | 비밀번호 sha256 해시(평문 미저장). 로그인이 비번만으로 사용자를 식별하므로 전역 유일 |
+| pw_hash | text **unique** | 비밀번호 sha256 해시. 로그인·게이트가 비번만으로 사용자를 식별하므로 전역 유일 |
+| pw_enc | bytea | 비밀번호 **복호화 가능 암호문**(pgcrypto pgp_sym, 키는 서버 함수 본문에만). 관리자가 비번을 열람·관리하기 위한 용도 — 관리자 게이트 RPC 안에서만 복호화 |
 | status | text | `신청함`(가입 신청, 로그인 불가) · `승인됨`(로그인·데이터 접근 가능) · `거절됨`(로그인 불가, 기록 보존·재승인 가능) |
 | **role** | text | `viewer`(보기 전용, 기본값) · `editor`(저장·수정 가능). 관리자가 admin.html에서 지정 |
 | created_at·reviewed_at·reviewed_by | | 신청 시각 · 승인/거절/권한 처리 시각·처리자 |
@@ -95,8 +96,10 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 | `_cr_check_admin(pw)` | 관리자 게이트 (별도 시크릿, 내부용, 저장소·코드에 비저장) |
 | `cr_register(p_name, p_pw)` | 가입 신청 적재(신청함·viewer). 이름/비번 형식·중복·예약비번(0715) 검증 |
 | `cr_login(p_pw)` | 비번만으로 사용자 식별 → `{found,name,status,role,viewer}` (틀려도 예외 아님) |
-| `cr_admin_list(admin_pw)` | 전 사용자 목록(신청함 먼저, role 포함) — 관리자용 |
+| `cr_admin_list(admin_pw)` | 전 사용자 목록(신청함 먼저, role + **복호화한 pw** 포함) — 관리자용 |
 | `cr_admin_set(admin_pw, p_id, p_status, reviewer, p_role)` | 상태·권한 변경(둘 다 nullable — 하나만 변경 가능) + 처리자·시각 기록 |
+| `cr_admin_create(admin_pw, p_name, p_pw, p_role, reviewer)` | 관리자가 계정 직접 추가(승인됨으로 생성, 형식·중복 검증) |
+| `cr_admin_setpw(admin_pw, p_id, p_new_pw, reviewer)` | 관리자가 비밀번호 변경(hash·enc 동시 갱신, 예약비번·중복 금지) |
 | `cr_load(pw)` | 전 기록을 단일 jsonb 배열로 반환 (PostgREST 1,000행 페이지네이션 우회) |
 | `cr_save(pw, rows, uploader)` | 주간 기록 벌크 저장. 서버 가드: 채널 공백/'기타' 거부, 이름 필수, **비용 ₩1,500 미만 거부**, 중복은 `ON CONFLICT DO NOTHING` |
 | `cr_status(pw)` | rows·ads(고유 소재)·weeks·channels·기간·unsigned_rows·**uploaders 분포·last_upload** |
