@@ -605,11 +605,20 @@
   #landing .ldev{position:fixed;left:0;right:0;bottom:22px;text-align:center;font-family:"SFMono-Regular",Menlo,Consolas,monospace;font-size:12px;font-weight:500;color:#C4C4CA;text-decoration:none;letter-spacing:.02em;transition:color .15s}
   #landing .ldev:hover{color:#1D1D1F}
   @keyframes pwshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-  /* 새 가입 신청 알림 칩 (에디터, 대기 있을 때만) → 관리자 페이지 */
-  #signupNudge{position:fixed;right:18px;bottom:18px;z-index:75;background:var(--karrot);color:#fff;padding:10px 15px;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:-.01em;text-decoration:none;box-shadow:0 8px 22px -6px rgba(255,111,15,.55);display:inline-flex;align-items:center;gap:6px;transition:transform .12s,box-shadow .12s}
-  #signupNudge:hover{transform:translateY(-2px);box-shadow:0 12px 26px -6px rgba(255,111,15,.65)}
-  #signupNudge[hidden]{display:none}
-  #signupNudge b{font-weight:800}
+  /* 즐겨찾기 / 내 소재 별 버튼 — 이름 바로 우측, 호버 시에만 회색으로 노출(추가 공간 없음). 상태는 칩으로 상시 표시 */
+  .mark-btns{display:inline-flex;gap:1px;vertical-align:-3px;margin-left:5px}
+  .mark-btn{opacity:0;padding:1px;line-height:0;background:none;border:0;cursor:pointer;transition:opacity .12s,transform .1s;color:#C6C6C6}
+  tr.row:hover .mark-btn{opacity:1}
+  .mark-btn:hover{transform:scale(1.18)}
+  .mark-btn svg{width:16px;height:16px;display:block;fill:currentColor}
+  .mark-btn.fav.on{color:#F5C518}
+  .mark-btn.mine.on{color:#3EA8E0}
+  .mark-btn .mchk{fill:none}
+  .chip.mine-chip{background:#E3F1FB;color:#2478C7;font-weight:650}
+  .chip.fav-chip{background:#FBF1D3;color:#B0870F;font-weight:650}
+  .chip.mine-chip svg,.chip.fav-chip svg{width:11px;height:11px;vertical-align:-2px;margin-right:3px}
+  .chip.mine-chip svg{fill:#2478C7}.chip.mine-chip .mchk{fill:none}
+  .chip.fav-chip svg{fill:#B0870F}
 </style>
 </head>
 <body>
@@ -647,7 +656,6 @@
     <a class="ldev" id="devLink" href="admin.html">&lt;/&gt; Dev</a>
   </div>
 </div>
-<a id="signupNudge" href="admin.html" hidden title="관리자 페이지에서 승인하기">🔔 <b></b> · 승인하기</a>
 <div class="app">
   <!-- SIDEBAR: identity + media + summary + actions -->
   <aside class="side">
@@ -660,6 +668,10 @@
         <div class="side-h">기간</div>
         <div class="mseg" id="pseg"></div>
       </div>
+    </div>
+    <div class="side-sec" id="viewSec" hidden>
+      <div class="side-h">보기</div>
+      <div class="mseg" id="vseg"></div>
     </div>
     <details class="side-more" id="sideMore" open>
       <summary class="side-h">요약</summary>
@@ -1337,6 +1349,12 @@ function chipsHTML(t,e){
     if(gid){const raw=e._m_group?gid:adGroupLabel(gid);
       const glab=raw?groupPrettyName(raw):"그룹 …"+String(gid).slice(-4);
       arr.push(mk("grp",gid,"grp",trunc(glab,24)));}}
+  /* 내 소재 칩(등록자 이름, 전원 공개) · 즐겨찾기 칩(본인 계정에서만) — 칩 위치에 추가 */
+  if(e&&!e._isGroup){const ch=(t&&t.ch)||(curDS&&curDS.media)||"";const k=markKey(ch,e.name);
+    const mineNames=MARKS.mineByKey.get(k);
+    if(mineNames&&mineNames.length)for(const nm of mineNames)
+      arr.push(`<span class="chip mine-chip" title="내 소재로 등록: ${escAttr(nm)}">${SEAL_SVG} ${escHtml(nm)}</span>`);
+    if(MARKS.fav.has(k))arr.push(`<span class="chip fav-chip" title="내 즐겨찾기">${STAR_SVG} 즐겨찾기</span>`);}
   return arr.filter(Boolean).join("");}
 /* key summary tiles */
 function renderKeyrow(ds){const L=ds.L,a=ds.agg,tiles=[];
@@ -1519,12 +1537,16 @@ let tQuickFo=null; /* "영상" | "이미지" | null */
 let tGroupBy=false; /* true → aggregate table rows by 광고그룹 ID */
 let tLiveOnly=true; /* 기본 ON — 스코프 최신 집행 주에 광고비>0인 소재만 (전체 목록 한정) */
 let tChip=null; /* 칩 클릭 필터 {k:"ve|fo|nat|size|grp", v, lab} — 한 번에 하나, 다시 클릭·✕로 해제 */
+let tMarkView="all"; /* 전체 / 내 소재(mine) / 즐겨찾기(fav) — 좌측 nav 세그먼트 */
 let tExp=new Set(); /* 펼쳐진 컬럼 그룹(cost/inst/act/clk/g) — 기본은 대표 컬럼만 */
 function isInactive(e){if(!e)return true;
   if((e.비용||0)<=0)return true;
   if(!("클릭 수" in e)||!("어트리뷰션 수" in e))return true;
   return false;}
 function applyTFilter(rows,ds){
+  if(tMarkView!=="all"&&MARKS.me){const ch=(ds&&ds.media)||"";
+    rows=rows.filter(e=>{if(e._isGroup)return false;const k=markKey(ch,e.name);
+      return tMarkView==="mine"?MARKS.myMine.has(k):MARKS.fav.has(k);});}
   if(tLiveOnly&&!standaloneMode&&ds&&ds.liveWeek)rows=rows.filter(e=>e._isGroup?(e._members||[]).some(m=>m._live):e._live);
   if(tQuickFo)rows=rows.filter(e=>e.tags&&e.tags.fo===tQuickFo);
   if(tChip)rows=rows.filter(e=>{
@@ -1538,6 +1560,7 @@ function renderTFilter(ds){/* filter popup removed */}
 let tableShowAll=false;
 let curDS=null; const ISLE={name:null,metric:null,gtab:"trend",posX:null,posY:null}; /* gtab: 상세 그래프 탭, posX/posY: 포지셔닝 축 지표 — 소재를 옮겨 다녀도 유지 */
 function escAttr(s){return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;");}
+function escHtml(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function familyKey(name){let s=String(name);
   s=s.replace(/(\d{3,4})\s*[x×]\s*(\d{3,4})/gi,"");
   s=s.replace(/\.(mp4|png|jpe?g|gif|webp|mov|webm)\b/gi,"");
@@ -2062,7 +2085,8 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
       if(c.k==="name"){const th=thumbHTML(r);const dn=displayNameOf(r);
         const gst=r._isGroup?giStatusChip(groupInfoOf(r._g_adGroupId||r._m_group)):"";
         const om=isOcrName(r)?`<span class="ocr-mark" title="이미지에서 자동 추출한 텍스트(OCR) — 공식 애셋 이름을 등록하면 대체됩니다">OCR</span>`:"";
-        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}>${trunc(dn,60)}${om}${liveBadge(ds,r)}${gst}${lrnBadge(r)}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
+        const mb=r._isGroup?"":markBtnsHTML(ds.media,r.name);
+        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}>${trunc(dn,60)}${mb}${om}${liveBadge(ds,r)}${gst}${lrnBadge(r)}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
       if(c.k==="score")return `<td>${score}</td>`;
       const dir=COL_DIR[c.k]||0;
       const t=dir?cellTier(r[c.k],colSorted[c.k],dir):"m";
@@ -2401,6 +2425,8 @@ function loadCloudRows(rows){
   for(const[ch,arr]of byCh)ingest(["date","ad_name","비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"],arr,"Supabase 저장소",ch,"replace");
   rebuildAllDatasets();
   refreshAll();
+  /* 즐겨찾기·내 소재 마크 로드 후 목록·세그먼트 갱신 */
+  loadMarks().then(()=>{renderViewSeg();if(active&&mainTab==="table"&&DATASETS[active])renderTable(DATASETS[active]);});
   setTimeout(openDeepLink,700);
   setTimeout(()=>{hydrateAllYtTitles().catch(()=>{});},1200);}
 /* #ad= 딥링크 — 공유받은 링크로 접속하면 해당 소재 상세를 바로 연다 (최초 로드 후 1회) */
@@ -2585,6 +2611,13 @@ function windowCount(ds,ch){
   const s=new Set();
   for(const r of rows){let nm=r[ds.L.nameCol];if(nm==null||nm===""||nm==="nan")nm="(미지정)";s.add(nm);}
   return s.size;}
+/* 보기 세그먼트 — 전체 / 내 소재 / 즐겨찾기. 로그인 계정(0715 제외)에서만 노출 */
+function renderViewSeg(){const el=$("#vseg"),sec=$("#viewSec");if(!el||!sec)return;
+  const on=!!MARKS.me&&!standaloneMode&&active&&DATASETS[active]&&DATASETS[active].dataAll&&DATASETS[active].dataAll.length;
+  sec.hidden=!on;if(!on){el.innerHTML="";return;}
+  const opts=[["all","전체"],["mine","내 소재"],["fav","즐겨찾기"]];
+  el.innerHTML=opts.map(([v,lab])=>`<button data-v="${v}" class="${v===tMarkView?"on":""}">${lab}</button>`).join("");
+  $$("#vseg button").forEach(b=>b.onclick=()=>{const v=b.dataset.v;if(tMarkView===v)return;tMarkView=v;tPage=1;renderViewSeg();if(active)renderTable(DATASETS[active]);});}
 function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)return;
   if(dsMode!=="channeled"||!ds.channels||!ds.channels.length){sec.hidden=true;el.innerHTML="";return;}
   sec.hidden=false;
@@ -2594,7 +2627,7 @@ function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)r
   el.innerHTML=chans.map(ch=>`<button data-m="${ch}" class="${ch===ds.media?"on":""}">${ch}<span class="c">${counts.get(ch).toLocaleString()}</span></button>`).join("");
   $$("#mseg button").forEach(b=>b.onclick=()=>{const m=b.dataset.m;if(ds.media===m)return;ds.media=m;tPage=1;show(ds);});}
 function show(ds){scope(ds);
-  renderMediaSeg(ds);renderPeriodSeg();renderSideKpis(ds);renderKeyrow(ds);
+  renderMediaSeg(ds);renderPeriodSeg();renderViewSeg();renderSideKpis(ds);renderKeyrow(ds);
   requestAnimationFrame(()=>{renderQuad(ds);renderQuadTierLegend();
     renderTrend(ds);
     requestAnimationFrame(()=>{renderTlegend();curDS=ds;renderQuickFo();renderTable(ds);renderAB(ds);});});}
@@ -2933,6 +2966,9 @@ document.addEventListener("keydown",ev=>{
     else{const ir=document.querySelector(".isle-row");if(ir)ir.remove();ISLE.name=null;}}});
 $("#showAll").addEventListener("change",e=>{tableShowAll=e.target.checked;tPage=1;if(active)renderTable(DATASETS[active]);});
 $("#table tbody").addEventListener("click",e=>{
+  /* 즐겨찾기 / 내 소재 별 클릭 (행 펼침·필터와 분리) */
+  const mbtn=e.target.closest(".mark-btn");
+  if(mbtn&&curDS){e.stopPropagation();toggleMark(curDS.media||"",mbtn.dataset.ad,mbtn.dataset.mk);return;}
   /* 칩 클릭 = 그 값으로 필터 토글 (행 펼침과 분리) */
   const chip=e.target.closest(".chip[data-ck]");
   if(chip&&curDS){const k=chip.dataset.ck,v=chip.dataset.cv;
@@ -2984,19 +3020,43 @@ renderGlossary();renderFooter();refreshAll();updateLandingVisibility();
 /* 클라우드 저장소 UI 배선 */
 /* 비밀번호 규칙 — 영문+숫자 조합, 영숫자만, 6자 이상 (서버 _cr_pwok과 동일) */
 const pwOk=p=>/^[A-Za-z0-9]{6,}$/.test(p||"")&&/[A-Za-z]/.test(p||"")&&/[0-9]/.test(p||"");
-/* 에디터에게 새 가입 신청 알림 — cr_pending_count 폴링(90초), 증가 시 토스트, 대기 있으면 우하단 칩 */
-let _lastPending=-1,_pendTimer=null;
-async function checkPendingSignups(){
-  const nudge=$("#signupNudge");
-  if(!canEdit||!cloudPw){if(nudge)nudge.hidden=true;return;}
-  try{const r=await sbRpc("cr_pending_count",{pw:cloudPw});const p=Math.max(0,+((r&&r.pending))||0);
-    if(nudge){if(p>0){const b=nudge.querySelector("b");if(b)b.textContent=`가입 신청 ${p}건`;nudge.hidden=false;}else nudge.hidden=true;}
-    if(_lastPending>=0&&p>_lastPending)toast(`🔔 새 가입 신청이 ${p}건 있어요 · 관리자 페이지에서 승인해 주세요`);
-    else if(_lastPending<0&&p>0)toast(`🔔 승인 대기 중인 가입 신청이 ${p}건 있어요`);
-    _lastPending=p;
+/* 즐겨찾기 / 내 소재 — 개별 계정 단위(뷰어도 가능, 0715 불가). Supabase 저장.
+   fav=본인 것만 로드(비공개) · mine=전체 로드(등록자 이름 공개). 채널=현재 매체(ds.media) */
+const STAR_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.3l2.83 5.73 6.32.92-4.57 4.46 1.08 6.3L12 16.93 6.34 19.9l1.08-6.3L2.85 8.95l6.32-.92z"/></svg>`;
+const SEAL_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M 12 1.4 L 14.25 3.6 L 17.3 2.82 L 18.15 5.85 L 21.18 6.7 L 20.4 9.75 L 22.6 12 L 20.4 14.25 L 21.18 17.3 L 18.15 18.15 L 17.3 21.18 L 14.25 20.4 L 12 22.6 L 9.75 20.4 L 6.7 21.18 L 5.85 18.15 L 2.82 17.3 L 3.6 14.25 L 1.4 12 L 3.6 9.75 L 2.82 6.7 L 5.85 5.85 L 6.7 2.82 L 9.75 3.6 Z"/><path class="mchk" d="M8.4 12.0l2.5 2.5 4.7-5.1" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+let MARKS={me:null,fav:new Set(),myMine:new Set(),mineByKey:new Map()};
+const markKey=(ch,ad)=>String(ch||"")+""+String(ad||"");
+const canMark=()=>!!MARKS.me;
+async function loadMarks(){
+  MARKS={me:null,fav:new Set(),myMine:new Set(),mineByKey:new Map()};
+  if(!cloudPw)return;
+  try{const r=await sbRpc("cr_marks_load",{pw:cloudPw});
+    const me=(r&&r.me)||null;const fav=new Set(),myMine=new Set(),mineByKey=new Map();
+    for(const x of (r&&r.fav)||[])fav.add(markKey(x.c,x.a));
+    for(const x of (r&&r.mine)||[]){const k=markKey(x.c,x.a);let a=mineByKey.get(k);if(!a){a=[];mineByKey.set(k,a);}a.push(x.n);if(me&&x.n===me)myMine.add(k);}
+    MARKS={me,fav,myMine,mineByKey};
   }catch(e){}}
-function startPendingWatch(){if(_pendTimer)clearInterval(_pendTimer);_pendTimer=null;_lastPending=-1;
-  if(!canEdit)return;checkPendingSignups();_pendTimer=setInterval(checkPendingSignups,90000);}
+function markBtnsHTML(ch,ad){
+  if(!MARKS.me)return "";
+  const k=markKey(ch,ad),faved=MARKS.fav.has(k),mined=MARKS.myMine.has(k);
+  return `<span class="mark-btns">`+
+    `<button type="button" class="mark-btn fav${faved?" on":""}" data-mk="fav" data-ad="${escAttr(ad)}" title="${faved?"즐겨찾기 해제":"즐겨찾기"}" aria-label="즐겨찾기">${STAR_SVG}</button>`+
+    `<button type="button" class="mark-btn mine${mined?" on":""}" data-mk="mine" data-ad="${escAttr(ad)}" title="${mined?"내 소재 해제":"내 소재로 등록"}" aria-label="내 소재">${SEAL_SVG}</button>`+
+    `</span>`;}
+async function toggleMark(ch,ad,kind){
+  if(!MARKS.me){toast("로그인한 계정에서만 즐겨찾기·내 소재를 쓸 수 있어요");return;}
+  const k=markKey(ch,ad),set=kind==="fav"?MARKS.fav:MARKS.myMine,on=!set.has(k);
+  if(on){set.add(k);if(kind==="mine"){let a=MARKS.mineByKey.get(k);if(!a){a=[];MARKS.mineByKey.set(k,a);}if(!a.includes(MARKS.me))a.push(MARKS.me);}}
+  else{set.delete(k);if(kind==="mine"){const a=(MARKS.mineByKey.get(k)||[]).filter(n=>n!==MARKS.me);if(a.length)MARKS.mineByKey.set(k,a);else MARKS.mineByKey.delete(k);}}
+  updateMarkRow(ch,ad);
+  if(kind==="fav"&&tMarkView==="fav"||kind==="mine"&&tMarkView==="mine"){if(curDS)renderTable(curDS);}
+  try{await sbRpc("cr_mark_set",{pw:cloudPw,p_channel:ch,p_ad:ad,p_kind:kind,p_on:on});}
+  catch(e){await loadMarks();if(curDS)renderTable(curDS);toast("저장하지 못했어요 · "+(e.message||""));}}
+function updateMarkRow(ch,ad){
+  const tr=[...document.querySelectorAll("#table tbody tr.row")].find(t=>t.getAttribute("data-name")===ad);
+  if(!tr||!curDS)return;const e=findRow(curDS,ad);
+  const box=tr.querySelector(".mark-btns");if(box)box.outerHTML=markBtnsHTML(ch,ad);
+  const chips=tr.querySelector(".chips");if(chips&&e)chips.innerHTML=chipsHTML(e.tags,e);}
 /* 로그인 — 비밀번호만으로 사용자 식별. cr_login이 {found,name,status,role,viewer} 반환:
    승인됨=데이터 열고 환영(권한별) · 신청함=승인 대기 · 거절됨=거절 안내 · 미존재=흔들기.
    0715=이름 없는 뷰어 · role=editor만 저장·수정 가능(canEdit) */
@@ -3014,7 +3074,6 @@ async function attemptLogin(pw){
   uploaderId=name||null;try{if(name)localStorage.setItem("cr_uploader",name);else localStorage.removeItem("cr_uploader");}catch(_){}
   try{sessionStorage.setItem("crname",name);sessionStorage.setItem("crviewer",viewer?"1":"0");sessionStorage.setItem("crcan",editor?"1":"0");}catch(_){}
   const ok=await cloudUnlock(pw,{name,viewer,editor});
-  if(ok&&editor)startPendingWatch();
   return ok?"ok":"error";}
 const _pwForm=$("#pwForm");
 if(_pwForm)_pwForm.addEventListener("submit",async e=>{e.preventDefault();
@@ -3058,7 +3117,7 @@ if(_cloudLine)_cloudLine.addEventListener("click",cloudRestore);
 const _fmtBack=$("#fmtBarBack");
 if(_fmtBack)_fmtBack.addEventListener("click",cloudRestore);
 refreshCloudLine();
-if(cloudPw)cloudUnlock(cloudPw,{silent:true}).catch(()=>false).then(()=>{cloudBooting=false;updateLandingVisibility();if(canEdit)startPendingWatch();});
+if(cloudPw)cloudUnlock(cloudPw,{silent:true}).catch(()=>false).then(()=>{cloudBooting=false;updateLandingVisibility();});
 else cloudBooting=false;
 /* 좁은 화면에서는 요약 토글 기본 접힘 */
 try{if(matchMedia("(max-width:900px)").matches){const sm=$("#sideMore");if(sm)sm.removeAttribute("open");}}catch(e){}
