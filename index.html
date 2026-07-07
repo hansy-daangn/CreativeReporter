@@ -686,6 +686,8 @@
   .xt-chip{border:1px solid var(--surface-3);background:var(--surface);color:var(--muted);font:inherit;font-size:12.5px;font-weight:650;padding:6px 14px;border-radius:999px;cursor:pointer;transition:.1s}
   .xt-chip:hover{border-color:var(--karrot);color:var(--ink)}
   .xt-chip.on{background:var(--karrot);border-color:var(--karrot);color:#fff}
+  .xt-grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+  .xt-grid4 .xt-chip{text-align:center;padding:8px 6px}
   .xt-seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--surface-3);border-radius:9px;overflow:hidden;max-width:100%}
   .xt-seg button{border:0;border-left:1px solid var(--surface-3);background:var(--surface);color:var(--muted);font:inherit;font-size:12.5px;font-weight:650;padding:8px 16px;cursor:pointer;transition:.1s}
   .xt-seg button:first-child{border-left:0}
@@ -779,7 +781,7 @@
           <button class="sbtn" id="glossBtn"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>용어</button>
           <label class="sbtn icon-only" id="drop" title="CSV 파일 넣기 · 드래그해서 놓아도 됩니다"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15V4m0 0L8 8m4-4l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input type="file" id="file" accept=".csv,text/csv" multiple hidden></label>
         </div>
-        <button class="sbtn pri xtract" id="exportBtn" title="선택한 조건의 소재 성과를 AI가 읽기 좋은 파일로 내보내요"><svg viewBox="0 0 24 24" fill="none"><path d="M9 17H7A4 4 0 017 9h.26A6 6 0 0119 10a4.5 4.5 0 01-1 8.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 12v7m0 0l-2.3-2.3M12 19l2.3-2.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>내 자료 추출하기</button>
+        <button class="sbtn pri xtract" id="exportBtn" title="선택한 조건의 소재 성과를 AI가 읽기 좋은 파일로 내보내요">내 자료 추출하기</button>
       </div>
     </details>
   </aside>
@@ -3491,15 +3493,19 @@ function scopeRange(ds,ch,start,end){
   ds.S=computeScores(ds);ds._wkScore=null;ds._wkScoreG=null;}
 function buildExportMd(creator,chans,period,custArg,compareOpt){
   const adDs=DATASETS["ad"]||(active&&DATASETS[active]);if(!adDs)return "";
-  const _p=periodN,_cw=customWeeks,_cur=curDS,isRange=period==="range";
+  const _p=periodN,_cw=customWeeks,_cur=curDS;
+  const now=new Date(),stamp=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+  const isRange=(period==="range"||period==="year");
+  let rStart,rEnd,perLab;
+  if(period==="year"){const y=now.getFullYear();rStart=`${y}-01-01`;rEnd="9999-12-31";perLab=`올해 (${y}년 1월~)`;}
+  else if(period==="range"){rStart=custArg.start;rEnd=custArg.end;perLab=`${custArg.start} ~ ${custArg.end}`;}
+  else{perLab=period==="4"?"최근 1달":period==="13"?"최근 3달":"전체 기간";}
   if(!isRange)periodN=period;
   const allCreator=creator==="모두",compare=!!compareOpt&&!allCreator;
-  const now=new Date(),stamp=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
-  const perLab=isRange?`${custArg.start} ~ ${custArg.end}`:(period==="4"?"최근 1달":period==="13"?"최근 3달":"전체 기간");
   const chSecs=[];
   for(const ch of chans){
     let tmp;
-    try{tmp=Object.assign({},adDs);tmp.media=ch;if(isRange)scopeRange(tmp,ch,custArg.start,custArg.end);else scope(tmp);curDS=tmp;}catch(e){continue;}
+    try{tmp=Object.assign({},adDs);tmp.media=ch;if(isRange)scopeRange(tmp,ch,rStart,rEnd);else scope(tmp);curDS=tmp;}catch(e){continue;}
     const list=tmp.agg.slice(),rng=tmp.range||{},rangeLab=(rng.first&&rng.last)?`${rng.first}~${rng.last}`:"";
     const mine=allCreator?list:list.filter(e=>rosterCreatorsOf(e).includes(creator));
     const peers=list.filter(e=>!rosterCreatorsOf(e).includes(creator));
@@ -3544,9 +3550,9 @@ function openExportModal(){
   _expState={creator:"hansy",chans:new Set(chansAll),period:(periodN==="custom"?"13":periodN),compare:true,chansAll,rangeStart:dataMin,rangeEnd:dataMax,dataMin,dataMax};
   const ov=document.createElement("div");ov.className="xt-ov";ov.id="xtOv";
   ov.innerHTML=`<div class="xt-modal" role="dialog" aria-modal="true" aria-label="자료 추출">`+
-    `<div class="xt-head"><div class="xt-ttl">📤 자료 추출하기</div><button type="button" class="xt-close" aria-label="닫기">✕</button></div>`+
+    `<div class="xt-head"><div class="xt-ttl">자료 추출하기</div><button type="button" class="xt-close" aria-label="닫기">✕</button></div>`+
     `<div class="xt-body">`+
-      `<div class="xt-field"><div class="xt-lab">제작자</div><div class="xt-opts" id="xtCreator"></div></div>`+
+      `<div class="xt-field"><div class="xt-lab">제작자</div><div class="xt-grid4" id="xtCreator"></div></div>`+
       `<div class="xt-field"><div class="xt-lab">매체 <span class="xt-hint">복수 선택</span></div><div class="xt-seg" id="xtMedia"></div></div>`+
       `<div class="xt-field"><div class="xt-lab">기간</div><div class="xt-seg" id="xtPeriod"></div><div class="xt-range" id="xtRange" hidden><input type="date" id="xtStart"><span class="xt-tilde">~</span><input type="date" id="xtEnd"></div></div>`+
       `<label class="xt-check"><input type="checkbox" id="xtCompare" checked><span>비교 데이터 포함 <span class="xt-hint">동기간·동매체 다른 제작자 소재를 별도로 함께 추출</span></span></label>`+
@@ -3567,7 +3573,7 @@ function openExportModal(){
       renderMedia();});};
   renderMedia();
   const pwrap=ov.querySelector("#xtPeriod"),rangeBox=ov.querySelector("#xtRange"),startIn=ov.querySelector("#xtStart"),endIn=ov.querySelector("#xtEnd");
-  const pOpts=[["4","1달"],["13","3달"],["all","전체"],["range","직접 설정"]];
+  const pOpts=[["4","1달"],["13","3달"],["year","올해"],["all","전체"],["range","직접 설정"]];
   const renderPeriod=()=>{pwrap.innerHTML=pOpts.map(([v,l])=>`<button type="button" class="${_expState.period===v?"on":""}" data-v="${v}">${l}</button>`).join("");
     pwrap.querySelectorAll("button").forEach(b=>b.onclick=()=>{_expState.period=b.dataset.v;rangeBox.hidden=_expState.period!=="range";renderPeriod();});};
   renderPeriod();rangeBox.hidden=_expState.period!=="range";
