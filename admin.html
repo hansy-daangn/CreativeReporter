@@ -104,7 +104,7 @@
   <!-- 계정 직접 추가 (승인됨으로 생성) -->
   <div class="addbox" id="addBox" hidden>
     <input class="af" type="text" id="afName" placeholder="daangn name (영문)" maxlength="24">
-    <input class="af" type="text" id="afPw" placeholder="비밀번호 (4자+)" maxlength="40">
+    <input class="af" type="text" id="afPw" placeholder="비밀번호 (영문+숫자, 6자+)" maxlength="40">
     <select class="af" id="afRole"><option value="viewer">뷰어</option><option value="editor">에디터</option></select>
     <button class="btn pri" id="afGo" type="button">추가</button>
     <button class="btn" id="afCancel" type="button">닫기</button>
@@ -185,18 +185,35 @@ function render(){
   tb.querySelectorAll(".rbtn").forEach(b=>b.onclick=()=>{if(!b.classList.contains("on"))setRole(+b.dataset.id,b.dataset.role);});
   tb.querySelectorAll(".pwval.copyable").forEach(el=>el.onclick=()=>{const pw=el.textContent;navigator.clipboard&&navigator.clipboard.writeText(pw).then(()=>toast("비밀번호를 복사했어요")).catch(()=>{});});
 }
-async function load(){
+let _seenPending=null; /* 이미 인지한 신청 id 집합 (null=최초 로드 전) */
+function notifyNewSignups(fresh){
+  const names=fresh.map(u=>u.name).join(", ");
+  toast(`🔔 새 가입 신청: ${names}`);
+  try{if(window.Notification&&Notification.permission==="granted"){
+    const n=new Notification("새 가입 신청",{body:`${names} 님이 가입을 신청했어요 · 승인해 주세요`,tag:"cr-signup",renotify:true});
+    n.onclick=()=>{window.focus();n.close();};
+  }}catch(e){}
+}
+async function load(opts){
   if(!adminPw)return;
   try{const list=await rpc("cr_admin_list",{admin_pw:adminPw});
     USERS=Array.isArray(list)?list:[];render();
+    /* 새 가입 신청 감지 → 알림 (최초 로드는 알리지 않음) */
+    const pend=USERS.filter(u=>u.status==="신청함");
+    const ids=new Set(pend.map(u=>u.id));
+    if(_seenPending!==null){const fresh=pend.filter(u=>!_seenPending.has(u.id));if(fresh.length)notifyNewSignups(fresh);}
+    _seenPending=ids;
   }catch(e){
-    if(e.status===400||e.status===403||/denied/i.test(e.message||"")){lock();toast("관리자 비밀번호가 올바르지 않아요");}
-    else toast("목록을 불러오지 못했어요 · "+(e.message||""));}
+    if(e.status===400||e.status===403||/denied/i.test(e.message||"")){if(!(opts&&opts.silent)){lock();toast("관리자 비밀번호가 올바르지 않아요");}}
+    else if(!(opts&&opts.silent))toast("목록을 불러오지 못했어요 · "+(e.message||""));}
 }
+/* 관리자 페이지 열려 있는 동안 15초마다 새 신청 확인 */
+let _pollTimer=null;
+function startPoll(){if(_pollTimer)clearInterval(_pollTimer);_pollTimer=setInterval(()=>{if(adminPw)load({silent:true});},15000);}
+function stopPoll(){if(_pollTimer)clearInterval(_pollTimer);_pollTimer=null;_seenPending=null;}
 async function setStatus(id,status){
   const reviewer=($("#reviewer").value||"").trim()||"admin";
   const u=USERS.find(x=>x.id===id);
-  if(status==="거절됨"&&!confirm(`${u?u.name:"이 사용자"} 을(를) 거절 처리할까요?\n(기록은 보존돼요 · 언제든 다시 승인할 수 있어요)`))return;
   try{await rpc("cr_admin_set",{admin_pw:adminPw,p_id:id,p_status:status,reviewer});
     toast(`${u?u.name:""} → ${status}`);
     await load();
@@ -210,13 +227,15 @@ async function setRole(id,role){
     await load();
   }catch(e){toast("권한을 바꾸지 못했어요 · "+(e.message||""));}
 }
-const ERRMAP={name_taken:"이미 누군가 쓰고 있는 이름이에요",pw_taken:"이미 쓰이고 있는 비밀번호예요 · 다른 걸로 정해 주세요",pw_reserved:"그 비밀번호는 쓸 수 없어요 · 다른 걸로 정해 주세요",name_invalid:"이름은 영문 시작 2~24자 영문·숫자여야 해요",pw_weak:"비밀번호는 4자 이상이어야 해요",bad_role:"권한 값이 올바르지 않아요"};
+const PWMSG="비밀번호는 영문과 숫자를 섞어 6자 이상으로 정해 주세요";
+const pwOk=p=>/^[A-Za-z0-9]{6,}$/.test(p||"")&&/[A-Za-z]/.test(p||"")&&/[0-9]/.test(p||"");
+const ERRMAP={name_taken:"이미 누군가 쓰고 있는 이름이에요",pw_taken:"이미 쓰이고 있는 비밀번호예요 · 다른 걸로 정해 주세요",pw_reserved:"그 비밀번호는 쓸 수 없어요 · 다른 걸로 정해 주세요",name_invalid:"이름은 영문 시작 2~24자 영문·숫자여야 해요",pw_weak:PWMSG,pw_format:PWMSG,bad_role:"권한 값이 올바르지 않아요"};
 function mapErr(m){return ERRMAP[m]||m||"실패했어요";}
 async function changePw(id){
   const u=USERS.find(x=>x.id===id);if(!u)return;
-  const np=prompt(`${u.name} 의 새 비밀번호를 입력해 주세요 (4자 이상)`);
+  const np=prompt(`${u.name} 의 새 비밀번호를 입력해 주세요\n(영문+숫자 조합, 6자 이상)`);
   if(np==null)return; const pw=np.trim();
-  if(pw.length<4){toast("비밀번호는 4자 이상이어야 해요");return;}
+  if(!pwOk(pw)){toast(PWMSG);return;}
   const reviewer=($("#reviewer").value||"").trim()||"admin";
   try{await rpc("cr_admin_setpw",{admin_pw:adminPw,p_id:id,p_new_pw:pw,reviewer});
     toast(`${u.name} 비밀번호를 바꿨어요`);
@@ -227,7 +246,7 @@ async function changePw(id){
 async function addAccount(){
   const name=($("#afName").value||"").trim(),pw=($("#afPw").value||"").trim(),role=$("#afRole").value;
   if(!/^[A-Za-z][A-Za-z0-9]{1,23}$/.test(name)){toast("이름은 영문 시작 2~24자 영문·숫자여야 해요");$("#afName").focus();return;}
-  if(pw.length<4){toast("비밀번호는 4자 이상이어야 해요");$("#afPw").focus();return;}
+  if(!pwOk(pw)){toast(PWMSG);$("#afPw").focus();return;}
   const reviewer=($("#reviewer").value||"").trim()||"admin";
   const btn=$("#afGo"),bt=btn.textContent;btn.disabled=true;btn.textContent="추가 중…";
   try{await rpc("cr_admin_create",{admin_pw:adminPw,p_name:name,p_pw:pw,p_role:role,reviewer});
@@ -237,8 +256,10 @@ async function addAccount(){
   }catch(e){toast("추가하지 못했어요 · "+mapErr(e.message));}
   finally{btn.disabled=false;btn.textContent=bt;}
 }
-function unlock(pw){adminPw=pw;sessionStorage.setItem("cradmin",pw);$("#gate").classList.add("hidden");load();}
-function lock(){adminPw=null;sessionStorage.removeItem("cradmin");$("#gate").classList.remove("hidden");$("#rows").innerHTML=`<tr><td colspan="7" class="empty">관리자 비밀번호를 입력해 주세요.</td></tr>`;$("#counts").innerHTML="";$("#addBox").hidden=true;const i=$("#apwIn");if(i){i.value="";i.focus();}}
+function unlock(pw){adminPw=pw;sessionStorage.setItem("cradmin",pw);$("#gate").classList.add("hidden");
+  try{if(window.Notification&&Notification.permission==="default")Notification.requestPermission();}catch(e){}
+  load();startPoll();}
+function lock(){adminPw=null;sessionStorage.removeItem("cradmin");stopPoll();$("#gate").classList.remove("hidden");$("#rows").innerHTML=`<tr><td colspan="7" class="empty">관리자 비밀번호를 입력해 주세요.</td></tr>`;$("#counts").innerHTML="";$("#addBox").hidden=true;const i=$("#apwIn");if(i){i.value="";i.focus();}}
 $("#gateForm").addEventListener("submit",async e=>{e.preventDefault();
   const inp=$("#apwIn"),box=$("#gateForm"),v=(inp.value||"").trim();if(!v)return;
   try{const list=await rpc("cr_admin_list",{admin_pw:v});USERS=Array.isArray(list)?list:[];unlock(v);render();}
@@ -252,7 +273,9 @@ $("#afCancel").onclick=()=>{$("#addBox").hidden=true;};
 $("#afGo").onclick=addAccount;
 ["afName","afPw"].forEach(id=>$("#"+id).addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addAccount();}}));
 /* 저장된 관리자 비밀번호가 있으면 자동 진입 시도 */
-if(adminPw){ $("#gate").classList.add("hidden"); load(); }
+if(adminPw){ $("#gate").classList.add("hidden");
+  try{if(window.Notification&&Notification.permission==="default")Notification.requestPermission();}catch(e){}
+  load(); startPoll(); }
 </script>
 </body>
 </html>

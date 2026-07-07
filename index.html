@@ -605,6 +605,11 @@
   #landing .ldev{position:fixed;left:0;right:0;bottom:22px;text-align:center;font-family:"SFMono-Regular",Menlo,Consolas,monospace;font-size:12px;font-weight:500;color:#C4C4CA;text-decoration:none;letter-spacing:.02em;transition:color .15s}
   #landing .ldev:hover{color:#1D1D1F}
   @keyframes pwshake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  /* 새 가입 신청 알림 칩 (에디터, 대기 있을 때만) → 관리자 페이지 */
+  #signupNudge{position:fixed;right:18px;bottom:18px;z-index:75;background:var(--karrot);color:#fff;padding:10px 15px;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:-.01em;text-decoration:none;box-shadow:0 8px 22px -6px rgba(255,111,15,.55);display:inline-flex;align-items:center;gap:6px;transition:transform .12s,box-shadow .12s}
+  #signupNudge:hover{transform:translateY(-2px);box-shadow:0 12px 26px -6px rgba(255,111,15,.65)}
+  #signupNudge[hidden]{display:none}
+  #signupNudge b{font-weight:800}
 </style>
 </head>
 <body>
@@ -642,6 +647,7 @@
     <a class="ldev" id="devLink" href="admin.html">&lt;/&gt; Dev</a>
   </div>
 </div>
+<a id="signupNudge" href="admin.html" hidden title="관리자 페이지에서 승인하기">🔔 <b></b> · 승인하기</a>
 <div class="app">
   <!-- SIDEBAR: identity + media + summary + actions -->
   <aside class="side">
@@ -2419,9 +2425,8 @@ async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
     const gv=(opts&&"viewer"in opts)?opts:{viewer:sessionStorage.getItem("crviewer")==="1",name:sessionStorage.getItem("crname")||"",editor:sessionStorage.getItem("crcan")==="1"};
     if(!sessionStorage.getItem("crHi")){sessionStorage.setItem("crHi","1");
       const nm=(gv.name||"").toUpperCase();
-      const msg=gv.viewer?"뷰어 권한으로 로그인했어요 · 구경 환영해요 👀"
-        :gv.editor?`${nm}님 환영해요! 🥕`
-        :`${nm}님 환영해요! · 지금은 뷰어 권한이에요 👀`;
+      /* 환영 토스트는 환영 문구만. 0715 뷰어는 로그인 안내만(환영 문구 없음) */
+      const msg=gv.viewer?"뷰어 권한으로 로그인했어요 👀":`${nm}님 환영해요! 🥕`;
       setTimeout(()=>toast(msg),1200);}
     refreshCloudLine();return true;
   }catch(err){
@@ -2977,6 +2982,21 @@ function updateLandingVisibility(){const el=document.getElementById("landing");i
 $$("#mtabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.t));
 renderGlossary();renderFooter();refreshAll();updateLandingVisibility();
 /* 클라우드 저장소 UI 배선 */
+/* 비밀번호 규칙 — 영문+숫자 조합, 영숫자만, 6자 이상 (서버 _cr_pwok과 동일) */
+const pwOk=p=>/^[A-Za-z0-9]{6,}$/.test(p||"")&&/[A-Za-z]/.test(p||"")&&/[0-9]/.test(p||"");
+/* 에디터에게 새 가입 신청 알림 — cr_pending_count 폴링(90초), 증가 시 토스트, 대기 있으면 우하단 칩 */
+let _lastPending=-1,_pendTimer=null;
+async function checkPendingSignups(){
+  const nudge=$("#signupNudge");
+  if(!canEdit||!cloudPw){if(nudge)nudge.hidden=true;return;}
+  try{const r=await sbRpc("cr_pending_count",{pw:cloudPw});const p=Math.max(0,+((r&&r.pending))||0);
+    if(nudge){if(p>0){const b=nudge.querySelector("b");if(b)b.textContent=`가입 신청 ${p}건`;nudge.hidden=false;}else nudge.hidden=true;}
+    if(_lastPending>=0&&p>_lastPending)toast(`🔔 새 가입 신청이 ${p}건 있어요 · 관리자 페이지에서 승인해 주세요`);
+    else if(_lastPending<0&&p>0)toast(`🔔 승인 대기 중인 가입 신청이 ${p}건 있어요`);
+    _lastPending=p;
+  }catch(e){}}
+function startPendingWatch(){if(_pendTimer)clearInterval(_pendTimer);_pendTimer=null;_lastPending=-1;
+  if(!canEdit)return;checkPendingSignups();_pendTimer=setInterval(checkPendingSignups,90000);}
 /* 로그인 — 비밀번호만으로 사용자 식별. cr_login이 {found,name,status,role,viewer} 반환:
    승인됨=데이터 열고 환영(권한별) · 신청함=승인 대기 · 거절됨=거절 안내 · 미존재=흔들기.
    0715=이름 없는 뷰어 · role=editor만 저장·수정 가능(canEdit) */
@@ -2994,6 +3014,7 @@ async function attemptLogin(pw){
   uploaderId=name||null;try{if(name)localStorage.setItem("cr_uploader",name);else localStorage.removeItem("cr_uploader");}catch(_){}
   try{sessionStorage.setItem("crname",name);sessionStorage.setItem("crviewer",viewer?"1":"0");sessionStorage.setItem("crcan",editor?"1":"0");}catch(_){}
   const ok=await cloudUnlock(pw,{name,viewer,editor});
+  if(ok&&editor)startPendingWatch();
   return ok?"ok":"error";}
 const _pwForm=$("#pwForm");
 if(_pwForm)_pwForm.addEventListener("submit",async e=>{e.preventDefault();
@@ -3014,7 +3035,7 @@ if(_regName)_regName.addEventListener("input",e=>{const c=e.target.selectionStar
 async function doRegister(){
   const name=($("#regName").value||"").trim(),pw=$("#regPw").value||"",pw2=$("#regPw2").value||"";
   if(!/^[A-Za-z][A-Za-z0-9]{1,23}$/.test(name)){toast("daangn name은 영문으로 시작하는 2~24자 영문·숫자로 정해 주세요");$("#regName").focus();return;}
-  if(pw.length<4){toast("비밀번호는 4자 이상으로 정해 주세요");$("#regPw").focus();return;}
+  if(!pwOk(pw)){toast("비밀번호는 영문과 숫자를 섞어 6자 이상으로 정해 주세요");$("#regPw").focus();return;}
   if(pw!==pw2){toast("비밀번호와 비밀번호 확인이 서로 달라요");$("#regPw2").focus();return;}
   const btn=$("#doRegister"),bt=btn.textContent;btn.disabled=true;btn.textContent="신청 중…";
   try{
@@ -3027,7 +3048,7 @@ async function doRegister(){
           m==="pw_taken"?"이미 쓰이고 있는 비밀번호예요 · 다른 걸로 정해 주세요":
           m==="pw_reserved"?"그 비밀번호는 쓸 수 없어요 · 다른 걸로 정해 주세요":
           m==="name_invalid"?"daangn name 형식이 올바르지 않아요 (영문 시작, 2~24자)":
-          m==="pw_weak"?"비밀번호는 4자 이상으로 정해 주세요":
+          (m==="pw_format"||m==="pw_weak")?"비밀번호는 영문과 숫자를 섞어 6자 이상으로 정해 주세요":
           "가입 신청에 실패했어요 · "+m);
   }finally{btn.disabled=false;btn.textContent=bt;}}
 const _doReg=$("#doRegister");if(_doReg)_doReg.onclick=doRegister;
@@ -3037,7 +3058,7 @@ if(_cloudLine)_cloudLine.addEventListener("click",cloudRestore);
 const _fmtBack=$("#fmtBarBack");
 if(_fmtBack)_fmtBack.addEventListener("click",cloudRestore);
 refreshCloudLine();
-if(cloudPw)cloudUnlock(cloudPw,{silent:true}).catch(()=>false).then(()=>{cloudBooting=false;updateLandingVisibility();});
+if(cloudPw)cloudUnlock(cloudPw,{silent:true}).catch(()=>false).then(()=>{cloudBooting=false;updateLandingVisibility();if(canEdit)startPendingWatch();});
 else cloudBooting=false;
 /* 좁은 화면에서는 요약 토글 기본 접힘 */
 try{if(matchMedia("(max-width:900px)").matches){const sm=$("#sideMore");if(sm)sm.removeAttribute("open");}}catch(e){}

@@ -86,7 +86,9 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 ### 로그인·가입 흐름
 1. **가입**: 랜딩 '회원가입' → daangn name(영문 시작 2~24자)·비번·비번확인 → `cr_register`(신청함 적재). 이름/비번 중복·형식 오류는 서버가 거부(`name_taken`/`pw_taken`/`name_invalid`/`pw_weak`). 성공 시 "관리자 확인 후 가입이 승인됩니다".
 2. **관리자 처리**: admin.html에서 신청함 → 승인됨/거절됨. 거절은 삭제가 아니라 상태 저장이라 언제든 재승인 가능.
-3. **로그인**: 비밀번호만 입력 → `cr_login`이 `{found,name,status,role,viewer}` 반환. 권한별 인사(탭당 1회) — 0715 뷰어="뷰어 권한으로 로그인했어요 👀"(이름 없음) · 에디터="NAME님 환영해요! 🥕" · 승인된 뷰어="NAME님 환영해요! · 지금은 뷰어 권한이에요" · 신청함="아직 관리자 승인 대기 중이에요" · 거절됨="가입이 거절된 계정이에요" · 미존재=흔들기. (모든 토스트는 당근 보이스 해요체)
+3. **로그인**: 비밀번호만 입력 → `cr_login`이 `{found,name,status,role,viewer}` 반환. 인사(탭당 1회) — 0715 뷰어="뷰어 권한으로 로그인했어요 👀"(이름 없음, 환영 문구 없음) · 승인된 사용자(에디터·뷰어 공통)="NAME님 환영해요! 🥕"(환영 문구만) · 신청함="아직 관리자 승인 대기 중이에요" · 거절됨="가입이 거절된 계정이에요" · 미존재=흔들기. (모든 토스트는 당근 보이스 해요체)
+- **비밀번호 규칙**(`_cr_pwok`): 영문+숫자 조합·영숫자만·6자 이상. **같은 비밀번호로 다른 계정 생성 금지**(pw_hash 전역 유일 → register·admin_create·setpw 모두 `pw_taken` 차단).
+- **새 가입 신청 알림**: `cr_pending_count(pw)`(로그인 사용자면 조회 가능)로 대기 수 확인. 에디터는 메인 화면에서 우하단 "🔔 가입 신청 N건 · 승인하기" 칩(→admin.html)+증가 시 토스트. admin.html은 열려 있는 동안 15초 폴링해 새 신청 시 토스트+브라우저 알림, **거절은 확인창 없이 즉시**.
 
 ### RPC 목록
 | 함수 | 역할 |
@@ -99,7 +101,8 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 | `cr_admin_list(admin_pw)` | 전 사용자 목록(신청함 먼저, role + **복호화한 pw** 포함) — 관리자용 |
 | `cr_admin_set(admin_pw, p_id, p_status, reviewer, p_role)` | 상태·권한 변경(둘 다 nullable — 하나만 변경 가능) + 처리자·시각 기록 |
 | `cr_admin_create(admin_pw, p_name, p_pw, p_role, reviewer)` | 관리자가 계정 직접 추가(승인됨으로 생성, 형식·중복 검증) |
-| `cr_admin_setpw(admin_pw, p_id, p_new_pw, reviewer)` | 관리자가 비밀번호 변경(hash·enc 동시 갱신, 예약비번·중복 금지) |
+| `cr_admin_setpw(admin_pw, p_id, p_new_pw, reviewer)` | 관리자가 비밀번호 변경(hash·enc 동시 갱신, 규칙·예약비번·중복 금지) |
+| `cr_pending_count(pw)` | 대기(신청함) 수 반환 — 로그인 사용자용 알림 |
 | `cr_load(pw)` | 전 기록을 단일 jsonb 배열로 반환 (PostgREST 1,000행 페이지네이션 우회) |
 | `cr_save(pw, rows, uploader)` | 주간 기록 벌크 저장. 서버 가드: 채널 공백/'기타' 거부, 이름 필수, **비용 ₩1,500 미만 거부**, 중복은 `ON CONFLICT DO NOTHING` |
 | `cr_status(pw)` | rows·ads(고유 소재)·weeks·channels·기간·unsigned_rows·**uploaders 분포·last_upload** |
