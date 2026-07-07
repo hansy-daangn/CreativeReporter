@@ -693,6 +693,8 @@
   .xt-seg button:first-child{border-left:0}
   .xt-seg button:hover{background:var(--surface-2);color:var(--ink)}
   .xt-seg button.on{background:var(--karrot);color:#fff}
+  .xt-seg.off{opacity:.45}
+  .xt-seg button[disabled]{cursor:default}
   .xt-range{margin-top:10px;display:flex;align-items:center;gap:8px}
   .xt-range[hidden]{display:none}
   .xt-range input[type=date]{height:33px;border:1px solid var(--surface-3);border-radius:8px;padding:0 10px;font:inherit;font-size:12.5px;background:var(--surface);color:var(--ink)}
@@ -3441,38 +3443,47 @@ function expCols(L,list){
   if(list.some(e=>e["영상 완주율"]!=null))cols.push({k:"영상 완주율",lab:"완주율",f:"pct"});
   if(list.some(e=>e._g_ROAS!=null))cols.push({k:"_g_ROAS",lab:"ROAS",f:"num"});
   return cols;}
-function expRow(e,cols,withCreator){
+function expRow(e,cols,withCreator,nRank){
   const nm=String(displayNameOf(e)).replace(/\|/g,"/").replace(/\s+/g," ").trim();
   const cells=[trunc(nm,44),svcOf(e)||"기타"];
   if(withCreator)cells.push(rosterCreatorsOf(e).join(",")||"기타");
   for(const c of cols)cells.push(_fmtCell(e[c.k],c.f));
   cells.push(e.score!=null?String(Math.round(e.score)):"–");
   cells.push(TIER_LAB[e.tier]||"–");
-  cells.push(e.rank!=null?("#"+e.rank):"–");
+  cells.push(e.rank!=null?("#"+e.rank+(nRank?"/"+nRank:"")):"–");
   return "| "+cells.join(" | ")+" |";}
-function expTable(list,cols,withCreator){
+function expTable(list,cols,withCreator,nRank){
   const h=["소재","서비스",...(withCreator?["제작자"]:[]),...cols.map(c=>c.lab),"점수","등급","순위"];
   const lines=["| "+h.join(" | ")+" |","| "+h.map(()=>"---").join(" | ")+" |"];
-  for(const e of list)lines.push(expRow(e,cols,withCreator));
+  for(const e of list)lines.push(expRow(e,cols,withCreator,nRank));
   return lines.join("\n");}
+function _tierDistStr(list){const d={g2:0,g1:0,m:0,w1:0,w2:0};for(const e of list)if(d[e.tier]!=null)d[e.tier]++;
+  return `매우좋음 ${d.g2}·좋음 ${d.g1}·보통 ${d.m}·나쁨 ${d.w1}·매우나쁨 ${d.w2}`;}
 function expSummary(list,L,peers){
   const sum=k=>list.reduce((s,e)=>s+(+e[k]||0),0);
-  const dist={g2:0,g1:0,m:0,w1:0,w2:0};for(const e of list)if(dist[e.tier]!=null)dist[e.tier]++;
   let s=`총 광고비 ${fmtWon(sum("비용"))}`;
   if(L.volCol)s+=` · 총 ${L.volLab||L.volCol} ${fmtInt(sum(L.volCol))}`;
   if(L.effCol)s+=` · ${L.effLabel||L.effCol} 중앙값 ${_fmtCell(_med(list.map(e=>e[L.effCol])),_effF(L))}`;
   const medS=_med(list.map(e=>e.score));
   if(medS!=null){s+=` · 점수 중앙값 ${Math.round(medS)}`;
     if(peers&&peers.length){const mp=_med(peers.map(e=>e.score));if(mp!=null){const d=Math.round(medS)-Math.round(mp);s+=` (비교군 중앙값 ${Math.round(mp)} 대비 ${d>=0?"+":""}${d})`;}}}
-  s+=` · 등급 매우좋음 ${dist.g2}·좋음 ${dist.g1}·보통 ${dist.m}·나쁨 ${dist.w1}·매우나쁨 ${dist.w2}`;
+  s+=` · 등급 ${_tierDistStr(list)}`;
   return s;}
 function expBench(mine,peers,L){
   const ps=peers.map(e=>e.score);const medP=_med(ps);
   let s=`비교군 ${peers.length}개 · 점수 중앙값 ${medP!=null?Math.round(medP):"–"}`;
   if(L.effCol)s+=` · ${L.effLabel||L.effCol} 중앙값 ${_fmtCell(_med(peers.map(e=>e[L.effCol])),_effF(L))}`;
+  s+=` · 등급 ${_tierDistStr(peers)}`;
   const medM=_med(mine.map(e=>e.score));
   if(medM!=null&&medP!=null){const d=Math.round(medM)-Math.round(medP);s+=` · **대상 점수 중앙값 ${Math.round(medM)} (비교군 대비 ${d>=0?"+":""}${d}점)**`;}
   return s;}
+/* 비교군 분포 요약표 — 지표별 중앙값·25/75백분위 3행. 전체 표 없이도 상대 위치 판단 근거 제공 */
+function expStatTable(list,L){
+  const cols=expCols(L,list).concat([{k:"score",lab:"점수",f:"int"}]);
+  const q=(k,p)=>{const a=list.map(e=>e[k]).filter(v=>v!=null&&isFinite(v)).sort((x,y)=>x-y);return a.length?quantile(a,p):null;};
+  const row=(lab,p)=>"| "+[lab,...cols.map(c=>_fmtCell(q(c.k,p),c.f))].join(" | ")+" |";
+  const h=["통계",...cols.map(c=>c.lab)];
+  return ["| "+h.join(" | ")+" |","| "+h.map(()=>"---").join(" | ")+" |",row("중앙값",0.5),row("25백분위",0.25),row("75백분위",0.75)].join("\n");}
 /* 절대 날짜 구간[start,end]으로 매체 집계·채점 — scope()의 '최근 N주' 대신 주-시작일 범위 필터 */
 function scopeRange(ds,ch,start,end){
   let rows;
@@ -3491,7 +3502,7 @@ function scopeRange(ds,ch,start,end){
   for(const e of ds.agg)e._live=liveSet.has(e.name);
   ds.weekly=weeklyTotals(rows,dates);
   ds.S=computeScores(ds);ds._wkScore=null;ds._wkScoreG=null;}
-function buildExportMd(creator,chans,period,custArg,compareOpt){
+function buildExportMd(creator,chans,period,custArg,opts){
   const adDs=DATASETS["ad"]||(active&&DATASETS[active]);if(!adDs)return "";
   const _p=periodN,_cw=customWeeks,_cur=curDS;
   const now=new Date(),stamp=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
@@ -3501,7 +3512,9 @@ function buildExportMd(creator,chans,period,custArg,compareOpt){
   else if(period==="range"){rStart=custArg.start;rEnd=custArg.end;perLab=`${custArg.start} ~ ${custArg.end}`;}
   else{perLab=period==="4"?"최근 1달":period==="13"?"최근 3달":"전체 기간";}
   if(!isRange)periodN=period;
-  const allCreator=creator==="모두",compare=!!compareOpt&&!allCreator;
+  const allCreator=creator==="모두";
+  const cmpMode=allCreator?"none":((opts&&opts.compare)||"none"); /* none | summary | full */
+  const minS=(opts&&opts.minScore!=null&&isFinite(opts.minScore))?+opts.minScore:null;
   const chSecs=[];
   for(const ch of chans){
     let tmp;
@@ -3510,25 +3523,43 @@ function buildExportMd(creator,chans,period,custArg,compareOpt){
     const mine=allCreator?list:list.filter(e=>rosterCreatorsOf(e).includes(creator));
     const peers=list.filter(e=>!rosterCreatorsOf(e).includes(creator));
     const cols=expCols(tmp.L,list);
+    const nRank=list.filter(e=>e.rank!=null).length; /* 순위 분모 = 이 매체·기간에서 채점된 소재 수 */
     let sec=`## ${chLabel(ch)} (${ch})${rangeLab?` · ${rangeLab}`:""}\n`;
     sec+=(allCreator?`### 소재 전체 (${mine.length}개)`:`### A. ${creator} 제작 소재 (${mine.length}개)`)+"\n";
     if(!mine.length)sec+="_해당 조건에 소재가 없습니다._\n";
-    else{mine.sort((a,b)=>(b.score??-1)-(a.score??-1));sec+=expTable(mine,cols,allCreator)+"\n\n";sec+="**요약** — "+expSummary(mine,tmp.L,allCreator?null:peers)+"\n";}
-    if(compare){
+    else{
+      mine.sort((a,b)=>(b.score??-1)-(a.score??-1));
+      /* 최소 점수 필터 — 표에서만 제외, 요약 통계는 전체 기준(체리피킹 방지·AI 혼동 방지) */
+      let shown=mine,hid=0;
+      if(minS!=null){shown=mine.filter(e=>e.score!=null&&e.score>=minS);hid=mine.length-shown.length;}
+      if(shown.length)sec+=expTable(shown,cols,allCreator,nRank)+"\n";
+      else sec+=`_점수 ${minS}점 이상인 소재가 없습니다._\n`;
+      if(hid>0)sec+=`_점수 ${minS} 미만·무점수 ${hid}개는 표에서 제외 — 아래 요약은 전체 ${mine.length}개 기준_\n`;
+      sec+="\n**요약** — "+expSummary(mine,tmp.L,allCreator?null:peers)+"\n";}
+    if(cmpMode!=="none"){
       sec+=`\n### B. 동기간·동매체 비교군 — ${creator} 외 제작 (${peers.length}개)\n`;
       if(!peers.length)sec+="_비교군이 없습니다._\n";
-      else{sec+="**비교군 기준선** — "+expBench(mine,peers,tmp.L)+"\n\n";
-        const cap=40,ps=peers.slice().sort((a,b)=>(b.비용||0)-(a.비용||0)),shown=ps.slice(0,cap);
-        sec+=expTable(shown,cols,true)+"\n";
-        if(peers.length>cap)sec+=`\n_비교군 ${peers.length}개 중 광고비 상위 ${cap}개만 표시(위 기준선 통계는 전체 ${peers.length}개 기준)_\n`;}}
+      else{
+        sec+="**비교군 기준선** — "+expBench(mine,peers,tmp.L)+"\n\n";
+        if(cmpMode==="summary"){
+          /* 요약 모드 — 분포 통계표 + 상위 3개 참고만 (전체 표 대비 텍스트 ~90% 절감) */
+          sec+=expStatTable(peers,tmp.L)+"\n";
+          const top=peers.filter(e=>e.score!=null).sort((a,b)=>b.score-a.score).slice(0,3);
+          if(top.length)sec+=`\n**비교군 상위 ${top.length}개 (참고)**\n`+expTable(top,cols,true,nRank)+"\n";
+        }else{
+          const cap=40,ps=peers.slice().sort((a,b)=>(b.비용||0)-(a.비용||0)),shownP=ps.slice(0,cap);
+          sec+=expTable(shownP,cols,true,nRank)+"\n";
+          if(peers.length>cap)sec+=`\n_비교군 ${peers.length}개 중 광고비 상위 ${cap}개만 표시(위 기준선 통계는 전체 ${peers.length}개 기준)_\n`;}}}
     chSecs.push(sec);}
   periodN=_p;customWeeks=_cw;curDS=_cur;
   try{if(active&&DATASETS[active])show(DATASETS[active]);}catch(e){}
   let head=`# 소재 성과 추출\n`;
   head+=`- 제작자: **${allCreator?"모두":creator}** · 매체: ${chans.map(chLabel).join(", ")} · 기간: ${perLab} · 추출일: ${stamp}\n`;
-  head+=`- 비교 데이터: ${compare?"포함(매체별 B 섹션에 동조건 타 제작자 소재)":"미포함"}\n`;
-  head+=`- 점수 = 같은 **매체·기간 비교군** 내 상대 위치(0~100, 높을수록 우수). 등급: 매우좋음>좋음>보통>나쁨>매우나쁨. 순위 = 그 매체·기간 내 점수 순위.\n`;
+  head+=`- 비교 데이터: ${cmpMode==="none"?"미포함":cmpMode==="summary"?"요약 포함 — B 섹션은 비교군의 기준선·분포 통계와 상위 3개 참고만":"전체 포함 — B 섹션에 비교군 소재 표(광고비 상위 40개)"}\n`;
+  if(minS!=null)head+=`- 최소 점수 필터: ${minS}점 이상만 표에 표시(각 섹션 요약 통계는 전체 기준, 제외 수 명시)\n`;
+  head+=`- 점수 = 같은 **매체·기간 비교군** 내 상대 위치(0~100, 높을수록 우수). 등급: 매우좋음>좋음>보통>나쁨>매우나쁨. 순위 #r/N = 그 매체·기간에서 채점된 N개 중 r등.\n`;
   head+=`- ⚠️ 각 행은 **개별 소재**의 값입니다. 행 간 수치를 합산·혼용하지 마세요. 매체가 다르면 점수를 직접 비교하지 마세요(비교군이 다름).\n`;
+  if(cmpMode!=="none")head+=`- B 섹션의 "중앙값/백분위" 행은 비교군 **집계 통계**이며 개별 소재가 아닙니다.\n`;
   return head+"\n"+(chSecs.length?chSecs.join("\n---\n\n"):"_선택한 매체·기간에 데이터가 없습니다._\n");}
 function downloadText(text,filename){
   const blob=new Blob([text],{type:"text/markdown;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
@@ -3536,8 +3567,6 @@ function downloadText(text,filename){
 let _expState=null;
 function _xtEsc(e){if(e.key==="Escape"){e.preventDefault();closeExportModal();}}
 function closeExportModal(){const ov=$("#xtOv");if(ov)ov.remove();document.removeEventListener("keydown",_xtEsc,true);_expState=null;}
-function _xtSyncCompare(ov){const chk=ov.querySelector("#xtCompare"),box=ov.querySelector(".xt-check");if(!chk)return;
-  const on=_expState.creator!=="모두";chk.disabled=!on;if(box)box.classList.toggle("off",!on);if(!on)chk.checked=false;chk.checked=on&&_expState.compare;}
 function openExportModal(){
   if(!cloudPw){toast("로그인 후 저장소를 열면 추출할 수 있어요");return;}
   const adDs=DATASETS["ad"]||(active&&DATASETS[active]);
@@ -3547,7 +3576,7 @@ function openExportModal(){
   const chansAll=((adDs.channels&&adDs.channels.length)?adDs.channels.slice():(adDs.media?[adDs.media]:[])).sort((a,b)=>_chRank(a)-_chRank(b));
   const _dts=[...new Set(adDs.dataAll.map(r=>String(r.date||"")).filter(d=>/^\d{4}-\d{2}-\d{2}/.test(d)))].sort();
   const dataMin=_dts[0]||"",dataMax=_dts[_dts.length-1]||"";
-  _expState={creator:"hansy",chans:new Set(chansAll),period:(periodN==="custom"?"13":periodN),compare:true,chansAll,rangeStart:dataMin,rangeEnd:dataMax,dataMin,dataMax};
+  _expState={creator:"hansy",chans:new Set(chansAll),period:(periodN==="custom"?"13":periodN),compare:"summary",minScore:"",chansAll,rangeStart:dataMin,rangeEnd:dataMax,dataMin,dataMax};
   const ov=document.createElement("div");ov.className="xt-ov";ov.id="xtOv";
   ov.innerHTML=`<div class="xt-modal" role="dialog" aria-modal="true" aria-label="자료 추출">`+
     `<div class="xt-head"><div class="xt-ttl">자료 추출하기</div><button type="button" class="xt-close" aria-label="닫기">✕</button></div>`+
@@ -3555,14 +3584,15 @@ function openExportModal(){
       `<div class="xt-field"><div class="xt-lab">제작자</div><div class="xt-grid4" id="xtCreator"></div></div>`+
       `<div class="xt-field"><div class="xt-lab">매체 <span class="xt-hint">복수 선택</span></div><div class="xt-seg" id="xtMedia"></div></div>`+
       `<div class="xt-field"><div class="xt-lab">기간</div><div class="xt-seg" id="xtPeriod"></div><div class="xt-range" id="xtRange" hidden><input type="date" id="xtStart"><span class="xt-tilde">~</span><input type="date" id="xtEnd"></div></div>`+
-      `<label class="xt-check"><input type="checkbox" id="xtCompare" checked><span>비교 데이터 포함 <span class="xt-hint">동기간·동매체 다른 제작자 소재를 별도로 함께 추출</span></span></label>`+
+      `<div class="xt-field"><div class="xt-lab">비교 데이터 <span class="xt-hint">동기간·동매체 타 제작자 — 요약=기준선 통계+상위 3개</span></div><div class="xt-seg" id="xtCompare"></div></div>`+
+      `<div class="xt-field"><div class="xt-lab">최소 점수 <span class="xt-hint">미만·무점수는 표에서 제외(요약 통계는 전체 기준)</span></div><div class="xt-seg" id="xtMinScore"></div></div>`+
     `</div>`+
     `<div class="xt-foot"><button type="button" class="xt-cancel">취소</button><button type="button" class="xt-go">추출하기</button></div>`+
   `</div>`;
   document.body.appendChild(ov);
   const cwrap=ov.querySelector("#xtCreator");
   cwrap.innerHTML=["모두",...CREATORS].map(n=>`<button type="button" class="xt-chip${_expState.creator===n?" on":""}" data-v="${escAttr(n)}">${escHtml(n)}</button>`).join("");
-  cwrap.querySelectorAll(".xt-chip").forEach(b=>b.onclick=()=>{_expState.creator=b.dataset.v;cwrap.querySelectorAll(".xt-chip").forEach(x=>x.classList.toggle("on",x===b));_xtSyncCompare(ov);});
+  cwrap.querySelectorAll(".xt-chip").forEach(b=>b.onclick=()=>{_expState.creator=b.dataset.v;cwrap.querySelectorAll(".xt-chip").forEach(x=>x.classList.toggle("on",x===b));renderCompare();});
   const mwrap=ov.querySelector("#xtMedia");
   const renderMedia=()=>{const all=_expState.chansAll.length>0&&_expState.chans.size===_expState.chansAll.length;
     mwrap.innerHTML=`<button type="button" class="${all?"on":""}" data-v="__all">모두</button>`+
@@ -3580,8 +3610,18 @@ function openExportModal(){
   for(const el of [startIn,endIn]){el.min=_expState.dataMin;el.max=_expState.dataMax;}
   startIn.value=_expState.rangeStart;endIn.value=_expState.rangeEnd;
   startIn.onchange=()=>{_expState.rangeStart=startIn.value;};endIn.onchange=()=>{_expState.rangeEnd=endIn.value;};
-  ov.querySelector("#xtCompare").onchange=e=>{_expState.compare=e.target.checked;};
-  _xtSyncCompare(ov);
+  /* 비교 데이터 3단 — 제작자=모두면 비교 무의미 → 없음으로 강제·비활성 */
+  const cmpWrap=ov.querySelector("#xtCompare"),CMP_OPTS=[["none","없음"],["summary","요약만"],["full","전체 표"]];
+  const renderCompare=()=>{const forced=_expState.creator==="모두";
+    cmpWrap.innerHTML=CMP_OPTS.map(([v,l])=>`<button type="button" class="${(forced?v==="none":_expState.compare===v)?"on":""}" data-v="${v}"${forced?" disabled":""}>${l}</button>`).join("");
+    cmpWrap.classList.toggle("off",forced);
+    if(!forced)cmpWrap.querySelectorAll("button").forEach(b=>b.onclick=()=>{_expState.compare=b.dataset.v;renderCompare();});};
+  renderCompare();
+  /* 최소 점수 — 저성과 소재를 표에서 제외(통계는 전체 기준으로 유지) */
+  const msWrap=ov.querySelector("#xtMinScore"),MS_OPTS=[["","없음"],["40","40+"],["50","50+"],["60","60+"],["70","70+"]];
+  const renderMs=()=>{msWrap.innerHTML=MS_OPTS.map(([v,l])=>`<button type="button" class="${_expState.minScore===v?"on":""}" data-v="${v}">${l}</button>`).join("");
+    msWrap.querySelectorAll("button").forEach(b=>b.onclick=()=>{_expState.minScore=b.dataset.v;renderMs();});};
+  renderMs();
   ov.querySelector(".xt-close").onclick=closeExportModal;ov.querySelector(".xt-cancel").onclick=closeExportModal;
   ov.addEventListener("click",e=>{if(e.target===ov)closeExportModal();});
   ov.querySelector(".xt-modal").addEventListener("click",e=>e.stopPropagation());
@@ -3593,7 +3633,7 @@ function openExportModal(){
     if(st.period==="range"){const s=ov.querySelector("#xtStart").value,e=ov.querySelector("#xtEnd").value;
       if(!s||!e){toast("시작일과 종료일을 골라 주세요");return;}
       custArg={start:s<=e?s:e,end:s<=e?e:s};}
-    const md=buildExportMd(st.creator,chans,st.period,custArg,st.compare);
+    const md=buildExportMd(st.creator,chans,st.period,custArg,{compare:st.creator==="모두"?"none":st.compare,minScore:st.minScore===""?null:+st.minScore});
     const now=new Date(),tag=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}${String(now.getDate()).padStart(2,"0")}`;
     downloadText(md,`소재추출_${st.creator}_${tag}.md`);
     closeExportModal();toast("추출 파일을 내려받았어요 📄");};
