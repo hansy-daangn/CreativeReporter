@@ -2685,12 +2685,61 @@ function openDeepLink(){
   setTimeout(()=>{
     if(!findRow(ds,nm)){toast("링크에 담긴 소재를 저장소에서 못 찾았어요");return;}
     goToIslandFromQuad(nm);},500);}
+/* 로그인 환영 인사 — 시간대별로 다양한 문구를 랜덤으로 골라 "환영해요 NAME!" 형식(당근 해요체).
+   시간대 경계는 분 단위(t=시*60+분): 출근 09:00–11:30 · 오전근무 11:30–12:30 · 점심직전 12:30–13:00 ·
+   점심 13:00–14:30 · 오후근무 14:30–18:00 · 그 밖 시간(새벽·이른아침·저녁·밤)은 시간 감성 인사 */
+const GREETINGS=[
+  {lo:0,   hi:300, key:"새벽",     lines:[
+    "환영해요 {n}! 이 새벽까지 고생 많아요 🌙",
+    "환영해요 {n}! 늦은 밤인데 무리하진 말아요 🌌",
+    "환영해요 {n}! 새벽 감성으로 소재 보러 왔군요 🦉"]},
+  {lo:300, hi:540, key:"이른 아침", lines:[
+    "환영해요 {n}! 이른 아침부터 부지런하네요 🌅",
+    "환영해요 {n}! 상쾌한 아침이에요, 좋은 하루 시작해요 ☀️",
+    "환영해요 {n}! 오늘 하루도 잘 부탁해요 🐥"]},
+  {lo:540, hi:690, key:"출근",     lines:[
+    "환영해요 {n}! 오늘도 출근 파이팅이에요 ☕",
+    "환영해요 {n}! 좋은 아침, 출근길 무사했어요? 🚶",
+    "환영해요 {n}! 커피 한 잔과 함께 시작해봐요 ☕",
+    "환영해요 {n}! 오늘도 힘차게 열어봐요 💪"]},
+  {lo:690, hi:750, key:"오전 근무", lines:[
+    "환영해요 {n}! 오전 업무 순조롭게 흘러가고 있어요? 💻",
+    "환영해요 {n}! 점심 전 막판 스퍼트예요 🏃",
+    "환영해요 {n}! 곧 점심시간, 조금만 더 힘내요 ⏳"]},
+  {lo:750, hi:780, key:"점심 직전", lines:[
+    "환영해요 {n}! 슬슬 배고파질 시간이네요 🍚",
+    "환영해요 {n}! 점심 뭐 먹을지 정했어요? 🤔",
+    "환영해요 {n}! 밥 먹기 직전에 잠깐 들렀군요 🍽️"]},
+  {lo:780, hi:870, key:"점심",     lines:[
+    "환영해요 {n}! 점심은 맛있게 먹었어요? 😋",
+    "환영해요 {n}! 식후 소화도 할 겸 둘러봐요 🍵",
+    "환영해요 {n}! 나른한 점심시간, 커피 한 잔 어때요? ☕"]},
+  {lo:870, hi:1080,key:"오후 근무", lines:[
+    "환영해요 {n}! 오후도 집중해서 달려봐요 📊",
+    "환영해요 {n}! 나른한 오후, 소재 보며 리프레시해요 🍃",
+    "환영해요 {n}! 오후 업무도 화이팅이에요 💪",
+    "환영해요 {n}! 퇴근까지 조금만 더 힘내요 ⏳"]},
+  {lo:1080,hi:1320,key:"저녁",     lines:[
+    "환영해요 {n}! 오늘 하루도 고생 많았어요 🌆",
+    "환영해요 {n}! 퇴근 시간인데 아직 일하는군요, 무리 말아요 🌙",
+    "환영해요 {n}! 저녁은 챙겨 먹었어요? 🍲"]},
+  {lo:1320,hi:1440,key:"밤",       lines:[
+    "환영해요 {n}! 밤늦게까지 수고 많아요 🌙",
+    "환영해요 {n}! 오늘도 마무리 잘 해봐요 ✨",
+    "환영해요 {n}! 늦은 시간이에요, 곧 푹 쉬어요 😴"]},
+];
+function greetingFor(name){
+  const d=new Date(),t=d.getHours()*60+d.getMinutes();
+  const s=GREETINGS.find(g=>t>=g.lo&&t<g.hi)||GREETINGS[0];
+  return s.lines[Math.floor(Math.random()*s.lines.length)].replace(/\{n\}/g,name);}
 async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
   try{const rows=await sbRpc("cr_load",{pw});
     cloudPw=pw;sessionStorage.setItem("crpw",pw);
+    /* 이번 탭에서 첫 로그인이면 환영 인사(아래)가 뜬다 → 이때는 저장소 로드 토스트는 생략하고 인사만 */
+    const willGreet=!sessionStorage.getItem("crHi");
     await loadNameMap(pw);
-    if(rows.length){loadCloudRows(rows);toast(`☁️ 저장소를 열었어요 · 소재 ${new Set(rows.map(r=>r.ad_name)).size.toLocaleString()}개 · 주간 기록 ${rows.length.toLocaleString()}건`);}
-    else if(!silent)toast("☁️ 연결됐어요 · 아직 데이터가 없어요. 주간 CSV를 올리면 여기 쌓여요");
+    if(rows.length){loadCloudRows(rows);if(!willGreet)toast(`☁️ 저장소를 열었어요 · 소재 ${new Set(rows.map(r=>r.ad_name)).size.toLocaleString()}개 · 주간 기록 ${rows.length.toLocaleString()}건`);}
+    else if(!silent&&!willGreet)toast("☁️ 연결됐어요 · 아직 데이터가 없어요. 주간 CSV를 올리면 여기 쌓여요");
     /* 탭 세션당 1회 환영 인사 — 권한별 문구. 자동 재접속 시엔 sessionStorage 값 사용 */
     /* 자동 재접속(restore) 경로면 서버에서 최신 이름·권한을 다시 받아 반영 —
        관리자가 admin에서 daangn name/권한을 바꿔도 본 페이지 닉네임·서명·권한이 새로고침만으로 갱신 */
@@ -2706,10 +2755,11 @@ async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
         }
       }catch(_){}}
     const gv=(idOpts&&"viewer"in idOpts)?idOpts:{viewer:sessionStorage.getItem("crviewer")==="1",name:sessionStorage.getItem("crname")||"",editor:sessionStorage.getItem("crcan")==="1"};
-    if(!sessionStorage.getItem("crHi")){sessionStorage.setItem("crHi","1");
+    if(willGreet){sessionStorage.setItem("crHi","1");
       const nm=(gv.name||"").toUpperCase();
-      /* 환영 토스트는 환영 문구만. 0715 뷰어는 로그인 안내만(환영 문구 없음) */
-      const msg=gv.viewer?"뷰어 권한으로 로그인했어요 👀":`${nm}님 환영해요! 🥕`;
+      /* 환영 토스트는 환영 문구만(로그인 시 저장소 로드 토스트는 위에서 생략). 0715 뷰어는 로그인 안내만.
+         계정은 시간대별 인사("환영해요 NAME!")를 랜덤으로 */
+      const msg=gv.viewer?"뷰어 권한으로 로그인했어요 👀":greetingFor(nm);
       setTimeout(()=>toast(msg),1200);}
     refreshCloudLine();return true;
   }catch(err){
