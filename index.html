@@ -1527,7 +1527,7 @@ const MOLOCO_QUAD_METRICS=[
 const AVAIL_MIN=0.10;
 function isAvail(ds,k){if(!ds||!ds.fieldAvail)return true;const v=ds.fieldAvail[k];return v==null||v>=AVAIL_MIN;}
 function quadMetricsFor(ds){let base=QUAD_METRICS.filter(m=>!m.conv||ds.L.hasConv);
-  if(ds.agg.some(e=>e._g_assetType))base=base.concat(GOOGLE_QUAD_METRICS);
+  if(ds.agg.some(e=>e._g_assetType))base=base.concat(GOOGLE_QUAD_METRICS.map(m=>m.k==="_g_costPerConv"?{...m,lab:gCostLabel(ds.media)}:m));
   if(ds.agg.some(e=>e._m_ctype))base=base.concat(MOLOCO_QUAD_METRICS);
   return base.filter(m=>isAvail(ds,m.k));}
 let qX=null,qY=null,qDim=null; /* qDim: null=개별 소재, 아니면 tags 차원 키(fo/size/shape/nat/ve) */
@@ -2251,8 +2251,8 @@ function tableCols(L,ds){const meta=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score
     {k:"CPC",t:"CPC",f:"won",help:"클릭당 비용 · 낮을수록 좋음",sub:1,grp:"clk"});
   if(isM)nums.push({k:"영상 완주율",t:"완주율",f:"pct",help:"영상을 끝까지 본 비율 (노출 가중 평균) · 높을수록 좋음",lead:1,grp:"vid"});
   if(isG)nums.push(
+    {k:"_g_costPerConv",t:gCostLabel(ds&&ds.media),f:"won",help:gCostHelp(ds&&ds.media),lead:1,grp:"gcost"},
     {k:"_g_ROAS",t:"ROAS",f:"num",help:"전환 가치÷비용 · 높을수록 좋음",lead:1,grp:"g"},
-    {k:"_g_costPerConv",t:"전환당 비용",f:"won",help:"비용÷전환수 · 낮을수록 좋음",sub:1,grp:"g"},
     {k:"_g_conversionRate",t:"전환율",f:"pct",help:"전환÷상호작용 (Google 관례) · 높을수록 좋음",sub:1,grp:"g"},
     {k:"_g_conversions",t:"전환",f:"int",help:"Google 전환 수",sub:1,grp:"g"},
     {k:"_g_interactions",t:"상호작용",f:"int",help:"상호작용 총 수",sub:1,grp:"g"},
@@ -2692,11 +2692,24 @@ async function cloudRestore(){
     else toast("☁️ 아직 저장된 데이터가 없어요");
   }catch(e){toast("☁️ 못 불러왔어요 · "+e.message);}
   refreshCloudLine();}
+/* 구글 캠페인 유형 분리 — 캠페인명(gmap)에 AEO(신규·설치 최적화)/ACE(리타겟팅·인앱액션) 표기가 있어
+   그걸로 매체를 'Google AEO'·'Google ACE'로 나눈다. 유형 미상·비구글은 원 채널 그대로. */
+const CAMP_AEO=/(?:^|[_\s-])AEO(?:[_\s-]|$)/i, CAMP_ACE=/(?:^|[_\s-])ACE(?:[_\s-]|$)/i;
+function googleSubChannel(channel,d){
+  if(channel!=="Google")return channel;
+  const cid=String((d&&d._g_campaignId)||"").replace(/\D/g,"");
+  const nm=cid&&gNameMap&&gNameMap.campaign?gNameMap.campaign[cid]:null;
+  if(nm){if(CAMP_ACE.test(nm))return "Google ACE";if(CAMP_AEO.test(nm))return "Google AEO";}
+  return "Google";}
+/* 구글 하위 매체의 '단가' 라벨 — AEO=CPI(설치당), ACE=CPA(인앱액션당). 값은 둘 다 비용÷전환수(_g_costPerConv) */
+function gCostLabel(media){return media==="Google AEO"?"CPI":media==="Google ACE"?"CPA":"전환당 비용";}
+function gCostHelp(media){return media==="Google AEO"?"설치당 비용 = 비용÷설치(전환) · 낮을수록 좋음":media==="Google ACE"?"인앱액션당 비용 = 비용÷인앱액션(전환) · 낮을수록 좋음":"비용÷전환수 · 낮을수록 좋음";}
 function loadCloudRows(rows){
   resetAll();dsMode="channeled";setStandalone(false);
   const byCh=new Map();
   for(const r of rows){const d={date:String(r.week_start).slice(0,10),ad_name:r.ad_name,...(r.payload||{})};
-    let a=byCh.get(r.channel);if(!a){a=[];byCh.set(r.channel,a);}a.push(d);}
+    const ch=googleSubChannel(r.channel,d); /* 구글은 캠페인 유형(AEO/ACE)별로 분리 */
+    let a=byCh.get(ch);if(!a){a=[];byCh.set(ch,a);}a.push(d);}
   for(const[ch,arr]of byCh)ingest(["date","ad_name","비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"],arr,"Supabase 저장소",ch,"replace");
   rebuildAllDatasets();
   refreshAll();
@@ -3578,7 +3591,7 @@ function openEditPop(ch,ent,anchor){
     }catch(e){toast("일부 저장에 실패했어요 · "+(e.message||""));await loadMarks();renderInlineRefresh();}};}
 document.addEventListener("click",()=>closeEditPop()); /* 바깥 클릭 시 편집 팝오버 닫기 */
 /* ══ 자료 추출(모달) — 제작자·매체(복수)·기간·비교포함 선택 → 매체별로 재채점한 소재 성과를 AI가 읽기 좋은 Markdown으로 내보냄 ══ */
-const CH_LABEL={Meta:"메타",Google:"구글",Moloco:"몰로코",몰로코:"몰로코",구글:"구글",메타:"메타"};
+const CH_LABEL={Meta:"메타",Google:"구글","Google AEO":"구글 AEO","Google ACE":"구글 ACE",Moloco:"몰로코",몰로코:"몰로코",구글:"구글",메타:"메타"};
 function chLabel(c){return CH_LABEL[c]||c;}
 const TIER_LAB={g2:"매우좋음",g1:"좋음",m:"보통",w1:"나쁨",w2:"매우나쁨",na:"–"};
 function _med(a){const s=(a||[]).filter(v=>v!=null&&isFinite(v)).sort((x,y)=>x-y);if(!s.length)return null;const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
@@ -3722,7 +3735,7 @@ function openExportModal(){
   const adDs=DATASETS["ad"]||(active&&DATASETS[active]);
   if(!adDs||!adDs.dataAll||!adDs.dataAll.length){toast("먼저 데이터를 불러와 주세요");return;}
   closeExportModal();
-  const _chRank=c=>({Moloco:0,몰로코:0,Google:1,구글:1,Meta:2,메타:2}[c]??9); /* 표시 순서 몰로코·구글·메타 */
+  const _chRank=c=>({Moloco:0,몰로코:0,Google:1,구글:1,"Google AEO":1.1,"Google ACE":1.2,Meta:2,메타:2}[c]??9); /* 표시 순서 몰로코·구글(AEO·ACE)·메타 */
   const chansAll=((adDs.channels&&adDs.channels.length)?adDs.channels.slice():(adDs.media?[adDs.media]:[])).sort((a,b)=>_chRank(a)-_chRank(b));
   const _dts=[...new Set(adDs.dataAll.map(r=>String(r.date||"")).filter(d=>/^\d{4}-\d{2}-\d{2}/.test(d)))].sort();
   const dataMin=_dts[0]||"",dataMax=_dts[_dts.length-1]||"";
