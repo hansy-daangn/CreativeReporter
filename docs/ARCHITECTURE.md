@@ -153,6 +153,8 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 
 **매체 판별 우선순위**: ① 리포트 형식 자동 감지 → ② 미리보기 URL 도메인(adsmoloco→Moloco, googlesyndication/youtube→Google, fbcdn→Meta) → ③ 드롭 위치 → ④ 파일명 접두(meta_/moloco_/google_).
 
+**구글 AEO/ACE 분리**(클라우드 로드 시): 구글은 캠페인 유형이 **AEO(신규·설치 최적화)**와 **ACE(리타겟팅·인앱액션)**로 나뉘어, 각각 성과·단가 기준이 달라 매체를 분리한다. `loadCloudRows`에서 각 소재의 `_g_campaignId`를 `gmap`(kv) 캠페인명과 맞춰(`Google_AEO_…`/`Google_ACE_…` 토큰) `_ch`를 **`Google AEO`·`Google ACE`**로 배정(`googleSubChannel`), 유형 미상은 `Google` 유지. 이후 매체 세그먼트·집계(`aggByChannel`)·`scope`·채점이 하위 매체별로 독립 동작한다(라벨 `구글 AEO`/`구글 ACE`, 추출 모달 순서도 구글 사이). **단가 라벨**: 구글은 `비용÷전환수`(`_g_costPerConv`)가 곧 그 유형의 단가라, 표·효율지도에서 **AEO=CPI(설치당)·ACE=CPA(인앱액션당)**로 이름만 분기(값 동일, `gCostLabel`) — 표에선 대표 컬럼으로 노출. (몰로코=eCPA는 기존대로.) 파일 드롭 즉석 분석은 아직 미분리(클라우드 대시보드 한정).
+
 **저장 규칙**:
 - 주간 리포트만 저장소 누적. 월간·일간·기간미상·매체미상은 **임시 분석 모드**(배너 표시, 저장 안 함, ☁️ 클릭으로 복귀).
 - (주차,소재) 병합 그레인으로 합산 광고비 ₩1,500 미만이면 분석·저장 모두 제외.
