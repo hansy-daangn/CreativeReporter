@@ -193,7 +193,7 @@
   .quad-reset{margin-left:auto;padding:4px 11px;border-radius:7px;background:var(--surface-2);color:var(--muted);font-size:11px;font-weight:650}
   .quad-reset:hover{background:var(--surface-3);color:var(--ink)}
   #quad circle.qb{cursor:pointer;transition:fill-opacity .12s}
-  #quad circle.qb:hover{fill-opacity:.92!important}
+  #quad circle.qb:hover{fill-opacity:.95!important;stroke-width:2.6!important}
   /* 세그먼트 컨트롤 (탭과 동일한 트랙+흰 알약) */
   .dtog{display:inline-flex;gap:3px;background:#E7E6DF;border-radius:10px;padding:3px;flex-wrap:wrap}
   .dtog button{padding:4px 12px;border-radius:8px;background:transparent;color:var(--muted);font-size:11.5px;font-weight:700;transition:.12s}
@@ -618,10 +618,12 @@
   .mark-btn.fav.on{color:#F5C518}
   .mark-btn.mine.on{color:#3EA8E0}
   .mark-btn .mchk{fill:none}
-  .chip.mine-chip{background:#E3F1FB;color:#2478C7;font-weight:650}
+  .chip.mine-chip{background:#E7E6E1;color:#1D1D1F;font-weight:650;cursor:pointer}
+  .chip.mine-chip:hover{background:#DCDBD5}
+  .chip.mine-chip.crsel{background:var(--karrot-f);color:var(--karrot)}
   .chip.fav-chip{background:#FBF1D3;color:#B0870F;font-weight:650}
   .chip.mine-chip svg,.chip.fav-chip svg{width:11px;height:11px;vertical-align:-2px;margin-right:3px}
-  .chip.mine-chip svg{fill:#2478C7}.chip.mine-chip .mchk{fill:none}
+  .chip.mine-chip svg{fill:#4A4A4A}.chip.mine-chip.crsel svg{fill:var(--karrot)}.chip.mine-chip .mchk{fill:none}
   .chip.fav-chip svg{fill:#B0870F}
   /* 소재 이름 수동 변경(관리자) */
   .nm-text.editing{display:inline-block;min-width:24px;outline:2px dashed var(--karrot);outline-offset:2px;border-radius:3px;padding:0 4px;background:var(--karrot-f);color:var(--ink);cursor:text;white-space:pre-wrap;font-weight:700}
@@ -810,6 +812,7 @@
       <section class="card" id="tabAnalysis">
         <div class="keyrow" id="keyrow"></div>
         <p class="qhint" id="qhint"></p>
+        <div class="qaxis"><span class="qaxis-lab">지도 필터</span><div class="dtog" id="qMapFil"><button data-f="live" type="button" title="라이브(최신 집행 주 광고비>0) 소재만">Live</button><button data-f="영상" type="button" title="영상 소재만 보기">Video</button><button data-f="이미지" type="button" title="이미지 소재만 보기">Image</button></div></div>
         <div class="qaxis"><span class="qaxis-lab">보기</span><div class="dtog" id="qdTog"></div></div>
         <div class="qaxis"><span class="qaxis-lab">가로</span><div class="dtog" id="qxTog"></div></div>
         <div class="qaxis"><span class="qaxis-lab">세로</span><div class="dtog" id="qyTog"></div></div>
@@ -823,7 +826,7 @@
         </div>
         <div class="quad-tier-legend" id="qTierLeg"></div>
         <div style="margin-top:22px">
-          <div id="trendWrap"><div class="sub-h" style="margin-top:0">주차별 추세</div><div style="position:relative"><svg class="chart" id="trend"></svg></div><div class="leg" id="trendLeg"></div></div>
+          <div id="trendWrap"><div class="sub-h" style="margin-top:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">주차별 추세 <span class="dtog" id="tmetTog"></span></div><div style="position:relative"><svg class="chart" id="trend"></svg></div><div class="leg" id="trendLeg"></div></div>
         </div>
       </section>
 
@@ -912,7 +915,7 @@ function assetPreviewTipHTML(url,label){if(!url)return "";
   if(isVideoUrl(url))return `<video src="${url}" autoplay muted loop playsinline preload="metadata"></video><div class="tp-cap">▶ ${label||"영상"}</div>`;
   if(isImageUrl(url))return `<img src="${imgSrc(url)}" data-osrc="${escAttr(url)}" alt="" referrerpolicy="no-referrer" onload="imgOk(this)" onerror="imgRetry(this)"><div class="tp-cap">${label||""}</div>`;
   return `<div class="tp-cap">${label||"미리보기 없음"}</div>`;}
-function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2600);}
+function toast(m,ms){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),ms||2600);}
 function copyText(t){
   const fb=()=>new Promise(r=>{const ta=document.createElement("textarea");ta.value=t;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(_){}ta.remove();r();});
   try{if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(t).catch(fb);}catch(_){}
@@ -1482,7 +1485,8 @@ function chipsHTML(t,e){
     const mineNames=MARKS.mineByKey.get(k);
     if(mineNames&&mineNames.length)for(const nm of mineNames){
       if(nm===MARKS.me)continue;
-      arr.push(`<span class="chip mine-chip" title="내 소재로 등록: ${escAttr(nm)}">${SEAL_SVG} ${escHtml(nm)}</span>`);}}
+      const sel=tCreators.has(nm)?" crsel":"";
+      arr.push(`<span class="chip mine-chip${sel}" data-cr="${escAttr(nm)}" title="${escAttr(nm)} 제작 소재만 보기 (제작자 필터)">${SEAL_SVG} ${escHtml(nm)}</span>`);}}
   return arr.filter(Boolean).join("");}
 /* key summary tiles */
 function renderKeyrow(ds){const L=ds.L,a=ds.agg,tiles=[];
@@ -1527,12 +1531,22 @@ function quadMetricsFor(ds){let base=QUAD_METRICS.filter(m=>!m.conv||ds.L.hasCon
   if(ds.agg.some(e=>e._m_ctype))base=base.concat(MOLOCO_QUAD_METRICS);
   return base.filter(m=>isAvail(ds,m.k));}
 let qX=null,qY=null,qDim=null; /* qDim: null=개별 소재, 아니면 tags 차원 키(fo/size/shape/nat/ve) */
+let qLive=false,qFoMap=null; /* 효율 지도 전용 필터 — 라이브만 · 영상/이미지만 */
+let trendMet="비용"; /* 주차별 추세 주 지표 — 광고비/노출/클릭/설치/활성유저 */
+const TREND_METS=[
+  {k:"비용",lab:"광고비",f:"won"},
+  {k:"노출 수",lab:"노출",f:"int"},
+  {k:"클릭 수",lab:"클릭",f:"int"},
+  {k:"어트리뷰션 수",lab:"설치",f:"int"},
+  {k:"활성 유저 수",lab:"활성유저",f:"int"},
+];
 function renderQuad(ds){const L=ds.L,svg=$("#quad");
   const mets=quadMetricsFor(ds);
   if(!mets.length){svg.innerHTML=`<text x="200" y="200" text-anchor="middle" fill="var(--faint)">지도 지표 없음</text>`;return;}
   const pick=(prefs)=>{for(const p of prefs){if(mets.find(m=>m.k===p))return p;}return mets[0].k;};
-  if(!qX||!mets.find(m=>m.k===qX))qX=pick(["CTR","_g_ROAS","CPC"]);
-  if(!qY||!mets.find(m=>m.k===qY))qY=pick(["_g_ROAS","eCPI","CPC","CPM"].filter(k=>k!==qX));
+  /* 기본 축: 가로 CTR · 세로 단가(eCPA 우선, 없으면 eCPI·전환당비용) */
+  if(!qX||!mets.find(m=>m.k===qX))qX=pick(["CTR","_g_interactionRate","CPC","_g_ROAS"]);
+  if(!qY||!mets.find(m=>m.k===qY))qY=pick(["활성 유저 eCPA","eCPI","_g_costPerConv","CPC","CPM","_g_ROAS"].filter(k=>k!==qX));
   if(qX===qY){const other=mets.find(m=>m.k!==qX);if(other)qY=other.k;}
   /* 보기 세그먼트: 개별 소재 또는 유형별 집계 (값이 2가지 이상인 차원만 노출) */
   const qdims=[["소재",""],["포맷","fo"],["사이즈","size"],["형태","shape"],["지면","nat"],["서비스","ve"]]
@@ -1540,6 +1554,15 @@ function renderQuad(ds){const L=ds.L,svg=$("#quad");
   if(qDim&&!qdims.find(d=>d[1]===qDim))qDim=null;
   $("#qdTog").innerHTML=qdims.map(([lab,k])=>`<button data-d="${k}" class="${(k||null)===qDim?"on":""}">${lab}</button>`).join("");
   $$("#qdTog button").forEach(b=>b.onclick=()=>{qDim=b.dataset.d||null;qView={xlo:0,xhi:100,ylo:0,yhi:100};_qxRange&&_qxRange.paint();_qyRange&&_qyRange.paint();renderQuad(ds);});
+  /* 효율 지도 전용 필터(라이브·영상·이미지) — 지도에 그릴 소재 집합에만 적용 */
+  const liveOn=qLive&&!!ds.liveWeek;
+  let mapAgg=ds.agg;
+  if(liveOn)mapAgg=mapAgg.filter(e=>e._live);
+  if(qFoMap)mapAgg=mapAgg.filter(e=>e.tags&&e.tags.fo===qFoMap);
+  const mf=$("#qMapFil");
+  if(mf){const lb=mf.querySelector('button[data-f="live"]');if(lb)lb.style.display=ds.liveWeek?"":"none";
+    mf.querySelectorAll("button").forEach(b=>{const f=b.dataset.f;const on=f==="live"?qLive:qFoMap===f;b.classList.toggle("on",on);
+      b.onclick=()=>{if(f==="live")qLive=!qLive;else qFoMap=(qFoMap===f?null:f);qView={xlo:0,xhi:100,ylo:0,yhi:100};_qxRange&&_qxRange.paint();_qyRange&&_qyRange.paint();renderQuad(ds);};});}
   const dimLab=qDim?(qdims.find(d=>d[1]===qDim)||["유형"])[0]:null;
   $("#qxTog").innerHTML=mets.map(m=>`<button data-m="${m.k}" class="${m.k===qX?"on":""}">${m.lab}</button>`).join("");
   $("#qyTog").innerHTML=mets.map(m=>`<button data-m="${m.k}" class="${m.k===qY?"on":""}">${m.lab}</button>`).join("");
@@ -1552,10 +1575,10 @@ function renderQuad(ds){const L=ds.L,svg=$("#quad");
   svg.setAttribute("width",W);svg.setAttribute("height",H);svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   let pts,capped=false;const CAP=L.key==="ad"?70:160;
   if(qDim){
-    pts=typeAggRows(ds,qDim).filter(e=>e.비용>0&&e[qX]!=null&&e[qX]>0&&e[qY]!=null&&e[qY]>0);
+    pts=typeAggRows({...ds,agg:mapAgg},qDim).filter(e=>e.비용>0&&e[qX]!=null&&e[qX]>0&&e[qY]!=null&&e[qY]>0);
     pts.sort((a,b)=>b.비용-a.비용);
   }else{
-    pts=ds.agg.filter(e=>e.비용>0&&e[qX]!=null&&e[qX]>0&&e[qY]!=null&&e[qY]>0);
+    pts=mapAgg.filter(e=>e.비용>0&&e[qX]!=null&&e[qX]>0&&e[qY]!=null&&e[qY]>0);
     pts.sort((a,b)=>b.비용-a.비용);capped=pts.length>CAP;pts=pts.slice(0,CAP);
   }
   const dh=d=>d<0?"낮을수록 좋음":"높을수록 좋음";
@@ -1587,8 +1610,8 @@ function renderQuad(ds){const L=ds.L,svg=$("#quad");
   vpts.forEach((p,i)=>{const cx=X(p[qX]),cy=Y(p[qY]),r=R(p.비용);
     const tier=tierOf(goodness(p));const col=tierCol[tier];p._qtier=tier;
     s+=`<circle class="qb" data-i="${i}" cx="${cx}" cy="${cy}" r="${r}" fill="${col}" fill-opacity="0.68" stroke="${col}" stroke-width="1.3"/>`;});
-  /* 라벨: 소재 보기는 광고비 상위 3개만, 유형 보기는 전 지점(개수가 적음) */
-  const placed=[];[...vpts].sort((a,b)=>b.비용-a.비용).slice(0,qDim?vpts.length:3).forEach(p=>{const r=R(p.비용);let lx=X(p[qX]),anchor="middle";if(lx>W-pad.r-70){lx=W-pad.r-2;anchor="end";}else if(lx<pad.l+44){lx=pad.l+2;anchor="start";}let ly=Y(p[qY])-r-5;placed.forEach(q=>{if(Math.abs(lx-q.x)<92&&Math.abs(ly-q.y)<13)ly=q.y-13;});placed.push({x:lx,y:ly});s+=`<text x="${lx}" y="${Math.max(ly,12)}" text-anchor="${anchor}" font-size="9.5" fill="var(--ink)" font-weight="600">${trunc(displayNameOf(p),qDim?20:15)}</text>`;});
+  /* 라벨: 유형 보기만 각 지점에 이름 표시(개수 적음). 소재 보기는 원이 겹쳐 라벨이 더 헷갈리므로 생략(호버로 확인) */
+  if(qDim){const placed=[];[...vpts].sort((a,b)=>b.비용-a.비용).forEach(p=>{const r=R(p.비용);let lx=X(p[qX]),anchor="middle";if(lx>W-pad.r-70){lx=W-pad.r-2;anchor="end";}else if(lx<pad.l+44){lx=pad.l+2;anchor="start";}let ly=Y(p[qY])-r-5;placed.forEach(q=>{if(Math.abs(lx-q.x)<92&&Math.abs(ly-q.y)<13)ly=q.y-13;});placed.push({x:lx,y:ly});s+=`<text x="${lx}" y="${Math.max(ly,12)}" text-anchor="${anchor}" font-size="9.5" fill="var(--ink)" font-weight="600">${trunc(displayNameOf(p),20)}</text>`;});}
   svg.innerHTML=s;
   svg.querySelectorAll(".qb").forEach(c=>{const p=vpts[+c.dataset.i];
     c.addEventListener("mousemove",e=>{const tLab={g2:"매우 좋음",g1:"좋음",mid:"보통",w1:"나쁨",w2:"매우 나쁨"}[p._qtier]||"";showTip(`<b>${displayNameOf(p)}</b>${qDim?`<br><span class="t-k">포함 소재</span> ${p.n}개`:""}${tLab?`<br><span class="t-k">위치 등급</span> <b style="color:${tierCol[p._qtier]}">${tLab}</b>`:""}<br><span class="t-k">${xMet.lab}</span> ${xMet.fmt(p[qX])}<br><span class="t-k">${yMet.lab}</span> ${yMet.fmt(p[qY])}<br><span class="t-k">광고비</span> ${fmtWon(p.비용)}${qDim?"":`<br><span class="t-k" style="font-size:10px">클릭 → 표에서 자세히</span>`}`,e.clientX,e.clientY);});
@@ -1606,15 +1629,26 @@ function goToIslandFromQuad(name){if(!curDS)return;
     (document.querySelector(".isle-row")||tr).scrollIntoView({behavior:"smooth",block:"center"});});}
 
 /* trend */
+/* 추세 축용 정수 콤팩트 표기(만 단위) */
+function trInt(v){const n=Math.round(v||0);return n>=10000?(n/10000).toFixed(n>=100000?0:1).replace(/\.0$/,"")+"만":n.toLocaleString();}
 function renderTrend(ds){const svg=$("#trend"),L=ds.L,S=ds.S;
   const W=Math.max(300,Math.min((svg.parentElement&&svg.parentElement.clientWidth)||380,720)),H=250,pad={l:50,r:48,t:14,b:32};
   svg.setAttribute("width",W);svg.setAttribute("height",H);svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
-  /* 효율선: 레벨의 실제 전환 컬럼(소재=설치, 세트=활성 유저)으로 주간 단가 계산 — 전환이 없는 매체(구글 확장 소재)는 비용 추세만 */
-  const wk=ds.weekly,costs=wk.map(w=>w.비용),eff=wk.map(w=>L.hasConv?((w[L.volCol]||0)>0?w.비용/w[L.volCol]:null):((w["클릭 수"]||0)>0?w.비용/w["클릭 수"]:null));
-  const hasEff=eff.some(v=>v!=null),effLab=L.hasConv?L.effLabel:"CPC";
-  const cmax=Math.max(...costs)*1.12||1,ev=eff.filter(v=>v!=null),emax=(ev.length?Math.max(...ev):1)*1.2||1;
+  const wk=ds.weekly;
+  /* 주 지표 토글 — 데이터가 있는 지표만 노출(광고비는 항상). 유저 반응 흐름(노출·클릭·설치·활성유저)도 볼 수 있게 */
+  const avail=TREND_METS.filter(m=>m.k==="비용"||wk.some(w=>(w[m.k]||0)>0));
+  if(!avail.find(m=>m.k===trendMet))trendMet="비용";
+  const pm=avail.find(m=>m.k===trendMet)||avail[0];
+  const tt=$("#tmetTog");if(tt){tt.innerHTML=avail.map(m=>`<button data-m="${escAttr(m.k)}" class="${m.k===trendMet?"on":""}">${m.lab}</button>`).join("");
+    tt.querySelectorAll("button").forEach(b=>b.onclick=()=>{trendMet=b.dataset.m;renderTrend(ds);});}
+  const prim=wk.map(w=>w[pm.k]||0);
+  /* 효율선(단가): 소재=설치·세트=활성 유저 단가 — 주 지표가 광고비일 때만 함께 표시 */
+  const eff=wk.map(w=>L.hasConv?((w[L.volCol]||0)>0?w.비용/w[L.volCol]:null):((w["클릭 수"]||0)>0?w.비용/w["클릭 수"]:null));
+  const showEff=pm.k==="비용"&&eff.some(v=>v!=null),effLab=L.hasConv?L.effLabel:"CPC";
+  const cmax=Math.max(...prim)*1.12||1,ev=eff.filter(v=>v!=null),emax=(ev.length?Math.max(...ev):1)*1.2||1;
   const den=Math.max(1,wk.length-1),xat=i=>pad.l+(wk.length<=1?(W-pad.l-pad.r)/2:i/den*(W-pad.l-pad.r)),yC=v=>H-pad.b-(v/cmax)*(H-pad.t-pad.b),yE=v=>H-pad.b-(v/emax)*(H-pad.t-pad.b);
-  let s=`<g class="axis">`;for(let i=0;i<=4;i++){const gy=H-pad.b-i/4*(H-pad.t-pad.b);s+=`<line class="gl" x1="${pad.l}" y1="${gy}" x2="${W-pad.r}" y2="${gy}"/><text x="${pad.l-7}" y="${gy+3}" text-anchor="end">${fmtKRW(i/4*cmax)}</text>${hasEff?`<text x="${W-pad.r+7}" y="${gy+3}" text-anchor="start" fill="var(--c2)">${fmtWon(i/4*emax)}</text>`:""}`;}
+  const axL=v=>pm.f==="won"?fmtKRW(v):trInt(v),axV=v=>pm.f==="won"?fmtWon(v):fmtInt(v);
+  let s=`<g class="axis">`;for(let i=0;i<=4;i++){const gy=H-pad.b-i/4*(H-pad.t-pad.b);s+=`<line class="gl" x1="${pad.l}" y1="${gy}" x2="${W-pad.r}" y2="${gy}"/><text x="${pad.l-7}" y="${gy+3}" text-anchor="end">${axL(i/4*cmax)}</text>${showEff?`<text x="${W-pad.r+7}" y="${gy+3}" text-anchor="start" fill="var(--c2)">${fmtWon(i/4*emax)}</text>`:""}`;}
   /* 주가 많으면(1년·전체) 라벨을 솎아내되 첫·끝 주는 항상 표시 */
   const lstep=Math.max(1,Math.ceil(wk.length/13));
   wk.forEach((o,i)=>{const last=i===wk.length-1;
@@ -1622,13 +1656,13 @@ function renderTrend(ds){const svg=$("#trend"),L=ds.L,S=ds.S;
     if(!last&&wk.length>1&&(wk.length-1-i)<Math.ceil(lstep/2))return; /* 끝 라벨과 겹침 방지 */
     s+=`<text x="${xat(i)}" y="${H-pad.b+18}" text-anchor="middle">${String(o.week).slice(5).replace("-","/")}</text>`;});s+=`</g>`;
   const pr=wk.length>26?2.6:wk.length>16?3.2:3.8; /* 포인트 밀도 대응 */
-  let area=`M ${xat(0)} ${yC(costs[0])}`;costs.forEach((c,i)=>{if(i)area+=` L ${xat(i)} ${yC(c)}`;});
-  s+=`<path d="${area} L ${xat(costs.length-1)} ${H-pad.b} L ${pad.l} ${H-pad.b} Z" fill="var(--karrot)" fill-opacity="0.1"/><path d="${area}" fill="none" stroke="var(--karrot)" stroke-width="2.2"/>`;
-  costs.forEach((c,i)=>{s+=`<circle class="tp" data-i="${i}" cx="${xat(i)}" cy="${yC(c)}" r="${pr}" fill="var(--karrot)" stroke="#fff" stroke-width="1.5"/>`;});
-  let st=false,ep="";eff.forEach((v,i)=>{if(v==null)return;ep+=(st?" L":"M")+` ${xat(i)} ${yE(v)}`;st=true;});
-  if(st){s+=`<path d="${ep}" fill="none" stroke="var(--c2)" stroke-width="2"/>`;eff.forEach((v,i)=>{if(v==null)return;s+=`<circle class="tp" data-i="${i}" cx="${xat(i)}" cy="${yE(v)}" r="${Math.max(2.4,pr-0.4)}" fill="#fff" stroke="var(--c2)" stroke-width="2"/>`;});}
-  svg.innerHTML=s;$("#trendLeg").innerHTML=`<span><i style="background:var(--karrot)"></i>광고비</span>${hasEff?`<span><i style="background:var(--c2)"></i>${effLab} (낮을수록 좋음)</span>`:""}`;
-  svg.querySelectorAll(".tp").forEach(c=>{c.addEventListener("mousemove",e=>{const i=+c.dataset.i,w=wk[i];showTip(`<b>${String(w.week).slice(5).replace("-","/")} 주</b><br><span class="t-k">광고비</span> ${fmtWon(w.비용)}${hasEff?`<br><span class="t-k">${effLab}</span> ${eff[i]!=null?fmtWon(eff[i]):"–"}`:""}`,e.clientX,e.clientY);});c.addEventListener("mouseleave",hideTip);});}
+  let area=`M ${xat(0)} ${yC(prim[0])}`;prim.forEach((c,i)=>{if(i)area+=` L ${xat(i)} ${yC(c)}`;});
+  s+=`<path d="${area} L ${xat(prim.length-1)} ${H-pad.b} L ${pad.l} ${H-pad.b} Z" fill="var(--karrot)" fill-opacity="0.1"/><path d="${area}" fill="none" stroke="var(--karrot)" stroke-width="2.2"/>`;
+  prim.forEach((c,i)=>{s+=`<circle class="tp" data-i="${i}" cx="${xat(i)}" cy="${yC(c)}" r="${pr}" fill="var(--karrot)" stroke="#fff" stroke-width="1.5"/>`;});
+  if(showEff){let st=false,ep="";eff.forEach((v,i)=>{if(v==null)return;ep+=(st?" L":"M")+` ${xat(i)} ${yE(v)}`;st=true;});
+    if(st){s+=`<path d="${ep}" fill="none" stroke="var(--c2)" stroke-width="2"/>`;eff.forEach((v,i)=>{if(v==null)return;s+=`<circle class="tp" data-i="${i}" cx="${xat(i)}" cy="${yE(v)}" r="${Math.max(2.4,pr-0.4)}" fill="#fff" stroke="var(--c2)" stroke-width="2"/>`;});}}
+  svg.innerHTML=s;$("#trendLeg").innerHTML=`<span><i style="background:var(--karrot)"></i>${pm.lab}</span>${showEff?`<span><i style="background:var(--c2)"></i>${effLab} (낮을수록 좋음)</span>`:""}`;
+  svg.querySelectorAll(".tp").forEach(c=>{c.addEventListener("mousemove",e=>{const i=+c.dataset.i,w=wk[i];showTip(`<b>${String(w.week).slice(5).replace("-","/")} 주</b><br><span class="t-k">${pm.lab}</span> ${axV(w[pm.k]||0)}${showEff?`<br><span class="t-k">${effLab}</span> ${eff[i]!=null?fmtWon(eff[i]):"–"}`:""}`,e.clientX,e.clientY);});c.addEventListener("mouseleave",hideTip);});}
 
 /* 유형별 집계 — 효율 지도 '보기' 세그먼트용 (구 유형별 비교 그래프를 지도에 흡수).
    비율 지표는 상하 10% 트림 후 합산 기반으로 계산해 이상치 소재가 유형 평균을 흔들지 못하게 한다 */
@@ -2199,8 +2233,8 @@ function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-r
 function tableCols(L,ds){const meta=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score",t:"점수",help:"복합 지표 가중 종합"}];
   const isM=ds&&ds.agg&&ds.agg.some(e=>e._m_ctype),isG=ds&&ds.agg&&ds.agg.some(e=>e._g_assetType);
   const nums=[
-    {k:"노출 수",t:"노출",f:"int",help:"보여진 횟수 (도달 규모)",lead:1,grp:"vol"},
-    {k:"비용",t:"광고비",f:"won",help:"쓴 광고비",sub:1,grp:"vol"},
+    {k:"비용",t:"광고비",f:"won",help:"쓴 광고비",lead:1,grp:"vol"},
+    {k:"노출 수",t:"노출",f:"int",help:"보여진 횟수 (도달 규모)",sub:1,grp:"vol"},
     {k:"CPM",t:"CPM",f:"won",help:"노출 1,000회당 비용 · 낮을수록 좋음",sub:1,grp:"vol"}];
   if(L.hasConv)nums.push(
     {k:"eCPI",t:"eCPI",f:"won",help:"설치 1건당 비용 · 낮을수록 좋음",lead:1,grp:"inst"},
@@ -2760,7 +2794,7 @@ async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
       /* 환영 토스트는 환영 문구만(로그인 시 저장소 로드 토스트는 위에서 생략). 0715 뷰어는 로그인 안내만.
          계정은 시간대별 인사("환영해요 NAME!")를 랜덤으로 */
       const msg=gv.viewer?"뷰어 권한으로 로그인했어요 👀":greetingFor(nm);
-      setTimeout(()=>toast(msg),1200);}
+      setTimeout(()=>toast(msg,6000),1200);}
     refreshCloudLine();return true;
   }catch(err){
     /* 저장된 비밀번호가 더는 안 맞으면 지워서 다음 새로고침에 바로 입력 화면이 뜨게 */
@@ -2939,7 +2973,7 @@ function show(ds){scope(ds);
     renderTrend(ds);
     requestAnimationFrame(()=>{renderTlegend();curDS=ds;renderQuickFo();renderTable(ds);renderAB(ds);});});}
 function setActive(k){if(!DATASETS[k])return;active=k;
-  tableShowAll=false;tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;
+  tableShowAll=false;tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;
   if($("#search"))$("#search").value="";if($("#showAll"))$("#showAll").checked=false;
   show(DATASETS[k]);}
 function renderFooter(){$("#ft").innerHTML=`
@@ -3113,7 +3147,7 @@ function renderFooter(){$("#ft").innerHTML=`
 function refreshAll(){if(!active||!DATASETS[active])active=TAB_ORDER.find(k=>DATASETS[k])||Object.keys(DATASETS)[0];if(active)setActive(active);}
 
 function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;tableShowAll=false;
-  tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;ISLE.name=null;
+  tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;ISLE.name=null;
   const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
 function dropZone(e){if(!e||e.clientY==null)return null;
   const H=window.innerHeight||800,W=window.innerWidth||1200;
@@ -3288,6 +3322,11 @@ $("#table tbody").addEventListener("click",e=>{
   if(mbtn&&curDS){e.stopPropagation();const ent=findRow(curDS,mbtn.dataset.nm);
     if(mbtn.dataset.mk==="edit"){openEditPop(curDS.media||"",ent,mbtn);return;}
     markToggle(curDS.media||"",ent,mbtn.dataset.mk);return;}
+  /* 제작자 칩 클릭 = 그 제작자 필터 토글 (툴바 '전체 제작자' 드롭다운과 동일 동작) */
+  const crc=e.target.closest(".chip.mine-chip[data-cr]");
+  if(crc&&curDS){e.stopPropagation();const n=crc.getAttribute("data-cr");
+    if(tCreators.has(n))tCreators.delete(n);else tCreators.add(n);
+    _mselSig.cr="";tPage=1;renderTable(curDS);return;}
   /* 칩 클릭 = 그 값으로 필터 토글 (행 펼침과 분리) */
   const chip=e.target.closest(".chip[data-ck]");
   if(chip&&curDS){const k=chip.dataset.ck,v=chip.dataset.cv;
