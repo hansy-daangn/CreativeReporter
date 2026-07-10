@@ -1389,9 +1389,12 @@ function computeFieldAvail(a){
     "영상 완주율","신규+재활성 유저 수","신규+재활성 eCPA","_m_installs",
     "_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue",
     "_g_interactionRate","_g_trueViewRate","_g_conversionRate","_g_costPerConv","_g_cpFirstOpen","_g_cpHome","_g_ROAS","_g_convValuePerConv"];
+  /* 비율/ROAS 지표는 값 0이 '결측'이 아니라 정상적인 저성과 데이터 → 0을 결측으로 세지 않는다.
+     (0을 결측 취급하면 전환율·CTR·ROAS가 0인 정상 소재가 채점에서 탈락하거나 열이 숨겨짐) */
+  const RATE_KEYS=new Set(["CTR","영상 완주율","_g_interactionRate","_g_trueViewRate","_g_conversionRate","_g_ROAS"]);
   const n=a.length||1,avail={};
-  for(const k of numKeys){
-    let miss=0;for(const e of a){const v=e[k];if(v==null||v===0||!isFinite(v))miss++;}
+  for(const k of numKeys){const rate=RATE_KEYS.has(k);
+    let miss=0;for(const e of a){const v=e[k];if(v==null||!isFinite(v)||(v===0&&!rate))miss++;}
     avail[k]=1-miss/n;
   }
   return avail;}
@@ -2558,9 +2561,11 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
 /* 유튜브 제목이 캐시에 도착하면 다시 그리지 않고 화면의 URL 이름만 제자리 갱신 */
 function refreshDisplayNames(){
   if(!curDS)return;
+  /* 이름 텍스트는 .nm-text 스팬에 있다(.ntxt는 뱃지·칩 포함) — 직접 갱신(textContent라 XSS 안전) */
   $$("#table tbody tr.row").forEach(tr=>{const nm=tr.getAttribute("data-name");const ent=findRow(curDS,nm);if(!ent)return;
-    const dn=trunc(displayNameOf(ent),60),tx=tr.querySelector(".ntxt");
-    if(tx&&tx.childNodes[0]&&tx.childNodes[0].nodeType===3&&tx.childNodes[0].textContent!==dn){tx.childNodes[0].textContent=dn;if(dn!==nm)tx.title=nm;}});}
+    const sp=tr.querySelector(".nm-text");if(!sp||sp.classList.contains("editing"))return;
+    const dn=trunc(displayNameOf(ent),60);
+    if(sp.textContent!==dn){sp.textContent=dn;const tx=tr.querySelector(".ntxt");if(tx&&dn!==nm)tx.title=nm;}});}
 /* 표에 보이는 유튜브 URL 이름은 영상 제목을 자동 조회해 교체 (동시 4개, 캐시는 영구) */
 let _hydSeq=0;
 async function hydrateYtNames(){
@@ -2648,7 +2653,7 @@ function switchTab(t){mainTab=t;
    인식 규칙 (오인 방지를 위해 전부 '구분자 뒤 접미' 형태만):
    1) 확장자·해상도(1080x1920 등)·화면비(16x9)·꼬리 구분자를 먼저 제거
    2) 문자 변형: 구분자(_,-,공백,.) + (v|ver|version|시안)? + 대문자 한 글자 A~F 로 끝 → "_A", " B", "_ver_C"
-   3) 숫자 변형: 구분자 뒤 또는 문자에 바로 붙은 1~12 (v1, _2, cafe3, kkak01) — 13 이상·연도/코드류(4자리)는 제외
+   3) 숫자 변형: 1~5만 (v1·kkak01·cafe3·ep3 등). 회차 없는 '구분자 뒤 맨숫자'(_2)와 6 이상·연도/코드류(4자리)는 제외
    단어 자체가 A로 시작/끝나는 경우(구분자 없음)는 매치되지 않음 */
 function abVariantOf(name){let s=String(name||"");
   s=s.replace(/\.(mp4|png|jpe?g|gif|webp|mov|webm)$/i,"");
@@ -2699,10 +2704,10 @@ function renderAB(ds){const el=$("#abBody"),meta=$("#abMeta"),cnt=$("#abCnt");
   fams.forEach(f=>{
     f.rows=[...f.vars.entries()].map(([variant,mem])=>{
       const sum=k=>mem.reduce((s,e)=>s+(+e[k]||0),0);
-      const cost=sum("비용"),imp=sum("노출 수"),clk=sum("클릭 수"),attr=sum("어트리뷰션 수"),act=sum("활성 유저 수"),gv=sum("_g_convValue"),gc=sum("_g_conversions"),vn=sum("_vcrNum"),vd=sum("_vcrDen");
+      const cost=sum("비용"),imp=sum("노출 수"),clk=sum("클릭 수"),attr=sum("어트리뷰션 수"),act=sum("활성 유저 수"),nu=sum("신규+재활성 유저 수"),gfo=sum("_g_firstOpen"),ghome=sum("_g_home"),gv=sum("_g_convValue"),gc=sum("_g_conversions"),vn=sum("_vcrNum"),vd=sum("_vcrDen");
       const r={variant,mem,cost,imp,clk,attr,
-        eCPI:attr>0?cost/attr:null,"활성 유저 eCPA":act>0?cost/act:null,CTR:imp>0?clk/imp:null,CPM:imp>0?cost/imp*1000:null,CPC:clk>0?cost/clk:null,
-        _g_ROAS:cost>0&&gv>0?gv/cost:null,_g_costPerConv:gc>0?cost/gc:null,vcr:vd>0?vn/vd:null,
+        eCPI:attr>0?cost/attr:null,"활성 유저 eCPA":act>0?cost/act:null,"신규+재활성 eCPA":nu>0?cost/nu:null,CTR:imp>0?clk/imp:null,CPM:imp>0?cost/imp*1000:null,CPC:clk>0?cost/clk:null,
+        _g_ROAS:cost>0&&gv>0?gv/cost:null,_g_costPerConv:gc>0?cost/gc:null,_g_cpFirstOpen:gfo>0?cost/gfo:null,_g_cpHome:ghome>0?cost/ghome:null,vcr:vd>0?vn/vd:null,
         learning:mem.every(isLearning)};
       const sc=mem.filter(e=>e.score!=null);
       r.score=sc.length?Math.round(sc.reduce((s,e)=>s+e.score*(e.비용||1),0)/sc.reduce((s,e)=>s+(e.비용||1),0)*10)/10:null;
@@ -2715,8 +2720,8 @@ function renderAB(ds){const el=$("#abBody"),meta=$("#abMeta"),cnt=$("#abCnt");
       return primary.dir<0?a.pv-b.pv:b.pv-a.pv;});});
   fams.sort((a,b)=>b.cost-a.cost);
   if(cnt)cnt.textContent=fams.length?String(fams.length):"";
-  if(meta)meta.innerHTML=fams.length?`<b>${fams.length}</b>개 테스트 그룹 · 판정 기준 <b>${primary.lab}</b> · 변형 접미(_A·_B, 끝 숫자 1~12, v1·v2 등) 자동 인식`:"";
-  if(!fams.length){el.innerHTML=`<div class="bd-empty">변형 네이밍(_A·_B·_C, 이름 끝 숫자 1~12, v1·v2 등)으로 묶이는 소재가 없습니다. 소재명 끝에 "_A", "_B"처럼 변형 표기를 붙이면 자동으로 여기에 모입니다.</div>`;return;}
+  if(meta)meta.innerHTML=fams.length?`<b>${fams.length}</b>개 테스트 그룹 · 판정 기준 <b>${escHtml(primary.lab)}</b> · 변형 접미(_A·_B, 끝 숫자 1~5, v1·v2 등) 자동 인식`:"";
+  if(!fams.length){el.innerHTML=`<div class="bd-empty">변형 네이밍(_A·_B·_C, 이름 끝 숫자 1~5, v1·v2 등)으로 묶이는 소재가 없습니다. 소재명 끝에 "_A", "_B"처럼 변형 표기를 붙이면 자동으로 여기에 모입니다.</div>`;return;}
   _abFams=fams;_abPrimary=primary;_abFmt=pFmt;
   el.innerHTML=fams.map((f,fi)=>{
     const dispBase=f.base.replace(/[_\-\s.]{2,}/g,"_").replace(/^[_\s]+|[_\s]+$/g,"");
