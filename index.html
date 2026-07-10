@@ -2856,11 +2856,10 @@ function greetingFor(name){
 async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
   try{const rows=await sbRpc("cr_load",{pw});
     cloudPw=pw;sessionStorage.setItem("crpw",pw);
-    /* 이번 탭에서 첫 로그인이면 환영 인사(아래)가 뜬다 → 이때는 저장소 로드 토스트는 생략하고 인사만 */
-    const willGreet=!sessionStorage.getItem("crHi");
+    /* 접속·로그인 시엔 저장소 로드 토스트("저장소를 열었어요 …")를 띄우지 않고 환영 인사만 보여준다(아래) */
     await loadNameMap(pw);
-    if(rows.length){loadCloudRows(rows);if(!willGreet)toast(`☁️ 저장소를 열었어요 · 소재 ${new Set(rows.map(r=>r.ad_name)).size.toLocaleString()}개 · 주간 기록 ${rows.length.toLocaleString()}건`);}
-    else if(!silent&&!willGreet)toast("☁️ 연결됐어요 · 아직 데이터가 없어요. 주간 CSV를 올리면 여기 쌓여요");
+    if(rows.length)loadCloudRows(rows);
+    else if(!silent)toast("☁️ 연결됐어요 · 아직 데이터가 없어요. 주간 CSV를 올리면 여기 쌓여요");
     /* 탭 세션당 1회 환영 인사 — 권한별 문구. 자동 재접속 시엔 sessionStorage 값 사용 */
     /* 자동 재접속(restore) 경로면 서버에서 최신 이름·권한을 다시 받아 반영 —
        관리자가 admin에서 daangn name/권한을 바꿔도 본 페이지 닉네임·서명·권한이 새로고침만으로 갱신 */
@@ -2876,10 +2875,8 @@ async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
         }
       }catch(_){}}
     const gv=(idOpts&&"viewer"in idOpts)?idOpts:{viewer:sessionStorage.getItem("crviewer")==="1",name:sessionStorage.getItem("crname")||"",editor:sessionStorage.getItem("crcan")==="1"};
-    if(willGreet){sessionStorage.setItem("crHi","1");
-      const nm=(gv.name||"").toUpperCase();
-      /* 환영 토스트는 환영 문구만(로그인 시 저장소 로드 토스트는 위에서 생략). 0715 뷰어는 로그인 안내만.
-         계정은 시간대별 인사("환영해요 NAME!")를 랜덤으로 */
+    /* 접속·로그인마다 환영 인사만 — 저장소 로드 토스트 대신. 계정=시간대별 랜덤 인사, 0715 뷰어=안내 */
+    {const nm=(gv.name||"").toUpperCase();
       const msg=gv.viewer?"뷰어 권한으로 로그인했어요 👀":greetingFor(nm);
       setTimeout(()=>toast(msg,6000),1200);}
     refreshCloudLine();return true;
@@ -3471,7 +3468,10 @@ const STAR_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.3l2.8
 const SEAL_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M 12 1.4 L 14.25 3.6 L 17.3 2.82 L 18.15 5.85 L 21.18 6.7 L 20.4 9.75 L 22.6 12 L 20.4 14.25 L 21.18 17.3 L 18.15 18.15 L 17.3 21.18 L 14.25 20.4 L 12 22.6 L 9.75 20.4 L 6.7 21.18 L 5.85 18.15 L 2.82 17.3 L 3.6 14.25 L 1.4 12 L 3.6 9.75 L 2.82 6.7 L 5.85 5.85 L 6.7 2.82 L 9.75 3.6 Z"/><path class="mchk" d="M8.4 12.0l2.5 2.5 4.7-5.1" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const PENCIL_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 000-1.42l-2.34-2.34a1.003 1.003 0 00-1.42 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
 let MARKS={me:null,fav:new Set(),myMine:new Set(),mineByKey:new Map()};
-const markKey=(ch,ad)=>String(ch||"")+""+String(ad||"");
+/* 마크(내소재·즐겨찾기) 채널 키 — 구글 하위매체(AEO/ACE)는 원 채널 'Google'로 묶어 저장·조회.
+   매체를 AEO/ACE로 나눠도 기존 'Google' 채널로 저장된 태그가 그대로 매칭돼 보인다(분리 전/후 호환). */
+function markChannel(ch){return (ch==="Google AEO"||ch==="Google ACE")?"Google":(ch||"");}
+const markKey=(ch,ad)=>markChannel(ch)+""+String(ad||"");
 const canMark=()=>!!MARKS.me;
 async function loadMarks(){
   MARKS={me:null,fav:new Set(),myMine:new Set(),mineByKey:new Map()};
@@ -3536,13 +3536,13 @@ async function markToggle(ch,ent,kind){
     const on=!(MARKS.mineByKey.get(k)||[]).includes(mineAs);
     _localMineSet(k,mineAs,on);refreshMarksUI();
     if(tMarkView==="mine"&&curDS)renderTable(curDS);
-    try{await sbRpc("cr_admin_mark_set",{pw:cloudPw,p_channel:ch,p_ad:ad,p_user:mineAs,p_kind:"mine",p_on:on});}
+    try{await sbRpc("cr_admin_mark_set",{pw:cloudPw,p_channel:markChannel(ch),p_ad:ad,p_user:mineAs,p_kind:"mine",p_on:on});}
     catch(e){await loadMarks();if(curDS)renderTable(curDS);toast("저장하지 못했어요 · "+(e.message||""));}
     return;}
   const on=!(kind==="fav"?MARKS.fav:MARKS.myMine).has(k);
   _applyMark(k,kind,on);refreshMarksUI();
   if((kind==="fav"&&tMarkView==="fav")||(kind==="mine"&&tMarkView==="mine")){if(curDS)renderTable(curDS);}
-  try{await sbRpc("cr_mark_set",{pw:cloudPw,p_channel:ch,p_ad:ad,p_kind:kind,p_on:on});}
+  try{await sbRpc("cr_mark_set",{pw:cloudPw,p_channel:markChannel(ch),p_ad:ad,p_kind:kind,p_on:on});}
   catch(e){await loadMarks();if(curDS)renderTable(curDS);toast("저장하지 못했어요 · "+(e.message||""));}}
 /* 그룹 일괄 토글 — 전원 표시면 전원 해제, 아니면 전원 표시(개별 해제로 파생 상태 자동 해제) */
 async function toggleGroupMark(ch,ent,kind){
@@ -3553,7 +3553,7 @@ async function toggleGroupMark(ch,ent,kind){
     for(const n of names)_localMineSet(markKey(ch,n),mineAs,on);
     refreshMarksUI();
     if(tMarkView==="mine"&&curDS)renderTable(curDS);
-    try{for(const n of names)await sbRpc("cr_admin_mark_set",{pw:cloudPw,p_channel:ch,p_ad:n,p_user:mineAs,p_kind:"mine",p_on:on});
+    try{for(const n of names)await sbRpc("cr_admin_mark_set",{pw:cloudPw,p_channel:markChannel(ch),p_ad:n,p_user:mineAs,p_kind:"mine",p_on:on});
       toast(on?`${mineAs}의 내 소재에 그룹 소재 ${names.length}개를 담았어요`:`${mineAs}의 그룹 내 소재를 해제했어요`);}
     catch(e){await loadMarks();if(curDS)renderTable(curDS);toast("저장하지 못했어요 · "+(e.message||""));}
     return;}
@@ -3563,7 +3563,7 @@ async function toggleGroupMark(ch,ent,kind){
   refreshMarksUI();
   if((kind==="fav"&&tMarkView==="fav")||(kind==="mine"&&tMarkView==="mine")){if(curDS)renderTable(curDS);}
   const lab=kind==="fav"?"즐겨찾기":"내 소재";
-  try{await sbRpc("cr_mark_set_many",{pw:cloudPw,p_channel:ch,p_ads:names,p_kind:kind,p_on:on});
+  try{await sbRpc("cr_mark_set_many",{pw:cloudPw,p_channel:markChannel(ch),p_ads:names,p_kind:kind,p_on:on});
     toast(on?`그룹 소재 ${names.length}개를 ${lab}에 담았어요`:`그룹 ${lab}를 해제했어요`);}
   catch(e){await loadMarks();if(curDS)renderTable(curDS);toast("저장하지 못했어요 · "+(e.message||""));}}
 /* ── 소재 이름 수동 변경(관리자 전용) ─────────────────────────────────────
@@ -3660,7 +3660,7 @@ function openEditPop(ch,ent,anchor){
     try{
       if(Object.keys(nameMap).length)await sbRpc("cr_names_merge",{pw:cloudPw,p_map:nameMap});
       if(Object.keys(svcMap).length)await sbRpc("cr_svc_merge",{pw:cloudPw,p_map:svcMap});
-      for(const [n,on] of markCalls)await sbRpc("cr_admin_mark_set",{pw:cloudPw,p_channel:ch,p_ad:ent.name,p_user:n,p_kind:"mine",p_on:on});
+      for(const [n,on] of markCalls)await sbRpc("cr_admin_mark_set",{pw:cloudPw,p_channel:markChannel(ch),p_ad:ent.name,p_user:n,p_kind:"mine",p_on:on});
       if(Object.keys(nameMap).length||Object.keys(svcMap).length||markCalls.length)toast("소재 정보를 바꿨어요");
     }catch(e){toast("일부 저장에 실패했어요 · "+(e.message||""));await loadMarks();renderInlineRefresh();}};}
 document.addEventListener("click",()=>closeEditPop()); /* 바깥 클릭 시 편집 팝오버 닫기 */
