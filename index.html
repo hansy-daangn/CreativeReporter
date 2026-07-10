@@ -986,10 +986,10 @@ function imgRetry(img){
 function assetPreviewTipHTML(url,label){if(!url)return "";
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
   if(yt){const lo=`https://img.youtube.com/vi/${yt[1]}/default.jpg`,hi=`https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg`;
-    return `<img src="${imgSrc(lo)}" data-osrc="${lo}" data-hi="${escAttr(imgSrc(hi))}" alt="" referrerpolicy="no-referrer" onload="imgOk(this);imgHi(this)" onerror="imgRetry(this)"><div class="tp-cap">${label||"영상"}</div>`;}
-  if(isVideoUrl(url))return `<video src="${url}" autoplay muted loop playsinline preload="metadata"></video><div class="tp-cap">▶ ${label||"영상"}</div>`;
-  if(isImageUrl(url))return `<img src="${imgSrc(url)}" data-osrc="${escAttr(url)}" alt="" referrerpolicy="no-referrer" onload="imgOk(this)" onerror="imgRetry(this)"><div class="tp-cap">${label||""}</div>`;
-  return `<div class="tp-cap">${label||"미리보기 없음"}</div>`;}
+    return `<img src="${escAttr(imgSrc(lo))}" data-osrc="${escAttr(lo)}" data-hi="${escAttr(imgSrc(hi))}" alt="" referrerpolicy="no-referrer" onload="imgOk(this);imgHi(this)" onerror="imgRetry(this)"><div class="tp-cap">${escHtml(label||"영상")}</div>`;}
+  if(isVideoUrl(url))return `<video src="${escAttr(safeUrl(url))}" autoplay muted loop playsinline preload="metadata"></video><div class="tp-cap">▶ ${escHtml(label||"영상")}</div>`;
+  if(isImageUrl(url))return `<img src="${escAttr(imgSrc(url))}" data-osrc="${escAttr(url)}" alt="" referrerpolicy="no-referrer" onload="imgOk(this)" onerror="imgRetry(this)"><div class="tp-cap">${escHtml(label||"")}</div>`;
+  return `<div class="tp-cap">${escHtml(label||"미리보기 없음")}</div>`;}
 function toast(m,ms){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),ms||2600);}
 function copyText(t){
   const fb=()=>new Promise(r=>{const ta=document.createElement("textarea");ta.value=t;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(_){}ta.remove();r();});
@@ -1571,9 +1571,9 @@ function sdelta(dd){if(dd==null)return"<span>지난주 –</span>";const c=Math.
 /* leaderboard */
 /* 이름 아래 태그 칩 — 표에서는 클릭하면 그 값으로 필터 (data-ck 있는 칩만) */
 function chipsHTML(t,e){
-  const mk=(k,v,cls,lab)=>`<span class="chip${cls?" "+cls:""}" data-ck="${k}" data-cv="${escAttr(v)}" title="클릭 = ${escAttr(lab||v)}만 보기">${lab||v}</span>`;
+  const mk=(k,v,cls,lab)=>`<span class="chip${cls?" "+cls:""}" data-ck="${k}" data-cv="${escAttr(v)}" title="클릭 = ${escAttr(lab||v)}만 보기">${escHtml(lab||v)}</span>`;
   const foChip=t.fo&&(e&&e._foFix
-    ?`<span class="chip fo" data-ck="fo" data-cv="${escAttr(t.fo)}" title="리포트 유형은 '네이티브 영상'이지만 첨부 파일이 이미지이고 완주율 데이터가 전 기간 없어 이미지로 분류했습니다 · 클릭 = 이미지만 보기">${t.fo}*</span>`
+    ?`<span class="chip fo" data-ck="fo" data-cv="${escAttr(t.fo)}" title="리포트 유형은 '네이티브 영상'이지만 첨부 파일이 이미지이고 완주율 데이터가 전 기간 없어 이미지로 분류했습니다 · 클릭 = 이미지만 보기">${escHtml(t.fo)}*</span>`
     :mk("fo",t.fo,"fo"));
   /* 서비스 칩 — 관리자가 수동 지정했으면 그 값(주황 강조), 아니면 자동(ve) */
   const _svcOv=svcOverrideFor(e);
@@ -1606,8 +1606,8 @@ function renderAutoInsight(ds){
   const specs=(typeof specsFor==="function")?specsFor(ds):null;const prim=specs&&specs[0];
   if(scored.length<4||!prim){el.style.display="none";el.innerHTML="";return;}
   const pk=prim.k,pLab=prim.lab,pdir=prim.dir||-1;
-  const won=v=>"₩"+Math.round(v).toLocaleString();
-  const nm=e=>trunc(displayNameOf(e),22);
+  const won=v=>fmtSpecVal(pk,v); /* 대표 지표 성격에 맞춰 포맷(비율=%, ROAS=×, 그 외=₩) */
+  const nm=e=>escHtml(trunc(displayNameOf(e),22));
   const out=[];
   const top=scored.slice().sort((x,y)=>y.score-x.score)[0];
   out.push(`<b>🏆 최고 점수</b> ${nm(top)} · <b>${Math.round(top.score*10)/10}점</b>${(top[pk]!=null&&isFinite(top[pk]))?` · ${pLab} ${won(top[pk])}`:""}`);
@@ -1757,10 +1757,10 @@ function renderQuad(ds){const L=ds.L,svg=$("#quad");
     const tier=tierOf(goodness(p));const col=tierCol[tier];p._qtier=tier;
     s+=`<circle class="qb" data-i="${i}" cx="${cx}" cy="${cy}" r="${r}" fill="${col}" fill-opacity="0.68" stroke="${col}" stroke-width="1.3"/>`;});
   /* 라벨: 유형 보기만 각 지점에 이름 표시(개수 적음). 소재 보기는 원이 겹쳐 라벨이 더 헷갈리므로 생략(호버로 확인) */
-  if(qDim){const placed=[];[...vpts].sort((a,b)=>b.비용-a.비용).forEach(p=>{const r=R(p.비용);let lx=X(p[qX]),anchor="middle";if(lx>W-pad.r-70){lx=W-pad.r-2;anchor="end";}else if(lx<pad.l+44){lx=pad.l+2;anchor="start";}let ly=Y(p[qY])-r-5;placed.forEach(q=>{if(Math.abs(lx-q.x)<92&&Math.abs(ly-q.y)<13)ly=q.y-13;});placed.push({x:lx,y:ly});s+=`<text x="${lx}" y="${Math.max(ly,12)}" text-anchor="${anchor}" font-size="9.5" fill="var(--ink)" font-weight="600">${trunc(displayNameOf(p),20)}</text>`;});}
+  if(qDim){const placed=[];[...vpts].sort((a,b)=>b.비용-a.비용).forEach(p=>{const r=R(p.비용);let lx=X(p[qX]),anchor="middle";if(lx>W-pad.r-70){lx=W-pad.r-2;anchor="end";}else if(lx<pad.l+44){lx=pad.l+2;anchor="start";}let ly=Y(p[qY])-r-5;placed.forEach(q=>{if(Math.abs(lx-q.x)<92&&Math.abs(ly-q.y)<13)ly=q.y-13;});placed.push({x:lx,y:ly});s+=`<text x="${lx}" y="${Math.max(ly,12)}" text-anchor="${anchor}" font-size="9.5" fill="var(--ink)" font-weight="600">${escHtml(trunc(displayNameOf(p),20))}</text>`;});}
   svg.innerHTML=s;
   svg.querySelectorAll(".qb").forEach(c=>{const p=vpts[+c.dataset.i];
-    c.addEventListener("mousemove",e=>{const tLab={g2:"매우 좋음",g1:"좋음",mid:"보통",w1:"나쁨",w2:"매우 나쁨"}[p._qtier]||"";showTip(`<b>${displayNameOf(p)}</b>${qDim?`<br><span class="t-k">포함 소재</span> ${p.n}개`:""}${tLab?`<br><span class="t-k">위치 등급</span> <b style="color:${tierCol[p._qtier]}">${tLab}</b>`:""}<br><span class="t-k">${xMet.lab}</span> ${xMet.fmt(p[qX])}<br><span class="t-k">${yMet.lab}</span> ${yMet.fmt(p[qY])}<br><span class="t-k">광고비</span> ${fmtWon(p.비용)}${qDim?"":`<br><span class="t-k" style="font-size:10px">클릭 → 표에서 자세히</span>`}`,e.clientX,e.clientY);});
+    c.addEventListener("mousemove",e=>{const tLab={g2:"매우 좋음",g1:"좋음",mid:"보통",w1:"나쁨",w2:"매우 나쁨"}[p._qtier]||"";showTip(`<b>${escHtml(displayNameOf(p))}</b>${qDim?`<br><span class="t-k">포함 소재</span> ${p.n}개`:""}${tLab?`<br><span class="t-k">위치 등급</span> <b style="color:${tierCol[p._qtier]}">${tLab}</b>`:""}<br><span class="t-k">${xMet.lab}</span> ${xMet.fmt(p[qX])}<br><span class="t-k">${yMet.lab}</span> ${yMet.fmt(p[qY])}<br><span class="t-k">광고비</span> ${fmtWon(p.비용)}${qDim?"":`<br><span class="t-k" style="font-size:10px">클릭 → 표에서 자세히</span>`}`,e.clientX,e.clientY);});
     c.addEventListener("mouseleave",hideTip);
     if(qDim)c.style.cursor="default";
     else c.addEventListener("click",()=>{hideTip();goToIslandFromQuad(p.name);});});}
@@ -1972,8 +1972,10 @@ function renderMineAs(ds){
 document.addEventListener("click",closeAllMsel); /* 바깥 클릭 시 드롭다운 닫기 */
 let tableShowAll=false;
 let curDS=null; const ISLE={name:null,metric:null,gtab:"trend",posX:null,posY:null}; /* gtab: 상세 그래프 탭, posX/posY: 포지셔닝 축 지표 — 소재를 옮겨 다녀도 유지 */
-function escAttr(s){return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;");}
+function escAttr(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/'/g,"&#39;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function escHtml(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+/* href/src에 넣기 전 스킴 화이트리스트 — DB 유입 URL의 javascript:/data: 등 주입 차단. http(s)만 허용 */
+function safeUrl(u){u=String(u==null?"":u).trim();return /^https?:\/\//i.test(u)?u:"";}
 function familyKey(name){let s=String(name);
   s=s.replace(/(\d{3,4})\s*[x×]\s*(\d{3,4})/gi,"");
   s=s.replace(/\.(mp4|png|jpe?g|gif|webp|mov|webm)\b/gi,"");
@@ -2002,16 +2004,16 @@ function assetPreview(url,ent){if(!url)return "";
   const dm=(typeof MDIM!=="undefined")&&MDIM[url];
   const dimTxt=[dm&&dm.w&&dm.h?`${dm.w}×${dm.h}`:"",dm&&dm.dur?`⏱ ${fmtDur(dm.dur)}`:""].filter(Boolean).join(" · ");
   const dimLine=dimTxt?`<span class="asset-dim">${dimTxt}</span>`:"";
-  const srcLine=(note)=>`<div class="asset-src">${ocrM}${dimLine}${note?note+" · ":""}<a href="${url}" target="_blank" rel="noopener">${trunc(url,60)}</a></div>`;
+  const srcLine=(note)=>`<div class="asset-src">${ocrM}${dimLine}${note?escHtml(note)+" · ":""}<a href="${escAttr(safeUrl(url))}" target="_blank" rel="noopener">${escHtml(trunc(url,60))}</a></div>`;
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
   if(yt)return `<div class="isle-frame"><iframe class="asset-yt" src="https://www.youtube.com/embed/${yt[1]}" frameborder="0" allow="encrypted-media" allowfullscreen></iframe></div>${srcLine()}`;
-  if(isVideoUrl(url))return `<div class="isle-frame"><video class="asset-vid" src="${url}" controls muted playsinline preload="metadata" onloadedmetadata="try{mdimEl(this)}catch(_){};isleAr(this)"></video></div>${srcLine()}`;
+  if(isVideoUrl(url))return `<div class="isle-frame"><video class="asset-vid" src="${escAttr(safeUrl(url))}" controls muted playsinline preload="metadata" onloadedmetadata="try{mdimEl(this)}catch(_){};isleAr(this)"></video></div>${srcLine()}`;
   if(isImageUrl(url)){
     const note=(ent&&ent.tags&&ent.tags.fo==="영상")?"영상 소재의 썸네일":"";
-    return `<div class="isle-frame"><img class="asset-img" src="${imgSrc(url)}" data-osrc="${escAttr(url)}" alt="asset" referrerpolicy="no-referrer" loading="lazy" onload="imgOk(this);isleAr(this)" onerror="imgRetry(this)"><div class="asset-err" hidden>미리보기를 불러오지 못했습니다 <button class="mini" onclick="const w=this.closest('.isle-frame'),i=w.querySelector('img');this.parentNode.hidden=true;i.hidden=false;i.dataset.rt=0;const s=i.dataset.osrc||i.src;i.src=s+(s.includes('?')?'&':'?')+'rt='+Date.now()">다시 시도</button></div></div>${srcLine(note)}`;}
+    return `<div class="isle-frame"><img class="asset-img" src="${escAttr(imgSrc(url))}" data-osrc="${escAttr(url)}" alt="asset" referrerpolicy="no-referrer" loading="lazy" onload="imgOk(this);isleAr(this)" onerror="imgRetry(this)"><div class="asset-err" hidden>미리보기를 불러오지 못했습니다 <button class="mini" onclick="const w=this.closest('.isle-frame'),i=w.querySelector('img');this.parentNode.hidden=true;i.hidden=false;i.dataset.rt=0;const s=i.dataset.osrc||i.src;i.src=s+(s.includes('?')?'&':'?')+'rt='+Date.now()">다시 시도</button></div></div>${srcLine(note)}`;}
   /* 메타 등: 미디어 URL이 아니라 광고관리자 링크뿐인 소재 — 실제 이미지/영상 대신 '광고관리자에서 보기' 카드로 미리보기 슬롯을 제공(열람은 로그인 필요) */
   if(isAdManagerUrl(url)){const emo=(typeof entTypeEmoji==="function")?entTypeEmoji(ent):"📊";const ty=(ent&&ent.tags&&ent.tags.fo)||"소재";
-    return `<div class="isle-frame"><a class="meta-pv-card" href="${url}" target="_blank" rel="noopener"><span class="meta-pv-emo">${emo}</span><span class="meta-pv-t">Meta 광고관리자에서 보기</span><span class="meta-pv-s">${ty} · 새 탭에서 열려요 (로그인 필요)</span></a></div>${srcLine("광고관리자 링크")}`;}
+    return `<div class="isle-frame"><a class="meta-pv-card" href="${escAttr(safeUrl(url))}" target="_blank" rel="noopener"><span class="meta-pv-emo">${emo}</span><span class="meta-pv-t">Meta 광고관리자에서 보기</span><span class="meta-pv-s">${escHtml(ty)} · 새 탭에서 열려요 (로그인 필요)</span></a></div>${srcLine("광고관리자 링크")}`;}
   return "";}
 function thumbHTML(e){const url=previewUrlOf(e);if(!url)return "";
   const vidMark=e.tags&&e.tags.fo==="영상";
@@ -2043,7 +2045,7 @@ function fmtSpecVal(k,v){if(v==null)return"–";
    동영상 재생 퍼널(v25~v100)은 여기가 아니라 가운데 그래프 열의 '영상 시청' 탭이 그린다 */
 function groupInfoHTML(gi){if(!gi)return "";
   const cells=[];
-  const add=(k,v,tip,wide)=>{if(v!=null&&v!=="")cells.push(`<div class="gi-r${wide?" wide":""}" ${tip?`title="${escAttr(tip)}"`:""}><span class="gi-k">${k}</span><b class="gi-v num">${v}</b></div>`);};
+  const add=(k,v,tip,wide)=>{if(v!=null&&v!=="")cells.push(`<div class="gi-r${wide?" wide":""}" ${tip?`title="${escAttr(tip)}"`:""}><span class="gi-k">${escHtml(k)}</span><b class="gi-v num">${escHtml(v)}</b></div>`);};
   add("캠페인",gi.cpNm?trunc(groupPrettyName(gi.cpNm),40):null,gi.cpNm,true);
   add("타겟 CPA",gi.tcpa!=null?fmtWon(gi.tcpa):null,"이 그룹의 입찰 목표 CPA");
   add("참여율",gi.eng!=null?gi.eng+"%":null,"Google 참여율 (보고서 기간 누적)");
@@ -2259,7 +2261,7 @@ function positioningHTML(ds,e){
   g+=`<text x="${X(50).toFixed(1)}" y="${pad.t-5}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--g1)">+</text>`;
   g+=`<text x="${X(50).toFixed(1)}" y="${H-pad.b+12}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--w2)">−</text>`;
   const topPct=v=>Math.max(1,Math.round(100-v));
-  const tipOf=o=>`<b>${trunc(displayNameOf(o.p),46)}</b><br>${xM.lab} ${xM.fmt(o.p[xM.k])} · 상위 ${topPct(o.x)}%<br>${yM.lab} ${yM.fmt(o.p[yM.k])} · 상위 ${topPct(o.y)}%<br>광고비 ${fmtWon(o.p.비용)}`;
+  const tipOf=o=>`<b>${escHtml(trunc(displayNameOf(o.p),46))}</b><br>${xM.lab} ${xM.fmt(o.p[xM.k])} · 상위 ${topPct(o.x)}%<br>${yM.lab} ${yM.fmt(o.p[yM.k])} · 상위 ${topPct(o.y)}%<br>광고비 ${fmtWon(o.p.비용)}`;
   const dot=(o,fill,op,rr,extra)=>`<circle ${extra||""} data-tip="${escAttr(tipOf(o))}" cx="${X(o.x).toFixed(1)}" cy="${Y(o.y).toFixed(1)}" r="${rr.toFixed(1)}" fill="${fill}" fill-opacity="${op}"/>`;
   let nOther=0,nGrp=0,me=null;
   for(const o of pts){if(o.p.name===e.name){me=o;continue;}if(inGrp(o.p))continue;nOther++;g+=dot(o,"var(--mid)",0.34,R(o.p.비용),e._isGroup?"":`data-nm="${escAttr(o.p.name)}"`);}
@@ -2312,7 +2314,7 @@ function fillIsland(ds,e,inner){const L=ds.L;
     const _lgi=e._m_group?null:groupInfoOf(grpId);
     const _lraw=e._m_group?grpId:adGroupLabel(grpId);
     const _lst=_lgi?(/일시중지/.test(_lgi.st||"")||/일시중지/.test(_lgi.op||"")?" · 일시중지":(/제한/.test(_lgi.op||"")||/정책/.test(_lgi.rsn||"")?" · 정책 제한":"")):"";
-    listMetaN=`${_lraw?trunc(groupPrettyName(_lraw),34):"그룹 "+grpId} · ${grp.length}개${_lst}`;
+    listMetaN=`${_lraw?escHtml(trunc(groupPrettyName(_lraw),34)):"그룹 "+escHtml(String(grpId))} · ${grp.length}개${_lst}`;
     const _gtrim=prefixTrimmer(grp.map(x=>displayNameOf(x)));
     listHTML=grp.length<=1?`<div class="fam-note">이 그룹에 다른 소재가 없습니다.</div>`:
       `<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">유형 / 이름</th><th>광고비</th><th>${effLab}</th><th>점수</th></tr></thead><tbody>`+
@@ -2321,7 +2323,7 @@ function fillIsland(ds,e,inner){const L=ds.L;
         const emoji=entTypeEmoji(x);
         const dn=displayNameOf(x);
         return `<tr class="${x.name===e.name?"me":""} hoverable" data-nm="${escAttr(x.name)}" data-preview="${escAttr(url)}" data-label="${escAttr(typeShort+' · '+trunc(dn,40))}" title="${escAttr(dn)}">
-        <td class="l"><span class="g-type-emoji">${emoji}</span> <span class="g-type-lab">${typeShort}</span> <span class="g-name">${_gtrim(dn)}</span><span class="cmp-mark">${markBtnsHTML(ds.media,x)}</span></td>
+        <td class="l"><span class="g-type-emoji">${emoji}</span> <span class="g-type-lab">${escHtml(typeShort)}</span> <span class="g-name">${escHtml(_gtrim(dn))}</span><span class="cmp-mark">${markBtnsHTML(ds.media,x)}</span></td>
         <td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td>
         <td><span class="sp ${sp(x.tier)}">${fmtScore(x.score)}</span></td></tr>`;}).join("")+
       `</tbody></table></div></div>`;
@@ -2332,7 +2334,7 @@ function fillIsland(ds,e,inner){const L=ds.L;
       `<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">이름</th><th>광고비</th><th>${effLab}</th><th>점수</th></tr></thead><tbody>`+
       (()=>{const _ftrim=prefixTrimmer(fam.map(x=>displayNameOf(x)));
       return fam.map(x=>{const dn=displayNameOf(x);
-        return `<tr class="${x.name===e.name?"me":""}" data-nm="${escAttr(x.name)}" title="${escAttr(dn)}"><td class="l"><span class="mb b-${x.dom==="good"?"gold":x.tier}">${tierBadge(x)}</span> ${_ftrim(dn)}</td><td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td><td><span class="sp ${sp(x.tier)}">${fmtScore(x.score)}</span></td></tr>`;}).join("");})()+
+        return `<tr class="${x.name===e.name?"me":""}" data-nm="${escAttr(x.name)}" title="${escAttr(dn)}"><td class="l"><span class="mb b-${x.dom==="good"?"gold":x.tier}">${tierBadge(x)}</span> ${escHtml(_ftrim(dn))}</td><td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td><td><span class="sp ${sp(x.tier)}">${fmtScore(x.score)}</span></td></tr>`;}).join("");})()+
       `</tbody></table></div></div>`;}
   const preview=assetPreview(previewUrlOf(e),e);
   const cmpB=`<div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}`;
@@ -2526,7 +2528,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
         const mb=markBtnsHTML(ds.media,r);
         const nmHtml=(renameMode&&!r._isGroup)
           ? `<span class="nm-text editing" contenteditable="true" spellcheck="false" data-nm="${escAttr(r.name)}">${escHtml(dn)}</span>`
-          : `<span class="nm-text">${trunc(dn,60)}</span>`;
+          : `<span class="nm-text">${escHtml(trunc(dn,60))}</span>`;
         return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}>${liveBadge(ds,r)}${lrnBadge(r)}${nmHtml}${mb}${gst}<div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
       if(c.k==="score")return `<td>${score}</td>`;
       const dir=COL_DIR[c.k]||0;
