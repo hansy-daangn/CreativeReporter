@@ -1083,7 +1083,7 @@ function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n")
       "클릭 수":pn(r["클릭수"]),
       "어트리뷰션 수":pn(r["설치"]),
       "활성 유저 수":pn(r["인앱 액션"]),
-      "신규+재활성 유저 수":pn(r["조회연결 전환"]),
+      "신규+재활성 유저 수":pn(r["신규 고객"])+pn(r["재참여 고객"]),
       "_g_assetStatus":(r["애셋 상태"]||"").trim(),
       "_g_assetType":(r["애셋 유형"]||"").trim(),
       "_g_status":(r["상태"]||"").trim(),
