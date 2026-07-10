@@ -924,7 +924,7 @@ function imgOk(img){if(String(img.src).indexOf("wsrv.nl/")>-1&&(+img.dataset.rt|
    이미지=이미 뜨는 썸네일 onload의 naturalWidth · 영상=상세 재생 metadata + 지연·스로틀 백그라운드 metadata.
    기기 localStorage에 저장(서버 무접촉). 추가 네트워크는 최소·백그라운드라 접속 렉 없음, 값은 디코드된 원본에서 읽어 정확. ── */
 let MDIM={}; try{MDIM=JSON.parse(localStorage.getItem("cr_mdim")||"{}")||{};}catch(_){MDIM={};}
-let _mdimSaveT=null,_mdimApplyT=null;
+let _mdimSaveT=null,_mdimApplyT=null,_mdimDeferred=false;
 function _mdimSave(){try{localStorage.setItem("cr_mdim",JSON.stringify(MDIM));}catch(_){}}
 function mdimSet(url,w,h,dur){
   if(!url)return;w=Math.round(w||0);h=Math.round(h||0);
@@ -949,7 +949,18 @@ function mdimApply(){
   for(const k in DATASETS){const ds=DATASETS[k];scan(ds.aggAll);if(ds.aggByChannel)for(const v of ds.aggByChannel.values())scan(v.aggAll);}
   if(curDS)scan(curDS.agg); /* 기간 필터 시 ds.agg는 재집계본이라 별도 반영 */
   if(!changed||!curDS)return;
+  /* 상세(isle)가 열려 있으면 표를 다시 그리지 않는다 — 실측 치수 도착으로 인한 표 재렌더가
+     열린 상세를 닫거나 깜빡이게 하던 근본 원인. 열린 상세의 치수/재생시간만 제자리 갱신하고,
+     사이즈 칩 반영은 상세를 닫을 때 한 번 처리(_mdimDeferred). 데이터의 tags는 이미 위에서 갱신됨. */
+  if(ISLE.name){_mdimDeferred=true;refreshIsleDim();return;}
   if(mainTab==="table")renderTable(curDS); else if(mainTab==="analysis")renderQuad(curDS);}
+/* 열린 상세 미리보기의 실측 치수·재생시간 표시를 MDIM 캐시로 제자리 갱신(표 재렌더 없이) */
+function refreshIsleDim(){
+  if(!ISLE.name||!curDS)return;
+  const e=findRow(curDS,ISLE.name);if(!e||e._isGroup)return;
+  const url=previewUrlOf(e),d=url&&MDIM[url];if(!d)return;
+  const el=document.querySelector(".isle .asset-dim");if(!el)return;
+  el.textContent=[d.w&&d.h?`${d.w}×${d.h}`:"",d.dur?`⏱ ${fmtDur(d.dur)}`:""].filter(Boolean).join(" · ");}
 function fmtDur(s){s=Math.round(s||0);if(!s)return"";return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
 /* 직접 영상 URL 소재의 metadata를 지연·스로틀(동시 2·상한 240)로 백그라운드 수집 — 접속 직후 아님 */
 let _mdimVidRan=false;
@@ -986,10 +997,10 @@ function imgRetry(img){
 function assetPreviewTipHTML(url,label){if(!url)return "";
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
   if(yt){const lo=`https://img.youtube.com/vi/${yt[1]}/default.jpg`,hi=`https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg`;
-    return `<img src="${imgSrc(lo)}" data-osrc="${lo}" data-hi="${escAttr(imgSrc(hi))}" alt="" referrerpolicy="no-referrer" onload="imgOk(this);imgHi(this)" onerror="imgRetry(this)"><div class="tp-cap">${label||"영상"}</div>`;}
-  if(isVideoUrl(url))return `<video src="${url}" autoplay muted loop playsinline preload="metadata"></video><div class="tp-cap">▶ ${label||"영상"}</div>`;
-  if(isImageUrl(url))return `<img src="${imgSrc(url)}" data-osrc="${escAttr(url)}" alt="" referrerpolicy="no-referrer" onload="imgOk(this)" onerror="imgRetry(this)"><div class="tp-cap">${label||""}</div>`;
-  return `<div class="tp-cap">${label||"미리보기 없음"}</div>`;}
+    return `<img src="${escAttr(imgSrc(lo))}" data-osrc="${escAttr(lo)}" data-hi="${escAttr(imgSrc(hi))}" alt="" referrerpolicy="no-referrer" onload="imgOk(this);imgHi(this)" onerror="imgRetry(this)"><div class="tp-cap">${escHtml(label||"영상")}</div>`;}
+  if(isVideoUrl(url))return `<video src="${escAttr(safeUrl(url))}" autoplay muted loop playsinline preload="metadata"></video><div class="tp-cap">▶ ${escHtml(label||"영상")}</div>`;
+  if(isImageUrl(url))return `<img src="${escAttr(imgSrc(url))}" data-osrc="${escAttr(url)}" alt="" referrerpolicy="no-referrer" onload="imgOk(this)" onerror="imgRetry(this)"><div class="tp-cap">${escHtml(label||"")}</div>`;
+  return `<div class="tp-cap">${escHtml(label||"미리보기 없음")}</div>`;}
 function toast(m,ms){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),ms||2600);}
 function copyText(t){
   const fb=()=>new Promise(r=>{const ta=document.createElement("textarea");ta.value=t;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(_){}ta.remove();r();});
@@ -1332,12 +1343,12 @@ async function fetchYtTitle(id){
 let WEEKS=[];/* 실데이터 로드 시 rebuildAllDatasets()가 채움 — 하드코딩 주차 없음 */
 function aggregate(data,L){const map=new Map();
   for(const r of data){let nm=r[L.nameCol];if(nm==null||nm===""||nm==="nan")nm="(미지정)";
-    if(!map.has(nm))map.set(nm,{name:nm,비용:0,"노출 수":0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0,weeks:Object.fromEntries(WEEKS.map(w=>[w,{비용:0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0}]))});
+    if(!map.has(nm))map.set(nm,{name:nm,비용:0,"노출 수":0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0});
     const e=map.get(nm);for(const c of["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e[c]+=v;}
     const _cv=num(r["비용"]);if(_cv!=null&&_cv>0){if(!e._wkSet)e._wkSet=new Set();e._wkSet.add(r.date);}
     for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_adGroupId","_g_campaignId","_m_url","_m_ctype","_m_res","_m_group"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
     for(const k of["_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue","_m_installs","신규+재활성 유저 수","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100"]){const v=num(r[k]);if(v!=null)e[k]=(e[k]||0)+v;}
-    const w=r.date;if(e.weeks[w])for(const c of["비용","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e.weeks[w][c]+=v;}}
+  }
   const arr=[...map.values()].map(e=>{e.CPC=e["클릭 수"]>0?e.비용/e["클릭 수"]:null;e.CTR=e["노출 수"]>0?e["클릭 수"]/e["노출 수"]:null;e.CPM=e["노출 수"]>0?e.비용/e["노출 수"]*1000:null;e.eCPI=e["어트리뷰션 수"]>0?e.비용/e["어트리뷰션 수"]:null;e["활성 유저 eCPA"]=e["활성 유저 수"]>0?e.비용/e["활성 유저 수"]:null;
     if((e._vcrDen||0)>0)e["영상 완주율"]=e._vcrNum/e._vcrDen;
     if((e["신규+재활성 유저 수"]||0)>0)e["신규+재활성 eCPA"]=e.비용/e["신규+재활성 유저 수"];
@@ -1389,9 +1400,12 @@ function computeFieldAvail(a){
     "영상 완주율","신규+재활성 유저 수","신규+재활성 eCPA","_m_installs",
     "_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue",
     "_g_interactionRate","_g_trueViewRate","_g_conversionRate","_g_costPerConv","_g_cpFirstOpen","_g_cpHome","_g_ROAS","_g_convValuePerConv"];
+  /* 비율/ROAS 지표는 값 0이 '결측'이 아니라 정상적인 저성과 데이터 → 0을 결측으로 세지 않는다.
+     (0을 결측 취급하면 전환율·CTR·ROAS가 0인 정상 소재가 채점에서 탈락하거나 열이 숨겨짐) */
+  const RATE_KEYS=new Set(["CTR","영상 완주율","_g_interactionRate","_g_trueViewRate","_g_conversionRate","_g_ROAS"]);
   const n=a.length||1,avail={};
-  for(const k of numKeys){
-    let miss=0;for(const e of a){const v=e[k];if(v==null||v===0||!isFinite(v))miss++;}
+  for(const k of numKeys){const rate=RATE_KEYS.has(k);
+    let miss=0;for(const e of a){const v=e[k];if(v==null||!isFinite(v)||(v===0&&!rate))miss++;}
     avail[k]=1-miss/n;
   }
   return avail;}
@@ -1571,9 +1585,9 @@ function sdelta(dd){if(dd==null)return"<span>지난주 –</span>";const c=Math.
 /* leaderboard */
 /* 이름 아래 태그 칩 — 표에서는 클릭하면 그 값으로 필터 (data-ck 있는 칩만) */
 function chipsHTML(t,e){
-  const mk=(k,v,cls,lab)=>`<span class="chip${cls?" "+cls:""}" data-ck="${k}" data-cv="${escAttr(v)}" title="클릭 = ${escAttr(lab||v)}만 보기">${lab||v}</span>`;
+  const mk=(k,v,cls,lab)=>`<span class="chip${cls?" "+cls:""}" data-ck="${k}" data-cv="${escAttr(v)}" title="클릭 = ${escAttr(lab||v)}만 보기">${escHtml(lab||v)}</span>`;
   const foChip=t.fo&&(e&&e._foFix
-    ?`<span class="chip fo" data-ck="fo" data-cv="${escAttr(t.fo)}" title="리포트 유형은 '네이티브 영상'이지만 첨부 파일이 이미지이고 완주율 데이터가 전 기간 없어 이미지로 분류했습니다 · 클릭 = 이미지만 보기">${t.fo}*</span>`
+    ?`<span class="chip fo" data-ck="fo" data-cv="${escAttr(t.fo)}" title="리포트 유형은 '네이티브 영상'이지만 첨부 파일이 이미지이고 완주율 데이터가 전 기간 없어 이미지로 분류했습니다 · 클릭 = 이미지만 보기">${escHtml(t.fo)}*</span>`
     :mk("fo",t.fo,"fo"));
   /* 서비스 칩 — 관리자가 수동 지정했으면 그 값(주황 강조), 아니면 자동(ve) */
   const _svcOv=svcOverrideFor(e);
@@ -1606,8 +1620,8 @@ function renderAutoInsight(ds){
   const specs=(typeof specsFor==="function")?specsFor(ds):null;const prim=specs&&specs[0];
   if(scored.length<4||!prim){el.style.display="none";el.innerHTML="";return;}
   const pk=prim.k,pLab=prim.lab,pdir=prim.dir||-1;
-  const won=v=>"₩"+Math.round(v).toLocaleString();
-  const nm=e=>trunc(displayNameOf(e),22);
+  const won=v=>fmtSpecVal(pk,v); /* 대표 지표 성격에 맞춰 포맷(비율=%, ROAS=×, 그 외=₩) */
+  const nm=e=>escHtml(trunc(displayNameOf(e),22));
   const out=[];
   const top=scored.slice().sort((x,y)=>y.score-x.score)[0];
   out.push(`<b>🏆 최고 점수</b> ${nm(top)} · <b>${Math.round(top.score*10)/10}점</b>${(top[pk]!=null&&isFinite(top[pk]))?` · ${pLab} ${won(top[pk])}`:""}`);
@@ -1680,7 +1694,8 @@ const TREND_METS=[
 ];
 function renderQuad(ds){const L=ds.L,svg=$("#quad");
   const mets=quadMetricsFor(ds);
-  if(!mets.length){svg.innerHTML=`<text x="200" y="200" text-anchor="middle" fill="var(--faint)">지도 지표 없음</text>`;return;}
+  /* 축이 2개 이상 있어야 산점도가 의미 있음 — 1개뿐이면 qX===qY로 대각선이 그려지므로 안내 후 종료 */
+  if(mets.length<2){svg.innerHTML=`<text x="200" y="200" text-anchor="middle" fill="var(--faint)" font-size="13">축으로 쓸 지표가 2개 이상 필요합니다</text>`;const qx=$("#qxv"),qy=$("#qyv");if(qx)qx.textContent="";if(qy)qy.innerHTML="";return;}
   const pick=(prefs)=>{for(const p of prefs){if(mets.find(m=>m.k===p))return p;}return mets[0].k;};
   /* 기본 축: 가로 CTR · 세로 단가(eCPA 우선, 없으면 eCPI·전환당비용) */
   if(!qX||!mets.find(m=>m.k===qX))qX=pick(["CTR","_g_interactionRate","CPC","_g_ROAS"]);
@@ -1757,16 +1772,18 @@ function renderQuad(ds){const L=ds.L,svg=$("#quad");
     const tier=tierOf(goodness(p));const col=tierCol[tier];p._qtier=tier;
     s+=`<circle class="qb" data-i="${i}" cx="${cx}" cy="${cy}" r="${r}" fill="${col}" fill-opacity="0.68" stroke="${col}" stroke-width="1.3"/>`;});
   /* 라벨: 유형 보기만 각 지점에 이름 표시(개수 적음). 소재 보기는 원이 겹쳐 라벨이 더 헷갈리므로 생략(호버로 확인) */
-  if(qDim){const placed=[];[...vpts].sort((a,b)=>b.비용-a.비용).forEach(p=>{const r=R(p.비용);let lx=X(p[qX]),anchor="middle";if(lx>W-pad.r-70){lx=W-pad.r-2;anchor="end";}else if(lx<pad.l+44){lx=pad.l+2;anchor="start";}let ly=Y(p[qY])-r-5;placed.forEach(q=>{if(Math.abs(lx-q.x)<92&&Math.abs(ly-q.y)<13)ly=q.y-13;});placed.push({x:lx,y:ly});s+=`<text x="${lx}" y="${Math.max(ly,12)}" text-anchor="${anchor}" font-size="9.5" fill="var(--ink)" font-weight="600">${trunc(displayNameOf(p),20)}</text>`;});}
+  if(qDim){const placed=[];[...vpts].sort((a,b)=>b.비용-a.비용).forEach(p=>{const r=R(p.비용);let lx=X(p[qX]),anchor="middle";if(lx>W-pad.r-70){lx=W-pad.r-2;anchor="end";}else if(lx<pad.l+44){lx=pad.l+2;anchor="start";}let ly=Y(p[qY])-r-5;placed.forEach(q=>{if(Math.abs(lx-q.x)<92&&Math.abs(ly-q.y)<13)ly=q.y-13;});placed.push({x:lx,y:ly});s+=`<text x="${lx}" y="${Math.max(ly,12)}" text-anchor="${anchor}" font-size="9.5" fill="var(--ink)" font-weight="600">${escHtml(trunc(displayNameOf(p),20))}</text>`;});}
   svg.innerHTML=s;
   svg.querySelectorAll(".qb").forEach(c=>{const p=vpts[+c.dataset.i];
-    c.addEventListener("mousemove",e=>{const tLab={g2:"매우 좋음",g1:"좋음",mid:"보통",w1:"나쁨",w2:"매우 나쁨"}[p._qtier]||"";showTip(`<b>${displayNameOf(p)}</b>${qDim?`<br><span class="t-k">포함 소재</span> ${p.n}개`:""}${tLab?`<br><span class="t-k">위치 등급</span> <b style="color:${tierCol[p._qtier]}">${tLab}</b>`:""}<br><span class="t-k">${xMet.lab}</span> ${xMet.fmt(p[qX])}<br><span class="t-k">${yMet.lab}</span> ${yMet.fmt(p[qY])}<br><span class="t-k">광고비</span> ${fmtWon(p.비용)}${qDim?"":`<br><span class="t-k" style="font-size:10px">클릭 → 표에서 자세히</span>`}`,e.clientX,e.clientY);});
+    c.addEventListener("mousemove",e=>{const tLab={g2:"매우 좋음",g1:"좋음",mid:"보통",w1:"나쁨",w2:"매우 나쁨"}[p._qtier]||"";showTip(`<b>${escHtml(displayNameOf(p))}</b>${qDim?`<br><span class="t-k">포함 소재</span> ${p.n}개`:""}${tLab?`<br><span class="t-k">위치 등급</span> <b style="color:${tierCol[p._qtier]}">${tLab}</b>`:""}<br><span class="t-k">${xMet.lab}</span> ${xMet.fmt(p[qX])}<br><span class="t-k">${yMet.lab}</span> ${yMet.fmt(p[qY])}<br><span class="t-k">광고비</span> ${fmtWon(p.비용)}${qDim?"":`<br><span class="t-k" style="font-size:10px">클릭 → 표에서 자세히</span>`}`,e.clientX,e.clientY);});
     c.addEventListener("mouseleave",hideTip);
     if(qDim)c.style.cursor="default";
     else c.addEventListener("click",()=>{hideTip();goToIslandFromQuad(p.name);});});}
-function goToIslandFromQuad(name){if(!curDS)return;
+function goToIslandFromQuad(name){if(!curDS)return;_userActed=true;
   switchTab("table");
   tGroupBy=false;tQuickFo=null;tLiveOnly=false;tChip=null;renderQuickFo();
+  /* 대상 소재가 필터로 숨겨져 상세가 조용히 안 열리는 것을 방지 — 마크/서비스/제작자 필터도 해제 후 이동 */
+  tMarkView="all";tServices.clear();tCreators.clear();_mselSig.svc="";_mselSig.cr="";renderViewSeg();
   tState.q="";tableShowAll=true;const sb=$("#search");if(sb)sb.value="";const sa=$("#showAll");if(sa)sa.checked=true;
   const p=pageForName(curDS,name);if(p)tPage=p;
   renderTable(curDS);
@@ -1842,7 +1859,6 @@ function typeAggRows(ds,dim){const a=ds.agg;
 
 /* table — paginated */
 let tState={sort:"score",dir:-1,q:""};
-let tFilter={ve:new Set(),fo:new Set(),size:new Set()};
 let tQuickFo=null; /* "영상" | "이미지" | null */
 let tGroupBy=false; /* true → aggregate table rows by 광고그룹 ID */
 let tLiveOnly=true; /* 기본 ON — 스코프 최신 집행 주에 광고비>0인 소재만 (전체 목록 한정) */
@@ -1972,8 +1988,10 @@ function renderMineAs(ds){
 document.addEventListener("click",closeAllMsel); /* 바깥 클릭 시 드롭다운 닫기 */
 let tableShowAll=false;
 let curDS=null; const ISLE={name:null,metric:null,gtab:"trend",posX:null,posY:null}; /* gtab: 상세 그래프 탭, posX/posY: 포지셔닝 축 지표 — 소재를 옮겨 다녀도 유지 */
-function escAttr(s){return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;");}
+function escAttr(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/'/g,"&#39;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function escHtml(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+/* href/src에 넣기 전 스킴 화이트리스트 — DB 유입 URL의 javascript:/data: 등 주입 차단. http(s)만 허용 */
+function safeUrl(u){u=String(u==null?"":u).trim();return /^https?:\/\//i.test(u)?u:"";}
 function familyKey(name){let s=String(name);
   s=s.replace(/(\d{3,4})\s*[x×]\s*(\d{3,4})/gi,"");
   s=s.replace(/\.(mp4|png|jpe?g|gif|webp|mov|webm)\b/gi,"");
@@ -2001,17 +2019,17 @@ function assetPreview(url,ent){if(!url)return "";
   /* 미리보기 실측 캐시로 해상도·재생시간 표시 */
   const dm=(typeof MDIM!=="undefined")&&MDIM[url];
   const dimTxt=[dm&&dm.w&&dm.h?`${dm.w}×${dm.h}`:"",dm&&dm.dur?`⏱ ${fmtDur(dm.dur)}`:""].filter(Boolean).join(" · ");
-  const dimLine=dimTxt?`<span class="asset-dim">${dimTxt}</span>`:"";
-  const srcLine=(note)=>`<div class="asset-src">${ocrM}${dimLine}${note?note+" · ":""}<a href="${url}" target="_blank" rel="noopener">${trunc(url,60)}</a></div>`;
+  const dimLine=`<span class="asset-dim">${dimTxt}</span>`; /* 값이 비어도 스팬 유지 — 실측 도착 시 제자리 갱신용 */
+  const srcLine=(note)=>`<div class="asset-src">${ocrM}${dimLine}${note?escHtml(note)+" · ":""}<a href="${escAttr(safeUrl(url))}" target="_blank" rel="noopener">${escHtml(trunc(url,60))}</a></div>`;
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
   if(yt)return `<div class="isle-frame"><iframe class="asset-yt" src="https://www.youtube.com/embed/${yt[1]}" frameborder="0" allow="encrypted-media" allowfullscreen></iframe></div>${srcLine()}`;
-  if(isVideoUrl(url))return `<div class="isle-frame"><video class="asset-vid" src="${url}" controls muted playsinline preload="metadata" onloadedmetadata="try{mdimEl(this)}catch(_){};isleAr(this)"></video></div>${srcLine()}`;
+  if(isVideoUrl(url))return `<div class="isle-frame"><video class="asset-vid" src="${escAttr(safeUrl(url))}" controls muted playsinline preload="metadata" onloadedmetadata="try{mdimEl(this)}catch(_){};isleAr(this)"></video></div>${srcLine()}`;
   if(isImageUrl(url)){
     const note=(ent&&ent.tags&&ent.tags.fo==="영상")?"영상 소재의 썸네일":"";
-    return `<div class="isle-frame"><img class="asset-img" src="${imgSrc(url)}" data-osrc="${escAttr(url)}" alt="asset" referrerpolicy="no-referrer" loading="lazy" onload="imgOk(this);isleAr(this)" onerror="imgRetry(this)"><div class="asset-err" hidden>미리보기를 불러오지 못했습니다 <button class="mini" onclick="const w=this.closest('.isle-frame'),i=w.querySelector('img');this.parentNode.hidden=true;i.hidden=false;i.dataset.rt=0;const s=i.dataset.osrc||i.src;i.src=s+(s.includes('?')?'&':'?')+'rt='+Date.now()">다시 시도</button></div></div>${srcLine(note)}`;}
+    return `<div class="isle-frame"><img class="asset-img" src="${escAttr(imgSrc(url))}" data-osrc="${escAttr(url)}" alt="asset" referrerpolicy="no-referrer" loading="lazy" onload="imgOk(this);isleAr(this)" onerror="imgRetry(this)"><div class="asset-err" hidden>미리보기를 불러오지 못했습니다 <button class="mini" onclick="const w=this.closest('.isle-frame'),i=w.querySelector('img');this.parentNode.hidden=true;i.hidden=false;i.dataset.rt=0;const s=i.dataset.osrc||i.src;i.src=s+(s.includes('?')?'&':'?')+'rt='+Date.now()">다시 시도</button></div></div>${srcLine(note)}`;}
   /* 메타 등: 미디어 URL이 아니라 광고관리자 링크뿐인 소재 — 실제 이미지/영상 대신 '광고관리자에서 보기' 카드로 미리보기 슬롯을 제공(열람은 로그인 필요) */
   if(isAdManagerUrl(url)){const emo=(typeof entTypeEmoji==="function")?entTypeEmoji(ent):"📊";const ty=(ent&&ent.tags&&ent.tags.fo)||"소재";
-    return `<div class="isle-frame"><a class="meta-pv-card" href="${url}" target="_blank" rel="noopener"><span class="meta-pv-emo">${emo}</span><span class="meta-pv-t">Meta 광고관리자에서 보기</span><span class="meta-pv-s">${ty} · 새 탭에서 열려요 (로그인 필요)</span></a></div>${srcLine("광고관리자 링크")}`;}
+    return `<div class="isle-frame"><a class="meta-pv-card" href="${escAttr(safeUrl(url))}" target="_blank" rel="noopener"><span class="meta-pv-emo">${emo}</span><span class="meta-pv-t">Meta 광고관리자에서 보기</span><span class="meta-pv-s">${escHtml(ty)} · 새 탭에서 열려요 (로그인 필요)</span></a></div>${srcLine("광고관리자 링크")}`;}
   return "";}
 function thumbHTML(e){const url=previewUrlOf(e);if(!url)return "";
   const vidMark=e.tags&&e.tags.fo==="영상";
@@ -2028,12 +2046,6 @@ function assetShortType(t){if(!t)return "";const s=String(t);
   if(/정사각형|square/i.test(s))return "정사각 이미지";
   if(/이미지|image/i.test(s))return "이미지";
   return s;}
-function assetTypeEmoji(t){const s=assetShortType(t);
-  if(s==="영상")return "🎬";
-  if(s==="가로 이미지")return "🖼️";
-  if(s==="세로 이미지")return "📱";
-  if(s==="정사각 이미지")return "⏹️";
-  return "🖼️";}
 function fmtSpecVal(k,v){if(v==null)return"–";
   if(k==="_g_ROAS")return v.toFixed(1)+"×";
   if(k==="CTR"||k==="영상 완주율"||k.endsWith("Rate"))return fmtPct(v);
@@ -2043,7 +2055,7 @@ function fmtSpecVal(k,v){if(v==null)return"–";
    동영상 재생 퍼널(v25~v100)은 여기가 아니라 가운데 그래프 열의 '영상 시청' 탭이 그린다 */
 function groupInfoHTML(gi){if(!gi)return "";
   const cells=[];
-  const add=(k,v,tip,wide)=>{if(v!=null&&v!=="")cells.push(`<div class="gi-r${wide?" wide":""}" ${tip?`title="${escAttr(tip)}"`:""}><span class="gi-k">${k}</span><b class="gi-v num">${v}</b></div>`);};
+  const add=(k,v,tip,wide)=>{if(v!=null&&v!=="")cells.push(`<div class="gi-r${wide?" wide":""}" ${tip?`title="${escAttr(tip)}"`:""}><span class="gi-k">${escHtml(k)}</span><b class="gi-v num">${escHtml(v)}</b></div>`);};
   add("캠페인",gi.cpNm?trunc(groupPrettyName(gi.cpNm),40):null,gi.cpNm,true);
   add("타겟 CPA",gi.tcpa!=null?fmtWon(gi.tcpa):null,"이 그룹의 입찰 목표 CPA");
   add("참여율",gi.eng!=null?gi.eng+"%":null,"Google 참여율 (보고서 기간 누적)");
@@ -2092,7 +2104,7 @@ function weeklyScoresOf(ds,e){
     for(const r of ds.data){const d=String(r.date||"").slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;
       let a=byW.get(d);if(!a){a=[];byW.set(d,a);}a.push(r);}
     for(const[w,rows]of byW){
-      const sub={L:ds.L,agg:aggregate(rows,ds.L)};
+      const sub={L:ds.L,media:ds.media,agg:aggregate(rows,ds.L)}; /* media 전달 — 주차 점수도 매체별(AEO 신규단가/ACE CPA·홈) 스펙으로 채점 */
       sub.S=computeScores(sub);
       const ents=isG?buildAdGroupAgg(sub):sub.agg;
       const wm=new Map();
@@ -2259,7 +2271,7 @@ function positioningHTML(ds,e){
   g+=`<text x="${X(50).toFixed(1)}" y="${pad.t-5}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--g1)">+</text>`;
   g+=`<text x="${X(50).toFixed(1)}" y="${H-pad.b+12}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--w2)">−</text>`;
   const topPct=v=>Math.max(1,Math.round(100-v));
-  const tipOf=o=>`<b>${trunc(displayNameOf(o.p),46)}</b><br>${xM.lab} ${xM.fmt(o.p[xM.k])} · 상위 ${topPct(o.x)}%<br>${yM.lab} ${yM.fmt(o.p[yM.k])} · 상위 ${topPct(o.y)}%<br>광고비 ${fmtWon(o.p.비용)}`;
+  const tipOf=o=>`<b>${escHtml(trunc(displayNameOf(o.p),46))}</b><br>${xM.lab} ${xM.fmt(o.p[xM.k])} · 상위 ${topPct(o.x)}%<br>${yM.lab} ${yM.fmt(o.p[yM.k])} · 상위 ${topPct(o.y)}%<br>광고비 ${fmtWon(o.p.비용)}`;
   const dot=(o,fill,op,rr,extra)=>`<circle ${extra||""} data-tip="${escAttr(tipOf(o))}" cx="${X(o.x).toFixed(1)}" cy="${Y(o.y).toFixed(1)}" r="${rr.toFixed(1)}" fill="${fill}" fill-opacity="${op}"/>`;
   let nOther=0,nGrp=0,me=null;
   for(const o of pts){if(o.p.name===e.name){me=o;continue;}if(inGrp(o.p))continue;nOther++;g+=dot(o,"var(--mid)",0.34,R(o.p.비용),e._isGroup?"":`data-nm="${escAttr(o.p.name)}"`);}
@@ -2312,7 +2324,7 @@ function fillIsland(ds,e,inner){const L=ds.L;
     const _lgi=e._m_group?null:groupInfoOf(grpId);
     const _lraw=e._m_group?grpId:adGroupLabel(grpId);
     const _lst=_lgi?(/일시중지/.test(_lgi.st||"")||/일시중지/.test(_lgi.op||"")?" · 일시중지":(/제한/.test(_lgi.op||"")||/정책/.test(_lgi.rsn||"")?" · 정책 제한":"")):"";
-    listMetaN=`${_lraw?trunc(groupPrettyName(_lraw),34):"그룹 "+grpId} · ${grp.length}개${_lst}`;
+    listMetaN=`${_lraw?escHtml(trunc(groupPrettyName(_lraw),34)):"그룹 "+escHtml(String(grpId))} · ${grp.length}개${_lst}`;
     const _gtrim=prefixTrimmer(grp.map(x=>displayNameOf(x)));
     listHTML=grp.length<=1?`<div class="fam-note">이 그룹에 다른 소재가 없습니다.</div>`:
       `<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">유형 / 이름</th><th>광고비</th><th>${effLab}</th><th>점수</th></tr></thead><tbody>`+
@@ -2321,7 +2333,7 @@ function fillIsland(ds,e,inner){const L=ds.L;
         const emoji=entTypeEmoji(x);
         const dn=displayNameOf(x);
         return `<tr class="${x.name===e.name?"me":""} hoverable" data-nm="${escAttr(x.name)}" data-preview="${escAttr(url)}" data-label="${escAttr(typeShort+' · '+trunc(dn,40))}" title="${escAttr(dn)}">
-        <td class="l"><span class="g-type-emoji">${emoji}</span> <span class="g-type-lab">${typeShort}</span> <span class="g-name">${_gtrim(dn)}</span><span class="cmp-mark">${markBtnsHTML(ds.media,x)}</span></td>
+        <td class="l"><span class="g-type-emoji">${emoji}</span> <span class="g-type-lab">${escHtml(typeShort)}</span> <span class="g-name">${escHtml(_gtrim(dn))}</span><span class="cmp-mark">${markBtnsHTML(ds.media,x)}</span></td>
         <td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td>
         <td><span class="sp ${sp(x.tier)}">${fmtScore(x.score)}</span></td></tr>`;}).join("")+
       `</tbody></table></div></div>`;
@@ -2332,7 +2344,7 @@ function fillIsland(ds,e,inner){const L=ds.L;
       `<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">이름</th><th>광고비</th><th>${effLab}</th><th>점수</th></tr></thead><tbody>`+
       (()=>{const _ftrim=prefixTrimmer(fam.map(x=>displayNameOf(x)));
       return fam.map(x=>{const dn=displayNameOf(x);
-        return `<tr class="${x.name===e.name?"me":""}" data-nm="${escAttr(x.name)}" title="${escAttr(dn)}"><td class="l"><span class="mb b-${x.dom==="good"?"gold":x.tier}">${tierBadge(x)}</span> ${_ftrim(dn)}</td><td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td><td><span class="sp ${sp(x.tier)}">${fmtScore(x.score)}</span></td></tr>`;}).join("");})()+
+        return `<tr class="${x.name===e.name?"me":""}" data-nm="${escAttr(x.name)}" title="${escAttr(dn)}"><td class="l"><span class="mb b-${x.dom==="good"?"gold":x.tier}">${tierBadge(x)}</span> ${escHtml(_ftrim(dn))}</td><td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td><td><span class="sp ${sp(x.tier)}">${fmtScore(x.score)}</span></td></tr>`;}).join("");})()+
       `</tbody></table></div></div>`;}
   const preview=assetPreview(previewUrlOf(e),e);
   const cmpB=`<div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}`;
@@ -2364,18 +2376,29 @@ function fillIsland(ds,e,inner){const L=ds.L;
     tr.addEventListener("mousemove",ev=>{if(tip.style.opacity!=="0")placeTip(ev.clientX,ev.clientY);});
     tr.addEventListener("mouseleave",hideTip);});}
 /* 상세 이전/다음 — 표의 현재 필터·정렬 순서를 그대로 따라 이동 (페이지 경계 자동 처리) */
-function navIsland(delta){if(!curDS||!ISLE.name)return;
+/* 이동 목표를 동기적으로 추적 — ←/→ 연타 시 ISLE.name이 rAF 안에서만 갱신돼
+   두 번째 호출이 같은 목표를 다시 토글(=닫힘)하던 문제 방지 */
+let _isleNavTo=null;
+function navIsland(delta){if(!curDS)return;
   const rows=orderedRowsForTable(curDS);
-  const i=rows.findIndex(r=>r.name===ISLE.name);if(i<0)return;
+  let base=_isleNavTo;if(!base||!rows.some(r=>r.name===base))base=ISLE.name;
+  if(!base)return;
+  const i=rows.findIndex(r=>r.name===base);if(i<0)return;
   const j=i+delta;if(j<0||j>=rows.length)return;
-  const nm=rows[j].name,p=Math.floor(j/PAGE_SIZE)+1;
+  const nm=rows[j].name;_isleNavTo=nm; /* 연타 시 다음 호출은 이 목표에서 이어 계산 */
+  const p=Math.floor(j/PAGE_SIZE)+1;
   if(p!==tPage){tPage=p;renderTable(curDS);}
   requestAnimationFrame(()=>{const tr=[...document.querySelectorAll("#table tbody tr.row")].find(t=>t.getAttribute("data-name")===nm);
-    if(!tr)return;toggleIsland(curDS,nm,tr);
+    if(!tr){if(_isleNavTo===nm)_isleNavTo=null;return;}
+    if(ISLE.name!==nm)toggleIsland(curDS,nm,tr); /* 이미 그 소재면 다시 토글(닫힘) 금지 — 이동 전용 */
+    if(_isleNavTo===nm)_isleNavTo=null;
     (document.querySelector(".isle-row")||tr).scrollIntoView({behavior:"smooth",block:"center"});});}
 function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-row");const wasOpen=ISLE.name===name;
   if(existing)existing.remove();$$("#table tbody tr.exp").forEach(t=>t.classList.remove("exp"));
-  if(wasOpen){ISLE.name=null;try{history.replaceState(null,"",location.pathname+location.search);}catch(_){}return;}
+  if(wasOpen){ISLE.name=null;try{history.replaceState(null,"",location.pathname+location.search);}catch(_){}
+    /* 상세가 열려 있는 동안 실측 치수가 도착해 미룬 표 갱신이 있으면, 닫는 시점에 한 번 반영(사이즈 칩) */
+    if(_mdimDeferred){_mdimDeferred=false;if(curDS&&mainTab==="table")renderTable(curDS);}
+    return;}
   const e=findRow(ds,name);if(!e)return;ISLE.name=name;
   try{history.replaceState(null,"","#ad="+encodeURIComponent(name)+"&ch="+encodeURIComponent(ds.media||""));}catch(_){}
   tr.classList.add("exp");const row=document.createElement("tr");row.className="isle-row";
@@ -2496,7 +2519,9 @@ function cellTier(v,sortedAll,dir){
   if(g<=0.05)return "w2";
   if(g<=0.15)return "w1";
   return "m";}
-function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#table thead"),tbody=$("#table tbody");curDS=ds;ISLE.name=null;
+function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#table thead"),tbody=$("#table tbody");curDS=ds;_mdimDeferred=false;
+  /* 열려 있던 상세(isle)는 DOM 노드를 그대로 보존해 재렌더 후 다시 붙인다 — fillIsland 재실행/재렌더 루프 없이 열린 상태 유지 */
+  const _isleName=ISLE.name,_keepIsle=_isleName?tbody.querySelector(".isle-row"):null;
   const cols=allCols.filter(c=>!c.sub||tExp.has(c.grp));
   thead.innerHTML="<tr>"+cols.map(c=>{const sorted=tState.sort===c.k,arr=sorted?(tState.dir<0?"▼":"▲"):"";
     const cl=(c.k==="name"?"name ":c.k==="_b"?"bdg ":"")+(c.help?"help ":"")+(c.sub?"csub ":"")+(sorted?"sorted":"");
@@ -2524,7 +2549,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
         const mb=markBtnsHTML(ds.media,r);
         const nmHtml=(renameMode&&!r._isGroup)
           ? `<span class="nm-text editing" contenteditable="true" spellcheck="false" data-nm="${escAttr(r.name)}">${escHtml(dn)}</span>`
-          : `<span class="nm-text">${trunc(dn,60)}</span>`;
+          : `<span class="nm-text">${escHtml(trunc(dn,60))}</span>`;
         return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}>${liveBadge(ds,r)}${lrnBadge(r)}${nmHtml}${mb}${gst}<div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
       if(c.k==="score")return `<td>${score}</td>`;
       const dir=COL_DIR[c.k]||0;
@@ -2544,13 +2569,19 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
     const cx=ev.target.closest(".colx");
     if(cx){const g=cx.dataset.g;if(tExp.has(g))tExp.delete(g);else tExp.add(g);renderTable(ds);return;}
     const k=th.dataset.k;if(tState.sort===k)tState.dir*=-1;else{tState.sort=k;tState.dir=(k==="name")?1:-1;}tPage=1;renderTable(ds);});
+  /* 보존해 둔 상세 노드를 여전히 보이는 소재 행 아래 다시 삽입(내용 재생성 없음). 안 보이면 상세는 닫힌다 */
+  if(_isleName){const rtr=[...tbody.querySelectorAll("tr.row")].find(t=>t.getAttribute("data-name")===_isleName);
+    if(rtr&&_keepIsle){rtr.classList.add("exp");const td=_keepIsle.querySelector("td");if(td)td.colSpan=cols.length;rtr.parentNode.insertBefore(_keepIsle,rtr.nextSibling);}
+    else ISLE.name=null;}
   hydrateYtNames();}
 /* 유튜브 제목이 캐시에 도착하면 다시 그리지 않고 화면의 URL 이름만 제자리 갱신 */
 function refreshDisplayNames(){
   if(!curDS)return;
+  /* 이름 텍스트는 .nm-text 스팬에 있다(.ntxt는 뱃지·칩 포함) — 직접 갱신(textContent라 XSS 안전) */
   $$("#table tbody tr.row").forEach(tr=>{const nm=tr.getAttribute("data-name");const ent=findRow(curDS,nm);if(!ent)return;
-    const dn=trunc(displayNameOf(ent),60),tx=tr.querySelector(".ntxt");
-    if(tx&&tx.childNodes[0]&&tx.childNodes[0].nodeType===3&&tx.childNodes[0].textContent!==dn){tx.childNodes[0].textContent=dn;if(dn!==nm)tx.title=nm;}});}
+    const sp=tr.querySelector(".nm-text");if(!sp||sp.classList.contains("editing"))return;
+    const dn=trunc(displayNameOf(ent),60);
+    if(sp.textContent!==dn){sp.textContent=dn;const tx=tr.querySelector(".ntxt");if(tx&&dn!==nm)tx.title=nm;}});}
 /* 표에 보이는 유튜브 URL 이름은 영상 제목을 자동 조회해 교체 (동시 4개, 캐시는 영구) */
 let _hydSeq=0;
 async function hydrateYtNames(){
@@ -2572,6 +2603,8 @@ function orderedRowsForTable(ds){
     rows=rows.filter(r=>!isInactive(r)&&(!hasSc||r.score!=null));}
   rows=applyTFilter(rows,ds);
   if(tState.q){const q=tState.q.toLowerCase();rows=rows.filter(r=>r.name.toLowerCase().includes(q)||displayNameOf(r).toLowerCase().includes(q));}
+  /* 매체 전환 후 현재 매체에 없는 컬럼(예: ACE 홈 단가)으로 정렬 상태가 남으면 조용히 무정렬되므로 점수순 폴백 */
+  if(tState.sort!=="name"&&tState.sort!=="_b"&&tState.sort!=="score"&&!tableCols(ds.L,ds).some(c=>c.k===tState.sort))tState.sort="score";
   rows.sort((a,b)=>{
     if(tState.sort==="name")return tState.dir*a.name.localeCompare(b.name);
     const k=(tState.sort==="_b")?"score":tState.sort;
@@ -2608,15 +2641,20 @@ function renderQuickFo(){const wrap=$("#qfoWrap"),ds=curDS;
   if(g){g.hidden=!hasAdGr;g.classList.toggle("on",tGroupBy);}
   if(lv){lv.hidden=!hasLive;lv.classList.toggle("on",tLiveOnly&&hasLive);
     if(hasLive)lv.title=`최신 집행 주(${String(ds.liveWeek).slice(5).replace("-","/")})에 광고비가 나간 소재 ${ds.agg.filter(e=>e._live).length.toLocaleString()}개만 보기`;}}
+/* 현재 뷰(그룹/개별)에 맞지 않는 칩 필터 자동 해제 — 그룹 전용: gpre/gdt/gxt · 소재 전용: fo/nat/size.
+   개별뷰로 바뀌었는데 그룹 전용 칩이 남아 표가 통째로 비는 것을 방지 */
+function _syncChipToView(){if(tChip&&((!tGroupBy&&["gpre","gdt","gxt"].includes(tChip.k))||(tGroupBy&&["fo","nat","size"].includes(tChip.k))))tChip=null;}
 function toggleQuickFo(val){tQuickFo=tQuickFo===val?null:val;
   if(tQuickFo)tGroupBy=false; /* Video/Image 선택 시 GroupView 자동 해제 */
+  _syncChipToView();
   renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);}
 function toggleGroupBy(){tGroupBy=!tGroupBy;
   if(tGroupBy)tQuickFo=null; /* GroupView 선택 시 Video/Image 자동 해제 */
-  /* 모드에 없는 칩 필터는 자동 해제 (그룹 전용: gpre/gdt/gxt · 소재 전용: fo/nat/size) */
-  if(tChip&&(!tGroupBy&&["gpre","gdt","gxt"].includes(tChip.k)||tGroupBy&&["fo","nat","size"].includes(tChip.k)))tChip=null;
+  /* 그룹 행은 마크 필터 대상이 아니라 마크뷰+그룹뷰면 항상 빈 표 → 그룹뷰 진입 시 마크뷰 해제 */
+  if(tGroupBy&&tMarkView!=="all"){tMarkView="all";renderViewSeg();toast("그룹 보기에선 '내 소재/즐겨찾기' 필터가 해제돼요");}
+  _syncChipToView();
   renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);}
-function toggleLiveOnly(){tLiveOnly=!tLiveOnly;renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);}
+function toggleLiveOnly(){tLiveOnly=!tLiveOnly;_syncChipToView();renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);}
 
 /* ===== 메인 탭 (분석 / 전체 목록 / AB테스트) ===== */
 let mainTab="analysis";
@@ -2631,7 +2669,7 @@ function switchTab(t){mainTab=t;
    인식 규칙 (오인 방지를 위해 전부 '구분자 뒤 접미' 형태만):
    1) 확장자·해상도(1080x1920 등)·화면비(16x9)·꼬리 구분자를 먼저 제거
    2) 문자 변형: 구분자(_,-,공백,.) + (v|ver|version|시안)? + 대문자 한 글자 A~F 로 끝 → "_A", " B", "_ver_C"
-   3) 숫자 변형: 구분자 뒤 또는 문자에 바로 붙은 1~12 (v1, _2, cafe3, kkak01) — 13 이상·연도/코드류(4자리)는 제외
+   3) 숫자 변형: 1~5만 (v1·kkak01·cafe3·ep3 등). 회차 없는 '구분자 뒤 맨숫자'(_2)와 6 이상·연도/코드류(4자리)는 제외
    단어 자체가 A로 시작/끝나는 경우(구분자 없음)는 매치되지 않음 */
 function abVariantOf(name){let s=String(name||"");
   s=s.replace(/\.(mp4|png|jpe?g|gif|webp|mov|webm)$/i,"");
@@ -2682,10 +2720,10 @@ function renderAB(ds){const el=$("#abBody"),meta=$("#abMeta"),cnt=$("#abCnt");
   fams.forEach(f=>{
     f.rows=[...f.vars.entries()].map(([variant,mem])=>{
       const sum=k=>mem.reduce((s,e)=>s+(+e[k]||0),0);
-      const cost=sum("비용"),imp=sum("노출 수"),clk=sum("클릭 수"),attr=sum("어트리뷰션 수"),act=sum("활성 유저 수"),gv=sum("_g_convValue"),gc=sum("_g_conversions"),vn=sum("_vcrNum"),vd=sum("_vcrDen");
+      const cost=sum("비용"),imp=sum("노출 수"),clk=sum("클릭 수"),attr=sum("어트리뷰션 수"),act=sum("활성 유저 수"),nu=sum("신규+재활성 유저 수"),gfo=sum("_g_firstOpen"),ghome=sum("_g_home"),gv=sum("_g_convValue"),gc=sum("_g_conversions"),vn=sum("_vcrNum"),vd=sum("_vcrDen");
       const r={variant,mem,cost,imp,clk,attr,
-        eCPI:attr>0?cost/attr:null,"활성 유저 eCPA":act>0?cost/act:null,CTR:imp>0?clk/imp:null,CPM:imp>0?cost/imp*1000:null,CPC:clk>0?cost/clk:null,
-        _g_ROAS:cost>0&&gv>0?gv/cost:null,_g_costPerConv:gc>0?cost/gc:null,vcr:vd>0?vn/vd:null,
+        eCPI:attr>0?cost/attr:null,"활성 유저 eCPA":act>0?cost/act:null,"신규+재활성 eCPA":nu>0?cost/nu:null,CTR:imp>0?clk/imp:null,CPM:imp>0?cost/imp*1000:null,CPC:clk>0?cost/clk:null,
+        _g_ROAS:cost>0&&gv>0?gv/cost:null,_g_costPerConv:gc>0?cost/gc:null,_g_cpFirstOpen:gfo>0?cost/gfo:null,_g_cpHome:ghome>0?cost/ghome:null,vcr:vd>0?vn/vd:null,
         learning:mem.every(isLearning)};
       const sc=mem.filter(e=>e.score!=null);
       r.score=sc.length?Math.round(sc.reduce((s,e)=>s+e.score*(e.비용||1),0)/sc.reduce((s,e)=>s+(e.비용||1),0)*10)/10:null;
@@ -2698,8 +2736,8 @@ function renderAB(ds){const el=$("#abBody"),meta=$("#abMeta"),cnt=$("#abCnt");
       return primary.dir<0?a.pv-b.pv:b.pv-a.pv;});});
   fams.sort((a,b)=>b.cost-a.cost);
   if(cnt)cnt.textContent=fams.length?String(fams.length):"";
-  if(meta)meta.innerHTML=fams.length?`<b>${fams.length}</b>개 테스트 그룹 · 판정 기준 <b>${primary.lab}</b> · 변형 접미(_A·_B, 끝 숫자 1~12, v1·v2 등) 자동 인식`:"";
-  if(!fams.length){el.innerHTML=`<div class="bd-empty">변형 네이밍(_A·_B·_C, 이름 끝 숫자 1~12, v1·v2 등)으로 묶이는 소재가 없습니다. 소재명 끝에 "_A", "_B"처럼 변형 표기를 붙이면 자동으로 여기에 모입니다.</div>`;return;}
+  if(meta)meta.innerHTML=fams.length?`<b>${fams.length}</b>개 테스트 그룹 · 판정 기준 <b>${escHtml(primary.lab)}</b> · 변형 접미(_A·_B, 끝 숫자 1~5, v1·v2 등) 자동 인식`:"";
+  if(!fams.length){el.innerHTML=`<div class="bd-empty">변형 네이밍(_A·_B·_C, 이름 끝 숫자 1~5, v1·v2 등)으로 묶이는 소재가 없습니다. 소재명 끝에 "_A", "_B"처럼 변형 표기를 붙이면 자동으로 여기에 모입니다.</div>`;return;}
   _abFams=fams;_abPrimary=primary;_abFmt=pFmt;
   el.innerHTML=fams.map((f,fi)=>{
     const dispBase=f.base.replace(/[_\-\s.]{2,}/g,"_").replace(/^[_\s]+|[_\s]+$/g,"");
@@ -2796,32 +2834,35 @@ const SB_URL="https://newoydegfbnnqujgiips.supabase.co";
 const SB_KEY="sb_publishable_6remFFz9oGKffdlRakvdfg_OOLp6zYL";
 let cloudPw=sessionStorage.getItem("crpw")||null;
 let cloudBooting=!!cloudPw; /* 자동 재접속 중 — 랜딩(비밀번호 화면) 대신 로딩 화면을 보여 깜빡임 방지 */
-/* 업로더 서명 — 사이트 아무 곳에서나 "/hansy" 타이핑 시 이 기기를 hansy로 인증(localStorage 영구),
-   "/logout" 으로 해제. 인증 안 된 업로드는 저장소에 uploaded_by='unknown'으로 기록됨 */
+/* 업로더 서명 — 로그인 계정 이름을 그대로 사용(별도 키보드 서명 기능 없음).
+   (예전의 "/hansy"·"/logout" 타이핑 서명 기능은 제거됨) */
 let uploaderId=localStorage.getItem("cr_uploader")||null;
 let canEdit=(sessionStorage.getItem("crcan")==="1"); /* 에디터 권한 — 저장·수정 가능. 뷰어·0715는 false */
-let isAdmin=(sessionStorage.getItem("crrole")==="admin"); /* 관리자 권한(에디터 상위) — 소재 이름 변경 가능. 현재 hansy만 */
-(function(){let buf="";
-  addEventListener("keydown",e=>{
-    if(e.key==="Enter"){
-      if(buf.endsWith("/hansy")){uploaderId="hansy";localStorage.setItem("cr_uploader","hansy");toast("✍️ hansy로 서명했어요 · 이 기기 업로드에 이름이 남아요");refreshCloudLine();}
-      else if(buf.endsWith("/logout")){uploaderId=null;localStorage.removeItem("cr_uploader");toast("서명을 지웠어요");refreshCloudLine();}
-      buf="";return;}
-    if(e.key&&e.key.length===1){buf=(buf+e.key).slice(-24);}
-    else if(e.key==="Backspace")buf=buf.slice(0,-1);});})();
-async function sbRpc(fn,body){
-  const res=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:"POST",
+let isAdmin=(sessionStorage.getItem("crrole")==="admin"); /* 관리자 권한(에디터 상위) — 소재 이름 변경 가능 */
+async function sbRpc(fn,body,opt){
+  /* 네트워크가 멈추면(응답 없음) 무한 대기 → 부팅/조작이 영구 잠기는 것을 방지: AbortController 타임아웃 */
+  const ac=new AbortController(),ms=(opt&&opt.timeout)||30000;
+  const to=setTimeout(()=>ac.abort(),ms);
+  let res;
+  try{res=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:"POST",
     headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,"Content-Type":"application/json"},
-    body:JSON.stringify(body)});
+    body:JSON.stringify(body),signal:ac.signal});}
+  catch(e){const err=new Error(e&&e.name==="AbortError"?"요청 시간이 초과됐어요 (네트워크 지연) — 잠시 후 다시 시도해 주세요":(e&&e.message)||"네트워크 오류");err.status=(e&&e.name==="AbortError")?408:0;throw err;}
+  finally{clearTimeout(to);}
   if(!res.ok){let msg="";try{const j=await res.json();msg=j.message||j.hint||JSON.stringify(j);}catch(e){msg="HTTP "+res.status;}
     const err=new Error(msg);err.status=res.status;throw err;}
   return res.json();}
 /* 저장 페이로드: (매체, 주 시작일, 소재) 그레인으로 원본 수치 합산 — 파생 지표는 로드시 재계산 */
 const SAVE_NUM_KEYS=["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수","_m_installs","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100","_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue"];
 const SAVE_STR_KEYS=["_m_url","_m_ctype","_m_res","_m_group","_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_adGroupId","_g_campaignId"];
+const ACE_MARK="​"; /* 같은 확장소재 URL이 AEO·ACE 캠페인에 함께 쓰이면 DB UNIQUE(채널,주,이름)가 한 행으로 붕괴돼
+   지표가 섞이고 한쪽 서브채널로만 귀속된다. 마이그레이션과 동일하게 ACE 행 ad_name 끝에 zero-width space를
+   붙여 두 유형을 별개 행으로 저장(로드 시 _g_campaignId로 AEO/ACE 분리, _g_url은 깨끗해 미리보기 영향 없음). */
 function buildSaveRows(data,channel){const map=new Map();
-  for(const r of data){const nm=String(r.ad_name||"").trim(),wk=String(r.date||"").slice(0,10);
+  for(const r of data){let nm=String(r.ad_name||"").trim();const wk=String(r.date||"").slice(0,10);
     if(!nm||!/^\d{4}-\d{2}-\d{2}$/.test(wk))continue;
+    /* 구글 ACE면 마커를 붙여 AEO와 합쳐지지 않게(이미 붙어 있으면 중복 방지) */
+    if(channel==="Google"&&googleSubChannel(channel,r)==="Google ACE"&&!nm.endsWith(ACE_MARK))nm+=ACE_MARK;
     const key=wk+"|"+nm;let e=map.get(key);
     if(!e){e={channel,week_start:wk,ad_name:nm,payload:{}};map.set(key,e);}
     const p=e.payload;
@@ -2888,16 +2929,23 @@ function loadCloudRows(rows){
   loadMarks().then(()=>{renderViewSeg();if(active&&DATASETS[active])renderTable(DATASETS[active]);});
   setTimeout(openDeepLink,700);
   setTimeout(()=>{hydrateAllYtTitles().catch(()=>{});},1200);}
-/* #ad= 딥링크 — 공유받은 링크로 접속하면 해당 소재 상세를 바로 연다 (최초 로드 후 1회) */
-let _dlDone=false;
+/* #ad= 딥링크 — 공유받은 링크로 접속하면 해당 소재 상세를 바로 연다 (최초 로드 후 1회).
+   ⚠️ 반드시 '로드 시점'의 해시(_initHash)만 본다. 상세를 열면 toggleIsland가 location.hash를
+   #ad=… 로 바꾸기 때문에, fire 시점에 live 해시를 읽으면 사용자가 방금 연/닫은 소재를 딥링크가
+   다시 여는 경합이 생긴다(전체목록 소재 클릭 시 창이 저절로 다시 열리는/닫히는 원인이었음).
+   또한 사용자가 이미 무언가를 눌렀다면(_userActed) 자동 이동을 포기해 조작을 가로채지 않는다. */
+let _dlDone=false,_userActed=false;
+const _initHash=(()=>{try{return location.hash||"";}catch(_){return"";}})();
 function openDeepLink(){
   if(_dlDone)return;_dlDone=true;
-  let m;try{m=location.hash.match(/ad=([^&]+)(?:&ch=([^&]+))?/);}catch(_){return;}
+  if(_userActed)return;
+  let m;try{m=_initHash.match(/ad=([^&]+)(?:&ch=([^&]+))?/);}catch(_){return;}
   if(!m)return;
   const nm=decodeURIComponent(m[1]),ch=m[2]?decodeURIComponent(m[2]):null;
   const ds=active?DATASETS[active]:null;if(!ds)return;
   if(ch&&ds.media!==ch){ds.media=ch;show(ds);}
   setTimeout(()=>{
+    if(_userActed)return; /* 대기 사이에 사용자가 조작했으면 딥링크 자동 이동 취소 */
     if(!findRow(ds,nm)){toast("링크에 담긴 소재를 저장소에서 못 찾았어요");return;}
     goToIslandFromQuad(nm);},500);}
 /* 로그인 환영 인사 — 시간대별로 다양한 문구를 랜덤으로 골라 "환영해요 NAME!" 형식(당근 해요체).
@@ -3136,7 +3184,9 @@ function renderViewSeg(){const el=$("#vseg"),sec=$("#viewSec");if(!el||!sec)retu
   sec.hidden=!on;if(!on){el.innerHTML="";return;}
   const opts=[["all","전체"],["mine","내 소재"],["fav","즐겨찾기"]];
   el.innerHTML=opts.map(([v,lab])=>`<button data-v="${v}" class="${v===tMarkView?"on":""}">${lab}</button>`).join("");
-  $$("#vseg button").forEach(b=>b.onclick=()=>{const v=b.dataset.v;if(tMarkView===v)return;tMarkView=v;tPage=1;renderViewSeg();if(active)renderTable(DATASETS[active]);});}
+  $$("#vseg button").forEach(b=>b.onclick=()=>{const v=b.dataset.v;if(tMarkView===v)return;tMarkView=v;
+    if(v!=="all"&&tGroupBy){tGroupBy=false;renderQuickFo();} /* 마크 필터는 그룹뷰와 공존 불가(그룹은 마크 대상 아님) → 개별뷰로 */
+    tPage=1;renderViewSeg();if(active)renderTable(DATASETS[active]);});}
 function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)return;
   if(dsMode!=="channeled"||!ds.channels||!ds.channels.length){sec.hidden=true;el.innerHTML="";return;}
   sec.hidden=false;
@@ -3151,7 +3201,8 @@ function show(ds){scope(ds);
     renderTrend(ds);
     requestAnimationFrame(()=>{renderTlegend();curDS=ds;renderQuickFo();renderTable(ds);renderAB(ds);});});}
 function setActive(k){if(!DATASETS[k])return;active=k;
-  tableShowAll=false;tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;
+  tableShowAll=false;tState={sort:"score",dir:-1,q:""};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;
+  tMarkView="all";tServices=new Set();tCreators=new Set();mineAs=null;_mselSig={svc:"",cr:"",ma:""}; /* 마크/서비스/제작자 필터도 리셋 — 데이터 재로드·스탠드얼론에서 필터가 새어 빈 표로 고착되는 것 방지 */
   if($("#search"))$("#search").value="";if($("#showAll"))$("#showAll").checked=false;
   show(DATASETS[k]);}
 function renderFooter(){$("#ft").innerHTML=`
@@ -3325,7 +3376,8 @@ function renderFooter(){$("#ft").innerHTML=`
 function refreshAll(){if(!active||!DATASETS[active])active=TAB_ORDER.find(k=>DATASETS[k])||Object.keys(DATASETS)[0];if(active)setActive(active);}
 
 function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;tableShowAll=false;
-  tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;ISLE.name=null;
+  tState={sort:"score",dir:-1,q:""};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;ISLE.name=null;
+  tMarkView="all";tServices=new Set();tCreators=new Set();mineAs=null;_mselSig={svc:"",cr:"",ma:""};
   const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
 function dropZone(e){if(!e||e.clientY==null)return null;
   const H=window.innerHeight||800,W=window.innerWidth||1200;
@@ -3435,8 +3487,11 @@ function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(
     const gTxt=forceTags.length?`✓ ${forceTags.map(t=>t==="Google"?"Google Ads":t).join(" · ")} 리포트 인식했어요 · `:"";
     const cf=costFiltered>0?` · 소액 기록 ${costFiltered.toLocaleString()}건은 뺐어요(소재·주 합산 ₩1,500 미만)`:"";
     toast(`${gTxt}${notes.join(" · ")}${cf}${failed.length?` · ${failed.length}건은 건너뛰었어요`:""}`);
-    /* 임시 분석 화면에서 규격 파일로 복귀한 경우: 저장 완료 후 저장소 전체를 자동으로 다시 불러온다 */
-    cloudSaveAll(saveJobs,[],{reloadAfter:conf.length>0&&fromStandalone&&!!cloudPw});
+    /* 저장 후 저장소 전체 자동 재로드: 임시분석 복귀 시 + 구글 업로드 시(항상).
+       구글은 인앱 ingest가 AEO/ACE로 분리하지 못해 미분할 'Google' 유령 채널이 생기므로,
+       재로드해 loadCloudRows가 _g_campaignId로 다시 분리하게 한다(유령 채널 제거). */
+    const _hasGoogleJob=saveJobs.some(j=>j.ch==="Google");
+    cloudSaveAll(saveJobs,[],{reloadAfter:((conf.length>0&&fromStandalone)||_hasGoogleJob)&&!!cloudPw});
   }
   arr.forEach(f=>{const rd=new FileReader();
     rd.onload=()=>{const raw=rd.result;
@@ -3511,7 +3566,7 @@ $("#table tbody").addEventListener("click",e=>{
     tChip=(tChip&&tChip.k===k&&tChip.v===v)?null:{k,v,lab:chip.textContent};
     if(tChip&&tChip.k==="grp")tGroupBy=false; /* 그룹 필터는 소재 목록으로 */
     tPage=1;renderQuickFo();renderTable(curDS);return;}
-  const tr=e.target.closest("tr");if(!tr||tr.classList.contains("isle-row"))return;const nm=tr.getAttribute("data-name");if(nm==null||!curDS)return;toggleIsland(curDS,nm,tr);});
+  const tr=e.target.closest("tr");if(!tr||tr.classList.contains("isle-row"))return;const nm=tr.getAttribute("data-name");if(nm==null||!curDS)return;_userActed=true;toggleIsland(curDS,nm,tr);});
 $("#chipFil").addEventListener("click",()=>{tChip=null;tPage=1;renderQuickFo();if(active)renderTable(DATASETS[active]);});
 let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{if(active&&DATASETS[active]){renderQuad(DATASETS[active]);renderTrend(DATASETS[active]);}const inner=document.querySelector(".isle"),sc=document.querySelector(".tbl-scroll");if(inner&&sc)inner.style.width=sc.clientWidth+"px";},140);});
 
@@ -3619,6 +3674,15 @@ function refreshIslandMarks(){
     const tr=box.closest("tr[data-nm]");const nm=tr&&tr.getAttribute("data-nm");if(nm==null)return;
     const e=findRow(curDS,nm);box.innerHTML=e?markBtnsHTML(ch,e):"";});}
 /* 별 클릭 진입점 — 그룹이면 일괄 토글, 개별이면 단건 토글 */
+/* 같은 마크(키+종류) 연타 시 서버 쓰기를 클릭 순서대로 직렬화 — 병렬/역순 쓰기로
+   서버 상태가 낙관적 UI와 어긋나는 것 방지(최종 클릭 상태로 수렴) */
+let _markChain=new Map();
+function _seqMarkWrite(id,fn){
+  const prev=_markChain.get(id)||Promise.resolve();
+  const next=prev.catch(()=>{}).then(fn);
+  _markChain.set(id,next);
+  next.catch(()=>{}).finally(()=>{if(_markChain.get(id)===next)_markChain.delete(id);});
+  return next;}
 async function markToggle(ch,ent,kind){
   if(!MARKS.me){toast("로그인한 계정에서만 즐겨찾기·내 소재를 쓸 수 있어요");return;}
   if(!ent)return;
@@ -3630,13 +3694,13 @@ async function markToggle(ch,ent,kind){
     const on=!(MARKS.mineByKey.get(k)||[]).includes(mineAs);
     _localMineSet(k,mineAs,on);refreshMarksUI();
     if(tMarkView==="mine"&&curDS)renderTable(curDS);
-    try{await sbRpc("cr_admin_mark_set",{pw:cloudPw,p_channel:markChannel(ch),p_ad:ad,p_user:mineAs,p_kind:"mine",p_on:on});}
+    try{await _seqMarkWrite(k+"|mine|"+mineAs,()=>sbRpc("cr_admin_mark_set",{pw:cloudPw,p_channel:markChannel(ch),p_ad:ad,p_user:mineAs,p_kind:"mine",p_on:on}));}
     catch(e){await loadMarks();if(curDS)renderTable(curDS);toast("저장하지 못했어요 · "+(e.message||""));}
     return;}
   const on=!(kind==="fav"?MARKS.fav:MARKS.myMine).has(k);
   _applyMark(k,kind,on);refreshMarksUI();
   if((kind==="fav"&&tMarkView==="fav")||(kind==="mine"&&tMarkView==="mine")){if(curDS)renderTable(curDS);}
-  try{await sbRpc("cr_mark_set",{pw:cloudPw,p_channel:markChannel(ch),p_ad:ad,p_kind:kind,p_on:on});}
+  try{await _seqMarkWrite(k+"|"+kind,()=>sbRpc("cr_mark_set",{pw:cloudPw,p_channel:markChannel(ch),p_ad:ad,p_kind:kind,p_on:on}));}
   catch(e){await loadMarks();if(curDS)renderTable(curDS);toast("저장하지 못했어요 · "+(e.message||""));}}
 /* 그룹 일괄 토글 — 전원 표시면 전원 해제, 아니면 전원 표시(개별 해제로 파생 상태 자동 해제) */
 async function toggleGroupMark(ch,ent,kind){
@@ -3705,11 +3769,14 @@ function renameBanner(){
   else if(b){b.remove();}}
 /* ── 연필 편집 팝오버(관리자) — 소재 이름·서비스 분류·제작자(내 소재 등록자)를 한 곳에서 수정 ── */
 let _editPop=null;
-function _editPopEsc(e){if(e.key==="Escape"){e.preventDefault();closeEditPop();}}
+function _editPopEsc(e){if(e.key==="Escape"){e.preventDefault();e.stopPropagation();closeEditPop();}} /* stopPropagation: Esc가 전역 상세닫기 핸들러까지 전파돼 팝오버+상세가 함께 닫히는 것 방지 */
 function closeEditPop(){if(_editPop){_editPop.remove();_editPop=null;document.removeEventListener("keydown",_editPopEsc,true);}}
 /* 이름·서비스 변경 반영: 전체 재렌더 + 열려 있던 상세는 다시 열기(필터 개수도 갱신) */
 function renderInlineRefresh(){
   if(!curDS)return;const openName=ISLE.name;_mselSig={svc:"",cr:"",ma:""};
+  /* renderTable은 열린 상세를 보존(재부착)하므로, 편집 내용 반영을 위해 먼저 비워 보존을 건너뛰고
+     아래에서 새로 열어 fillIsland가 갱신된 이름·서비스로 다시 그리게 한다 (보존된 stale 노드가 닫히던 문제) */
+  if(openName){const ir=document.querySelector(".isle-row");if(ir)ir.remove();ISLE.name=null;}
   renderTable(curDS);
   if(openName){const tr=[...document.querySelectorAll("#table tbody tr.row")].find(t=>t.getAttribute("data-name")===openName);if(tr)toggleIsland(curDS,openName,tr);}}
 /* 특정인 mine 마크를 로컬 상태에 즉시 반영(제작자 칩) */
@@ -3763,7 +3830,6 @@ const CH_LABEL={Meta:"메타",Google:"구글","Google AEO":"구글 AEO","Google 
 function chLabel(c){return CH_LABEL[c]||c;}
 const TIER_LAB={g2:"매우좋음",g1:"좋음",m:"보통",w1:"나쁨",w2:"매우나쁨",na:"–"};
 function _med(a){const s=(a||[]).filter(v=>v!=null&&isFinite(v)).sort((x,y)=>x-y);if(!s.length)return null;const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
-function _pctBelow(arr,v){const a=(arr||[]).filter(x=>x!=null&&isFinite(x));if(!a.length||v==null)return null;return Math.round(a.filter(x=>x<v).length/a.length*100);}
 function _fmtCell(v,f){if(v==null||(typeof v==="number"&&!isFinite(v)))return "–";return f==="won"?fmtWon(v):f==="int"?fmtInt(v):f==="pct"?fmtPct(v):f==="num"?(v.toFixed(1)+"×"):String(v);}
 function _effF(L){return (L.effCol==="CTR"||L.key==="cg")?"pct":"won";}
 function expCols(L,list){
@@ -3896,7 +3962,7 @@ function downloadText(text,filename){
   const blob=new Blob([text],{type:"text/markdown;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
   a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);}
 let _expState=null;
-function _xtEsc(e){if(e.key==="Escape"){e.preventDefault();closeExportModal();}}
+function _xtEsc(e){if(e.key==="Escape"){e.preventDefault();e.stopPropagation();closeExportModal();}} /* stopPropagation: Esc가 전역 상세닫기까지 전파되는 것 방지 */
 function closeExportModal(){const ov=$("#xtOv");if(ov)ov.remove();document.removeEventListener("keydown",_xtEsc,true);_expState=null;}
 function openExportModal(){
   if(!cloudPw){toast("로그인 후 저장소를 열면 추출할 수 있어요");return;}
@@ -4031,7 +4097,10 @@ if(_cloudLine)_cloudLine.addEventListener("click",cloudRestore);
 const _fmtBack=$("#fmtBarBack");
 if(_fmtBack)_fmtBack.addEventListener("click",cloudRestore);
 refreshCloudLine();
-if(cloudPw)cloudUnlock(cloudPw,{silent:true}).catch(()=>false).then(()=>{cloudBooting=false;updateLandingVisibility();});
+if(cloudPw){
+  /* 부팅이 어떤 이유로든 안 끝나면(네트워크 지연 등) 로딩 화면에 갇히지 않도록 안전 타이머로 강제 해제 */
+  setTimeout(()=>{if(cloudBooting){cloudBooting=false;updateLandingVisibility();}},35000);
+  cloudUnlock(cloudPw,{silent:true}).catch(()=>false).then(()=>{cloudBooting=false;updateLandingVisibility();});}
 else cloudBooting=false;
 /* 좁은 화면에서는 요약 토글 기본 접힘 */
 try{if(matchMedia("(max-width:900px)").matches){const sm=$("#sideMore");if(sm)sm.removeAttribute("open");}}catch(e){}
