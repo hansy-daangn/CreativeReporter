@@ -109,7 +109,7 @@
   .asset-src .ocr-mark{margin-left:0;margin-right:6px;vertical-align:0}
   .gst{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:5px;margin-left:6px;vertical-align:1px;white-space:nowrap}
   .gst.lim{background:var(--w1-f);color:var(--w1)}
-  .lvb{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:800;color:var(--g1);background:var(--g1-f);padding:1.5px 8px 1.5px 7px;border-radius:999px;margin-left:6px;vertical-align:1px;white-space:nowrap;letter-spacing:.2px}
+  .lvb{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:800;color:var(--g1);background:var(--g1-f);padding:1.5px 8px 1.5px 7px;border-radius:999px;margin-right:6px;vertical-align:1px;white-space:nowrap;letter-spacing:.2px}
   .lvb::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--g1);vertical-align:.5px}
   .gi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px 18px;margin-top:8px}
   .gi-r{display:flex;justify-content:space-between;gap:10px;font-size:12px;border-bottom:1px dashed var(--surface-3);padding:3px 0;min-width:0}
@@ -143,6 +143,17 @@
   .qhint{font-size:11px;color:var(--faint);margin:0 0 6px}
   .qaxis{display:flex;align-items:center;gap:10px;margin-bottom:6px}
   .qaxis .qaxis-lab{font-size:10px;color:var(--faint);font-weight:700;letter-spacing:.06em;text-transform:uppercase;width:34px;flex:0 0 auto}
+  /* 효율 지도 컨트롤 바 — 필터(Live 단독 · Video/Image 세그먼트) + 보기·가로·세로 드롭다운을 한 줄로 */
+  .qbar{display:flex;align-items:center;gap:16px;margin-bottom:10px;flex-wrap:wrap}
+  .qbar .qaxis-lab{font-size:10px;color:var(--faint);font-weight:700;letter-spacing:.06em;text-transform:uppercase;flex:0 0 auto;width:auto}
+  .qbar-grp{display:inline-flex;align-items:center;gap:7px}
+  .qsel{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+  .qsel select{height:29px;border:1px solid var(--surface-3);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:12px;font-weight:650;padding:0 26px 0 10px;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%23999' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-size:12px}
+  .qsel select:hover{border-color:var(--karrot)}
+  .qsel select:focus{outline:none;border-color:var(--karrot)}
+  .qfilt-live{height:29px;padding:0 14px;border:1px solid var(--surface-3);border-radius:8px;background:var(--surface);color:var(--muted);font:inherit;font-size:11.5px;font-weight:700;cursor:pointer;transition:.12s}
+  .qfilt-live:hover{border-color:var(--karrot)}
+  .qfilt-live.on{background:var(--karrot);color:#fff;border-color:var(--karrot)}
   .twocol{display:grid;grid-template-columns:1fr 1fr;gap:24px}
   @media(max-width:760px){.twocol{grid-template-columns:1fr}}
   .leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:6px}
@@ -361,7 +372,7 @@
   .abxc-go{margin-top:auto;background:var(--surface-2);border-radius:8px;padding:8px;font-size:11.5px;font-weight:700;color:var(--muted);transition:.12s}
   .abxc-go:hover{background:var(--surface-3);color:var(--ink)}
   /* 학습중 뱃지 */
-  .lrn{display:inline-block;font-size:9px;font-weight:800;color:#3D6BB3;background:#E1EBF8;padding:1.5px 6px;border-radius:5px;vertical-align:1.5px;letter-spacing:.02em;cursor:help;margin-left:6px}
+  .lrn{display:inline-block;font-size:9px;font-weight:800;color:#3D6BB3;background:#E1EBF8;padding:1.5px 6px;border-radius:5px;vertical-align:1.5px;letter-spacing:.02em;cursor:help;margin-right:6px}
   /* 기간 직접 설정 (사이드바) */
   .pcustom{display:flex;align-items:center;gap:5px;padding:7px 2px 0;flex-wrap:wrap;color:var(--side-muted);font-size:11px}
   .pcustom input[type=number]{background:var(--side-2);border:1px solid rgba(255,255,255,.14);color:var(--side-ink);border-radius:7px;padding:5px 6px;font-size:11px;font-family:inherit;width:52px;color-scheme:dark}
@@ -812,10 +823,15 @@
       <section class="card" id="tabAnalysis">
         <div class="keyrow" id="keyrow"></div>
         <p class="qhint" id="qhint"></p>
-        <div class="qaxis"><span class="qaxis-lab">지도 필터</span><div class="dtog" id="qMapFil"><button data-f="live" type="button" title="라이브(최신 집행 주 광고비>0) 소재만">Live</button><button data-f="영상" type="button" title="영상 소재만 보기">Video</button><button data-f="이미지" type="button" title="이미지 소재만 보기">Image</button></div></div>
-        <div class="qaxis"><span class="qaxis-lab">보기</span><div class="dtog" id="qdTog"></div></div>
-        <div class="qaxis"><span class="qaxis-lab">가로</span><div class="dtog" id="qxTog"></div></div>
-        <div class="qaxis"><span class="qaxis-lab">세로</span><div class="dtog" id="qyTog"></div></div>
+        <div class="qbar">
+          <div class="qbar-grp"><span class="qaxis-lab">필터</span>
+            <button class="qfilt-live" id="qLiveBtn" type="button" title="라이브(최신 집행 주 광고비>0) 소재만">Live</button>
+            <div class="dtog" id="qFoSeg"><button data-f="영상" type="button" title="영상 소재만 보기">Video</button><button data-f="이미지" type="button" title="이미지 소재만 보기">Image</button></div>
+          </div>
+          <label class="qsel"><span class="qaxis-lab">보기</span><select id="qdSel" title="개별 소재 또는 유형별 집계"></select></label>
+          <label class="qsel"><span class="qaxis-lab">가로</span><select id="qxSel" title="가로축 지표"></select></label>
+          <label class="qsel"><span class="qaxis-lab">세로</span><select id="qySel" title="세로축 지표"></select></label>
+        </div>
         <div class="quad-wrap">
           <div class="quad-svgwrap" id="qsvgwrap">
             <svg class="chart" id="quad"></svg>
@@ -1548,26 +1564,31 @@ function renderQuad(ds){const L=ds.L,svg=$("#quad");
   if(!qX||!mets.find(m=>m.k===qX))qX=pick(["CTR","_g_interactionRate","CPC","_g_ROAS"]);
   if(!qY||!mets.find(m=>m.k===qY))qY=pick(["활성 유저 eCPA","eCPI","_g_costPerConv","CPC","CPM","_g_ROAS"].filter(k=>k!==qX));
   if(qX===qY){const other=mets.find(m=>m.k!==qX);if(other)qY=other.k;}
-  /* 보기 세그먼트: 개별 소재 또는 유형별 집계 (값이 2가지 이상인 차원만 노출) */
-  const qdims=[["소재",""],["포맷","fo"],["사이즈","size"],["형태","shape"],["지면","nat"],["서비스","ve"]]
+  const reset=()=>{qView={xlo:0,xhi:100,ylo:0,yhi:100};_qxRange&&_qxRange.paint();_qyRange&&_qyRange.paint();renderQuad(ds);};
+  /* 보기(드롭다운): 개별 소재 또는 유형별 집계 — 소재/사이즈/서비스만(값 2종 이상 차원만) */
+  const qdims=[["소재",""],["사이즈","size"],["서비스","ve"]]
     .filter(([,k])=>!k||new Set(ds.agg.filter(e=>e.tags&&e.tags[k]).map(e=>e.tags[k])).size>=2);
   if(qDim&&!qdims.find(d=>d[1]===qDim))qDim=null;
-  $("#qdTog").innerHTML=qdims.map(([lab,k])=>`<button data-d="${k}" class="${(k||null)===qDim?"on":""}">${lab}</button>`).join("");
-  $$("#qdTog button").forEach(b=>b.onclick=()=>{qDim=b.dataset.d||null;qView={xlo:0,xhi:100,ylo:0,yhi:100};_qxRange&&_qxRange.paint();_qyRange&&_qyRange.paint();renderQuad(ds);});
-  /* 효율 지도 전용 필터(라이브·영상·이미지) — 지도에 그릴 소재 집합에만 적용 */
+  const qdSel=$("#qdSel");
+  if(qdSel){qdSel.innerHTML=qdims.map(([lab,k])=>`<option value="${escAttr(k)}"${(k||"")===(qDim||"")?" selected":""}>${escHtml(lab)}</option>`).join("");
+    qdSel.onchange=()=>{qDim=qdSel.value||null;reset();};}
+  /* 효율 지도 필터(라이브 단독 버튼 · 영상/이미지 세그먼트) — 지도에 그릴 소재 집합에만 적용 */
   const liveOn=qLive&&!!ds.liveWeek;
   let mapAgg=ds.agg;
   if(liveOn)mapAgg=mapAgg.filter(e=>e._live);
   if(qFoMap)mapAgg=mapAgg.filter(e=>e.tags&&e.tags.fo===qFoMap);
-  const mf=$("#qMapFil");
-  if(mf){const lb=mf.querySelector('button[data-f="live"]');if(lb)lb.style.display=ds.liveWeek?"":"none";
-    mf.querySelectorAll("button").forEach(b=>{const f=b.dataset.f;const on=f==="live"?qLive:qFoMap===f;b.classList.toggle("on",on);
-      b.onclick=()=>{if(f==="live")qLive=!qLive;else qFoMap=(qFoMap===f?null:f);qView={xlo:0,xhi:100,ylo:0,yhi:100};_qxRange&&_qxRange.paint();_qyRange&&_qyRange.paint();renderQuad(ds);};});}
+  const lbtn=$("#qLiveBtn");
+  if(lbtn){lbtn.style.display=ds.liveWeek?"":"none";lbtn.classList.toggle("on",qLive);
+    lbtn.onclick=()=>{qLive=!qLive;reset();};}
+  const fseg=$("#qFoSeg");
+  if(fseg)fseg.querySelectorAll("button").forEach(b=>{const f=b.dataset.f;b.classList.toggle("on",qFoMap===f);
+    b.onclick=()=>{qFoMap=(qFoMap===f?null:f);reset();};});
   const dimLab=qDim?(qdims.find(d=>d[1]===qDim)||["유형"])[0]:null;
-  $("#qxTog").innerHTML=mets.map(m=>`<button data-m="${m.k}" class="${m.k===qX?"on":""}">${m.lab}</button>`).join("");
-  $("#qyTog").innerHTML=mets.map(m=>`<button data-m="${m.k}" class="${m.k===qY?"on":""}">${m.lab}</button>`).join("");
-  $$("#qxTog button").forEach(b=>b.onclick=()=>{if(b.dataset.m===qY){qY=qX;}qX=b.dataset.m;qView={xlo:0,xhi:100,ylo:0,yhi:100};_qxRange&&_qxRange.paint();_qyRange&&_qyRange.paint();renderQuad(ds);});
-  $$("#qyTog button").forEach(b=>b.onclick=()=>{if(b.dataset.m===qX){qX=qY;}qY=b.dataset.m;qView={xlo:0,xhi:100,ylo:0,yhi:100};_qxRange&&_qxRange.paint();_qyRange&&_qyRange.paint();renderQuad(ds);});
+  const qxSel=$("#qxSel"),qySel=$("#qySel");
+  if(qxSel){qxSel.innerHTML=mets.map(m=>`<option value="${escAttr(m.k)}"${m.k===qX?" selected":""}>${escHtml(m.lab)}</option>`).join("");
+    qxSel.onchange=()=>{if(qxSel.value===qY)qY=qX;qX=qxSel.value;reset();};}
+  if(qySel){qySel.innerHTML=mets.map(m=>`<option value="${escAttr(m.k)}"${m.k===qY?" selected":""}>${escHtml(m.lab)}</option>`).join("");
+    qySel.onchange=()=>{if(qySel.value===qX)qX=qY;qY=qySel.value;reset();};}
   const xMet=mets.find(m=>m.k===qX),yMet=mets.find(m=>m.k===qY);
   const par=svg.parentElement,parW=par?par.clientWidth:760;
   const cs=par?getComputedStyle(par):null,padL=cs?parseFloat(cs.paddingLeft)||0:0;
@@ -2360,7 +2381,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
         const nmHtml=(renameMode&&!r._isGroup)
           ? `<span class="nm-text editing" contenteditable="true" spellcheck="false" data-nm="${escAttr(r.name)}">${escHtml(dn)}</span>`
           : `<span class="nm-text">${trunc(dn,60)}</span>`;
-        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}>${nmHtml}${mb}${liveBadge(ds,r)}${gst}${lrnBadge(r)}<span class="caret">›</span><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
+        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}>${liveBadge(ds,r)}${lrnBadge(r)}${nmHtml}${mb}${gst}<div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
       if(c.k==="score")return `<td>${score}</td>`;
       const dir=COL_DIR[c.k]||0;
       const t=dir?cellTier(r[c.k],colSorted[c.k],dir):"m";
