@@ -140,6 +140,10 @@
   .quad-tier-legend .qtl-lab{color:var(--ink);font-weight:650}
   .quad-tier-legend .qtl-sep{color:var(--faint);margin:0 2px}
   .qhint{font-size:11px;color:var(--faint);margin:0 0 6px}
+  .auto-insight{display:flex;flex-wrap:wrap;align-items:center;gap:7px 14px;margin:0 0 16px;padding:10px 14px;background:var(--surface-2);border:1px solid var(--surface-3);border-radius:10px;font-size:12px;line-height:1.5}
+  .auto-insight .ai-tag{font-size:10px;font-weight:800;letter-spacing:.4px;color:#fff;background:var(--karrot);padding:3px 8px;border-radius:6px;white-space:nowrap}
+  .auto-insight .ai-item{color:var(--muted)}
+  .auto-insight .ai-item b{color:var(--ink);font-weight:700}
   .qaxis{display:flex;align-items:center;gap:10px;margin-bottom:6px}
   .qaxis .qaxis-lab{font-size:10px;color:var(--faint);font-weight:700;letter-spacing:.06em;text-transform:uppercase;width:34px;flex:0 0 auto}
   /* 효율 지도 컨트롤 바 — 필터(Live 단독 · Video/Image 세그먼트) + 보기·가로·세로 드롭다운을 한 줄로 */
@@ -829,10 +833,14 @@
       <section class="card" id="tabAnalysis">
         <div class="keyrow" id="keyrow"></div>
         <p class="qhint" id="qhint"></p>
+        <div class="auto-insight" id="autoInsight" style="display:none"></div>
         <div class="qbar">
           <div class="qbar-grp"><span class="qaxis-lab">필터</span>
             <button class="qfilt-live" id="qLiveBtn" type="button" title="라이브(최신 집행 주 광고비>0) 소재만">Live</button>
             <div class="dtog" id="qFoSeg"><button data-f="영상" type="button" title="영상 소재만 보기">Video</button><button data-f="이미지" type="button" title="이미지 소재만 보기">Image</button></div>
+          </div>
+          <div class="qbar-grp" id="qHomeGrp" style="display:none"><span class="qaxis-lab">효율 기준</span>
+            <button class="qfilt-live" id="qHomeBtn" type="button" title="구글 ACE 효율을 '홈 도달'당 비용(비용÷home)으로 채점·표시 · 끄면 모든 전환당 비용(CPA) 기준">홈 도달 기준</button>
           </div>
           <label class="qsel"><span class="qaxis-lab">보기</span><select id="qdSel" title="개별 소재 또는 유형별 집계"></select></label>
           <label class="qsel"><span class="qaxis-lab">가로</span><select id="qxSel" title="가로축 지표"></select></label>
@@ -1328,7 +1336,7 @@ function aggregate(data,L){const map=new Map();
     const e=map.get(nm);for(const c of["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e[c]+=v;}
     const _cv=num(r["비용"]);if(_cv!=null&&_cv>0){if(!e._wkSet)e._wkSet=new Set();e._wkSet.add(r.date);}
     for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_adGroupId","_g_campaignId","_m_url","_m_ctype","_m_res","_m_group"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
-    for(const k of["_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue","_m_installs","신규+재활성 유저 수","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100"]){const v=num(r[k]);if(v!=null)e[k]=(e[k]||0)+v;}
+    for(const k of["_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue","_m_installs","신규+재활성 유저 수","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100"]){const v=num(r[k]);if(v!=null)e[k]=(e[k]||0)+v;}
     const w=r.date;if(e.weeks[w])for(const c of["비용","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e.weeks[w][c]+=v;}}
   const arr=[...map.values()].map(e=>{e.CPC=e["클릭 수"]>0?e.비용/e["클릭 수"]:null;e.CTR=e["노출 수"]>0?e["클릭 수"]/e["노출 수"]:null;e.CPM=e["노출 수"]>0?e.비용/e["노출 수"]*1000:null;e.eCPI=e["어트리뷰션 수"]>0?e.비용/e["어트리뷰션 수"]:null;e["활성 유저 eCPA"]=e["활성 유저 수"]>0?e.비용/e["활성 유저 수"]:null;
     if((e._vcrDen||0)>0)e["영상 완주율"]=e._vcrNum/e._vcrDen;
@@ -1339,6 +1347,8 @@ function aggregate(data,L){const map=new Map();
       e["_g_trueViewRate"]=e["노출 수"]>0?(e["_g_trueViews"]||0)/e["노출 수"]:null;
       e["_g_conversionRate"]=(e["_g_interactions"]||0)>0?(e["_g_conversions"]||0)/e["_g_interactions"]:null;
       e["_g_costPerConv"]=(e["_g_conversions"]||0)>0?e.비용/e["_g_conversions"]:null; /* 전환 0 → 비용/0은 정의 불가라 null 유지 */
+      e["_g_cpFirstOpen"]=(e["_g_firstOpen"]||0)>0?e.비용/e["_g_firstOpen"]:null; /* 신규(앱 최초 실행) 획득 단가 */
+      e["_g_cpHome"]=(e["_g_home"]||0)>0?e.비용/e["_g_home"]:null; /* 홈 도달 단가 */
       e["_g_ROAS"]=e.비용>0?(e["_g_convValue"]||0)/e.비용:null;
       e["_g_convValuePerConv"]=(e["_g_convValue"]||0)>0&&(e["_g_allConv"]||0)>0?e["_g_convValue"]/e["_g_allConv"]:null;}
     e._wkCnt=e._wkSet?e._wkSet.size:0;e._wkSet=null;
@@ -1377,8 +1387,8 @@ function wPctRank(d,v){if(!d||d.vals.length<2||d.total<=0)return .5;
 function computeFieldAvail(a){
   const numKeys=["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","CTR","CPC","CPM","eCPI","활성 유저 eCPA",
     "영상 완주율","신규+재활성 유저 수","신규+재활성 eCPA","_m_installs",
-    "_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue",
-    "_g_interactionRate","_g_trueViewRate","_g_conversionRate","_g_costPerConv","_g_ROAS","_g_convValuePerConv"];
+    "_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue",
+    "_g_interactionRate","_g_trueViewRate","_g_conversionRate","_g_costPerConv","_g_cpFirstOpen","_g_cpHome","_g_ROAS","_g_convValuePerConv"];
   const n=a.length||1,avail={};
   for(const k of numKeys){
     let miss=0;for(const e of a){const v=e[k];if(v==null||v===0||!isFinite(v))miss++;}
@@ -1386,20 +1396,28 @@ function computeFieldAvail(a){
   }
   return avail;}
 function isGoogleDs(a){return a&&a.length&&a.some(e=>e._g_assetType);}
+let gHomeEff=false;try{gHomeEff=localStorage.getItem("cr_ghome")==="1";}catch(e){} /* 구글 ACE 효율을 '홈 도달' 기준으로 볼지 토글 */
+function setGHomeEff(v){gHomeEff=!!v;try{localStorage.setItem("cr_ghome",gHomeEff?"1":"0");}catch(e){}try{rebuildAllDatasets();refreshAll();}catch(e){}}
 /* Unified perf-ad scoring — Effectiveness × Reach × StatisticalConfidence
    Aligned with Google Ads Quality Score dimensions and Meta Ad Relevance Diagnostics */
 const SCORING={
   EFF_W:0.75, REACH_W:0.20, CONF_W:0.05, MIN_CONV_FOR_FULL_CONF:30,
   /* 목적 = 신규/복귀 유저를 효율적으로 데려오는 소재 → 매체별 '획득 단가'가 1순위. ROAS는 전환가치가
      모델링 값이라 점수에서 제외(표·지도엔 참고용으로만 남김). */
-  google_aeo:[ /* 구글 AEO(신규) — CPI(설치당 비용=eCPI) 중심 */
-    {k:"eCPI",w:0.50,dir:-1,lab:"CPI"},
+  google_aeo:[ /* 구글 AEO(신규) — 신규 유저(앱 최초 실행) 획득 단가 중심 */
+    {k:"_g_cpFirstOpen",w:0.50,dir:-1,lab:"신규 단가"},
     {k:"CTR",w:0.22,dir:1,lab:"CTR"},
     {k:"_g_conversionRate",w:0.16,dir:1,lab:"전환율"},
     {k:"CPM",w:0.12,dir:-1,lab:"CPM"},
   ],
-  google_ace:[ /* 구글 ACE(리타겟팅) — CPA(인앱액션당 비용) 중심 */
+  google_ace:[ /* 구글 ACE(리타겟팅) — 모든 전환당 비용(CPA) 중심 (기본) */
     {k:"_g_costPerConv",w:0.50,dir:-1,lab:"CPA"},
+    {k:"CTR",w:0.22,dir:1,lab:"CTR"},
+    {k:"_g_conversionRate",w:0.16,dir:1,lab:"전환율"},
+    {k:"CPM",w:0.12,dir:-1,lab:"CPM"},
+  ],
+  google_ace_home:[ /* 구글 ACE — 홈 도달 단가 중심 (홈 기준 효율 토글 시) */
+    {k:"_g_cpHome",w:0.50,dir:-1,lab:"홈 단가"},
     {k:"CTR",w:0.22,dir:1,lab:"CTR"},
     {k:"_g_conversionRate",w:0.16,dir:1,lab:"전환율"},
     {k:"CPM",w:0.12,dir:-1,lab:"CPM"},
@@ -1432,7 +1450,7 @@ const SCORING={
   ],
 };
 function specsFor(ds){const a=ds.agg,isG=isGoogleDs(a);
-  const key=isG?(ds.media==="Google AEO"?"google_aeo":ds.media==="Google ACE"?"google_ace":"google"):(ds.L.key||"ad");
+  const key=isG?(ds.media==="Google AEO"?"google_aeo":ds.media==="Google ACE"?(gHomeEff?"google_ace_home":"google_ace"):"google"):(ds.L.key||"ad");
   const isVideo=a.some(e=>(e._g_assetType&&/동영상|video/i.test(e._g_assetType))||(e._m_ctype&&e._m_ctype.includes("VIDEO")));
   return SCORING[key].filter(s=>!s.videoOnly||isVideo).map(s=>({...s}));}
 /* 지표별 증거량(표본) — 백분위를 g'=0.5+(g−0.5)·n/(n+n₀)로 축소해
@@ -1447,6 +1465,8 @@ const SPEC_EVIDENCE={
   "영상 완주율":{den:e=>e._vcrDen,n0:2000},
   "_g_ROAS":{den:e=>e._g_allConv||e._g_conversions,n0:30},
   "_g_costPerConv":{den:e=>e._g_conversions,n0:30},
+  "_g_cpFirstOpen":{den:e=>e._g_firstOpen,n0:30},
+  "_g_cpHome":{den:e=>e._g_home,n0:30},
   "_g_conversionRate":{den:e=>e._g_interactions,n0:300},
 };
 function evidenceW(e,k){const s=SPEC_EVIDENCE[k];if(!s)return 1;const d=s.den(e)||0;return d>0?d/(d+s.n0):0;}
@@ -1578,6 +1598,32 @@ function chipsHTML(t,e){
       arr.push(`<span class="chip mine-chip${sel}" data-cr="${escAttr(nm)}" title="${escAttr(nm)} 제작 소재만 보기 (제작자 필터)">${SEAL_SVG} ${escHtml(nm)}</span>`);}}
   return arr.filter(Boolean).join("");}
 /* key summary tiles */
+/* 자동 해석 — 현재 매체·기간 데이터에서 마케터가 먼저 볼 핵심을 문장으로 요약(최고 점수·획득단가 최저·포맷 우위) */
+function renderAutoInsight(ds){
+  const el=$("#autoInsight");if(!el)return;
+  const a=(ds&&ds.agg||[]).filter(e=>e&&!e._isGroup);
+  const scored=a.filter(e=>e.score!=null);
+  const specs=(typeof specsFor==="function")?specsFor(ds):null;const prim=specs&&specs[0];
+  if(scored.length<4||!prim){el.style.display="none";el.innerHTML="";return;}
+  const pk=prim.k,pLab=prim.lab,pdir=prim.dir||-1;
+  const won=v=>"₩"+Math.round(v).toLocaleString();
+  const nm=e=>trunc(displayNameOf(e),22);
+  const out=[];
+  const top=scored.slice().sort((x,y)=>y.score-x.score)[0];
+  out.push(`<b>🏆 최고 점수</b> ${nm(top)} · <b>${Math.round(top.score*10)/10}점</b>${(top[pk]!=null&&isFinite(top[pk]))?` · ${pLab} ${won(top[pk])}`:""}`);
+  const withPk=scored.filter(e=>e[pk]!=null&&isFinite(e[pk]));
+  if(withPk.length>=4){
+    const best=withPk.slice().sort((x,y)=>pdir<0?x[pk]-y[pk]:y[pk]-x[pk])[0];
+    out.push(`<b>💰 ${pLab} ${pdir<0?"최저":"최고"}</b> ${nm(best)} · <b>${won(best[pk])}</b>`);
+    const med=arr=>{const s=arr.filter(v=>v!=null&&isFinite(v)).sort((x,y)=>x-y);return s.length?s[Math.floor(s.length/2)]:null;};
+    const vid=med(withPk.filter(e=>e.tags&&e.tags.fo==="영상").map(e=>e[pk]));
+    const img=med(withPk.filter(e=>e.tags&&e.tags.fo==="이미지").map(e=>e[pk]));
+    if(vid!=null&&img!=null&&vid>0&&img>0){const better=((pdir<0?Math.min(vid,img):Math.max(vid,img))===vid)?"영상":"이미지";const d=Math.round(Math.abs(vid-img)/Math.max(vid,img)*100);
+      if(d>=5)out.push(`<b>🎬 포맷</b> ${pLab} 중앙값 영상 ${won(vid)} · 이미지 ${won(img)} → <b>${better}</b>${better==="영상"?"이":"가"} ${d}% 효율적`);}
+  }
+  el.style.display="";
+  el.innerHTML=`<span class="ai-tag">자동 해석</span>`+out.map(s=>`<span class="ai-item">${s}</span>`).join("");
+}
 function renderKeyrow(ds){const L=ds.L,a=ds.agg,tiles=[];
   const volK=L.hasConv?L.volCol:"클릭 수",szLab=L.hasConv?L.volLab+" 1건당":"클릭 1회당";
   function bestDim(key){const g={};a.forEach(e=>{const k=e.tags[key];if(!k)return;(g[k]=g[k]||{비용:0,v:0});g[k].비용+=e.비용;g[k].v+=e[volK]||0;});
@@ -1603,9 +1649,11 @@ const QUAD_METRICS=[
   {k:"노출 수",lab:"노출",dir:1,fmt:v=>fmtInt(v)},
 ];
 const GOOGLE_QUAD_METRICS=[
+  {k:"_g_cpFirstOpen",lab:"신규 단가",dir:-1,fmt:v=>fmtWon(v),google:true},
+  {k:"_g_cpHome",lab:"홈 단가",dir:-1,fmt:v=>fmtWon(v),google:true},
   {k:"_g_interactionRate",lab:"상호작용률",dir:1,fmt:v=>fmtPct(v),google:true},
   {k:"_g_conversionRate",lab:"전환율",dir:1,fmt:v=>fmtPct(v),google:true},
-  {k:"_g_costPerConv",lab:"전환당 비용",dir:-1,fmt:v=>fmtWon(v),google:true},
+  {k:"_g_costPerConv",lab:"CPA",dir:-1,fmt:v=>fmtWon(v),google:true},
   {k:"_g_ROAS",lab:"ROAS",dir:1,fmt:v=>v.toFixed(1)+"×",google:true},
   {k:"_g_convValuePerConv",lab:"전환당 가치",dir:1,fmt:v=>fmtWon(v),google:true},
 ];
@@ -1617,7 +1665,7 @@ const AVAIL_MIN=0.10;
 function isAvail(ds,k){if(!ds||!ds.fieldAvail)return true;const v=ds.fieldAvail[k];return v==null||v>=AVAIL_MIN;}
 function quadMetricsFor(ds){const isG=ds.agg.some(e=>e._g_assetType);
   let base=QUAD_METRICS.filter(m=>(!m.conv||ds.L.hasConv)&&!(isG&&m.k==="활성 유저 eCPA"));
-  if(isG)base=base.concat(GOOGLE_QUAD_METRICS.map(m=>m.k==="_g_costPerConv"?{...m,lab:gCostLabel(ds.media)}:m));
+  if(isG)base=base.concat(GOOGLE_QUAD_METRICS);
   if(ds.agg.some(e=>e._m_ctype))base=base.concat(MOLOCO_QUAD_METRICS);
   return base.filter(m=>isAvail(ds,m.k));}
 let qX=null,qY=null,qDim=null; /* qDim: null=개별 소재, 아니면 tags 차원 키(fo/size/shape/nat/ve) */
@@ -1636,7 +1684,7 @@ function renderQuad(ds){const L=ds.L,svg=$("#quad");
   const pick=(prefs)=>{for(const p of prefs){if(mets.find(m=>m.k===p))return p;}return mets[0].k;};
   /* 기본 축: 가로 CTR · 세로 단가(eCPA 우선, 없으면 eCPI·전환당비용) */
   if(!qX||!mets.find(m=>m.k===qX))qX=pick(["CTR","_g_interactionRate","CPC","_g_ROAS"]);
-  if(!qY||!mets.find(m=>m.k===qY))qY=pick(["활성 유저 eCPA","eCPI","_g_costPerConv","CPC","CPM","_g_ROAS"].filter(k=>k!==qX));
+  if(!qY||!mets.find(m=>m.k===qY))qY=pick([(ds.agg.some(e=>e._g_assetType))?gPrimaryKey(ds.media):null,"활성 유저 eCPA","eCPI","_g_costPerConv","CPC","CPM","_g_ROAS"].filter(k=>k&&k!==qX));
   if(qX===qY){const other=mets.find(m=>m.k!==qX);if(other)qY=other.k;}
   const reset=()=>{qView={xlo:0,xhi:100,ylo:0,yhi:100};_qxRange&&_qxRange.paint();_qyRange&&_qyRange.paint();renderQuad(ds);};
   /* 보기(드롭다운): 개별 소재 또는 유형별 집계 — 소재/사이즈/서비스만(값 2종 이상 차원만) */
@@ -1654,6 +1702,9 @@ function renderQuad(ds){const L=ds.L,svg=$("#quad");
   const lbtn=$("#qLiveBtn");
   if(lbtn){lbtn.style.display=ds.liveWeek?"":"none";lbtn.classList.toggle("on",qLive);
     lbtn.onclick=()=>{qLive=!qLive;reset();};}
+  const hgrp=$("#qHomeGrp"),hbtn=$("#qHomeBtn");
+  if(hgrp)hgrp.style.display=(ds.media==="Google ACE")?"":"none";
+  if(hbtn){hbtn.classList.toggle("on",gHomeEff);hbtn.onclick=()=>{setGHomeEff(!gHomeEff);};}
   const fseg=$("#qFoSeg");
   if(fseg)fseg.querySelectorAll("button").forEach(b=>{const f=b.dataset.f;b.classList.toggle("on",qFoMap===f);
     b.onclick=()=>{qFoMap=(qFoMap===f?null:f);reset();};});
@@ -1783,6 +1834,8 @@ function typeAggRows(ds,dim){const a=ds.agg;
     _g_conversionRate:trimMet(arr,e=>e._g_conversionRate,e=>e._g_conversions||0,e=>e._g_interactions||0),
     _g_ROAS:trimMet(arr,e=>e._g_ROAS,e=>e._g_convValue||0,e=>e.비용),
     _g_costPerConv:trimMet(arr,e=>e._g_costPerConv,e=>e.비용,e=>e._g_conversions||0),
+    _g_cpFirstOpen:trimMet(arr,e=>e._g_cpFirstOpen,e=>e.비용,e=>e._g_firstOpen||0),
+    _g_cpHome:trimMet(arr,e=>e._g_cpHome,e=>e.비용,e=>e._g_home||0),
     _g_convValuePerConv:trimMet(arr,e=>e._g_convValuePerConv,e=>e._g_convValue||0,e=>e._g_allConv||0),
     "영상 완주율":trimMet(arr,e=>e["영상 완주율"],e=>e._vcrNum||0,e=>e._vcrDen||0),
     "신규+재활성 eCPA":trimMet(arr,e=>e["신규+재활성 eCPA"],e=>e.비용,e=>e["신규+재활성 유저 수"]||0)}));}
@@ -2355,16 +2408,21 @@ function tableCols(L,ds){const meta=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score
     {k:"클릭 수",t:"클릭",f:"int",help:"눌린 횟수",sub:1,grp:"clk"},
     {k:"CPC",t:"CPC",f:"won",help:"클릭당 비용 · 낮을수록 좋음",sub:1,grp:"clk"});
   if(isM)nums.push({k:"영상 완주율",t:"완주율",f:"pct",help:"영상을 끝까지 본 비율 (노출 가중 평균) · 높을수록 좋음",lead:1,grp:"vid"});
-  if(isG)nums.push(
-    {k:"_g_costPerConv",t:gCostLabel(ds&&ds.media),f:"won",help:gCostHelp(ds&&ds.media),lead:1,grp:"gcost"},
-    {k:"_g_ROAS",t:"ROAS",f:"num",help:"전환 가치÷비용 · 높을수록 좋음",lead:1,grp:"g"},
+  if(isG){const pk=gPrimaryKey(ds&&ds.media);
+    nums.push({k:pk,t:gCostLabel(ds&&ds.media),f:"won",help:gCostHelp(ds&&ds.media),lead:1,grp:"gcost"});
+    for(const c of [{k:"_g_cpFirstOpen",t:"신규 단가",h:"신규 유저(앱 최초 실행) 1인당 비용 · 낮을수록 좋음"},{k:"_g_costPerConv",t:"CPA",h:"모든 전환당 비용 = 비용÷전환수 · 낮을수록 좋음"},{k:"_g_cpHome",t:"홈 단가",h:"홈 도달 1건당 비용 = 비용÷home · 낮을수록 좋음"}])
+      if(c.k!==pk)nums.push({k:c.k,t:c.t,f:"won",help:c.h,sub:1,grp:"gcost"});
+    nums.push(
+    {k:"_g_firstOpen",t:"신규 실행",f:"int",help:"앱 최초 실행 = 신규 유저 획득 수",sub:1,grp:"g"},
+    {k:"_g_home",t:"홈 도달",f:"int",help:"홈 화면 도달 = 주요 인앱 액션 수",sub:1,grp:"g"},
+    {k:"_g_ROAS",t:"ROAS",f:"num",help:"전환 가치÷비용 · 참고용(모델링 값이라 채점 제외)",lead:1,grp:"g"},
     {k:"_g_conversionRate",t:"전환율",f:"pct",help:"전환÷상호작용 (Google 관례) · 높을수록 좋음",sub:1,grp:"g"},
-    {k:"_g_conversions",t:"전환",f:"int",help:"Google 전환 수",sub:1,grp:"g"},
+    {k:"_g_conversions",t:"전환",f:"int",help:"Google 전환 수(모든 인앱 액션)",sub:1,grp:"g"},
     {k:"_g_interactions",t:"상호작용",f:"int",help:"상호작용 총 수",sub:1,grp:"g"},
     {k:"_g_interactionRate",t:"상호작용률",f:"pct",help:"상호작용÷노출 · 높을수록 좋음",sub:1,grp:"g"},
     {k:"_g_allConv",t:"모든 전환",f:"int",help:"모든 전환 (전환 시간별)",sub:1,grp:"g"},
     {k:"_g_convValue",t:"전환 가치",f:"won",help:"모든 전환 가치 (KRW)",sub:1,grp:"g"},
-    {k:"_g_convValuePerConv",t:"전환당 가치",f:"won",help:"전환 가치÷모든 전환",sub:1,grp:"g"});
+    {k:"_g_convValuePerConv",t:"전환당 가치",f:"won",help:"전환 가치÷모든 전환",sub:1,grp:"g"});}
   const filtered=nums.filter(c=>isAvail(ds,c.k));
   return meta.concat(filtered);}
 function fcell(v,f){return f==="won"?fmtWon(v):f==="int"?fmtInt(v):f==="pct"?fmtPct(v):f==="num"?(v!=null&&isFinite(v)?v.toFixed(1)+"×":"–"):(v??"–");}
@@ -2382,7 +2440,7 @@ function buildAdGroupAgg(ds){
   for(const e of ds.agg){const id=e._g_adGroupId||e._m_group;if(!id)continue;
     let g=grp.get(id);if(!g){g={_g_adGroupId:e._g_adGroupId||null,_m_group:e._m_group||null,_g_campaignId:e._g_campaignId,name:e._m_group?id:(adGroupLabel(id)||("광고그룹 "+id)),tags:{},_isGroup:true,_members:[]};grp.set(id,g);}
     g._members.push(e);
-    for(const k of ["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue","_m_installs","신규+재활성 유저 수","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100"]){
+    for(const k of ["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue","_m_installs","신규+재활성 유저 수","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100"]){
       if(e[k]!=null){g[k]=(g[k]||0)+(+e[k]||0);}}}
   const rows=[...grp.values()].filter(g=>g._members.length>0);
   rows.forEach(g=>{
@@ -2401,6 +2459,8 @@ function buildAdGroupAgg(ds){
     g._g_interactionRate=isGg&&imp>0?(g._g_interactions||0)/imp:null;
     g._g_conversionRate=isGg&&(g._g_interactions||0)>0?(g._g_conversions||0)/g._g_interactions:null;
     g._g_costPerConv=isGg&&(g._g_conversions||0)>0?cost/g._g_conversions:null;
+    g._g_cpFirstOpen=isGg&&(g._g_firstOpen||0)>0?cost/g._g_firstOpen:null;
+    g._g_cpHome=isGg&&(g._g_home||0)>0?cost/g._g_home:null;
     g._g_ROAS=isGg&&cost>0?(g._g_convValue||0)/cost:null;
     g._g_convValuePerConv=isGg&&(g._g_conversions||0)>0&&(g._g_convValue||0)>0?g._g_convValue/g._g_conversions:null;
     const fos=new Set(g._members.map(m=>m.tags&&m.tags.fo).filter(Boolean));
@@ -2426,8 +2486,8 @@ function findRow(ds,name){
   if(ds.byName){const e=ds.byName.get(name);if(e)return e;}
   if(ds._aggGrpCache){const g=ds._aggGrpCache.find(x=>x.name===name);if(g)return g;}
   return ds.agg.find(x=>x.name===name);}
-const COL_DIR={"CPC":-1,"CPM":-1,"eCPI":-1,"활성 유저 eCPA":-1,"_g_costPerConv":-1,"신규+재활성 eCPA":-1,
-  "노출 수":1,"클릭 수":1,"어트리뷰션 수":1,"활성 유저 수":1,"CTR":1,"영상 완주율":1,"신규+재활성 유저 수":1,"_m_installs":1,"_g_ROAS":1,"_g_conversionRate":1,"_g_interactionRate":1,"_g_conversions":1,"_g_interactions":1,"_g_convValue":1,"_g_convValuePerConv":1,"_g_allConv":1};
+const COL_DIR={"CPC":-1,"CPM":-1,"eCPI":-1,"활성 유저 eCPA":-1,"_g_costPerConv":-1,"_g_cpFirstOpen":-1,"_g_cpHome":-1,"신규+재활성 eCPA":-1,
+  "노출 수":1,"클릭 수":1,"어트리뷰션 수":1,"활성 유저 수":1,"CTR":1,"영상 완주율":1,"신규+재활성 유저 수":1,"_m_installs":1,"_g_ROAS":1,"_g_conversionRate":1,"_g_interactionRate":1,"_g_conversions":1,"_g_interactions":1,"_g_convValue":1,"_g_convValuePerConv":1,"_g_allConv":1,"_g_firstOpen":1,"_g_home":1};
 function cellTier(v,sortedAll,dir){
   if(v==null||!sortedAll||sortedAll.length<5)return "m";
   const p=pctRank(sortedAll,v),g=dir<0?1-p:p;
@@ -2719,7 +2779,7 @@ function wireHoverThumbs(root){
     t.addEventListener("mouseleave",hideTip);});}
 
 /* glossary */
-const GLOSSARY=[["광고비","이 소재에 쓴 돈"],["노출","사용자에게 보여진 횟수"],["클릭","눌린 횟수"],["CTR","클릭률 = 클릭÷노출",1,"높을수록 좋음"],["CPC","클릭 1번당 비용",1,"낮을수록 좋음"],["설치","이 소재로 생긴 앱 설치 수(어트리뷰션)"],["eCPI","설치 1건당 비용 (구글 AEO에선 CPI)",1,"낮을수록 좋음"],["CPA","전환(인앱 액션) 1건당 비용 — 구글 ACE 획득단가",1,"낮을수록 좋음"],["활성 유저","설치 후 실제로 앱을 쓴 사람 (구글은 '인앱 액션' 값이 여기 담김)"],["eCPA","활성 유저 1명당 비용",1,"낮을수록 좋음"],["신규+재활성 eCPA","신규·복귀 유저 1명당 비용 — 몰로코·메타 채점 1순위",1,"낮을수록 좋음"],["완주율","영상을 끝까지 본 비율 (노출 가중 평균)",1,"높을수록 좋음"],["신규+재활성","신규 유저 + 휴면에서 돌아온 유저 수"],["설치(몰로코)","몰로코 리포트 자체 집계 설치 수 — MMP 어트리뷰션과 다를 수 있음"],["점수","효율(75%)+규모(20%)+통계신뢰(5%) 종합, 0~100 · 효율은 매체별 획득단가(신규+재활성 eCPA·CPI·CPA) 중심이고 ROAS는 점수 제외 · 백분위는 광고비 가중, 표본 적은 지표는 중앙으로 축소 · 만점 구조상 최상위도 80점대가 정상"],["학습중","집행 2주 미만 또는 전환 30건 미만 — 표본 축적 중이라 점수 변동 가능, 볼륨 확대 판단 보류 권장"]];
+const GLOSSARY=[["광고비","이 소재에 쓴 돈"],["노출","사용자에게 보여진 횟수"],["클릭","눌린 횟수"],["CTR","클릭률 = 클릭÷노출",1,"높을수록 좋음"],["CPC","클릭 1번당 비용",1,"낮을수록 좋음"],["설치","이 소재로 생긴 앱 설치 수(어트리뷰션)"],["eCPI","설치 1건당 비용",1,"낮을수록 좋음"],["CPA","전환(모든 인앱 액션) 1건당 비용 — 구글 ACE 기본 획득단가 = 비용÷전환수",1,"낮을수록 좋음"],["신규 단가","신규 유저(앱 최초 실행) 1명당 비용 — 구글 AEO 채점 1순위 = 비용÷first_open",1,"낮을수록 좋음"],["홈 단가","홈 도달 1건당 비용 — 구글 ACE '홈 기준' 토글 시 채점 = 비용÷home",1,"낮을수록 좋음"],["신규 실행","앱 최초 실행 = 새로 유입된 신규 유저 수 (구글 first_open)"],["홈 도달","홈 화면 도달 = 주요 인앱 액션 수 (구글 home)"],["활성 유저","설치 후 실제로 앱을 쓴 사람 (구글은 '인앱 액션' 값이 여기 담김)"],["eCPA","활성 유저 1명당 비용",1,"낮을수록 좋음"],["신규+재활성 eCPA","신규·복귀 유저 1명당 비용 — 몰로코·메타 채점 1순위",1,"낮을수록 좋음"],["완주율","영상을 끝까지 본 비율 (노출 가중 평균)",1,"높을수록 좋음"],["신규+재활성","신규 유저 + 휴면에서 돌아온 유저 수"],["설치(몰로코)","몰로코 리포트 자체 집계 설치 수 — MMP 어트리뷰션과 다를 수 있음"],["점수","효율(75%)+규모(20%)+통계신뢰(5%) 종합, 0~100 · 효율은 매체별 획득단가(신규+재활성 eCPA·CPI·CPA) 중심이고 ROAS는 점수 제외 · 백분위는 광고비 가중, 표본 적은 지표는 중앙으로 축소 · 만점 구조상 최상위도 80점대가 정상"],["학습중","집행 2주 미만 또는 전환 30건 미만 — 표본 축적 중이라 점수 변동 가능, 볼륨 확대 판단 보류 권장"]];
 function renderGlossary(){$("#glossGrid").innerHTML=GLOSSARY.map(g=>`<div><b>${g[0]}</b> — ${g[1]}${g[2]?`<span class="dir">${g[3]}</span>`:""}</div>`).join("");}
 $("#glossBtn").onclick=()=>$("#gloss").classList.add("show");
 $("#glossClose").onclick=()=>$("#gloss").classList.remove("show");
@@ -2806,9 +2866,10 @@ function googleSubChannel(channel,d){
   const nm=cid&&gNameMap&&gNameMap.campaign?gNameMap.campaign[cid]:null;
   if(nm){if(CAMP_ACE.test(nm))return "Google ACE";if(CAMP_AEO.test(nm))return "Google AEO";}
   return "Google";}
-/* 구글 하위 매체의 '단가' 라벨 — AEO=CPI(설치당), ACE=CPA(인앱액션당). 값은 둘 다 비용÷전환수(_g_costPerConv) */
-function gCostLabel(media){return media==="Google AEO"?"CPI":media==="Google ACE"?"CPA":"전환당 비용";}
-function gCostHelp(media){return media==="Google AEO"?"설치당 비용 = 비용÷설치(전환) · 낮을수록 좋음":media==="Google ACE"?"인앱액션당 비용 = 비용÷인앱액션(전환) · 낮을수록 좋음":"비용÷전환수 · 낮을수록 좋음";}
+/* 구글 하위 매체의 대표 '단가' 지표 — AEO=신규 단가(비용÷first_open), ACE=CPA(비용÷전환수) 또는 홈 단가(비용÷home, 토글) */
+function gPrimaryKey(media){return media==="Google AEO"?"_g_cpFirstOpen":media==="Google ACE"?(gHomeEff?"_g_cpHome":"_g_costPerConv"):"_g_costPerConv";}
+function gCostLabel(media){return media==="Google AEO"?"신규 단가":media==="Google ACE"?(gHomeEff?"홈 단가":"CPA"):"전환당 비용";}
+function gCostHelp(media){return media==="Google AEO"?"신규 유저(앱 최초 실행) 1인당 비용 = 비용÷first_open · 낮을수록 좋음":media==="Google ACE"?(gHomeEff?"홈 도달 1건당 비용 = 비용÷home · 낮을수록 좋음":"모든 전환당 비용 = 비용÷전환수 · 낮을수록 좋음"):"비용÷전환수 · 낮을수록 좋음";}
 function loadCloudRows(rows){
   resetAll();dsMode="channeled";setStandalone(false);
   const byCh=new Map();
@@ -3085,7 +3146,7 @@ function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)r
   el.innerHTML=chans.map(ch=>`<button data-m="${ch}" class="${ch===ds.media?"on":""}">${ch}<span class="c">${counts.get(ch).toLocaleString()}</span></button>`).join("");
   $$("#mseg button").forEach(b=>b.onclick=()=>{const m=b.dataset.m;if(ds.media===m)return;ds.media=m;tPage=1;show(ds);});}
 function show(ds){scope(ds);
-  renderMediaSeg(ds);renderPeriodSeg();renderViewSeg();renderSideKpis(ds);renderKeyrow(ds);
+  renderMediaSeg(ds);renderPeriodSeg();renderViewSeg();renderSideKpis(ds);renderKeyrow(ds);renderAutoInsight(ds);
   requestAnimationFrame(()=>{renderQuad(ds);renderQuadTierLegend();
     renderTrend(ds);
     requestAnimationFrame(()=>{renderTlegend();curDS=ds;renderQuickFo();renderTable(ds);renderAB(ds);});});}
@@ -3101,7 +3162,7 @@ function renderFooter(){$("#ft").innerHTML=`
   매체나 기간을 바꾸면 비교군이 바뀌므로 점수도 함께 달라집니다.</p>
   <div class="ft-formula">
     <b>점수 = 효율 75% + 규모 20% + 신뢰 5%</b> → 원점수를 비교군 내 위치로 0~100에 재배치<br>
-    &nbsp;&nbsp;<b>효율 75%</b> — <b>매체별 '획득 단가'가 1순위</b>(몰로코·메타 = 신규+재활성 eCPA · 구글 AEO = CPI · ACE = CPA), 여기에 CTR·CPM 등을 더해 계정의 돈 흐름 대비 얼마나 좋은가로 평가. <b>ROAS는 전환가치가 모델링 값이라 점수에서 제외</b>(표·지도엔 참고용). 매체별 지표·가중치는 아래 표<br>
+    &nbsp;&nbsp;<b>효율 75%</b> — <b>매체별 '획득 단가'가 1순위</b>(몰로코·메타 = 신규+재활성 eCPA · 구글 AEO = 신규 단가(비용÷first_open) · ACE = CPA, '홈 기준' 토글 시 홈 단가(비용÷home)), 여기에 CTR·CPM 등을 더해 계정의 돈 흐름 대비 얼마나 좋은가로 평가. <b>ROAS는 전환가치가 모델링 값이라 점수에서 제외</b>(표·지도엔 참고용). 매체별 지표·가중치는 아래 표<br>
     &nbsp;&nbsp;<b>규모 20%</b> — 노출량의 계정 내 순위. 많이 틀고도 효율을 지킨 소재가 진짜 강한 소재<br>
     &nbsp;&nbsp;<b>신뢰 5%</b> — 전환 표본량(30건이면 만점). 몇 건짜리 반짝 성과가 상위권을 차지하는 것을 방지<br>
     &nbsp;&nbsp;표본이 적은 지표는 백분위 자체도 중앙(50) 쪽으로 당겨 계산 — 상세의 <b>표본보정</b> 표기가 그 흔적
