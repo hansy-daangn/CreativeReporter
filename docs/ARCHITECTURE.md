@@ -47,7 +47,13 @@
 - **UNIQUE(channel, week_start, ad_name)** — 같은 매체·주차·소재는 한 번만. 재업로드 중복은 DB 레벨에서 무시된다.
 - **payload가 JSONB인 이유**: 매체마다 지표 스키마가 다르고(메타 ~14종, 몰로코 ~20종, 구글 ~15종) 새 지표가 계속 생긴다. 컬럼 분리 시 대부분 NULL인 25+ 컬럼과 지표 추가 때마다 DDL 변경이 필요해진다. 사이트는 행 전체를 통째로 읽어 브라우저에서 집계하므로 컬럼 단위 쿼리 이점도 없다. 식별·필터 키(channel/week_start/ad_name/업로더)는 정식 컬럼으로 분리되어 있고, 자주 보는 수치는 generated column으로 노출한다 — "쿼리는 컬럼, 내용물은 JSONB" 하이브리드.
 
-payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수, 활성 유저 수, 신규+재활성 유저 수, _m_installs, _vcrNum, _vcrDen(완주율 분자/분모), _v25~_v100(동영상 25/50/75/95/100% 구간별 재생수 — 있으면), _g_interactions, _g_trueViews, _g_conversions, _g_allConv, _g_convValue` + 문자열 `_m_url, _m_ctype, _m_res, _m_group, _g_assetStatus, _g_assetType, _g_status, _g_level, _g_url, _g_assetId, _g_adGroupId, _g_campaignId`
+payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수, 활성 유저 수, 신규+재활성 유저 수, _m_installs, _vcrNum, _vcrDen(완주율 분자/분모), _v25~_v100(동영상 25/50/75/95/100% 구간별 재생수 — 있으면), _g_interactions, _g_trueViews, _g_conversions, _g_allConv, _g_convValue` + **유저 질(AF 코호트)** `_q_retD1Base/_q_retD1Users, _q_retD7Base/_q_retD7Users(D1·D7 잔존 코호트 분모/분자), _q_revD0/_q_revD7(코호트 매출 KRW), _q_afInstalls(AF 신규 설치), _q_reAtt(재어트리뷰션), _q_reEng(재참여)` + 문자열 `_m_url, _m_ctype, _m_res, _m_group, _q_campaign, _g_assetStatus, _g_assetType, _g_status, _g_level, _g_url, _g_assetId, _g_adGroupId, _g_campaignId`
+
+### 유저 질(AF 코호트) 데이터 — 주간 통합 소재 리포트
+- **출처**: 수퍼셋 크리에이티브 대시보드 dataset 내보내기(`week_start,channel,creative_name,…,cost_krw,…,ret_d1_*,cohort_revenue_*,af_installs,re_engagements,video_play_*`). 몰로코(`moloco_int`)+메타(`Facebook Ads`)가 한 파일.
+- **자동 반영**: 사이트가 이 형식을 자동 감지(`isQualityExport`)해 채널별로 분리 파싱(`parseQualityExport`) → 누적·저장. 관리자가 파일만 떨어뜨리면 됨. ₩1,500 미만 행 제외, 파생지표(잔존율=Users/Base, ROAS D7=revD7/비용)는 로드 시 재계산.
+- **활용**: 표 '질' 컬럼 그룹(D1/D7 잔존·ROAS D7·신규 설치(단가)·재참여(단가)) · 효율지도 축 · 상세 '유저 질' 탭(잔존 vs 중앙값·주차 추이·코호트 매출·유입 구성·표본 신뢰) · **채점: 몰로코·메타 스펙에 D1 잔존율 12%**(SPEC_EVIDENCE den=retD1Base·n0=150, 데이터 없는 매체는 가용성 게이트로 자동 제외) · 자동 해석 '유저 질 최고' 라인.
+- 2026-07-10 일괄 마이그레이션: 몰로코 11,357 + 메타 863행 업서트(주간 최신 2026-06-29 포함, 백업 `weekly_creative_stats_mm_bak_20260710`).
 
 ### cr_kv — 보조 저장소 (k, v jsonb, updated_at, updated_by)
 | 키 | 내용 | 채워지는 경로 |
