@@ -441,6 +441,12 @@
   .isle-frame video{width:100%;height:100%;object-fit:contain;display:block;background:#141410;border-radius:12px}
   .isle-frame .asset-yt{width:100%;height:100%;border:0}
   .isle-frame .asset-err{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:11px;color:var(--muted)}
+  .meta-pv-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;width:100%;height:100%;padding:20px;box-sizing:border-box;text-decoration:none;text-align:center;background:linear-gradient(160deg,#EEF3FF,#E4ECFA);color:var(--ink);transition:background .12s}
+  .meta-pv-card:hover{background:linear-gradient(160deg,#E4ECFF,#D8E4F8)}
+  .meta-pv-emo{font-size:34px;line-height:1}
+  .meta-pv-t{font-size:14px;font-weight:800;color:#1b4bd8}
+  .meta-pv-s{font-size:11px;color:var(--muted);font-weight:600;max-width:210px;line-height:1.4}
+  .tthumb.meta-th{background:#1b3a8f;color:#fff;font-size:10px;font-weight:800;letter-spacing:.3px;cursor:default}
   @media(max-width:1200px){.isle-row3{gap:20px}
     .isle-row3,.isle.ar-v .isle-row3{grid-template-columns:260px minmax(0,1fr) minmax(0,1.25fr)}
     .isle.ar-h .isle-row3{grid-template-columns:320px minmax(0,1fr) minmax(0,1.15fr)}}
@@ -896,6 +902,7 @@ function placeTip(x,y){const w=tip.offsetWidth,ht=tip.offsetHeight;let nx=x+14,n
 function showTip(h,x,y,big){tip.innerHTML=h;tip.classList.toggle("big",!!big);tip.style.opacity=1;placeTip(x,y);}
 function hideTip(){tip.style.opacity=0;tip.classList.remove("big");tip.innerHTML="";}
 function isVideoUrl(u){return /\.(mp4|webm|mov)(\?|$)/i.test(String(u||""));}
+function isAdManagerUrl(u){return /(?:adsmanager|business)\.facebook\.com|facebook\.com\/adsmanager/i.test(String(u||""));}
 function isImageUrl(u){return /simgad|googlesyndication\.com|\.(png|jpe?g|gif|webp)(\?|$)/i.test(String(u||""));}
 /* 이미지 로딩 복구 — 광고차단 DNS/확장이 광고 CDN(googlesyndication·adsmoloco)을 연결 거부시키는
    환경 대응. 실패하면 대기 없이 즉시 이미지 프록시(wsrv.nl)로 우회하고, 프록시로 성공한 세션은
@@ -1134,7 +1141,10 @@ function parseGroupReport(text){
 /* Moloco creative report — ad_name + creative_type/resolution/creative_preview(CDN 링크) 형식 자동 감지.
    creative_group_name은 레벨 컬럼이 아니라 소재의 소속 그룹 속성으로 취급해 소재(ad) 레벨로 분석한다. */
 function isMolocoReport(h){const s=new Set(h);
-  return s.has("creative_preview")||s.has("설치 수(몰로코)")||(s.has("ad_name")&&s.has("creative_type"));}
+  if(s.has("creative_type")||s.has("설치 수(몰로코)"))return true;
+  /* creative_preview 컬럼은 메타 내보내기(광고관리자 링크)에도 있으므로, 메타 지표가 함께 있으면 몰로코로 보지 않는다 */
+  const metaish=s.has("어트리뷰션 수")||s.has("활성 유저 수")||s.has("신규+재활성 유저 수")||s.has("eCPI");
+  return s.has("creative_preview")&&!metaish;}
 function prepMoloco(r){
   const kind=dateKindOf(r.data.map(o=>o.date)).kind;
   const data=r.data.map(o=>{
@@ -1942,6 +1952,9 @@ function assetPreview(url,ent){if(!url)return "";
   if(isImageUrl(url)){
     const note=(ent&&ent.tags&&ent.tags.fo==="영상")?"영상 소재의 썸네일":"";
     return `<div class="isle-frame"><img class="asset-img" src="${imgSrc(url)}" data-osrc="${escAttr(url)}" alt="asset" referrerpolicy="no-referrer" loading="lazy" onload="imgOk(this);isleAr(this)" onerror="imgRetry(this)"><div class="asset-err" hidden>미리보기를 불러오지 못했습니다 <button class="mini" onclick="const w=this.closest('.isle-frame'),i=w.querySelector('img');this.parentNode.hidden=true;i.hidden=false;i.dataset.rt=0;const s=i.dataset.osrc||i.src;i.src=s+(s.includes('?')?'&':'?')+'rt='+Date.now()">다시 시도</button></div></div>${srcLine(note)}`;}
+  /* 메타 등: 미디어 URL이 아니라 광고관리자 링크뿐인 소재 — 실제 이미지/영상 대신 '광고관리자에서 보기' 카드로 미리보기 슬롯을 제공(열람은 로그인 필요) */
+  if(isAdManagerUrl(url)){const emo=(typeof entTypeEmoji==="function")?entTypeEmoji(ent):"📊";const ty=(ent&&ent.tags&&ent.tags.fo)||"소재";
+    return `<div class="isle-frame"><a class="meta-pv-card" href="${url}" target="_blank" rel="noopener"><span class="meta-pv-emo">${emo}</span><span class="meta-pv-t">Meta 광고관리자에서 보기</span><span class="meta-pv-s">${ty} · 새 탭에서 열려요 (로그인 필요)</span></a></div>${srcLine("광고관리자 링크")}`;}
   return "";}
 function thumbHTML(e){const url=previewUrlOf(e);if(!url)return "";
   const vidMark=e.tags&&e.tags.fo==="영상";
@@ -1949,6 +1962,7 @@ function thumbHTML(e){const url=previewUrlOf(e);if(!url)return "";
   if(yt){const tu=`https://img.youtube.com/vi/${yt[1]}/default.jpg`;return `<span class="tthumb" data-purl="${escAttr(url)}"><img src="${imgSrc(tu)}" data-osrc="${tu}" loading="lazy" referrerpolicy="no-referrer" onload="imgOk(this)" onerror="imgRetry(this)"><span class="vb">▶</span></span>`;}
   if(isImageUrl(url))return `<span class="tthumb" data-purl="${escAttr(url)}"><img src="${imgSrc(url)}" data-osrc="${escAttr(url)}" loading="lazy" referrerpolicy="no-referrer" onload="imgOk(this)" onerror="imgRetry(this)">${vidMark?'<span class="vb">▶</span>':""}</span>`;
   if(isVideoUrl(url))return `<span class="tthumb ph" data-purl="${escAttr(url)}" title="올려서 미리보기 · 행 클릭 → 재생">▶</span>`;
+  if(isAdManagerUrl(url))return `<span class="tthumb ph meta-th" title="Meta 광고관리자에서 보기 — 소재 상세에서 링크가 열립니다">Meta</span>`;
   return "";}
 function assetShortType(t){if(!t)return "";const s=String(t);
   if(/동영상|video/i.test(s))return "영상";
