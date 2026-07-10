@@ -10,7 +10,6 @@ https://hansy-daangn.github.io/CreativeReporter/
 
 - 첫 화면에서 비밀번호 입력 → 클라우드(Supabase)에 쌓인 주간 성과 로드
 - 파일명이 `meta_` · `moloco_` · `google_` 로 시작하는 **주간** 리포트만 저장소에 누적 (월간·일간·매체 미상은 임시 분석만)
-- 아무 곳에서나 `/hansy` + Enter → 이 기기의 업로드에 서명 (`/logout` 해제)
 
 ## 지원 리포트
 
