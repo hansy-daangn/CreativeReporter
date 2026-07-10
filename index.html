@@ -2849,9 +2849,14 @@ async function sbRpc(fn,body,opt){
 /* 저장 페이로드: (매체, 주 시작일, 소재) 그레인으로 원본 수치 합산 — 파생 지표는 로드시 재계산 */
 const SAVE_NUM_KEYS=["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수","_m_installs","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100","_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue"];
 const SAVE_STR_KEYS=["_m_url","_m_ctype","_m_res","_m_group","_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_adGroupId","_g_campaignId"];
+const ACE_MARK="​"; /* 같은 확장소재 URL이 AEO·ACE 캠페인에 함께 쓰이면 DB UNIQUE(채널,주,이름)가 한 행으로 붕괴돼
+   지표가 섞이고 한쪽 서브채널로만 귀속된다. 마이그레이션과 동일하게 ACE 행 ad_name 끝에 zero-width space를
+   붙여 두 유형을 별개 행으로 저장(로드 시 _g_campaignId로 AEO/ACE 분리, _g_url은 깨끗해 미리보기 영향 없음). */
 function buildSaveRows(data,channel){const map=new Map();
-  for(const r of data){const nm=String(r.ad_name||"").trim(),wk=String(r.date||"").slice(0,10);
+  for(const r of data){let nm=String(r.ad_name||"").trim();const wk=String(r.date||"").slice(0,10);
     if(!nm||!/^\d{4}-\d{2}-\d{2}$/.test(wk))continue;
+    /* 구글 ACE면 마커를 붙여 AEO와 합쳐지지 않게(이미 붙어 있으면 중복 방지) */
+    if(channel==="Google"&&googleSubChannel(channel,r)==="Google ACE"&&!nm.endsWith(ACE_MARK))nm+=ACE_MARK;
     const key=wk+"|"+nm;let e=map.get(key);
     if(!e){e={channel,week_start:wk,ad_name:nm,payload:{}};map.set(key,e);}
     const p=e.payload;
@@ -3476,8 +3481,11 @@ function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(
     const gTxt=forceTags.length?`✓ ${forceTags.map(t=>t==="Google"?"Google Ads":t).join(" · ")} 리포트 인식했어요 · `:"";
     const cf=costFiltered>0?` · 소액 기록 ${costFiltered.toLocaleString()}건은 뺐어요(소재·주 합산 ₩1,500 미만)`:"";
     toast(`${gTxt}${notes.join(" · ")}${cf}${failed.length?` · ${failed.length}건은 건너뛰었어요`:""}`);
-    /* 임시 분석 화면에서 규격 파일로 복귀한 경우: 저장 완료 후 저장소 전체를 자동으로 다시 불러온다 */
-    cloudSaveAll(saveJobs,[],{reloadAfter:conf.length>0&&fromStandalone&&!!cloudPw});
+    /* 저장 후 저장소 전체 자동 재로드: 임시분석 복귀 시 + 구글 업로드 시(항상).
+       구글은 인앱 ingest가 AEO/ACE로 분리하지 못해 미분할 'Google' 유령 채널이 생기므로,
+       재로드해 loadCloudRows가 _g_campaignId로 다시 분리하게 한다(유령 채널 제거). */
+    const _hasGoogleJob=saveJobs.some(j=>j.ch==="Google");
+    cloudSaveAll(saveJobs,[],{reloadAfter:((conf.length>0&&fromStandalone)||_hasGoogleJob)&&!!cloudPw});
   }
   arr.forEach(f=>{const rd=new FileReader();
     rd.onload=()=>{const raw=rd.result;
