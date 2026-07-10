@@ -1376,21 +1376,33 @@ function isGoogleDs(a){return a&&a.length&&a.some(e=>e._g_assetType);}
    Aligned with Google Ads Quality Score dimensions and Meta Ad Relevance Diagnostics */
 const SCORING={
   EFF_W:0.75, REACH_W:0.20, CONF_W:0.05, MIN_CONV_FOR_FULL_CONF:30,
-  google:[
-    {k:"_g_ROAS",w:0.35,dir:1,lab:"ROAS"},
-    {k:"_g_costPerConv",w:0.20,dir:-1,lab:"전환당 비용"},
-    {k:"_g_conversionRate",w:0.15,dir:1,lab:"전환율"},
-    {k:"CTR",w:0.15,dir:1,lab:"CTR"},
-    {k:"CPM",w:0.15,dir:-1,lab:"CPM"},
+  /* 목적 = 신규/복귀 유저를 효율적으로 데려오는 소재 → 매체별 '획득 단가'가 1순위. ROAS는 전환가치가
+     모델링 값이라 점수에서 제외(표·지도엔 참고용으로만 남김). */
+  google_aeo:[ /* 구글 AEO(신규) — CPI(설치당 비용=eCPI) 중심 */
+    {k:"eCPI",w:0.50,dir:-1,lab:"CPI"},
+    {k:"CTR",w:0.22,dir:1,lab:"CTR"},
+    {k:"_g_conversionRate",w:0.16,dir:1,lab:"전환율"},
+    {k:"CPM",w:0.12,dir:-1,lab:"CPM"},
   ],
-  ad:[
-    {k:"eCPI",w:0.26,dir:-1,lab:"eCPI"},
-    {k:"활성 유저 eCPA",w:0.20,dir:-1,lab:"활성 eCPA"},
-    {k:"CTR",w:0.16,dir:1,lab:"CTR"},
-    {k:"신규+재활성 eCPA",w:0.12,dir:-1,lab:"신규 eCPA"},
-    {k:"CPM",w:0.10,dir:-1,lab:"CPM"},
+  google_ace:[ /* 구글 ACE(리타겟팅) — CPA(인앱액션당 비용) 중심 */
+    {k:"_g_costPerConv",w:0.50,dir:-1,lab:"CPA"},
+    {k:"CTR",w:0.22,dir:1,lab:"CTR"},
+    {k:"_g_conversionRate",w:0.16,dir:1,lab:"전환율"},
+    {k:"CPM",w:0.12,dir:-1,lab:"CPM"},
+  ],
+  google:[ /* 유형 미상 구글 — CPA 중심 폴백 */
+    {k:"_g_costPerConv",w:0.46,dir:-1,lab:"전환당 비용"},
+    {k:"CTR",w:0.22,dir:1,lab:"CTR"},
+    {k:"_g_conversionRate",w:0.18,dir:1,lab:"전환율"},
+    {k:"CPM",w:0.14,dir:-1,lab:"CPM"},
+  ],
+  ad:[ /* 몰로코·메타 — 신규+재활성 eCPA(신규/복귀 1인당 비용) 중심 */
+    {k:"신규+재활성 eCPA",w:0.40,dir:-1,lab:"신규+재활성 eCPA"},
+    {k:"활성 유저 eCPA",w:0.22,dir:-1,lab:"활성 eCPA"},
+    {k:"CTR",w:0.18,dir:1,lab:"CTR"},
+    {k:"eCPI",w:0.06,dir:-1,lab:"eCPI"},
     {k:"영상 완주율",w:0.08,dir:1,lab:"완주율",videoOnly:true},
-    {k:"CPC",w:0.08,dir:-1,lab:"CPC"},
+    {k:"CPM",w:0.06,dir:-1,lab:"CPM"},
   ],
   adset:[
     {k:"활성 유저 eCPA",w:0.35,dir:-1,lab:"활성 eCPA"},
@@ -1406,7 +1418,7 @@ const SCORING={
   ],
 };
 function specsFor(ds){const a=ds.agg,isG=isGoogleDs(a);
-  const key=isG?"google":(ds.L.key||"ad");
+  const key=isG?(ds.media==="Google AEO"?"google_aeo":ds.media==="Google ACE"?"google_ace":"google"):(ds.L.key||"ad");
   const isVideo=a.some(e=>(e._g_assetType&&/동영상|video/i.test(e._g_assetType))||(e._m_ctype&&e._m_ctype.includes("VIDEO")));
   return SCORING[key].filter(s=>!s.videoOnly||isVideo).map(s=>({...s}));}
 /* 지표별 증거량(표본) — 백분위를 g'=0.5+(g−0.5)·n/(n+n₀)로 축소해
@@ -1589,8 +1601,9 @@ const MOLOCO_QUAD_METRICS=[
 ];
 const AVAIL_MIN=0.10;
 function isAvail(ds,k){if(!ds||!ds.fieldAvail)return true;const v=ds.fieldAvail[k];return v==null||v>=AVAIL_MIN;}
-function quadMetricsFor(ds){let base=QUAD_METRICS.filter(m=>!m.conv||ds.L.hasConv);
-  if(ds.agg.some(e=>e._g_assetType))base=base.concat(GOOGLE_QUAD_METRICS.map(m=>m.k==="_g_costPerConv"?{...m,lab:gCostLabel(ds.media)}:m));
+function quadMetricsFor(ds){const isG=ds.agg.some(e=>e._g_assetType);
+  let base=QUAD_METRICS.filter(m=>(!m.conv||ds.L.hasConv)&&!(isG&&m.k==="활성 유저 eCPA"));
+  if(isG)base=base.concat(GOOGLE_QUAD_METRICS.map(m=>m.k==="_g_costPerConv"?{...m,lab:gCostLabel(ds.media)}:m));
   if(ds.agg.some(e=>e._m_ctype))base=base.concat(MOLOCO_QUAD_METRICS);
   return base.filter(m=>isAvail(ds,m.k));}
 let qX=null,qY=null,qDim=null; /* qDim: null=개별 소재, 아니면 tags 차원 키(fo/size/shape/nat/ve) */
@@ -2309,11 +2322,13 @@ function tableCols(L,ds){const meta=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score
     {k:"노출 수",t:"노출",f:"int",help:"보여진 횟수 (도달 규모)",sub:1,grp:"vol"},
     {k:"CPM",t:"CPM",f:"won",help:"노출 1,000회당 비용 · 낮을수록 좋음",sub:1,grp:"vol"}];
   if(L.hasConv)nums.push(
-    {k:"eCPI",t:"eCPI",f:"won",help:"설치 1건당 비용 · 낮을수록 좋음",lead:1,grp:"inst"},
+    {k:"eCPI",t:isG?"CPI":"eCPI",f:"won",help:"설치 1건당 비용 · 낮을수록 좋음",lead:1,grp:"inst"},
     {k:"어트리뷰션 수",t:"설치",f:"int",help:"이 항목으로 생긴 앱 설치 수",sub:1,grp:"inst"},
     ...(isM?[{k:"_m_installs",t:"설치(몰로코)",f:"int",help:"몰로코 리포트 기준 설치 수 — MMP 어트리뷰션과 다를 수 있음",sub:1,grp:"inst"}]:[]),
-    {k:"활성 유저 eCPA",t:"eCPA",f:"won",help:"활성유저 1명당 비용 · 낮을수록 좋음",lead:1,grp:"act"},
-    {k:"활성 유저 수",t:"활성유저",f:"int",help:"설치 후 실제 사용자",sub:1,grp:"act"},
+    /* 구글은 '활성 유저'가 실제로는 인앱 액션(=전환)이라 CPA·전환 컬럼과 중복 → 일반 활성/eCPA 컬럼은 몰로코·메타에만 */
+    ...(isG?[]:[
+      {k:"활성 유저 eCPA",t:"eCPA",f:"won",help:"활성유저 1명당 비용 · 낮을수록 좋음",lead:1,grp:"act"},
+      {k:"활성 유저 수",t:"활성유저",f:"int",help:"설치 후 실제 사용자",sub:1,grp:"act"}]),
     ...(isM?[
       {k:"신규+재활성 유저 수",t:"신규+재활성",f:"int",help:"신규 + 휴면 복귀 유저 수",sub:1,grp:"act"},
       {k:"신규+재활성 eCPA",t:"신규 eCPA",f:"won",help:"신규+재활성 유저 1명당 비용 · 낮을수록 좋음",sub:1,grp:"act"}]:[]));
@@ -3119,29 +3134,29 @@ function renderFooter(){$("#ft").innerHTML=`
 
 <details>
   <summary>매체·레벨별 효율(E) 지표 가중치</summary>
-  <h4>Google Ads (자산 리포트 · 반응형 디스플레이/영상)</h4>
+  <h4>Google Ads — AEO(신규)·ACE(리타겟팅) 분리 · 획득단가 중심</h4>
+  <p>목적(신규/복귀 유저 획득)에 맞춰 <b>획득 단가</b>를 1순위로 둔다. <b>ROAS는 전환가치가 모델링 값(실매출·유저 수 아님)이라 점수에서 제외</b> — 표·지도엔 참고용으로만 남긴다.</p>
   <table class="ft-tbl">
-    <thead><tr><th>지표</th><th class="n">가중치</th><th>방향</th><th>근거</th></tr></thead>
+    <thead><tr><th>지표</th><th class="n">AEO</th><th class="n">ACE</th><th>방향</th><th>근거</th></tr></thead>
     <tbody>
-      <tr><td>ROAS (전환값 ÷ 비용)</td><td class="n">35%</td><td>↑ 높을수록</td><td>매출 기반 광고의 최상위 KPI (Google Ads Value-based Bidding)</td></tr>
-      <tr><td>전환당 비용 (Cost/Conv)</td><td class="n">20%</td><td>↓ 낮을수록</td><td>Target CPA 자동입찰의 최적화 대상</td></tr>
-      <tr><td>전환율 (Conv Rate)</td><td class="n">15%</td><td>↑ 높을수록</td><td>Ad Relevance Diagnostics의 <i>Conversion Rate Ranking</i></td></tr>
-      <tr><td>CTR</td><td class="n">15%</td><td>↑ 높을수록</td><td>Quality Score의 <i>Expected CTR</i> 구성요소</td></tr>
-      <tr><td>CPM</td><td class="n">15%</td><td>↓ 낮을수록</td><td>노출 도달 효율 — 소재 품질이 낮으면 CPM 상승</td></tr>
+      <tr><td><b>CPI</b>(설치당, AEO) · <b>CPA</b>(인앱액션당, ACE)</td><td class="n">50%</td><td class="n">50%</td><td>↓ 낮을수록</td><td>캠페인 목표 획득단가 — Target CPI/CPA 자동입찰 최적화 대상</td></tr>
+      <tr><td>CTR</td><td class="n">22%</td><td class="n">22%</td><td>↑ 높을수록</td><td>Quality Score의 <i>Expected CTR</i></td></tr>
+      <tr><td>전환율 (Conv Rate)</td><td class="n">16%</td><td class="n">16%</td><td>↑ 높을수록</td><td>상호작용 → 전환 전환력</td></tr>
+      <tr><td>CPM</td><td class="n">12%</td><td class="n">12%</td><td>↓ 낮을수록</td><td>노출 도달 효율 — 소재 품질이 낮으면 CPM 상승</td></tr>
     </tbody>
   </table>
 
-  <h4>Ad(광고) 레벨 · MMP/앱 광고 (예: 몰로코, 메타 앱 인스톨)</h4>
+  <h4>Ad(광고) 레벨 · MMP/앱 광고 (몰로코·메타) — 신규/복귀 획득단가 중심</h4>
+  <p>목적(신규/복귀 유저 획득)에 맞춰 <b>신규+재활성 eCPA(신규·복귀 1인당 비용)</b>를 1순위로 둔다.</p>
   <table class="ft-tbl">
     <thead><tr><th>지표</th><th class="n">가중치</th><th>방향</th><th>근거</th></tr></thead>
     <tbody>
-      <tr><td>eCPI (Cost per Install)</td><td class="n">26%</td><td>↓ 낮을수록</td><td>UA(User Acquisition) 표준 KPI</td></tr>
-      <tr><td>활성 유저 eCPA</td><td class="n">20%</td><td>↓ 낮을수록</td><td>Active user 기준 CPA — 진성 유입 지표</td></tr>
-      <tr><td>CTR</td><td class="n">16%</td><td>↑ 높을수록</td><td>Meta Ad Relevance의 <i>Engagement Rate Ranking</i></td></tr>
-      <tr><td>신규+재활성 eCPA</td><td class="n">12%</td><td>↓ 낮을수록</td><td>신규·복귀 유저당 비용 — 몰로코 리포트 제공 시</td></tr>
-      <tr><td>CPM</td><td class="n">10%</td><td>↓ 낮을수록</td><td>Meta의 <i>Quality Ranking</i>과 상관 — 저품질 시 CPM 상승</td></tr>
-      <tr><td>영상 완주율 (VCR)</td><td class="n">8%</td><td>↑ 높을수록</td><td>영상 소재 한정 — 크리에이티브 주목도 신호 (몰로코 제공 시)</td></tr>
-      <tr><td>CPC</td><td class="n">8%</td><td>↓ 낮을수록</td><td>클릭 단가 — 클릭 유도 효율</td></tr>
+      <tr><td><b>신규+재활성 eCPA</b></td><td class="n">40%</td><td>↓ 낮을수록</td><td>신규·복귀 유저 1인당 비용 — 목적에 가장 직결</td></tr>
+      <tr><td>활성 유저 eCPA</td><td class="n">22%</td><td>↓ 낮을수록</td><td>전체 활성 유저 기준 CPA — 진성 유입 지표</td></tr>
+      <tr><td>CTR</td><td class="n">18%</td><td>↑ 높을수록</td><td>Meta Ad Relevance의 <i>Engagement Rate Ranking</i> — 창의성/후킹</td></tr>
+      <tr><td>영상 완주율 (VCR)</td><td class="n">8%</td><td>↑ 높을수록</td><td>영상 소재 한정 — 크리에이티브 주목도 (몰로코 제공 시)</td></tr>
+      <tr><td>eCPI (Cost per Install)</td><td class="n">6%</td><td>↓ 낮을수록</td><td>설치 단가 — 신규 획득의 상위 보조 지표</td></tr>
+      <tr><td>CPM</td><td class="n">6%</td><td>↓ 낮을수록</td><td>Meta의 <i>Quality Ranking</i>과 상관 — 저품질 시 CPM 상승</td></tr>
     </tbody>
   </table>
   <p>리포트에 없는 지표(예: 완주율·신규 eCPA가 없는 매체)는 자동 제외되며, 남은 지표의 가중치가 재정규화됩니다.</p>
