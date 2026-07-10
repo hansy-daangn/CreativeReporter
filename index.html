@@ -924,7 +924,7 @@ function imgOk(img){if(String(img.src).indexOf("wsrv.nl/")>-1&&(+img.dataset.rt|
    이미지=이미 뜨는 썸네일 onload의 naturalWidth · 영상=상세 재생 metadata + 지연·스로틀 백그라운드 metadata.
    기기 localStorage에 저장(서버 무접촉). 추가 네트워크는 최소·백그라운드라 접속 렉 없음, 값은 디코드된 원본에서 읽어 정확. ── */
 let MDIM={}; try{MDIM=JSON.parse(localStorage.getItem("cr_mdim")||"{}")||{};}catch(_){MDIM={};}
-let _mdimSaveT=null,_mdimApplyT=null;
+let _mdimSaveT=null,_mdimApplyT=null,_mdimDeferred=false;
 function _mdimSave(){try{localStorage.setItem("cr_mdim",JSON.stringify(MDIM));}catch(_){}}
 function mdimSet(url,w,h,dur){
   if(!url)return;w=Math.round(w||0);h=Math.round(h||0);
@@ -949,7 +949,18 @@ function mdimApply(){
   for(const k in DATASETS){const ds=DATASETS[k];scan(ds.aggAll);if(ds.aggByChannel)for(const v of ds.aggByChannel.values())scan(v.aggAll);}
   if(curDS)scan(curDS.agg); /* 기간 필터 시 ds.agg는 재집계본이라 별도 반영 */
   if(!changed||!curDS)return;
+  /* 상세(isle)가 열려 있으면 표를 다시 그리지 않는다 — 실측 치수 도착으로 인한 표 재렌더가
+     열린 상세를 닫거나 깜빡이게 하던 근본 원인. 열린 상세의 치수/재생시간만 제자리 갱신하고,
+     사이즈 칩 반영은 상세를 닫을 때 한 번 처리(_mdimDeferred). 데이터의 tags는 이미 위에서 갱신됨. */
+  if(ISLE.name){_mdimDeferred=true;refreshIsleDim();return;}
   if(mainTab==="table")renderTable(curDS); else if(mainTab==="analysis")renderQuad(curDS);}
+/* 열린 상세 미리보기의 실측 치수·재생시간 표시를 MDIM 캐시로 제자리 갱신(표 재렌더 없이) */
+function refreshIsleDim(){
+  if(!ISLE.name||!curDS)return;
+  const e=findRow(curDS,ISLE.name);if(!e||e._isGroup)return;
+  const url=previewUrlOf(e),d=url&&MDIM[url];if(!d)return;
+  const el=document.querySelector(".isle .asset-dim");if(!el)return;
+  el.textContent=[d.w&&d.h?`${d.w}×${d.h}`:"",d.dur?`⏱ ${fmtDur(d.dur)}`:""].filter(Boolean).join(" · ");}
 function fmtDur(s){s=Math.round(s||0);if(!s)return"";return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
 /* 직접 영상 URL 소재의 metadata를 지연·스로틀(동시 2·상한 240)로 백그라운드 수집 — 접속 직후 아님 */
 let _mdimVidRan=false;
@@ -2008,7 +2019,7 @@ function assetPreview(url,ent){if(!url)return "";
   /* 미리보기 실측 캐시로 해상도·재생시간 표시 */
   const dm=(typeof MDIM!=="undefined")&&MDIM[url];
   const dimTxt=[dm&&dm.w&&dm.h?`${dm.w}×${dm.h}`:"",dm&&dm.dur?`⏱ ${fmtDur(dm.dur)}`:""].filter(Boolean).join(" · ");
-  const dimLine=dimTxt?`<span class="asset-dim">${dimTxt}</span>`:"";
+  const dimLine=`<span class="asset-dim">${dimTxt}</span>`; /* 값이 비어도 스팬 유지 — 실측 도착 시 제자리 갱신용 */
   const srcLine=(note)=>`<div class="asset-src">${ocrM}${dimLine}${note?escHtml(note)+" · ":""}<a href="${escAttr(safeUrl(url))}" target="_blank" rel="noopener">${escHtml(trunc(url,60))}</a></div>`;
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
   if(yt)return `<div class="isle-frame"><iframe class="asset-yt" src="https://www.youtube.com/embed/${yt[1]}" frameborder="0" allow="encrypted-media" allowfullscreen></iframe></div>${srcLine()}`;
@@ -2384,7 +2395,10 @@ function navIsland(delta){if(!curDS)return;
     (document.querySelector(".isle-row")||tr).scrollIntoView({behavior:"smooth",block:"center"});});}
 function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-row");const wasOpen=ISLE.name===name;
   if(existing)existing.remove();$$("#table tbody tr.exp").forEach(t=>t.classList.remove("exp"));
-  if(wasOpen){ISLE.name=null;try{history.replaceState(null,"",location.pathname+location.search);}catch(_){}return;}
+  if(wasOpen){ISLE.name=null;try{history.replaceState(null,"",location.pathname+location.search);}catch(_){}
+    /* 상세가 열려 있는 동안 실측 치수가 도착해 미룬 표 갱신이 있으면, 닫는 시점에 한 번 반영(사이즈 칩) */
+    if(_mdimDeferred){_mdimDeferred=false;if(curDS&&mainTab==="table")renderTable(curDS);}
+    return;}
   const e=findRow(ds,name);if(!e)return;ISLE.name=name;
   try{history.replaceState(null,"","#ad="+encodeURIComponent(name)+"&ch="+encodeURIComponent(ds.media||""));}catch(_){}
   tr.classList.add("exp");const row=document.createElement("tr");row.className="isle-row";
@@ -2505,7 +2519,7 @@ function cellTier(v,sortedAll,dir){
   if(g<=0.05)return "w2";
   if(g<=0.15)return "w1";
   return "m";}
-function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#table thead"),tbody=$("#table tbody");curDS=ds;
+function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#table thead"),tbody=$("#table tbody");curDS=ds;_mdimDeferred=false;
   /* 열려 있던 상세(isle)는 DOM 노드를 그대로 보존해 재렌더 후 다시 붙인다 — fillIsland 재실행/재렌더 루프 없이 열린 상태 유지 */
   const _isleName=ISLE.name,_keepIsle=_isleName?tbody.querySelector(".isle-row"):null;
   const cols=allCols.filter(c=>!c.sub||tExp.has(c.grp));
@@ -2820,19 +2834,11 @@ const SB_URL="https://newoydegfbnnqujgiips.supabase.co";
 const SB_KEY="sb_publishable_6remFFz9oGKffdlRakvdfg_OOLp6zYL";
 let cloudPw=sessionStorage.getItem("crpw")||null;
 let cloudBooting=!!cloudPw; /* 자동 재접속 중 — 랜딩(비밀번호 화면) 대신 로딩 화면을 보여 깜빡임 방지 */
-/* 업로더 서명 — 사이트 아무 곳에서나 "/hansy" 타이핑 시 이 기기를 hansy로 인증(localStorage 영구),
-   "/logout" 으로 해제. 인증 안 된 업로드는 저장소에 uploaded_by='unknown'으로 기록됨 */
+/* 업로더 서명 — 로그인 계정 이름을 그대로 사용(별도 키보드 서명 기능 없음).
+   (예전의 "/hansy"·"/logout" 타이핑 서명 기능은 제거됨) */
 let uploaderId=localStorage.getItem("cr_uploader")||null;
 let canEdit=(sessionStorage.getItem("crcan")==="1"); /* 에디터 권한 — 저장·수정 가능. 뷰어·0715는 false */
-let isAdmin=(sessionStorage.getItem("crrole")==="admin"); /* 관리자 권한(에디터 상위) — 소재 이름 변경 가능. 현재 hansy만 */
-(function(){let buf="";
-  addEventListener("keydown",e=>{
-    if(e.key==="Enter"){
-      if(buf.endsWith("/hansy")){uploaderId="hansy";localStorage.setItem("cr_uploader","hansy");toast("✍️ hansy로 서명했어요 · 이 기기 업로드에 이름이 남아요");refreshCloudLine();}
-      else if(buf.endsWith("/logout")){uploaderId=null;localStorage.removeItem("cr_uploader");toast("서명을 지웠어요");refreshCloudLine();}
-      buf="";return;}
-    if(e.key&&e.key.length===1){buf=(buf+e.key).slice(-24);}
-    else if(e.key==="Backspace")buf=buf.slice(0,-1);});})();
+let isAdmin=(sessionStorage.getItem("crrole")==="admin"); /* 관리자 권한(에디터 상위) — 소재 이름 변경 가능 */
 async function sbRpc(fn,body,opt){
   /* 네트워크가 멈추면(응답 없음) 무한 대기 → 부팅/조작이 영구 잠기는 것을 방지: AbortController 타임아웃 */
   const ac=new AbortController(),ms=(opt&&opt.timeout)||30000;
