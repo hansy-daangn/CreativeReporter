@@ -104,19 +104,18 @@
   #table .chip[data-ck]{cursor:pointer;transition:.1s}
   #table .chip[data-ck]:hover{background:var(--karrot-f);color:var(--karrot)}
   .chip.grp{background:#E9E4F2;color:#6B5B95;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .chip.gdt{background:#E3EDF6;color:var(--c2)}
+  .chip.gdt{background:var(--surface-3);color:var(--muted)}
   .ocr-mark{font-size:8.5px;font-weight:800;letter-spacing:.04em;padding:1px 5px;border-radius:4px;margin-left:5px;background:var(--surface-3);color:var(--faint);vertical-align:1.5px}
   .asset-src .ocr-mark{margin-left:0;margin-right:6px;vertical-align:0}
   .gst{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:5px;margin-left:6px;vertical-align:1px;white-space:nowrap}
   .gst.lim{background:var(--w1-f);color:var(--w1)}
-  .lvb{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:800;color:var(--g1);background:var(--g1-f);padding:1.5px 8px 1.5px 7px;border-radius:999px;margin-right:6px;vertical-align:1px;white-space:nowrap;letter-spacing:.2px}
-  .lvb::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--g1);vertical-align:.5px}
+  .lvb{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--g1);margin-right:7px;vertical-align:1px;flex:0 0 auto}
   .gi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px 18px;margin-top:8px}
   .gi-r{display:flex;justify-content:space-between;gap:10px;font-size:12px;border-bottom:1px dashed var(--surface-3);padding:3px 0;min-width:0}
   .gi-r.wide{grid-column:1/-1}
   .gi-k{color:var(--muted);white-space:nowrap} .gi-v{color:var(--ink);font-weight:650;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .lcard.gold .chip,.lcard.bad .chip{background:rgba(255,255,255,.55)}
-  .chip.fo{background:var(--g1-f);color:var(--g1)} .lcard.gold .chip.fo,.lcard.bad .chip.fo{background:rgba(255,255,255,.6)}
+  .chip.fo{background:var(--surface-3);color:var(--muted)} .lcard.gold .chip.fo,.lcard.bad .chip.fo{background:rgba(255,255,255,.6)}
   .lfoot{display:flex;align-items:center;gap:9px;margin-top:1px}
   .lfoot .sp{flex:0 0 auto;font-size:12.5px;padding:2px 8px}
   .lreason{font-size:11px;color:var(--muted);line-height:1.38} .lreason b{color:var(--ink);font-weight:650}
@@ -485,6 +484,7 @@
   .asset-err .mini{margin-left:6px;font-size:10.5px;padding:2px 8px;border-radius:7px;border:1px solid #d8d7cf;background:var(--surface);color:var(--muted);cursor:pointer}
   .asset-err .mini:hover{color:var(--ink);border-color:var(--faint)}
   .asset-src{font-size:10.5px;color:var(--faint);text-align:center;word-break:break-all}
+  .asset-dim{display:inline-block;background:var(--surface-3);color:var(--muted);font-weight:700;font-size:10px;padding:1px 7px;border-radius:5px;margin-right:6px;white-space:nowrap}
   .asset-src a{color:var(--muted);text-decoration:none}
   .asset-src a:hover{color:var(--karrot);text-decoration:underline}
   .g-extra{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
@@ -631,10 +631,10 @@
   .mark-btn .mchk{fill:none}
   .chip.mine-chip{background:#E7E6E1;color:#1D1D1F;font-weight:650;cursor:pointer}
   .chip.mine-chip:hover{background:#DCDBD5}
-  .chip.mine-chip.crsel{background:var(--karrot-f);color:var(--karrot)}
+  .chip.mine-chip.crsel{background:#4A4A4A;color:#fff}
   .chip.fav-chip{background:#FBF1D3;color:#B0870F;font-weight:650}
   .chip.mine-chip svg,.chip.fav-chip svg{width:11px;height:11px;vertical-align:-2px;margin-right:3px}
-  .chip.mine-chip svg{fill:#4A4A4A}.chip.mine-chip.crsel svg{fill:var(--karrot)}.chip.mine-chip .mchk{fill:none}
+  .chip.mine-chip svg{fill:#4A4A4A}.chip.mine-chip.crsel svg{fill:#fff}.chip.mine-chip .mchk{fill:none}
   .chip.fav-chip svg{fill:#B0870F}
   /* 소재 이름 수동 변경(관리자) */
   .nm-text.editing{display:inline-block;min-width:24px;outline:2px dashed var(--karrot);outline-offset:2px;border-radius:3px;padding:0 4px;background:var(--karrot-f);color:var(--ink);cursor:text;white-space:pre-wrap;font-weight:700}
@@ -667,7 +667,7 @@
   .mineas-opt.sel{color:var(--karrot);font-weight:750}
   /* 연필 편집 팝오버 + 관리자 서비스 지정 칩 */
   .mark-btn.edit:hover{color:var(--karrot)}
-  .chip.svc-ovr{background:#FFE4CF;color:var(--karrot);font-weight:700}
+  .chip.svc-ovr{background:var(--surface-3);color:var(--ink);font-weight:700}
   .edit-pop{position:absolute;z-index:9999;width:302px;background:var(--surface);border:1px solid var(--surface-3);border-radius:12px;box-shadow:0 16px 44px rgba(0,0,0,.24);padding:14px}
   .ep-ttl{font-weight:800;font-size:13px;margin-bottom:11px;color:var(--ink)}
   .ep-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
@@ -904,7 +904,51 @@ function isImageUrl(u){return /simgad|googlesyndication\.com|\.(png|jpe?g|gif|we
 const IMG_PROXY=u=>"https://wsrv.nl/?url="+encodeURIComponent(u);
 /* 학습은 기기 단위로 지속(localStorage) — 차단 환경으로 판명된 기기는 재방문 때도 처음부터 프록시로 렌더 */
 function imgSrc(u){try{if(localStorage.getItem("crImgProxy")||sessionStorage.getItem("crImgProxy"))return IMG_PROXY(u);}catch(e){}return u;}
-function imgOk(img){if(String(img.src).indexOf("wsrv.nl/")>-1&&(+img.dataset.rt||0)>0){try{localStorage.setItem("crImgProxy","1");}catch(e){try{sessionStorage.setItem("crImgProxy","1");}catch(_){}}}}
+function imgOk(img){if(String(img.src).indexOf("wsrv.nl/")>-1&&(+img.dataset.rt||0)>0){try{localStorage.setItem("crImgProxy","1");}catch(e){try{sessionStorage.setItem("crImgProxy","1");}catch(_){}}}try{mdimEl(img);}catch(_){}}
+/* ── 미리보기 실측 해상도·재생시간 캐시(MDIM) — 이름·리포트에 크기 표기가 없는 매체도 미리보기에서 사이즈를 얻는다.
+   이미지=이미 뜨는 썸네일 onload의 naturalWidth · 영상=상세 재생 metadata + 지연·스로틀 백그라운드 metadata.
+   기기 localStorage에 저장(서버 무접촉). 추가 네트워크는 최소·백그라운드라 접속 렉 없음, 값은 디코드된 원본에서 읽어 정확. ── */
+let MDIM={}; try{MDIM=JSON.parse(localStorage.getItem("cr_mdim")||"{}")||{};}catch(_){MDIM={};}
+let _mdimSaveT=null,_mdimApplyT=null;
+function _mdimSave(){try{localStorage.setItem("cr_mdim",JSON.stringify(MDIM));}catch(_){}}
+function mdimSet(url,w,h,dur){
+  if(!url)return;w=Math.round(w||0);h=Math.round(h||0);
+  const cur=MDIM[url]||{};let ch=false;
+  if(w>1&&h>1&&(cur.w!==w||cur.h!==h)){cur.w=w;cur.h=h;ch=true;}
+  if(dur&&isFinite(dur)&&dur>0){const dv=Math.round(dur);if(cur.dur!==dv){cur.dur=dv;ch=true;}}
+  if(!ch)return;MDIM[url]=cur;
+  clearTimeout(_mdimSaveT);_mdimSaveT=setTimeout(_mdimSave,800);
+  clearTimeout(_mdimApplyT);_mdimApplyT=setTimeout(mdimApply,700);}
+/* 요소(img/video)에서 실측값 읽어 저장 — 프록시(리사이즈 가능)로 뜬 이미지는 건너뜀(오측 방지) */
+function mdimEl(el){if(!el||!el.tagName)return;
+  if(el.tagName==="IMG"&&String(el.src).includes("wsrv.nl"))return;
+  const url=(el.dataset&&el.dataset.osrc)||el.getAttribute("src")||"";
+  mdimSet(url,el.naturalWidth||el.videoWidth||0,el.naturalHeight||el.videoHeight||0,el.duration||0);}
+/* 캐시된 치수를 소재 tags에 반영(크기 비면 채움)·재생시간(_dur) 저장 → 필요 시 표·지도 갱신 */
+function mdimApply(){
+  let changed=false;
+  const scan=list=>{for(const e of (list||[])){if(!e||e._isGroup)continue;const pu=previewUrlOf(e),d=pu&&MDIM[pu];if(!d)continue;
+    if(d.dur&&e._dur==null)e._dur=d.dur;
+    if(d.w&&d.h&&!(e.tags&&e.tags.size)){e.tags=e.tags||{ve:null,fo:null,size:null,nat:null,shape:null};
+      e.tags.size=d.w+"×"+d.h;e.tags.shape=d.w>d.h?"가로":d.w<d.h?"세로":"정사각";changed=true;}}};
+  for(const k in DATASETS){const ds=DATASETS[k];scan(ds.aggAll);if(ds.aggByChannel)for(const v of ds.aggByChannel.values())scan(v.aggAll);}
+  if(curDS)scan(curDS.agg); /* 기간 필터 시 ds.agg는 재집계본이라 별도 반영 */
+  if(!changed||!curDS)return;
+  if(mainTab==="table")renderTable(curDS); else if(mainTab==="analysis")renderQuad(curDS);}
+function fmtDur(s){s=Math.round(s||0);if(!s)return"";return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
+/* 직접 영상 URL 소재의 metadata를 지연·스로틀(동시 2·상한 240)로 백그라운드 수집 — 접속 직후 아님 */
+let _mdimVidRan=false;
+async function hydrateMediaDims(){
+  if(_mdimVidRan)return;_mdimVidRan=true;
+  const urls=new Set();
+  for(const k in DATASETS){for(const e of (DATASETS[k].aggAll||[])){const u=previewUrlOf(e);
+    if(u&&isVideoUrl(u)&&!(MDIM[u]&&MDIM[u].w))urls.add(u);}}
+  const list=[...urls].slice(0,240);
+  const probe=u=>new Promise(res=>{const v=document.createElement("video");v.preload="metadata";v.muted=true;
+    let done=false;const fin=()=>{if(done)return;done=true;try{v.removeAttribute("src");v.load();}catch(_){}res();};
+    v.onloadedmetadata=()=>{mdimSet(u,v.videoWidth,v.videoHeight,v.duration);fin();};
+    v.onerror=fin;setTimeout(fin,8000);v.src=u;});
+  for(let i=0;i<list.length;i+=2)await Promise.all(list.slice(i,i+2).map(probe));}
 /* 툴팁 유튜브 썸네일 — 표에서 이미 캐시된 저해상도를 즉시 띄우고, 고해상도가 준비되면 바꿔치기 */
 function imgHi(img){const h=img.dataset.hi;if(!h)return;img.dataset.hi="";
   const p=new Image();p.referrerPolicy="no-referrer";
@@ -982,6 +1026,9 @@ function tagEntity(name,extras){const t={ve:null,fo:null,size:null,nat:null,shap
   if(!t.fo){if(/\.mp4|(^|_)vid|youtube\.com|youtu\.be/i.test(name))t.fo="영상";else if(/\.png|\.jpe?g|(^|_)img|simgad|googlesyndication/i.test(name))t.fo="이미지";}
   const m=name.match(/(\d{3,4})\s*[x×]\s*(\d{3,4})/);if(m)t.size=m[1]+"×"+m[2];
   if(extras&&extras["_m_res"]){const[w,h]=extras["_m_res"].split("x");t.size=w+"×"+h;}
+  /* 이름·리포트에 크기가 없으면 미리보기 실측 캐시(MDIM)로 보완 — 모든 매체에 사이즈 부여 */
+  if(!t.size){const pu=(extras&&(extras._m_url||extras._g_url))||(/^https?:/.test(name)?name:"");
+    const d=pu&&(typeof MDIM!=="undefined")&&MDIM[pu];if(d&&d.w&&d.h)t.size=d.w+"×"+d.h;}
   if(t.size){const[w,h]=t.size.split("×").map(Number);if(w&&h)t.shape=w>h?"가로":w<h?"세로":"정사각";}
   return t;}
 function isGoogleReport(text){return text&&text.includes("애셋 상태")&&text.includes("확장 소재")&&text.includes("애셋 유형");}
@@ -1179,7 +1226,7 @@ function giStatusChip(gi){if(!gi)return "";
 /* 최신 집행 주에 광고비가 나간 소재/그룹 — 매체 공통 Live 뱃지 */
 function liveBadge(ds,e){if(!ds||standaloneMode||!ds.liveWeek)return "";
   const lv=e._isGroup?(e._members||[]).some(m=>m._live):e._live;
-  return lv?`<span class="lvb" title="최신 집행 주(${String(ds.liveWeek).slice(5).replace("-","/")})에 광고비가 집행된 소재">Live</span>`:"";}
+  return lv?`<span class="lvb" title="라이브 — 최신 집행 주(${String(ds.liveWeek).slice(5).replace("-","/")})에 광고비가 집행된 소재" aria-label="라이브"></span>`:"";}
 /* 화면 표시용 이름 — 구글 애셋은 URL/ID 대신 매핑된 실제 애셋 이름을, 유튜브 소재는 캐시된 영상 제목을 우선 표시.
    내부 식별 키(data-name, 저장, 병합)는 항상 원본 name을 그대로 쓴다 */
 function displayNameOf(e){if(!e)return "";
@@ -1871,10 +1918,14 @@ function isleAr(el){const isle=el&&el.closest?el.closest(".isle"):null;if(!isle)
 /* 미리보기 — 고정 프레임(.isle-frame) 안에 비율 유지로 수납. 프레임 크기는 .isle의 ar-* 클래스가 결정 */
 function assetPreview(url,ent){if(!url)return "";
   const ocrM=isOcrName(ent)?`<span class="ocr-mark" title="이미지에서 자동 추출한 텍스트(OCR) — 공식 애셋 이름을 등록하면 대체됩니다">OCR</span>`:"";
-  const srcLine=(note)=>`<div class="asset-src">${ocrM}${note?note+" · ":""}<a href="${url}" target="_blank" rel="noopener">${trunc(url,60)}</a></div>`;
+  /* 미리보기 실측 캐시로 해상도·재생시간 표시 */
+  const dm=(typeof MDIM!=="undefined")&&MDIM[url];
+  const dimTxt=[dm&&dm.w&&dm.h?`${dm.w}×${dm.h}`:"",dm&&dm.dur?`⏱ ${fmtDur(dm.dur)}`:""].filter(Boolean).join(" · ");
+  const dimLine=dimTxt?`<span class="asset-dim">${dimTxt}</span>`:"";
+  const srcLine=(note)=>`<div class="asset-src">${ocrM}${dimLine}${note?note+" · ":""}<a href="${url}" target="_blank" rel="noopener">${trunc(url,60)}</a></div>`;
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
   if(yt)return `<div class="isle-frame"><iframe class="asset-yt" src="https://www.youtube.com/embed/${yt[1]}" frameborder="0" allow="encrypted-media" allowfullscreen></iframe></div>${srcLine()}`;
-  if(isVideoUrl(url))return `<div class="isle-frame"><video class="asset-vid" src="${url}" controls muted playsinline preload="metadata"></video></div>${srcLine()}`;
+  if(isVideoUrl(url))return `<div class="isle-frame"><video class="asset-vid" src="${url}" controls muted playsinline preload="metadata" onloadedmetadata="try{mdimEl(this)}catch(_){};isleAr(this)"></video></div>${srcLine()}`;
   if(isImageUrl(url)){
     const note=(ent&&ent.tags&&ent.tags.fo==="영상")?"영상 소재의 썸네일":"";
     return `<div class="isle-frame"><img class="asset-img" src="${imgSrc(url)}" data-osrc="${escAttr(url)}" alt="asset" referrerpolicy="no-referrer" loading="lazy" onload="imgOk(this);isleAr(this)" onerror="imgRetry(this)"><div class="asset-err" hidden>미리보기를 불러오지 못했습니다 <button class="mini" onclick="const w=this.closest('.isle-frame'),i=w.querySelector('img');this.parentNode.hidden=true;i.hidden=false;i.dataset.rt=0;const s=i.dataset.osrc||i.src;i.src=s+(s.includes('?')?'&':'?')+'rt='+Date.now()">다시 시도</button></div></div>${srcLine(note)}`;}
@@ -2733,7 +2784,9 @@ function loadCloudRows(rows){
     let a=byCh.get(ch);if(!a){a=[];byCh.set(ch,a);}a.push(d);}
   for(const[ch,arr]of byCh)ingest(["date","ad_name","비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"],arr,"Supabase 저장소",ch,"replace");
   rebuildAllDatasets();
+  mdimApply(); /* 이전 세션 캐시(MDIM)의 실측 사이즈를 첫 렌더 전에 tags에 반영 */
   refreshAll();
+  setTimeout(()=>{hydrateMediaDims().catch(()=>{});},2500); /* 직접 영상 URL의 해상도·재생시간 백그라운드 수집 */
   /* 즐겨찾기·내 소재 마크 로드 후 목록·세그먼트 갱신 — 마크는 비동기(loadMarks)라 최초 표는
      MARKS.me가 아직 null인 채로 그려진다. 기본 탭이 'analysis'라 예전엔 mainTab==="table" 게이트에
      막혀 표가 다시 안 그려졌고, 그 결과 로그인 직후 전체목록에선 별·칩이 안 보였다(상세 비교 섬은
