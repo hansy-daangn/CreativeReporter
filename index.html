@@ -1767,6 +1767,8 @@ function renderQuad(ds){const L=ds.L,svg=$("#quad");
 function goToIslandFromQuad(name){if(!curDS)return;_userActed=true;
   switchTab("table");
   tGroupBy=false;tQuickFo=null;tLiveOnly=false;tChip=null;renderQuickFo();
+  /* 대상 소재가 필터로 숨겨져 상세가 조용히 안 열리는 것을 방지 — 마크/서비스/제작자 필터도 해제 후 이동 */
+  tMarkView="all";tServices.clear();tCreators.clear();_mselSig.svc="";_mselSig.cr="";renderViewSeg();
   tState.q="";tableShowAll=true;const sb=$("#search");if(sb)sb.value="";const sa=$("#showAll");if(sa)sa.checked=true;
   const p=pageForName(curDS,name);if(p)tPage=p;
   renderTable(curDS);
@@ -2094,7 +2096,7 @@ function weeklyScoresOf(ds,e){
     for(const r of ds.data){const d=String(r.date||"").slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;
       let a=byW.get(d);if(!a){a=[];byW.set(d,a);}a.push(r);}
     for(const[w,rows]of byW){
-      const sub={L:ds.L,agg:aggregate(rows,ds.L)};
+      const sub={L:ds.L,media:ds.media,agg:aggregate(rows,ds.L)}; /* media 전달 — 주차 점수도 매체별(AEO 신규단가/ACE CPA·홈) 스펙으로 채점 */
       sub.S=computeScores(sub);
       const ents=isG?buildAdGroupAgg(sub):sub.agg;
       const wm=new Map();
@@ -2580,6 +2582,8 @@ function orderedRowsForTable(ds){
     rows=rows.filter(r=>!isInactive(r)&&(!hasSc||r.score!=null));}
   rows=applyTFilter(rows,ds);
   if(tState.q){const q=tState.q.toLowerCase();rows=rows.filter(r=>r.name.toLowerCase().includes(q)||displayNameOf(r).toLowerCase().includes(q));}
+  /* 매체 전환 후 현재 매체에 없는 컬럼(예: ACE 홈 단가)으로 정렬 상태가 남으면 조용히 무정렬되므로 점수순 폴백 */
+  if(tState.sort!=="name"&&tState.sort!=="_b"&&tState.sort!=="score"&&!tableCols(ds.L,ds).some(c=>c.k===tState.sort))tState.sort="score";
   rows.sort((a,b)=>{
     if(tState.sort==="name")return tState.dir*a.name.localeCompare(b.name);
     const k=(tState.sort==="_b")?"score":tState.sort;
@@ -2616,15 +2620,20 @@ function renderQuickFo(){const wrap=$("#qfoWrap"),ds=curDS;
   if(g){g.hidden=!hasAdGr;g.classList.toggle("on",tGroupBy);}
   if(lv){lv.hidden=!hasLive;lv.classList.toggle("on",tLiveOnly&&hasLive);
     if(hasLive)lv.title=`최신 집행 주(${String(ds.liveWeek).slice(5).replace("-","/")})에 광고비가 나간 소재 ${ds.agg.filter(e=>e._live).length.toLocaleString()}개만 보기`;}}
+/* 현재 뷰(그룹/개별)에 맞지 않는 칩 필터 자동 해제 — 그룹 전용: gpre/gdt/gxt · 소재 전용: fo/nat/size.
+   개별뷰로 바뀌었는데 그룹 전용 칩이 남아 표가 통째로 비는 것을 방지 */
+function _syncChipToView(){if(tChip&&((!tGroupBy&&["gpre","gdt","gxt"].includes(tChip.k))||(tGroupBy&&["fo","nat","size"].includes(tChip.k))))tChip=null;}
 function toggleQuickFo(val){tQuickFo=tQuickFo===val?null:val;
   if(tQuickFo)tGroupBy=false; /* Video/Image 선택 시 GroupView 자동 해제 */
+  _syncChipToView();
   renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);}
 function toggleGroupBy(){tGroupBy=!tGroupBy;
   if(tGroupBy)tQuickFo=null; /* GroupView 선택 시 Video/Image 자동 해제 */
-  /* 모드에 없는 칩 필터는 자동 해제 (그룹 전용: gpre/gdt/gxt · 소재 전용: fo/nat/size) */
-  if(tChip&&(!tGroupBy&&["gpre","gdt","gxt"].includes(tChip.k)||tGroupBy&&["fo","nat","size"].includes(tChip.k)))tChip=null;
+  /* 그룹 행은 마크 필터 대상이 아니라 마크뷰+그룹뷰면 항상 빈 표 → 그룹뷰 진입 시 마크뷰 해제 */
+  if(tGroupBy&&tMarkView!=="all"){tMarkView="all";renderViewSeg();toast("그룹 보기에선 '내 소재/즐겨찾기' 필터가 해제돼요");}
+  _syncChipToView();
   renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);}
-function toggleLiveOnly(){tLiveOnly=!tLiveOnly;renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);}
+function toggleLiveOnly(){tLiveOnly=!tLiveOnly;_syncChipToView();renderQuickFo();tPage=1;if(active)renderTable(DATASETS[active]);}
 
 /* ===== 메인 탭 (분석 / 전체 목록 / AB테스트) ===== */
 let mainTab="analysis";
@@ -3151,7 +3160,9 @@ function renderViewSeg(){const el=$("#vseg"),sec=$("#viewSec");if(!el||!sec)retu
   sec.hidden=!on;if(!on){el.innerHTML="";return;}
   const opts=[["all","전체"],["mine","내 소재"],["fav","즐겨찾기"]];
   el.innerHTML=opts.map(([v,lab])=>`<button data-v="${v}" class="${v===tMarkView?"on":""}">${lab}</button>`).join("");
-  $$("#vseg button").forEach(b=>b.onclick=()=>{const v=b.dataset.v;if(tMarkView===v)return;tMarkView=v;tPage=1;renderViewSeg();if(active)renderTable(DATASETS[active]);});}
+  $$("#vseg button").forEach(b=>b.onclick=()=>{const v=b.dataset.v;if(tMarkView===v)return;tMarkView=v;
+    if(v!=="all"&&tGroupBy){tGroupBy=false;renderQuickFo();} /* 마크 필터는 그룹뷰와 공존 불가(그룹은 마크 대상 아님) → 개별뷰로 */
+    tPage=1;renderViewSeg();if(active)renderTable(DATASETS[active]);});}
 function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)return;
   if(dsMode!=="channeled"||!ds.channels||!ds.channels.length){sec.hidden=true;el.innerHTML="";return;}
   sec.hidden=false;
@@ -3167,6 +3178,7 @@ function show(ds){scope(ds);
     requestAnimationFrame(()=>{renderTlegend();curDS=ds;renderQuickFo();renderTable(ds);renderAB(ds);});});}
 function setActive(k){if(!DATASETS[k])return;active=k;
   tableShowAll=false;tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;
+  tMarkView="all";tServices=new Set();tCreators=new Set();mineAs=null;_mselSig={svc:"",cr:"",ma:""}; /* 마크/서비스/제작자 필터도 리셋 — 데이터 재로드·스탠드얼론에서 필터가 새어 빈 표로 고착되는 것 방지 */
   if($("#search"))$("#search").value="";if($("#showAll"))$("#showAll").checked=false;
   show(DATASETS[k]);}
 function renderFooter(){$("#ft").innerHTML=`
@@ -3341,6 +3353,7 @@ function refreshAll(){if(!active||!DATASETS[active])active=TAB_ORDER.find(k=>DAT
 
 function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;tableShowAll=false;
   tState={sort:"score",dir:-1,q:""};tFilter={ve:new Set(),fo:new Set(),size:new Set()};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;ISLE.name=null;
+  tMarkView="all";tServices=new Set();tCreators=new Set();mineAs=null;_mselSig={svc:"",cr:"",ma:""};
   const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
 function dropZone(e){if(!e||e.clientY==null)return null;
   const H=window.innerHeight||800,W=window.innerWidth||1200;
