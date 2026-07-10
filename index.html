@@ -1764,7 +1764,7 @@ function renderQuad(ds){const L=ds.L,svg=$("#quad");
     c.addEventListener("mouseleave",hideTip);
     if(qDim)c.style.cursor="default";
     else c.addEventListener("click",()=>{hideTip();goToIslandFromQuad(p.name);});});}
-function goToIslandFromQuad(name){if(!curDS)return;
+function goToIslandFromQuad(name){if(!curDS)return;_userActed=true;
   switchTab("table");
   tGroupBy=false;tQuickFo=null;tLiveOnly=false;tChip=null;renderQuickFo();
   tState.q="";tableShowAll=true;const sb=$("#search");if(sb)sb.value="";const sa=$("#showAll");if(sa)sa.checked=true;
@@ -2496,7 +2496,9 @@ function cellTier(v,sortedAll,dir){
   if(g<=0.05)return "w2";
   if(g<=0.15)return "w1";
   return "m";}
-function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#table thead"),tbody=$("#table tbody");curDS=ds;ISLE.name=null;
+function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#table thead"),tbody=$("#table tbody");curDS=ds;
+  /* 열려 있던 상세(isle)는 DOM 노드를 그대로 보존해 재렌더 후 다시 붙인다 — fillIsland 재실행/재렌더 루프 없이 열린 상태 유지 */
+  const _isleName=ISLE.name,_keepIsle=_isleName?tbody.querySelector(".isle-row"):null;
   const cols=allCols.filter(c=>!c.sub||tExp.has(c.grp));
   thead.innerHTML="<tr>"+cols.map(c=>{const sorted=tState.sort===c.k,arr=sorted?(tState.dir<0?"▼":"▲"):"";
     const cl=(c.k==="name"?"name ":c.k==="_b"?"bdg ":"")+(c.help?"help ":"")+(c.sub?"csub ":"")+(sorted?"sorted":"");
@@ -2544,6 +2546,10 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
     const cx=ev.target.closest(".colx");
     if(cx){const g=cx.dataset.g;if(tExp.has(g))tExp.delete(g);else tExp.add(g);renderTable(ds);return;}
     const k=th.dataset.k;if(tState.sort===k)tState.dir*=-1;else{tState.sort=k;tState.dir=(k==="name")?1:-1;}tPage=1;renderTable(ds);});
+  /* 보존해 둔 상세 노드를 여전히 보이는 소재 행 아래 다시 삽입(내용 재생성 없음). 안 보이면 상세는 닫힌다 */
+  if(_isleName){const rtr=[...tbody.querySelectorAll("tr.row")].find(t=>t.getAttribute("data-name")===_isleName);
+    if(rtr&&_keepIsle){rtr.classList.add("exp");const td=_keepIsle.querySelector("td");if(td)td.colSpan=cols.length;rtr.parentNode.insertBefore(_keepIsle,rtr.nextSibling);}
+    else ISLE.name=null;}
   hydrateYtNames();}
 /* 유튜브 제목이 캐시에 도착하면 다시 그리지 않고 화면의 URL 이름만 제자리 갱신 */
 function refreshDisplayNames(){
@@ -2888,16 +2894,23 @@ function loadCloudRows(rows){
   loadMarks().then(()=>{renderViewSeg();if(active&&DATASETS[active])renderTable(DATASETS[active]);});
   setTimeout(openDeepLink,700);
   setTimeout(()=>{hydrateAllYtTitles().catch(()=>{});},1200);}
-/* #ad= 딥링크 — 공유받은 링크로 접속하면 해당 소재 상세를 바로 연다 (최초 로드 후 1회) */
-let _dlDone=false;
+/* #ad= 딥링크 — 공유받은 링크로 접속하면 해당 소재 상세를 바로 연다 (최초 로드 후 1회).
+   ⚠️ 반드시 '로드 시점'의 해시(_initHash)만 본다. 상세를 열면 toggleIsland가 location.hash를
+   #ad=… 로 바꾸기 때문에, fire 시점에 live 해시를 읽으면 사용자가 방금 연/닫은 소재를 딥링크가
+   다시 여는 경합이 생긴다(전체목록 소재 클릭 시 창이 저절로 다시 열리는/닫히는 원인이었음).
+   또한 사용자가 이미 무언가를 눌렀다면(_userActed) 자동 이동을 포기해 조작을 가로채지 않는다. */
+let _dlDone=false,_userActed=false;
+const _initHash=(()=>{try{return location.hash||"";}catch(_){return"";}})();
 function openDeepLink(){
   if(_dlDone)return;_dlDone=true;
-  let m;try{m=location.hash.match(/ad=([^&]+)(?:&ch=([^&]+))?/);}catch(_){return;}
+  if(_userActed)return;
+  let m;try{m=_initHash.match(/ad=([^&]+)(?:&ch=([^&]+))?/);}catch(_){return;}
   if(!m)return;
   const nm=decodeURIComponent(m[1]),ch=m[2]?decodeURIComponent(m[2]):null;
   const ds=active?DATASETS[active]:null;if(!ds)return;
   if(ch&&ds.media!==ch){ds.media=ch;show(ds);}
   setTimeout(()=>{
+    if(_userActed)return; /* 대기 사이에 사용자가 조작했으면 딥링크 자동 이동 취소 */
     if(!findRow(ds,nm)){toast("링크에 담긴 소재를 저장소에서 못 찾았어요");return;}
     goToIslandFromQuad(nm);},500);}
 /* 로그인 환영 인사 — 시간대별로 다양한 문구를 랜덤으로 골라 "환영해요 NAME!" 형식(당근 해요체).
@@ -3511,7 +3524,7 @@ $("#table tbody").addEventListener("click",e=>{
     tChip=(tChip&&tChip.k===k&&tChip.v===v)?null:{k,v,lab:chip.textContent};
     if(tChip&&tChip.k==="grp")tGroupBy=false; /* 그룹 필터는 소재 목록으로 */
     tPage=1;renderQuickFo();renderTable(curDS);return;}
-  const tr=e.target.closest("tr");if(!tr||tr.classList.contains("isle-row"))return;const nm=tr.getAttribute("data-name");if(nm==null||!curDS)return;toggleIsland(curDS,nm,tr);});
+  const tr=e.target.closest("tr");if(!tr||tr.classList.contains("isle-row"))return;const nm=tr.getAttribute("data-name");if(nm==null||!curDS)return;_userActed=true;toggleIsland(curDS,nm,tr);});
 $("#chipFil").addEventListener("click",()=>{tChip=null;tPage=1;renderQuickFo();if(active)renderTable(DATASETS[active]);});
 let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{if(active&&DATASETS[active]){renderQuad(DATASETS[active]);renderTrend(DATASETS[active]);}const inner=document.querySelector(".isle"),sc=document.querySelector(".tbl-scroll");if(inner&&sc)inner.style.width=sc.clientWidth+"px";},140);});
 
