@@ -1083,7 +1083,7 @@ function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n")
       "클릭 수":pn(r["클릭수"]),
       "어트리뷰션 수":pn(r["설치"]),
       "활성 유저 수":pn(r["인앱 액션"]),
-      "신규+재활성 유저 수":pn(r["신규 고객"])+pn(r["재참여 고객"]),
+      "신규+재활성 유저 수":pn(r["조회연결 전환"]),/* '신규 고객'·'재참여 고객' 컬럼은 이 리포트에서 비어 있어 조회연결 전환으로 유지 */
       "_g_assetStatus":(r["애셋 상태"]||"").trim(),
       "_g_assetType":(r["애셋 유형"]||"").trim(),
       "_g_status":(r["상태"]||"").trim(),
@@ -1092,11 +1092,15 @@ function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n")
       "_g_interactions":pn(r["상호작용 수"]),
       "_g_trueViews":pn(r["TrueView 조회수"]),
       "_g_conversions":pn(r["전환수"]),
+      "_g_firstOpen":pn(r["first_open"]),/* 앱 최초 실행 = 신규 유저 획득 지표 */
+      "_g_home":pn(r["home"]),/* 홈 도달 = 주요 인앱 액션(참여) 지표 */
       "_g_assetId":(r["항목 ID"]||"").trim(),
       "_g_adGroupId":(r["광고그룹 ID"]||"").trim(),
       "_g_campaignId":(r["캠페인 ID"]||"").trim(),
       "_g_allConv":pn(r["모든 전환(전환 시간별)"]),
-      "_g_convValue":pn(r["모든 전환 가치(전환 시간별)"])};}).filter(r=>r.ad_name);
+      "_g_convValue":pn(r["모든 전환 가치(전환 시간별)"])};})
+    /* 이미지·영상 소재만 집계·채점 — 광고제목/설명 등 텍스트 애셋은 조합(combination) 성과라 완전 제외 */
+    .filter(r=>r.ad_name && /이미지|동영상|image|video/i.test(r._g_assetType||""));
   /* 저장 허용 여부용 기간 판별: 주/일 컬럼이 있으면 원본 날짜로, 기간 합산이면 헤더의 시작~끝 범위로 */
   let kind;
   if(dcol)kind=dateKindOf(data.map(r=>String(r[dcol]||"").slice(0,10))).kind;
@@ -2753,7 +2757,7 @@ async function sbRpc(fn,body){
     const err=new Error(msg);err.status=res.status;throw err;}
   return res.json();}
 /* 저장 페이로드: (매체, 주 시작일, 소재) 그레인으로 원본 수치 합산 — 파생 지표는 로드시 재계산 */
-const SAVE_NUM_KEYS=["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수","_m_installs","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100","_g_interactions","_g_trueViews","_g_conversions","_g_allConv","_g_convValue"];
+const SAVE_NUM_KEYS=["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수","_m_installs","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100","_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue"];
 const SAVE_STR_KEYS=["_m_url","_m_ctype","_m_res","_m_group","_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_adGroupId","_g_campaignId"];
 function buildSaveRows(data,channel){const map=new Map();
   for(const r of data){const nm=String(r.ad_name||"").trim(),wk=String(r.date||"").slice(0,10);
