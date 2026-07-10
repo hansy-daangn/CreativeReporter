@@ -256,6 +256,21 @@
   th.csub,td.csub{background:#F7F6F1}
   .colx{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 2px;margin-left:5px;border-radius:5px;background:var(--surface-3);color:var(--muted);font-weight:800;font-size:12px;cursor:pointer;vertical-align:-3px}
   .colx:hover{background:var(--karrot-f);color:var(--karrot)}
+  /* 갤러리 보기 — 미디어 중심 카드 그리드 (점수·지표 없음, 이름·태그만) */
+  .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:14px;padding:8px 2px}
+  .gallery[hidden]{display:none}
+  .gal-card{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;transition:box-shadow .12s,transform .12s}
+  .gal-card:hover{box-shadow:0 10px 26px -12px rgba(0,0,0,.28);transform:translateY(-2px)}
+  .gal-media{position:relative;aspect-ratio:1/1;background:#101010;display:grid;place-items:center;overflow:hidden}
+  .gal-media img,.gal-media video{width:100%;height:100%;object-fit:contain;display:block}
+  .gal-media iframe.gal-yt{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .gal-play{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:3px 8px;border-radius:999px;pointer-events:none}
+  .gal-ph{font-size:34px;color:var(--faint)}
+  .gal-name{font-size:12px;font-weight:650;line-height:1.4;padding:9px 11px 3px;word-break:break-all;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .gal-chips{padding:0 11px 10px;display:flex;flex-wrap:wrap;gap:4px}
+  .gal-chips .chip{cursor:default}
+  .gal-more{grid-column:1/-1;margin:6px auto 2px;padding:8px 22px;border:1px solid var(--line);border-radius:999px;background:var(--surface-2);color:var(--muted);font-weight:700;font-size:12.5px;cursor:pointer}
+  .gal-more:hover{background:var(--karrot-f);color:var(--karrot)}
   th.bdg,td.bdg{width:58px;padding-left:14px;text-align:left}
   thead th{position:sticky;top:0;background:var(--surface-2);z-index:3;font-weight:650;color:var(--muted);cursor:pointer;user-select:none}
   thead th.help{text-decoration:underline dotted #cfcdc4;text-underline-offset:3px}
@@ -334,8 +349,13 @@
   .abl.open>.abl-row{background:var(--gold-f);border-radius:12px 12px 0 0}
   .abl-name{font-weight:740;font-size:13px;word-break:break-all;flex:1 1 240px}
   .abl-seq{display:inline-flex;align-items:center;gap:7px;flex-wrap:wrap}
-  .abl-v{display:inline-flex;align-items:center;gap:5px;font-size:14px}
+  .abl-v{display:inline-flex;align-items:center;gap:5px;font-size:14px;padding:3px 9px;border-radius:8px}
   .abl-v b{font-size:13px}
+  /* 순위를 배경색으로 — 금·은·동 (메달 이모지가 작아 변형 숫자와 헷갈리는 문제 해소) */
+  .abl-rank0{background:linear-gradient(135deg,#FDF3D0,#F7E29B);border:1px solid #E8CD6F}
+  .abl-rank1{background:linear-gradient(135deg,#F3F4F7,#E2E4EA);border:1px solid #C9CCD6}
+  .abl-rank2{background:linear-gradient(135deg,#F6E7DB,#EAD0BC);border:1px solid #D9B394}
+  .abl-fo{margin-left:6px;font-size:10px;font-weight:700;color:var(--faint);background:var(--surface-3);padding:1px 6px;border-radius:4px;vertical-align:1px}
   .abl-v .tthumb{width:28px;height:28px;border-radius:6px}
   .abl-v .tthumb .vb{width:11px;height:11px;font-size:6.5px;right:1px;bottom:1px}
   .abl-gt{color:var(--faint);font-size:13px}
@@ -505,6 +525,7 @@
   .tf-kind{margin-left:5px;font-size:9.5px;color:var(--faint);font-weight:600}
 
   .ft{padding:30px 30px 40px;font-size:12px;color:var(--muted);line-height:1.65;border-top:1px solid #E1DFD7;margin-top:64px;background:var(--canvas)}
+  .ft details,.ft>.ft-note{max-width:880px} /* 전체화면에서 줄 길이가 화면 끝까지 늘어나 가독성이 무너지는 것 방지 */
   .ft h3{margin:18px 0 8px;font-size:13px;color:var(--ink);font-weight:700}
   .ft h4{margin:14px 0 4px;font-size:12px;color:var(--ink);font-weight:650}
   .ft p,.ft ul{margin:4px 0 8px}
@@ -565,6 +586,7 @@
   .tooltip{position:fixed;pointer-events:none;background:var(--ink);color:#fff;padding:8px 11px;border-radius:9px;font-size:11.5px;line-height:1.45;box-shadow:0 8px 24px -8px rgba(0,0,0,.45);opacity:0;transition:opacity .1s;z-index:90;max-width:280px}
   .tooltip.big{max-width:340px;padding:8px}
   .tooltip.big img,.tooltip.big video,.tooltip.big iframe{display:block;max-width:320px;max-height:220px;border-radius:6px;background:#000}
+  .tooltip.big .tp-ytwrap{width:320px;height:180px;border-radius:6px;overflow:hidden;background:#000 center/cover no-repeat}
   .tooltip.big .tp-cap{font-size:10.5px;margin-top:6px;color:rgba(255,255,255,.75);word-break:break-all;max-width:320px}
   .tooltip .t-k{color:rgba(255,255,255,.6)}
   /* 형식 불일치 임시 분석 배너 */
@@ -885,10 +907,11 @@
             <button class="qfo-btn qfo-txt" id="qfoVid" type="button" title="영상만 보기" aria-label="영상만">Video</button>
             <button class="qfo-btn qfo-txt" id="qfoImg" type="button" title="이미지만 보기" aria-label="이미지만">Image</button>
           </div>
-          <label class="chk" title="기본 화면에서는 광고비 0(비활성)과 점수 산정이 안 된 소재(저광고비·표본 부족)를 숨깁니다"><input type="checkbox" id="showAll">비활성·점수없음도 보기</label>
+          <label class="chk" title="점수·지표 없이 소재 미디어만 카드로 훑어보기 — 카드 클릭 = 상세"><input type="checkbox" id="galleryView">갤러리 보기</label>
+          <label class="chk" title="기본 화면에서는 광고비 0(비활성)과 점수 산정이 안 된 소재(저광고비·표본 부족)를 숨깁니다"><input type="checkbox" id="showAll">비활성 포함</label>
           <div class="tlegend" id="tlegend"></div>
         </div>
-        <div class="tbl-scroll"><table id="table"><thead></thead><tbody></tbody></table></div>
+        <div class="tbl-scroll"><div id="gallery" class="gallery" hidden></div><table id="table"><thead></thead><tbody></tbody></table></div>
       </section>
 
       <section class="card" id="tabAB" hidden>
@@ -1008,8 +1031,9 @@ function imgRetry(img){
   },1200);}
 function assetPreviewTipHTML(url,label){if(!url)return "";
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
-  if(yt){const lo=`https://img.youtube.com/vi/${yt[1]}/default.jpg`,hi=`https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg`;
-    return `<img src="${escAttr(imgSrc(lo))}" data-osrc="${escAttr(lo)}" data-hi="${escAttr(imgSrc(hi))}" alt="" referrerpolicy="no-referrer" onload="imgOk(this);imgHi(this)" onerror="imgRetry(this)"><div class="tp-cap">${escHtml(label||"영상")}</div>`;}
+  if(yt){/* 유튜브도 몰로코처럼 호버 즉시 재생 — 음소거 자동재생 임베드(컨트롤 없음·반복). 로딩 동안 썸네일을 배경으로 깔아 공백 방지 */
+    const hi=`https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg`;
+    return `<div class="tp-ytwrap" style="background-image:url('${escAttr(imgSrc(hi))}')"><iframe class="tp-yt" width="320" height="180" src="https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=1&controls=0&playsinline=1&loop=1&playlist=${yt[1]}&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media"></iframe></div><div class="tp-cap">▶ ${escHtml(label||"영상")}</div>`;}
   if(isVideoUrl(url))return `<video src="${escAttr(safeUrl(url))}" autoplay muted loop playsinline preload="metadata"></video><div class="tp-cap">▶ ${escHtml(label||"영상")}</div>`;
   if(isImageUrl(url))return `<img src="${escAttr(imgSrc(url))}" data-osrc="${escAttr(url)}" alt="" referrerpolicy="no-referrer" onload="imgOk(this)" onerror="imgRetry(this)"><div class="tp-cap">${escHtml(label||"")}</div>`;
   return `<div class="tp-cap">${escHtml(label||"미리보기 없음")}</div>`;}
@@ -1054,9 +1078,43 @@ const TAB_ORDER=["ad","cg","adset"];
    그룹 레벨로 오인하지 않도록 한다 (그룹 전용 파일은 ad_name이 없으므로 기존과 동일하게 cg로 감지) */
 function detect(h){const s=new Set(h);if(s.has("adset_name"))return"adset";if(s.has("ad_name"))return"ad";if(s.has("creative_group_name"))return"cg";return null;}
 
-const VERTICALS=[[/fleamarket|flemarket|중고|sellitems|declutter|nocommission|simbatdan/i,"중고거래"],[/realty|부동산|rentkarrot|lifedaangn/i,"부동산"],[/localbiz|biz_|동네|realdaangn/i,"동네업체"],[/jobs|알바|baro_running/i,"알바"],[/branding|brand/i,"브랜딩"]];
+/* 서비스 사전 — 컨테이너(광고그룹·크리에이티브 그룹·캠페인)명과 소재명 공용. 순서 중요(먼저 맞는 것 승리: 중고차가 중고거래보다 앞) */
+const VERTICALS=[
+  [/중고차|(^|[_\-\s.])cars?([_\-\s.0-9]|$)|usedcar/i,"중고차"],
+  [/fleamarket|flemarket|중고(?!차)|sellitems|declutter|nocommission|simbatdan/i,"중고거래"],
+  [/realty|부동산|rentkarrot|lifedaangn|시크릿키|secretkey/i,"부동산"],
+  [/localbiz|(^|[_\-\s.])biz|비즈니스|동네|realdaangn/i,"동네업체"],
+  [/jobs|알바|baro_running/i,"알바"],
+  [/모임|(^|[_\-\s.])group(?![_a-z]*name)/i,"모임"],
+  [/branding|brand|bogum|integration|opendoor|(^|[_\-\s.])ios([_\-\s.0-9]|$)/i,"브랜딩"],
+];
+/* 서비스 토큰이 두 개 이상 함께 쓰였으면 "더 앞에 등장하는" 토큰이 승리 (사용자 지정 — 예: "브랜딩 fleamarket"=브랜딩) */
+function veMatch(dict,str){const h=String(str||"");let best=null,bi=Infinity;
+  for(const[re,l]of dict){const m=re.exec(h);if(m&&m.index<bi){bi=m.index;best=l;}}
+  return best;}
+/* 어디에 들어 있든 무조건 "기타(미분류)"로 두는 예외 (사용자 지정) */
+const VE_OTHER=/bugwifilmfestival|manbokibongju/i;
+/* 소재명에 서비스가 "명시"돼 있으면 컨테이너보다 소재명이 우선 (사용자 지정 규칙):
+   중고거래/fleamarket · 알바/jobs · 모임/group · 부동산/realty · 중고차/car · 비즈니스/biz · 브랜딩/branding */
+const VE_EXPLICIT=[
+  [/중고차|(^|[_\-\s.])cars?([_\-\s.0-9]|$)/i,"중고차"],
+  [/중고거래|fleamarket|flemarket/i,"중고거래"],
+  [/알바|jobs/i,"알바"],
+  [/부동산|realty/i,"부동산"],
+  [/모임|(^|[_\-\s.])group/i,"모임"],
+  [/비즈니스|localbiz|(^|[_\-\s.])biz/i,"동네업체"],
+  [/브랜딩|branding/i,"브랜딩"],
+];
 function tagEntity(name,extras){const t={ve:null,fo:null,size:null,nat:null,shape:null};if(!name)return t;
-  for(const[re,l]of VERTICALS){if(re.test(name)){t.ve=l;break;}}
+  /* 서비스(ve) 분류 우선순위 (사용자 지정 규칙):
+     ① 소재명에 서비스가 명시(중고거래/알바/모임/부동산/중고차/비즈니스/브랜딩 및 영문 토큰) → 소재명 기준
+     ② 아니면 '소재가 담긴 컨테이너 이름' 기준 — 구글=광고그룹명 · 몰로코=크리에이티브 그룹명 · 메타=캠페인명
+        (bogum·Integration·opendoor·ios=브랜딩, 시크릿키=부동산)
+     ③ 컨테이너 이름이 없으면 소재명 사전 폴백. (관리자 수동 지정 svcovr는 표시 단계에서 항상 최우선) */
+  const _cont=extras?String((extras._g_adGroupId!=null?(adGroupLabel(extras._g_adGroupId)||""):"")||extras._m_group||extras._q_campaign||""):"";
+  if(VE_OTHER.test(String(name))||VE_OTHER.test(_cont)){/* 기타 고정(미분류) — 사용자 지정 예외 */}
+  else{
+    t.ve=veMatch(VE_EXPLICIT,name)||veMatch(VERTICALS,_cont||name)||null;}
   if(extras&&extras["_m_ctype"]){t.fo=/VIDEO/.test(extras["_m_ctype"])?"영상":"이미지";
     t.nat=/^NATIVE/.test(extras["_m_ctype"])?"네이티브":"일반";}
   if(!t.fo&&extras&&extras["_g_assetType"]){const at=extras["_g_assetType"];
@@ -1287,6 +1345,7 @@ function groupSegTags(name){
   const pre=[];let seenMau=false;
   for(const s of segs){
     if(/^maugrowth$/i.test(s)){seenMau=true;continue;}
+    if(/^(google|ua|aeo|ace)$/i.test(s))continue; /* Google/UA(≡AEO)/ACE 접두는 칩 불필요 — 매체 분리(AEO/ACE)가 이미 표시 */
     if(!seenMau&&!out.ve&&!/^\d/.test(s)&&!VERTICALS.some(([re])=>re.test(s))){pre.push(s);continue;}
     if(/^\d{4}(\d{2})?$/.test(s)){if(!out.dt)out.dt=s;else out.xt.push(s);continue;}
     if(!out.ve){const ve=VERTICALS.find(([re])=>re.test(s));if(ve){out.ve=ve[1];continue;}}
@@ -1412,6 +1471,7 @@ function aggregate(data,L){const map=new Map();
       e["_g_interactionRate"]=e["노출 수"]>0?(e["_g_interactions"]||0)/e["노출 수"]:null;
       e["_g_trueViewRate"]=e["노출 수"]>0?(e["_g_trueViews"]||0)/e["노출 수"]:null;
       e["_g_conversionRate"]=(e["_g_interactions"]||0)>0?(e["_g_conversions"]||0)/e["_g_interactions"]:null;
+      e["_g_foRate"]=(e["_g_interactions"]||0)>0?(e["_g_firstOpen"]||0)/e["_g_interactions"]:null; /* 신규 전환율 = 신규 실행÷상호작용 — AEO 채점용(기존 전환율은 신규와 무상관 ρ=+0.09) */
       e["_g_costPerConv"]=(e["_g_conversions"]||0)>0?e.비용/e["_g_conversions"]:null; /* 전환 0 → 비용/0은 정의 불가라 null 유지 */
       e["_g_cpFirstOpen"]=(e["_g_firstOpen"]||0)>0?e.비용/e["_g_firstOpen"]:null; /* 신규(앱 최초 실행) 획득 단가 */
       e["_g_cpHome"]=(e["_g_home"]||0)>0?e.비용/e["_g_home"]:null; /* 홈 도달 단가 */
@@ -1454,12 +1514,12 @@ function wPctRank(d,v){if(!d||d.vals.length<2||d.total<=0)return .5;
 function computeFieldAvail(a){
   const numKeys=["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","CTR","CPC","CPM","eCPI","활성 유저 eCPA",
     "영상 완주율","신규+재활성 유저 수","신규+재활성 eCPA","_m_installs",
-    "_q_retD1","_q_retD7","_q_roasD7","_q_afInstalls","_q_cpNewInstall","_q_reEng","_q_cpReEng",
+    "_q_retD1","_q_retD7","_q_roasD7","_q_afInstalls","_q_cpNewInstall","_q_reEng","_q_cpReEng","_q_reAtt",
     "_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue",
-    "_g_interactionRate","_g_trueViewRate","_g_conversionRate","_g_costPerConv","_g_cpFirstOpen","_g_cpHome","_g_ROAS","_g_convValuePerConv"];
+    "_g_interactionRate","_g_trueViewRate","_g_conversionRate","_g_foRate","_g_costPerConv","_g_cpFirstOpen","_g_cpHome","_g_ROAS","_g_convValuePerConv"];
   /* 비율/ROAS 지표는 값 0이 '결측'이 아니라 정상적인 저성과 데이터 → 0을 결측으로 세지 않는다.
      (0을 결측 취급하면 전환율·CTR·ROAS가 0인 정상 소재가 채점에서 탈락하거나 열이 숨겨짐) */
-  const RATE_KEYS=new Set(["CTR","영상 완주율","_g_interactionRate","_g_trueViewRate","_g_conversionRate","_g_ROAS","_q_retD1","_q_retD7","_q_roasD7"]);
+  const RATE_KEYS=new Set(["CTR","영상 완주율","_g_interactionRate","_g_trueViewRate","_g_conversionRate","_g_foRate","_g_ROAS","_q_retD1","_q_retD7","_q_roasD7"]);
   const n=a.length||1,avail={};
   for(const k of numKeys){const rate=RATE_KEYS.has(k);
     let miss=0;for(const e of a){const v=e[k];if(v==null||!isFinite(v)||(v===0&&!rate))miss++;}
@@ -1472,42 +1532,59 @@ function setGHomeEff(v){gHomeEff=!!v;try{localStorage.setItem("cr_ghome",gHomeEf
 /* Unified perf-ad scoring — Effectiveness × Reach × StatisticalConfidence
    Aligned with Google Ads Quality Score dimensions and Meta Ad Relevance Diagnostics */
 const SCORING={
-  EFF_W:0.75, REACH_W:0.20, CONF_W:0.05, MIN_CONV_FOR_FULL_CONF:30,
+  /* 2026-07 실데이터 검증(적격 소재 1,292개 순위상관 분석)으로 재설계:
+     · 규모 축을 노출 → '데려온 유저 수' 백분위로 교체(몰로코 노출↔데려온 유저 ρ=-0.02 — 노출은 싼 인벤토리만 보상,
+       메타는 노출↔광고비 ρ=0.94로 예산 순환 보상), 비중 20%→15%.
+     · 신뢰(C) 축 폐지: 적격 소재 전원이 전환≥30으로 C=1 포화(상수) — 표본 보정은 지표별 베이지안 축소로 일원화. */
+  EFF_W:0.85, REACH_W:0.15, CONF_W:0, MIN_CONV_FOR_FULL_CONF:30,
   /* 목적 = 신규/복귀 유저를 효율적으로 데려오는 소재 → 매체별 '획득 단가'가 1순위. ROAS는 전환가치가
-     모델링 값이라 점수에서 제외(표·지도엔 참고용으로만 남김). */
-  google_aeo:[ /* 구글 AEO(신규) — 신규 유저(앱 최초 실행) 획득 단가 중심 */
-    {k:"_g_cpFirstOpen",w:0.50,dir:-1,lab:"신규 단가"},
-    {k:"CTR",w:0.22,dir:1,lab:"CTR"},
-    {k:"_g_conversionRate",w:0.16,dir:1,lab:"전환율"},
+     모델링 값이라 점수에서 제외(표·지도엔 참고용으로만 남김).
+     제거 근거: 활성 eCPA ↔ 신규+재활성 eCPA ρ=0.95(중복 · 메타는 활성의 34~50%가 리테인드 오염) → 소액 폴백만.
+     CPM은 몰로코 ρ=-0.53·구글 AEO ρ=-0.50으로 성과와 역방향(비싼 네이티브/영상 지면일수록 획득단가가 쌈) → 제거.
+     CTR은 매체별 정반대(몰로코 -0.70 강한 선행지표 · 메타 +0.18 역방향 클릭베이트) → 몰로코/메타 스펙 분리. */
+  google_aeo:[ /* 구글 AEO(신규) — 신규 단가 중심 · CTR은 동영상에서만 유효(ρ=-0.36, 이미지 -0.01)라 포맷 조건부 ·
+       신규 전환율은 신규단가와 분자 공유(준기계적)라 소액 · 기존 전환율(ρ=+0.09 무상관)·CPM(역방향) 제거 */
+    {k:"_g_cpFirstOpen",w:0.76,dir:-1,lab:"신규 단가"},
+    {k:"_g_foRate",w:0.12,dir:1,lab:"신규 전환율"},
+    {k:"CTR",w:0.12,dir:1,lab:"CTR",entFo:"영상"},
+  ],
+  google_ace:[ /* 구글 ACE(리타겟팅) — CPA 중심 · CTR(ρ=-0.09 무상관) 제외 · CPM은 ACE에서만 정합(ρ=+0.52) 유지 */
+    {k:"_g_costPerConv",w:0.78,dir:-1,lab:"CPA"},
+    {k:"_g_conversionRate",w:0.10,dir:1,lab:"전환율"},
     {k:"CPM",w:0.12,dir:-1,lab:"CPM"},
   ],
-  google_ace:[ /* 구글 ACE(리타겟팅) — 모든 전환당 비용(CPA) 중심 (기본) */
-    {k:"_g_costPerConv",w:0.50,dir:-1,lab:"CPA"},
-    {k:"CTR",w:0.22,dir:1,lab:"CTR"},
-    {k:"_g_conversionRate",w:0.16,dir:1,lab:"전환율"},
-    {k:"CPM",w:0.12,dir:-1,lab:"CPM"},
-  ],
-  google_ace_home:[ /* 구글 ACE — 홈 도달 단가 중심 (홈 기준 효율 토글 시) */
-    {k:"_g_cpHome",w:0.50,dir:-1,lab:"홈 단가"},
-    {k:"CTR",w:0.22,dir:1,lab:"CTR"},
-    {k:"_g_conversionRate",w:0.16,dir:1,lab:"전환율"},
+  google_ace_home:[ /* 구글 ACE — 홈 도달 단가 기준 토글 (CPA와 ρ=0.97 사실상 등가) */
+    {k:"_g_cpHome",w:0.78,dir:-1,lab:"홈 단가"},
+    {k:"_g_conversionRate",w:0.10,dir:1,lab:"전환율"},
     {k:"CPM",w:0.12,dir:-1,lab:"CPM"},
   ],
   google:[ /* 유형 미상 구글 — CPA 중심 폴백 */
-    {k:"_g_costPerConv",w:0.46,dir:-1,lab:"전환당 비용"},
-    {k:"CTR",w:0.22,dir:1,lab:"CTR"},
-    {k:"_g_conversionRate",w:0.18,dir:1,lab:"전환율"},
-    {k:"CPM",w:0.14,dir:-1,lab:"CPM"},
+    {k:"_g_costPerConv",w:0.72,dir:-1,lab:"전환당 비용"},
+    {k:"CTR",w:0.14,dir:1,lab:"CTR"},
+    {k:"_g_conversionRate",w:0.14,dir:1,lab:"전환율"},
   ],
-  ad:[ /* 몰로코·메타 — 신규+재활성 eCPA(획득 단가) 중심 + D1 잔존율(데려온 유저의 질).
-         잔존율은 '목적에 맞는 유저를 데려왔는가'의 직접 신호(AF 코호트 실측) — 데이터가 있는 매체에서만 자동 반영(가용성 게이트) */
-    {k:"신규+재활성 eCPA",w:0.36,dir:-1,lab:"신규+재활성 eCPA"},
-    {k:"활성 유저 eCPA",w:0.19,dir:-1,lab:"활성 eCPA"},
-    {k:"CTR",w:0.15,dir:1,lab:"CTR"},
-    {k:"_q_retD1",w:0.12,dir:1,lab:"D1 잔존율"},
-    {k:"영상 완주율",w:0.07,dir:1,lab:"완주율",videoOnly:true},
-    {k:"eCPI",w:0.055,dir:-1,lab:"eCPI"},
-    {k:"CPM",w:0.055,dir:-1,lab:"CPM"},
+  moloco:[ /* 몰로코 = 리타겟(RE) 채널(데려온 유저의 99.4%가 재참여) — 합산 획득단가 중심.
+       교차검증(심슨 역설 보정): CTR의 예측력은 '이미지에서만' 유효(포맷 내 ρ: 이미지 -0.48 · 영상 +0.01)라 포맷 조건부,
+       영상의 크리에이티브 신호는 완주율이 담당 · D1 잔존은 코호트 base 중앙값 13명이라 소액+강한 축소 ·
+       eCPI(성과의 0.6%)·CPM(포맷별 방향 상충)·활성 eCPA(ρ=0.98 완전 중복) 제거 — 신규+재활성 결측 데이터셋은 ad 폴백이 처리 */
+    {k:"신규+재활성 eCPA",w:0.70,dir:-1,lab:"신규+재활성 eCPA"},
+    {k:"CTR",w:0.12,dir:1,lab:"CTR",entFo:"이미지"},
+    {k:"영상 완주율",w:0.12,dir:1,lab:"완주율",videoOnly:true},
+    {k:"_q_retD1",w:0.06,dir:1,lab:"D1 잔존율"},
+  ],
+  meta:[ /* 메타 = 신규/재참여 혼합 채널(소재 단위 재참여 우세 47%) — 합산 획득단가 중심.
+       신규 설치 단가는 계측 보완용 소폭(ρ=0.85 대부분 중복 신호) · D1 잔존율(base 중앙값 1,212명 · 효율과 직교하는 질 축) ·
+       CTR은 이 채널에선 정합성 부재(+0.18)라 소액 · CPM·활성 eCPA(리테인드 부풀림 소재 부양) 제거 */
+    {k:"신규+재활성 eCPA",w:0.65,dir:-1,lab:"신규+재활성 eCPA"},
+    {k:"_q_retD1",w:0.14,dir:1,lab:"D1 잔존율"},
+    {k:"_q_cpNewInstall",w:0.12,dir:-1,lab:"신규 설치 단가"},
+    {k:"CTR",w:0.09,dir:1,lab:"CTR"},
+  ],
+  ad:[ /* 매체 미상 ad 레벨(일반 CSV) 폴백 — 보수적 구성 */
+    {k:"신규+재활성 eCPA",w:0.45,dir:-1,lab:"신규+재활성 eCPA"},
+    {k:"활성 유저 eCPA",w:0.20,dir:-1,lab:"활성 eCPA"},
+    {k:"CTR",w:0.20,dir:1,lab:"CTR"},
+    {k:"eCPI",w:0.15,dir:-1,lab:"eCPI"},
   ],
   adset:[
     {k:"활성 유저 eCPA",w:0.35,dir:-1,lab:"활성 eCPA"},
@@ -1523,7 +1600,14 @@ const SCORING={
   ],
 };
 function specsFor(ds){const a=ds.agg,isG=isGoogleDs(a);
-  const key=isG?(ds.media==="Google AEO"?"google_aeo":ds.media==="Google ACE"?(gHomeEff?"google_ace_home":"google_ace"):"google"):(ds.L.key||"ad");
+  let key;
+  if(isG)key=ds.media==="Google AEO"?"google_aeo":ds.media==="Google ACE"?(gHomeEff?"google_ace_home":"google_ace"):"google";
+  else if((ds.L.key||"ad")==="ad"){
+    /* 몰로코(RE 채널) vs 메타(UA 채널) 스펙 분리 — CTR·D1·eCPI의 유효성이 두 채널에서 정반대 (AEO/ACE 분리와 동일 논리) */
+    if(a.some(e=>e._m_ctype))key="moloco";
+    else if(a.some(e=>e._q_afInstalls!=null||e._q_retD1!=null||isAdManagerUrl(e._m_url||"")))key="meta";
+    else key="ad";}
+  else key=ds.L.key;
   const isVideo=a.some(e=>(e._g_assetType&&/동영상|video/i.test(e._g_assetType))||(e._m_ctype&&e._m_ctype.includes("VIDEO")));
   return SCORING[key].filter(s=>!s.videoOnly||isVideo).map(s=>({...s}));}
 /* 지표별 증거량(표본) — 백분위를 g'=0.5+(g−0.5)·n/(n+n₀)로 축소해
@@ -1541,13 +1625,23 @@ const SPEC_EVIDENCE={
   "_g_cpFirstOpen":{den:e=>e._g_firstOpen,n0:30},
   "_g_cpHome":{den:e=>e._g_home,n0:30},
   "_g_conversionRate":{den:e=>e._g_interactions,n0:300},
+  "_g_foRate":{den:e=>e._g_interactions,n0:300},
+  "_q_cpNewInstall":{den:e=>e._q_afInstalls,n0:50},
   "_q_retD1":{den:e=>e._q_retD1Base,n0:150}, /* 잔존율 표본 = D1 코호트 base — 표본 적은 소재의 운빨 잔존율 축소 */
 };
 function evidenceW(e,k){const s=SPEC_EVIDENCE[k];if(!s)return 1;const d=s.den(e)||0;return d>0?d/(d+s.n0):0;}
 /* 미디어 단가 지표는 인벤토리 특성(네이티브 영상 vs 배너)이 달라 같은 포맷 안에서만 상대 평가 */
 const MEDIA_COHORT_KEYS=new Set(["CTR","CPM","CPC","영상 완주율","_g_interactionRate","_g_trueViewRate"]);
 /* 공용 점수 코어 — computeScores(소재)와 scoreGroupAgg(그룹 집계)가 같은 규칙을 쓴다 */
-function runScoring(pop,elig,specs){
+/* 규모(R) 축의 기준 지표 — 노출이 아니라 "데려온 유저 수"(매체별: 신규+재활성 / first_open / 전환수).
+   실데이터 검증: 몰로코 노출↔데려온 유저 ρ=-0.02(노출은 싼 인벤토리만 보상), 메타 노출↔광고비 ρ=0.94(예산 순환 보상).
+   데이터 가용도가 50% 미만이면 노출 수로 폴백 */
+function reachKeyFor(ds){
+  const a=(ds&&ds.agg)||[],isG=isGoogleDs(a);
+  const k=isG?(ds.media==="Google ACE"?"_g_conversions":"_g_firstOpen"):"신규+재활성 유저 수";
+  const av=ds&&ds.fieldAvail?ds.fieldAvail[k]:null;
+  return av!=null&&av>=0.5?k:"노출 수";}
+function runScoring(pop,elig,specs,reachKey){
   const dists={},foDists={};
   for(const s of specs){
     dists[s.k]=buildWDist(pop.filter(e=>e[s.k]!=null).map(e=>[e[s.k],Math.max(e.비용||0,1)]));
@@ -1557,12 +1651,14 @@ function runScoring(pop,elig,specs){
         let arr=byFo.get(fo);if(!arr){arr=[];byFo.set(fo,arr);}arr.push([e[s.k],Math.max(e.비용||0,1)]);}
       const m=new Map();for(const[fo,arr]of byFo){if(arr.length>=8)m.set(fo,buildWDist(arr));}
       if(m.size)foDists[s.k]=m;}}
-  const impSorted=pop.map(e=>e["노출 수"]||0).sort((x,y)=>x-y);
+  const rk=reachKey||"노출 수";
+  const reachDist=buildWDist(pop.map(e=>[e[rk]||0,Math.max(e.비용||0,1)])); /* 데려온 유저 규모 — 광고비 가중 백분위 */
   const denomLn=Math.log(1+SCORING.MIN_CONV_FOR_FULL_CONF);
   const convOf=e=>e._g_conversions??e["어트리뷰션 수"]??e["활성 유저 수"]??e["클릭 수"]??0;
   elig.forEach(e=>{
     let composite=0,wsum=0;e._specPct={};
     for(const s of specs){if(e[s.k]==null||!dists[s.k].vals.length)continue;
+      if(s.entFo&&((e.tags&&e.tags.fo)||"")!==s.entFo)continue; /* 포맷 조건부 지표 — 해당 포맷에서만 채점(예: 몰로코 CTR=이미지만) */
       let d=dists[s.k];
       const fm=foDists[s.k];if(fm){const fo=(e.tags&&e.tags.fo)||"기타";if(fm.has(fo))d=fm.get(fo);}
       const p=wPctRank(d,e[s.k]);let g=s.dir<0?1-p:p;
@@ -1570,7 +1666,7 @@ function runScoring(pop,elig,specs){
       e._specPct[s.k]={g,w};
       composite+=g*s.w;wsum+=s.w;}
     const E=wsum>0?composite/wsum:0;
-    const R=impSorted.length?pctRank(impSorted,e["노출 수"]||0):0.5;
+    const R=reachDist.vals.length?wPctRank(reachDist,e[rk]||0):0.5;
     const C=Math.min(1,Math.log(1+convOf(e))/denomLn);
     e._E=E;e._R=R;e._C=C;
     e._raw=100*(SCORING.EFF_W*E+SCORING.REACH_W*R+SCORING.CONF_W*C);});
@@ -1584,7 +1680,9 @@ function runScoring(pop,elig,specs){
   const soft=v=>v>92?92+(v-92)*7/((v-92)+7):v<12?12-(12-v)*10/((12-v)+10):v;
   elig.forEach(e=>{e.score=Math.round(Math.max(2,Math.min(99.4,soft(lin(e._raw))))*10)/10;});
   const sc=elig.map(e=>e.score).sort((x,y)=>x-y);
-  elig.forEach(e=>{const p=pctRank(sc,e.score);e.tier=p>=0.8?"g2":p>=0.6?"g1":p>=0.4?"m":p>=0.2?"w1":"w2";});}
+  elig.forEach(e=>{const p=pctRank(sc,e.score);e.tier=p>=0.8?"g2":p>=0.6?"g1":p>=0.4?"m":p>=0.2?"w1":"w2";});
+  /* 채점 자(ruler) 반환 — 주차별 점수가 총점과 "같은 분포·같은 재배치"로 계산되도록 컨텍스트 공유 */
+  return {dists,foDists,reachDist,rk,rLo,rHi,useLin:(elig.length>=8&&rHi>rLo),sc,specs};}
 function computeScores(ds){const L=ds.L,a=ds.agg;
   ds.fieldAvail=computeFieldAvail(a);
   const av=ds.fieldAvail;
@@ -1599,7 +1697,7 @@ function computeScores(ds){const L=ds.L,a=ds.agg;
   const coreSpecs=specs.filter(s=>s.w>=0.15);
   const elig=a.filter(e=>(e.비용||0)>=minSpend&&coreSpecs.every(s=>e[s.k]!=null));
   if(elig.length<3)return{best:[],worst:[],med:null,goodCol:specs[0]?.k||"score",goodDir:specs[0]?.dir||1,goodLabel:specs[0]?.lab||"점수",goodFmt:specs[0]?.k==="_g_ROAS"?"num":"int",goodHelp:"복합 지표",volCol:"비용",eligCount:0,specs};
-  runScoring(a,elig,specs);
+  ds._scoreCtx=runScoring(a,elig,specs,reachKeyFor(ds));
   const best=elig.slice().sort((x,y)=>y.score-x.score);
   best.forEach((e,i)=>{e.rank=i+1;});
   const primary=specs[0],pkey=primary.k,pdir=primary.dir;
@@ -1936,6 +2034,7 @@ function typeAggRows(ds,dim){const a=ds.agg;
 let tState={sort:"score",dir:-1,q:""};
 let tQuickFo=null; /* "영상" | "이미지" | null */
 let tGroupBy=false; /* true → aggregate table rows by 광고그룹 ID */
+let tGallery=false,_galShown=100; /* 갤러리 보기 — 미디어 카드 그리드(점수·지표 없음), _galShown=더 보기 누적 */
 let tLiveOnly=true; /* 기본 ON — 스코프 최신 집행 주에 광고비>0인 소재만 (전체 목록 한정) */
 let tChip=null; /* 칩 클릭 필터 {k:"ve|fo|nat|size|grp", v, lab} — 한 번에 하나, 다시 클릭·✕로 해제 */
 let tMarkView="all"; /* 전체 / 내 소재(mine) / 즐겨찾기(fav) — 좌측 nav 세그먼트 */
@@ -2045,7 +2144,8 @@ function renderMineAs(ds){
   if(maSig===_mselSig.ma)return; _mselSig.ma=maSig;
   if(!isAdmin||!MARKS.me){host.hidden=true;host.innerHTML="";if(mineAs){mineAs=null;}return;}
   host.hidden=false;
-  const others=CREATORS.filter(n=>n!==MARKS.me);
+  const _nrm=x=>String(x||"").trim().toLowerCase();
+  const others=CREATORS.filter(n=>_nrm(n)!==_nrm(MARKS.me)); /* 대소문자·공백 차이로 본인+로스터가 중복 노출되는 것 방지 */
   const opts=[{v:"",label:"나 (본인)"}].concat(others.map(n=>({v:n,label:n})));
   const curLabel=mineAs||"나 (본인)";
   host.innerHTML=
@@ -2131,8 +2231,8 @@ function fmtSpecVal(k,v){if(v==null)return"–";
 function groupInfoHTML(gi){if(!gi)return "";
   const cells=[];
   const add=(k,v,tip,wide)=>{if(v!=null&&v!=="")cells.push(`<div class="gi-r${wide?" wide":""}" ${tip?`title="${escAttr(tip)}"`:""}><span class="gi-k">${escHtml(k)}</span><b class="gi-v num">${escHtml(v)}</b></div>`);};
-  add("캠페인",gi.cpNm?trunc(groupPrettyName(gi.cpNm),40):null,gi.cpNm,true);
-  add("타겟 CPA",gi.tcpa!=null?fmtWon(gi.tcpa):null,"이 그룹의 입찰 목표 CPA");
+  add("캠페인",gi.cpNm?trunc(groupPrettyName(gi.cpNm),40):null,(gi.cpNm||"")+" — 캠페인 이름 기준 표기. 여러 서비스의 광고그룹이 한 캠페인에 속할 수 있어요(예: AEO는 캠페인 1개에 전 서비스 그룹)",true);
+  add("타겟 CPA",gi.tcpa!=null?fmtWon(gi.tcpa):null,"목표 CPA — 그룹에 별도 설정이 없으면 캠페인 값이 상속되어 여러 그룹에 같은 값으로 보일 수 있어요");
   add("참여율",gi.eng!=null?gi.eng+"%":null,"Google 참여율 (보고서 기간 누적)");
   add("설치 시작 first_open",gi.fopen!=null?fmtInt(gi.fopen):null);
   add("홈 진입 home",gi.home!=null?fmtInt(gi.home):null);
@@ -2151,9 +2251,7 @@ function scorePosHTML(ds,e){const S=ds.S;
   return `<section class="ipos"><div class="ish">지표별 계정 내 위치 <span class="n">50=계정 평균 · 길수록 좋음</span></div><div class="sb">${rows}</div></section>`;}
 /* 소재(또는 그룹)의 주차별 광고비·핵심지표 미니 차트 — 상세 뷰 미리보기 아래 표시.
    막대=광고비(투입). 선은 매체 데이터에 맞춰 자동 선택, 각 선은 자체 최대값으로 정규화(모양=추세, 절대값은 범례 최신값·호버).
-   · 구글(전환 데이터 보유): ROAS + 전환당 비용 2선 — 수익성·전환효율이 채점의 55%라 이 둘이면 성패가 보임
-   · 앱 채널(몰로코·메타 등): eCPI + 활성 eCPA + CTR 3선 — 설치 효율, 설치의 질(둘의 벌어짐=질 악화), 소재 피로(CTR 하락 선행)
-   해당 데이터가 없는 지표는 자동 제외, 전환류가 전무하면 CPC로 대체 */
+   선 = 그 매체의 점수 반영 지표(가중치 상위 3) — 점수 미반영 지표는 그리지 않는다. 데이터 없는 지표 자동 제외 */
 function weeklyAggOf(ds,e){
   /* 소재(또는 그룹)의 주차별 원시 합계 — 추이 차트와 진단 라인이 공유 */
   const nameCol=ds.L.nameCol;
@@ -2162,30 +2260,57 @@ function weeklyAggOf(ds,e){
   else rows=ds.data.filter(r=>r[nameCol]===e.name);
   const wkMap=new Map();
   for(const r of rows){const d=String(r.date||"").slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;
-    let o=wkMap.get(d);if(!o){o={c:0,imp:0,clk:0,attr:0,act:0,conv:0,cval:0,vn:0,vd:0,tv:0,fo:0,home:0,inter:0,nu:0,rB:0,rU:0};wkMap.set(d,o);}
+    let o=wkMap.get(d);if(!o){o={c:0,imp:0,clk:0,attr:0,act:0,conv:0,cval:0,vn:0,vd:0,tv:0,fo:0,home:0,inter:0,nu:0,rB:0,rU:0,afI:0};wkMap.set(d,o);}
     o.c+=num(r["비용"])||0;o.imp+=num(r["노출 수"])||0;o.clk+=num(r["클릭 수"])||0;
     o.attr+=num(r["어트리뷰션 수"])||0;o.act+=num(r["활성 유저 수"])||0;
     o.conv+=num(r["_g_conversions"])||0;o.cval+=num(r["_g_convValue"])||0;
     o.vn+=num(r["_vcrNum"])||0;o.vd+=num(r["_vcrDen"])||0;o.tv+=num(r["_g_trueViews"])||0;
     o.fo+=num(r["_g_firstOpen"])||0;o.home+=num(r["_g_home"])||0;o.inter+=num(r["_g_interactions"])||0;
-    o.nu+=num(r["신규+재활성 유저 수"])||0;o.rB+=num(r["_q_retD1Base"])||0;o.rU+=num(r["_q_retD1Users"])||0;}
+    o.nu+=num(r["신규+재활성 유저 수"])||0;o.rB+=num(r["_q_retD1Base"])||0;o.rU+=num(r["_q_retD1Users"])||0;o.afI+=num(r["_q_afInstalls"])||0;}
   const ws=[...wkMap.keys()].sort();
   return{ws,os:ws.map(w=>wkMap.get(w))};}
 /* 주차별 점수 — 그 주 데이터만으로 전체 파이프라인(집계→채점)을 돌린 '그 주의 상대 점수'.
    주 단위 표본이라 변동이 크고, 그 주에 부적격(광고비 하위 15%·핵심 지표 결측)이면 null(–).
    스코프(매체·기간) 단위 캐시 — scope()가 무효화. 그룹 상세는 주별 그룹 집계를 따로 채점 */
+/* 소재 상세 "주차별 점수" — 총점과 같은 자(전체 기간 분포·같은 스펙·같은 재배치)로 그 주의 지표를 채점.
+   예전엔 주마다 '그 주 코호트'로 새로 상대평가해서 ① 비교군이 매주 바뀌어 총점과 모순돼 보이고
+   (전체 기간 풀엔 저효율 과거 소재가 포함돼 총점 1위인데 주차는 40점대 같은 역설),
+   ② 그 주 광고비 하위 15%·핵심지표 결측이면 점수가 아예 사라졌다(집행 중인 1위 소재가 '점수 없음').
+   이제 주차 점수 = "전체 기간의 자로 잰 그 주 성과" — 총점과 정합하고, 지표가 있는 주엔 항상 점수가 나온다.
+   주간 표본이 작으면 지표별 베이지안 축소가 자연히 중앙(50)쪽으로 당긴다. */
 function weeklyScoresOf(ds,e){
   const isG=!!e._isGroup,key=isG?"_wkScoreG":"_wkScore";
+  if(!ds._scoreCtx)return ()=>null; /* 채점 자 없음(무점수 데이터셋) */
   if(!ds[key]){
+    const C=ds._scoreCtx;
     const m=new Map(),byW=new Map();
     for(const r of ds.data){const d=String(r.date||"").slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;
       let a=byW.get(d);if(!a){a=[];byW.set(d,a);}a.push(r);}
-    for(const[w,rows]of byW){
-      const sub={L:ds.L,media:ds.media,agg:aggregate(rows,ds.L)}; /* media 전달 — 주차 점수도 매체별(AEO 신규단가/ACE CPA·홈) 스펙으로 채점 */
-      sub.S=computeScores(sub);
-      const ents=isG?buildAdGroupAgg(sub):sub.agg;
+    const lin=C.useLin?(v=>12+(v-C.rLo)/(C.rHi-C.rLo)*80):(v=>v);
+    const soft=v=>v>92?92+(v-92)*7/((v-92)+7):v<12?12-(12-v)*10/((12-v)+10):v;
+    /* 주간 규모(R)는 '주간 볼륨'끼리 비교해야 스케일이 맞음 — 전 주×소재의 주간 데려온 유저 분포(광고비 가중) */
+    const wkEnts=[...byW.entries()].map(([w,rows])=>[w,isG?buildAdGroupAgg({agg:aggregate(rows,ds.L)}):aggregate(rows,ds.L)]);
+    const wkReach=buildWDist(wkEnts.flatMap(([,ents])=>ents.map(x=>[x[C.rk]||0,Math.max(x.비용||0,1)])));
+    for(const[w,ents]of wkEnts){
       const wm=new Map();
-      for(const x of ents)wm.set(isG?String(x._g_adGroupId||x._m_group):x.name,{s:x.score,t:x.tier});
+      for(const x of ents){
+        if((x.비용||0)<=0)continue;
+        let comp=0,wsum=0;
+        for(const sp of C.specs){const v=x[sp.k];if(v==null)continue;
+          if(sp.entFo&&((x.tags&&x.tags.fo)||"")!==sp.entFo)continue;
+          const d0=C.dists[sp.k];if(!d0||!d0.vals.length)continue;
+          let d=d0;const fm=C.foDists[sp.k];if(fm){const fo=(x.tags&&x.tags.fo)||"기타";if(fm.has(fo))d=fm.get(fo);}
+          const p=wPctRank(d,v);let g=sp.dir<0?1-p:p;
+          const ww=evidenceW(x,sp.k);g=0.5+(g-0.5)*ww;
+          comp+=g*sp.w;wsum+=sp.w;}
+        if(!(wsum>0))continue; /* 그 주에 채점 가능한 지표가 하나도 없을 때만 – */
+        const E=comp/wsum;
+        const R=wkReach.vals.length?wPctRank(wkReach,x[C.rk]||0):0.5;
+        const raw=100*(SCORING.EFF_W*E+SCORING.REACH_W*R);
+        const scv=Math.round(Math.max(2,Math.min(99.4,soft(lin(raw))))*10)/10;
+        const p2=C.sc&&C.sc.length?pctRank(C.sc,scv):0.5;
+        const t=p2>=0.8?"g2":p2>=0.6?"g1":p2>=0.4?"m":p2>=0.2?"w1":"w2";
+        wm.set(isG?String(x._g_adGroupId||x._m_group):x.name,{s:scv,t});}
       m.set(w,wm);}
     ds[key]=m;}
   const id=isG?String(e._g_adGroupId||e._m_group):e.name;
@@ -2203,6 +2328,8 @@ function creativeTrendHTML(ds,e){
     "_g_costPerConv":{fmt:fmtWon,of:o=>o.conv>0?o.c/o.conv:null},
     "_g_cpHome":{fmt:fmtWon,of:o=>o.home>0?o.c/o.home:null},
     "_g_conversionRate":{fmt:fmtPct,of:o=>o.inter>0?o.conv/o.inter:null},
+    "_g_foRate":{fmt:fmtPct,of:o=>o.inter>0?o.fo/o.inter:null},
+    "_q_cpNewInstall":{fmt:fmtWon,of:o=>o.afI>0?o.c/o.afI:null},
     "신규+재활성 eCPA":{fmt:fmtWon,of:o=>o.nu>0?o.c/o.nu:null},
     "활성 유저 eCPA":{fmt:fmtWon,of:o=>o.act>0?o.c/o.act:null},
     "eCPI":{fmt:fmtWon,of:o=>o.attr>0?o.c/o.attr:null},
@@ -2557,22 +2684,23 @@ function tableCols(L,ds){const meta=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score
     /* ── 비용·도달 (공통) ── */
     {k:"비용",t:"광고비",f:"won",help:"쓴 광고비 · [+] 노출·CPM",lead:1,grp:"vol"},
     {k:"노출 수",t:"노출",f:"int",help:"보여진 횟수 (도달 규모)",sub:1,grp:"vol"},
-    {k:"CPM",t:"CPM",f:"won",help:"노출 1,000회당 비용 · 낮을수록 좋음 · 점수 "+(isG?"12%":"5.5%"),sub:1,grp:"vol"}];
+    {k:"CPM",t:"CPM",f:"won",help:"노출 1,000회당 비용 · 낮을수록 좋음 · 참고 지표(채점 제외 — 성과와 역방향 확인)",sub:1,grp:"vol"}];
   if(isG){
-    /* ── 구글: 획득 효율(50%) · 반응·전환(22+16%) · 참고(점수 미반영) ── */
+    /* ── 구글: 데려온 유저(승격) · 획득 효율(50%) · 반응·전환(22+16%) · 참고(점수 미반영) ── */
     const pk=gPrimaryKey(ds&&ds.media);
-    nums.push({k:pk,t:gCostLabel(ds&&ds.media),f:"won",help:gCostHelp(ds&&ds.media)+" · 점수 50%",lead:1,grp:"gcost"});
+    nums.push(
+      {k:"_g_firstOpen",t:"데려온 유저",f:"int",help:"신규 유저(앱 최초 실행 first_open) 수 — 이 소재가 실제로 데려온 유저. 구글 리포트는 신규만 집계(재활성 별도 집계 없음) · [+] 홈 도달",lead:1,grp:"gotten"},
+      {k:"_g_home",t:"홈 도달",f:"int",help:"홈 화면 도달 = 주요 인앱 액션 수 (ACE 리타겟 성과 프록시)",sub:1,grp:"gotten"});
+    nums.push({k:pk,t:gCostLabel(ds&&ds.media),f:"won",help:gCostHelp(ds&&ds.media)+" · 채점 1순위",lead:1,grp:"gcost"});
     for(const c of [{k:"_g_cpFirstOpen",t:"신규 단가",h:"신규 유저(앱 최초 실행) 1인당 비용 · 낮을수록 좋음"},{k:"_g_costPerConv",t:"CPA",h:"모든 전환당 비용 = 비용÷전환수 · 낮을수록 좋음"},{k:"_g_cpHome",t:"홈 단가",h:"홈 도달 1건당 비용 = 비용÷home · 낮을수록 좋음"}])
       if(c.k!==pk)nums.push({k:c.k,t:c.t,f:"won",help:c.h,sub:1,grp:"gcost"});
     nums.push(
-      {k:"_g_firstOpen",t:"신규 실행",f:"int",help:"앱 최초 실행 = 신규 유저 획득 수",sub:1,grp:"gcost"},
-      {k:"_g_home",t:"홈 도달",f:"int",help:"홈 화면 도달 = 주요 인앱 액션 수",sub:1,grp:"gcost"},
       {k:"_g_conversions",t:"전환",f:"int",help:"Google 전환 수(모든 인앱 액션)",sub:1,grp:"gcost"},
       /* 반응·전환력 */
-      {k:"CTR",t:"CTR",f:"pct",help:"클릭률 = 클릭÷노출 · 높을수록 좋음 · 점수 22%",lead:1,grp:"clk"},
+      {k:"CTR",t:"CTR",f:"pct",help:"클릭률 = 클릭÷노출 · 높을수록 좋음",lead:1,grp:"clk"},
       {k:"클릭 수",t:"클릭",f:"int",help:"눌린 횟수",sub:1,grp:"clk"},
       {k:"CPC",t:"CPC",f:"won",help:"클릭당 비용 · 낮을수록 좋음",sub:1,grp:"clk"},
-      {k:"_g_conversionRate",t:"전환율",f:"pct",help:"전환÷상호작용 (Google 관례) · 높을수록 좋음 · 점수 16%",sub:1,grp:"clk"},
+      {k:"_g_conversionRate",t:"전환율",f:"pct",help:"전환÷상호작용 (Google 관례) · 높을수록 좋음",sub:1,grp:"clk"},
       {k:"_g_interactions",t:"상호작용",f:"int",help:"상호작용 총 수",sub:1,grp:"clk"},
       {k:"_g_interactionRate",t:"상호작용률",f:"pct",help:"상호작용÷노출 · 높을수록 좋음",sub:1,grp:"clk"},
       /* 참고 — 점수 미반영 (전환가치는 모델링 값) */
@@ -2581,28 +2709,30 @@ function tableCols(L,ds){const meta=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score
       {k:"_g_convValuePerConv",t:"전환당 가치",f:"won",help:"전환 가치÷모든 전환",sub:1,grp:"gref"},
       {k:"_g_allConv",t:"모든 전환",f:"int",help:"모든 전환 (전환 시간별)",sub:1,grp:"gref"});
   }else if(L.hasConv){
-    /* ── 몰로코·메타: 획득 효율(36+19+5.5%) · 유저 질(12%) · 반응(15%) · 영상(7%) ── */
+    /* ── 몰로코·메타: 데려온 유저(승격) · 획득 효율 · 유저 질 · 반응 · 영상 ── */
     nums.push(
-      {k:"신규+재활성 eCPA",t:"신규 eCPA",f:"won",help:"신규+재활성 유저 1명당 비용 · 낮을수록 좋음 · 점수 36% (1순위) · [+] 획득 지표",lead:1,grp:"acq"},
-      {k:"신규+재활성 유저 수",t:"신규+재활성",f:"int",help:"신규 + 휴면 복귀 유저 수",sub:1,grp:"acq"},
-      {k:"활성 유저 eCPA",t:"활성 eCPA",f:"won",help:"활성유저 1명당 비용 · 낮을수록 좋음 · 점수 19%",sub:1,grp:"acq"},
-      {k:"활성 유저 수",t:"활성유저",f:"int",help:"설치 후 실제 사용자",sub:1,grp:"acq"},
-      {k:"eCPI",t:"eCPI",f:"won",help:"설치 1건당 비용 · 낮을수록 좋음 · 점수 5.5%",sub:1,grp:"acq"},
-      {k:"어트리뷰션 수",t:"설치",f:"int",help:"이 소재로 생긴 앱 설치 수(어트리뷰션)",sub:1,grp:"acq"},
+      {k:"신규+재활성 유저 수",t:"데려온 유저",f:"int",help:"신규 + 재활성(휴면 복귀) 합산 — 이 소재가 실제로 '데려온' 유저 수 (AF) · [+] 구성·단가",lead:1,grp:"gotten"},
+      {k:"_q_afInstalls",t:"신규 설치",f:"int",help:"AppsFlyer 기준 순수 신규 설치 수 (재참여 제외)",sub:1,grp:"gotten"},
+      {k:"_q_reEng",t:"재참여",f:"int",help:"리인게이지먼트(복귀 유도 성공) 수 (AF)",sub:1,grp:"gotten"},
+      {k:"_q_reAtt",t:"재어트리뷰션",f:"int",help:"재설치 후 복귀(리어트리뷰션) 수 (AF)",sub:1,grp:"gotten"},
+      {k:"_q_cpNewInstall",t:"신규 설치 단가",f:"won",help:"비용 ÷ 신규 설치(AF) · 낮을수록 좋음 · 재참여 캠페인은 신규가 적어 커 보일 수 있음",sub:1,grp:"gotten"},
+      {k:"_q_cpReEng",t:"재참여 단가",f:"won",help:"비용 ÷ 재참여 · 낮을수록 좋음 (리타겟팅 소재의 핵심 단가)",sub:1,grp:"gotten"});
+    nums.push(
+      {k:"신규+재활성 eCPA",t:"신규 eCPA",f:"won",help:"데려온 유저(신규+재활성) 1명당 비용 · 낮을수록 좋음 · 채점 1순위 · [+] 보조 단가",lead:1,grp:"acq"},
+      {k:"활성 유저 eCPA",t:"활성 eCPA",f:"won",help:"활성유저 1명당 비용 — 예전에 데려와 계속 쓰는 리테인드 유저가 섞여 '소재의 현재 획득 성과'와는 거리가 있는 보조 지표",sub:1,grp:"acq"},
+      {k:"활성 유저 수",t:"활성유저",f:"int",help:"설치 후 실제 사용자 (리테인드 포함)",sub:1,grp:"acq"},
+      {k:"eCPI",t:"eCPI",f:"won",help:"어트리뷰션 이벤트 1건당 비용 — 어트리뷰션엔 설치+재참여 이벤트가 섞여 있어 '설치 단가'가 아님(몰로코는 99.7%가 재참여 이벤트) · 참고용",sub:1,grp:"acq"},
+      {k:"어트리뷰션 수",t:"어트리뷰션",f:"int",help:"AF 어트리뷰션 이벤트 수(설치+재참여 이벤트 합 — 순수 설치는 '신규 설치' 컬럼)",sub:1,grp:"acq"},
       ...(isM?[{k:"_m_installs",t:"설치(몰로코)",f:"int",help:"몰로코 리포트 기준 설치 수 — MMP 어트리뷰션과 다를 수 있음",sub:1,grp:"acq"}]:[]));
     if(isQ)nums.push(
-      {k:"_q_retD1",t:"D1 잔존",f:"pct",help:"설치 다음날 앱에 돌아온 비율 (AppsFlyer 코호트 실측) · 높을수록 '목적에 맞는' 유저 · 점수 12% · [+] 질 지표",lead:1,grp:"qual"},
+      {k:"_q_retD1",t:"D1 잔존",f:"pct",help:"설치 다음날 앱에 돌아온 비율 (AppsFlyer 코호트 실측) · 높을수록 '목적에 맞는' 유저 · [+] 질 지표",lead:1,grp:"qual"},
       {k:"_q_retD7",t:"D7 잔존",f:"pct",help:"설치 7일 뒤에도 남아 있는 비율 (AF 코호트) · 높을수록 좋음",sub:1,grp:"qual"},
-      {k:"_q_roasD7",t:"ROAS D7",f:"num",help:"설치 후 7일 코호트 매출 ÷ 광고비 (AF 실측 매출) · 점수 미반영 참고",sub:1,grp:"qual"},
-      {k:"_q_afInstalls",t:"신규 설치",f:"int",help:"AppsFlyer 기준 순수 신규 설치 수 (재참여 제외)",sub:1,grp:"qual"},
-      {k:"_q_cpNewInstall",t:"신규 설치 단가",f:"won",help:"비용 ÷ 신규 설치(AF) · 낮을수록 좋음 · 재참여 캠페인은 신규가 적어 커 보일 수 있음",sub:1,grp:"qual"},
-      {k:"_q_reEng",t:"재참여",f:"int",help:"리인게이지먼트(복귀 유도 성공) 수 (AF)",sub:1,grp:"qual"},
-      {k:"_q_cpReEng",t:"재참여 단가",f:"won",help:"비용 ÷ 재참여 · 낮을수록 좋음 (리타겟팅 소재의 핵심 단가)",sub:1,grp:"qual"});
+      {k:"_q_roasD7",t:"ROAS D7",f:"num",help:"설치 후 7일 코호트 매출 ÷ 광고비 (AF 실측 매출) · 점수 미반영 참고",sub:1,grp:"qual"});
     nums.push(
-      {k:"CTR",t:"CTR",f:"pct",help:"클릭률 = 클릭÷노출 · 높을수록 좋음 · 점수 15%",lead:1,grp:"clk"},
+      {k:"CTR",t:"CTR",f:"pct",help:"클릭률 = 클릭÷노출 · 높을수록 좋음",lead:1,grp:"clk"},
       {k:"클릭 수",t:"클릭",f:"int",help:"눌린 횟수",sub:1,grp:"clk"},
       {k:"CPC",t:"CPC",f:"won",help:"클릭당 비용 · 낮을수록 좋음",sub:1,grp:"clk"});
-    if(isM)nums.push({k:"영상 완주율",t:"완주율",f:"pct",help:"영상을 끝까지 본 비율 (노출 가중 평균) · 높을수록 좋음 · 점수 7%(영상만)",lead:1,grp:"vid"});
+    if(isM)nums.push({k:"영상 완주율",t:"완주율",f:"pct",help:"영상을 끝까지 본 비율 (노출 가중 평균) · 높을수록 좋음 · 영상 소재만 채점 반영",lead:1,grp:"vid"});
   }else{
     /* ── 전환 데이터 없는 일반 CSV(캠페인/크리에이티브 그룹 등): 반응 중심 ── */
     nums.push(
@@ -2617,6 +2747,9 @@ function tableCols(L,ds){const meta=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score
   for(const c of filtered){if(!c.grp)continue;let g=byGrp.get(c.grp);if(!g){g={lead:0,subs:[]};byGrp.set(c.grp,g);}
     if(c.lead)g.lead++;else if(c.sub)g.subs.push(c);}
   for(const[,g]of byGrp)if(!g.lead&&g.subs.length){const p=g.subs[0];delete p.sub;p.lead=1;}
+  /* 채점 가중치를 컬럼 툴팁에 자동 표기 — SCORING과 표기가 어긋날 수 없게 스펙에서 직접 읽는다 */
+  try{const _ws=Object.fromEntries(specsFor(ds).map(x=>[x.k,x.w]));
+    for(const c of filtered)if(_ws[c.k])c.help=(c.help||"")+" · 점수 "+Math.round(_ws[c.k]*100)+"% 반영";}catch(_){}
   return meta.concat(filtered);}
 function fcell(v,f){return f==="won"?fmtWon(v):f==="int"?fmtInt(v):f==="pct"?fmtPct(v):f==="num"?(v!=null&&isFinite(v)?v.toFixed(1)+"×":"–"):(v??"–");}
 function tierBadge(e){if(e.dom==="good")return `<span class="dom-tag" title="독보적으로 잘 나옴">독보적</span>`;
@@ -2657,6 +2790,7 @@ function buildAdGroupAgg(ds){
     /* 소재 레벨과 동일 규칙: 분모가 있으면 0도 유효한 성과값 (구글 그룹에만 적용) */
     g._g_interactionRate=isGg&&imp>0?(g._g_interactions||0)/imp:null;
     g._g_conversionRate=isGg&&(g._g_interactions||0)>0?(g._g_conversions||0)/g._g_interactions:null;
+    g._g_foRate=isGg&&(g._g_interactions||0)>0?(g._g_firstOpen||0)/g._g_interactions:null;
     g._g_costPerConv=isGg&&(g._g_conversions||0)>0?cost/g._g_conversions:null;
     g._g_cpFirstOpen=isGg&&(g._g_firstOpen||0)>0?cost/g._g_firstOpen:null;
     g._g_cpHome=isGg&&(g._g_home||0)>0?cost/g._g_home:null;
@@ -2675,7 +2809,7 @@ function scoreGroupAgg(ds,rows){
   const elig=rows.filter(e=>(e.비용||0)>=minSpend&&coreSpecs.every(s=>e[s.k]!=null));
   rows.forEach(g=>{g.score=null;g.tier="na";g.dom=null;});
   if(elig.length<3)return;
-  runScoring(rows,elig,specs);
+  runScoring(rows,elig,specs,reachKeyFor(ds));
   const best=elig.slice().sort((x,y)=>y.score-x.score);best.forEach((e,i)=>{e.rank=i+1;});
 }
 function getRowsForTable(ds){
@@ -2687,7 +2821,7 @@ function findRow(ds,name){
   return ds.agg.find(x=>x.name===name);}
 const COL_DIR={"CPC":-1,"CPM":-1,"eCPI":-1,"활성 유저 eCPA":-1,"_g_costPerConv":-1,"_g_cpFirstOpen":-1,"_g_cpHome":-1,"신규+재활성 eCPA":-1,"_q_cpNewInstall":-1,"_q_cpReEng":-1,
   "노출 수":1,"클릭 수":1,"어트리뷰션 수":1,"활성 유저 수":1,"CTR":1,"영상 완주율":1,"신규+재활성 유저 수":1,"_m_installs":1,"_g_ROAS":1,"_g_conversionRate":1,"_g_interactionRate":1,"_g_conversions":1,"_g_interactions":1,"_g_convValue":1,"_g_convValuePerConv":1,"_g_allConv":1,"_g_firstOpen":1,"_g_home":1,
-  "_q_retD1":1,"_q_retD7":1,"_q_roasD7":1,"_q_afInstalls":1,"_q_reEng":1};
+  "_q_retD1":1,"_q_retD7":1,"_q_roasD7":1,"_q_afInstalls":1,"_q_reEng":1,"_q_reAtt":1};
 function cellTier(v,sortedAll,dir){
   if(v==null||!sortedAll||sortedAll.length<5)return "m";
   const p=pctRank(sortedAll,v),g=dir<0?1-p:p;
@@ -2696,7 +2830,44 @@ function cellTier(v,sortedAll,dir){
   if(g<=0.05)return "w2";
   if(g<=0.15)return "w1";
   return "m";}
+/* 갤러리 보기 — 미디어 중심 카드(이름·태그만, 점수·지표 없음). 표와 같은 필터·정렬·검색을 공유.
+   영상은 호버 시 재생(직접 mp4=video.play, 유튜브=음소거 자동재생 임베드 스왑). 카드 클릭 = 표로 돌아가 해당 소재 상세 */
+function renderGallery(ds,host){
+  const rows=orderedRowsForTable(ds);
+  const take=rows.slice(0,_galShown);
+  host.innerHTML=take.map(r=>{
+    const url=previewUrlOf(r);
+    const dn=escHtml(trunc(displayNameOf(r),52));
+    const yt=ytIdOf(url);
+    let media;
+    if(yt)media=`<img class="gal-img" loading="lazy" src="${escAttr(imgSrc('https://img.youtube.com/vi/'+yt+'/hqdefault.jpg'))}" data-yt="${escAttr(yt)}" referrerpolicy="no-referrer" onerror="imgRetry(this)"><span class="gal-play">▶ 호버 재생</span>`;
+    else if(isVideoUrl(url))media=`<video class="gal-vid" src="${escAttr(safeUrl(url))}" preload="metadata" muted loop playsinline></video><span class="gal-play">▶ 호버 재생</span>`;
+    else if(isImageUrl(url))media=`<img class="gal-img" loading="lazy" src="${escAttr(imgSrc(url))}" data-osrc="${escAttr(url)}" referrerpolicy="no-referrer" onerror="imgRetry(this)">`;
+    else if(isAdManagerUrl(url))media=`<span class="gal-ph" title="Meta 광고관리자 링크만 있는 소재">Meta</span>`;
+    else media=`<span class="gal-ph">${entTypeEmoji(r)||"🖼️"}</span>`;
+    return `<div class="gal-card" data-name="${escAttr(r.name)}" title="클릭 = 상세 보기"><div class="gal-media">${media}</div><div class="gal-name">${liveBadge(ds,r)}${dn}</div><div class="gal-chips">${chipsHTML(r.tags,r)}</div></div>`;
+  }).join("")+(rows.length>_galShown?`<button class="gal-more" id="galMore" type="button">+ ${Math.min(100,rows.length-_galShown)}개 더 보기 (${_galShown}/${rows.length})</button>`:"")||`<div class="tempty" style="grid-column:1/-1">조건에 맞는 소재가 없습니다</div>`;
+  host.querySelectorAll(".gal-vid").forEach(v=>{
+    v.addEventListener("mouseenter",()=>{try{v.play();}catch(_){}});
+    v.addEventListener("mouseleave",()=>{try{v.pause();}catch(_){}});});
+  host.querySelectorAll(".gal-img[data-yt]").forEach(im=>{
+    const box=im.closest(".gal-media");if(!box)return;
+    box.addEventListener("mouseenter",()=>{if(box.querySelector("iframe"))return;
+      const id=im.dataset.yt,f=document.createElement("iframe");
+      f.className="gal-yt";f.allow="autoplay; encrypted-media";f.setAttribute("frameborder","0");
+      f.src=`https://www.youtube.com/embed/${id}?autoplay=1&mute=1&controls=0&playsinline=1&loop=1&playlist=${id}&modestbranding=1`;
+      box.appendChild(f);});
+    box.addEventListener("mouseleave",()=>{const f=box.querySelector("iframe");if(f)f.remove();});});
+  const gm=host.querySelector("#galMore");if(gm)gm.onclick=()=>{_galShown+=100;renderGallery(ds,host);};
+  host.querySelectorAll(".gal-card").forEach(c=>c.addEventListener("click",()=>{
+    const nm=c.getAttribute("data-name");if(!nm)return;
+    tGallery=false;const gv=$("#galleryView");if(gv)gv.checked=false;
+    goToIslandFromQuad(nm);}));}
 function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#table thead"),tbody=$("#table tbody");curDS=ds;_mdimDeferred=false;
+  /* 갤러리 모드면 표 대신 카드 그리드 (표 DOM은 그대로 두고 숨김 — 복귀 시 전체 재렌더) */
+  const _gal=$("#gallery"),_tblEl=$("#table");
+  if(tGallery){if(_tblEl)_tblEl.style.display="none";if(_gal){_gal.hidden=false;renderGallery(ds,_gal);}return;}
+  if(_tblEl)_tblEl.style.display="";if(_gal&&!_gal.hidden){_gal.hidden=true;_gal.innerHTML="";}
   /* 열려 있던 상세(isle)는 DOM 노드를 그대로 보존해 재렌더 후 다시 붙인다 — fillIsland 재실행/재렌더 루프 없이 열린 상태 유지 */
   const _isleName=ISLE.name,_keepIsle=_isleName?tbody.querySelector(".isle-row"):null;
   const cols=allCols.filter(c=>!c.sub||tExp.has(c.grp));
@@ -2873,12 +3044,25 @@ function abVariantOf(name){let s=String(name||"");
   if(m)return{base:m[1],variant:m[2],kind:"N"};
   return null;}
 function abNormBase(b){return String(b).replace(/[_\-\s.]+/g," ").trim().toLowerCase();}
+/* 이름에 이 토큰이 들어가면 시리즈 전체를 하나의 AB 테스트로 강제 병합 (사용자 지정) — 유형(영상/이미지)별로는 분리 */
+const AB_SERIES_MERGE=[[/rentkarrot/i,"RentKarrot"],[/10years/i,"10years"]];
 function buildABFamilies(ds){
   const fams=new Map();
+  const foOf=e=>(e.tags&&e.tags.fo)||"기타";
   for(const e of ds.agg){if((e.비용||0)<=0||e._isGroup)continue;
+    const fo=foOf(e);
+    /* 시리즈 강제 병합 — ep·V·사이즈로 쪼개지 않고 시리즈 전체를 한 테스트로 */
+    const sm=AB_SERIES_MERGE.find(([re])=>re.test(e.name));
+    if(sm){const key="S|"+sm[1]+"|"+fo;
+      let f=fams.get(key);if(!f){f={base:sm[1],kind:"S",fo,vars:new Map()};fams.set(key,f);}
+      const vm=e.name.match(/[Vv](\d+)/),em=e.name.match(/ep\s?(\d+)/i);
+      const variant=[vm?"V"+vm[1]:null,em?"ep"+em[1]:null].filter(Boolean).join(" ")||trunc(String(e.name).replace(/\.[a-z0-9]+$/i,""),14);
+      let arr=f.vars.get(variant);if(!arr){arr=[];f.vars.set(variant,arr);}
+      arr.push(e);continue;}
     const v=abVariantOf(e.name);if(!v)continue;
-    const key=v.kind+"|"+abNormBase(v.base);
-    let f=fams.get(key);if(!f){f={base:v.base,kind:v.kind,vars:new Map()};fams.set(key,f);}
+    /* 유형(영상/이미지)까지 키에 포함 — 사진과 영상이 한 테스트에서 비교되는 일 금지 (사용자 지정) */
+    const key=v.kind+"|"+abNormBase(v.base)+"|"+fo;
+    let f=fams.get(key);if(!f){f={base:v.base,kind:v.kind,fo,vars:new Map()};fams.set(key,f);}
     let arr=f.vars.get(v.variant);if(!arr){arr=[];f.vars.set(v.variant,arr);}
     arr.push(e);}
   /* 숫자 패밀리는 1번 변형이 존재해야 인정 — {2,3}만 있는 건 시리즈 조각일 가능성 (보수 규칙) */
@@ -2920,11 +3104,11 @@ function renderAB(ds){const el=$("#abBody"),meta=$("#abMeta"),cnt=$("#abCnt");
     const dispBase=f.base.replace(/[_\-\s.]{2,}/g,"_").replace(/^[_\s]+|[_\s]+$/g,"");
     const seq=f.rows.map((r,i)=>{
       const top=r.mem.slice().sort((x,y)=>((y.score??-1)-(x.score??-1))||((y.비용||0)-(x.비용||0)))[0];
-      return `<span class="abl-v">${AB_MEDAL(i)}<b>${r.variant}</b>${top?thumbHTML(top):""}</span>`;
+      return `<span class="abl-v${i<3?" abl-rank"+i:""}">${AB_MEDAL(i)}<b>${escHtml(String(r.variant))}</b>${top?thumbHTML(top):""}</span>`;
     }).join('<span class="abl-gt">›</span>');
     return `<div class="abl" data-fi="${fi}">
       <div class="abl-row" data-fi="${fi}">
-        <span class="abl-name">${dispBase}</span>
+        <span class="abl-name">${escHtml(dispBase)}${f.fo&&f.fo!=="기타"?`<span class="abl-fo">${escHtml(f.fo)}</span>`:""}</span>
         <span class="abl-seq">${seq}</span>
         <span class="abl-meta">${primary.lab} 기준 · 광고비 ${fmtKRW(f.cost)}원</span>
         <span class="caret">›</span>
@@ -2994,7 +3178,7 @@ function wireHoverThumbs(root){
     t.addEventListener("mouseleave",hideTip);});}
 
 /* glossary */
-const GLOSSARY=[["광고비","이 소재에 쓴 돈"],["노출","사용자에게 보여진 횟수"],["클릭","눌린 횟수"],["CTR","클릭률 = 클릭÷노출",1,"높을수록 좋음"],["CPC","클릭 1번당 비용",1,"낮을수록 좋음"],["설치","이 소재로 생긴 앱 설치 수(어트리뷰션)"],["eCPI","설치 1건당 비용",1,"낮을수록 좋음"],["CPA","전환(모든 인앱 액션) 1건당 비용 — 구글 ACE 기본 획득단가 = 비용÷전환수",1,"낮을수록 좋음"],["신규 단가","신규 유저(앱 최초 실행) 1명당 비용 — 구글 AEO 채점 1순위 = 비용÷first_open",1,"낮을수록 좋음"],["홈 단가","홈 도달 1건당 비용 — 구글 ACE '홈 기준' 토글 시 채점 = 비용÷home",1,"낮을수록 좋음"],["신규 실행","앱 최초 실행 = 새로 유입된 신규 유저 수 (구글 first_open)"],["홈 도달","홈 화면 도달 = 주요 인앱 액션 수 (구글 home)"],["활성 유저","설치 후 실제로 앱을 쓴 사람 (구글은 '인앱 액션' 값이 여기 담김)"],["eCPA","활성 유저 1명당 비용",1,"낮을수록 좋음"],["신규+재활성 eCPA","신규·복귀 유저 1명당 비용 — 몰로코·메타 채점 1순위",1,"낮을수록 좋음"],["완주율","영상을 끝까지 본 비율 (노출 가중 평균)",1,"높을수록 좋음"],["신규+재활성","신규 유저 + 휴면에서 돌아온 유저 수"],["설치(몰로코)","몰로코 리포트 자체 집계 설치 수 — MMP 어트리뷰션과 다를 수 있음"],["D1 잔존율","설치 다음날 앱에 돌아온 비율 (AppsFlyer 코호트 실측) — 데려온 유저의 질, 몰로코·메타 점수에 12% 반영",1,"높을수록 좋음"],["D7 잔존율","설치 7일 뒤에도 남아 있는 비율 (AF 코호트)",1,"높을수록 좋음"],["ROAS D7","설치 후 7일 코호트 매출 ÷ 광고비 (AF 실측 매출 · 참고용)",1,"높을수록 좋음"],["신규 설치","AppsFlyer 기준 순수 신규 설치 수 (재참여 제외)"],["재참여","리인게이지먼트 — 기존 설치 유저를 다시 활동시킨 수 (AF)"],["점수","효율(75%)+규모(20%)+통계신뢰(5%) 종합, 0~100 · 효율은 매체별 획득단가(신규+재활성 eCPA·신규 단가·CPA) 중심 + 몰로코·메타는 D1 잔존율(유저 질) 12% · ROAS는 점수 제외 · 백분위는 광고비 가중, 표본 적은 지표는 중앙으로 축소 · 만점 구조상 최상위도 80점대가 정상"],["학습중","집행 2주 미만 또는 전환 30건 미만 — 표본 축적 중이라 점수 변동 가능, 볼륨 확대 판단 보류 권장"]];
+const GLOSSARY=[["광고비","이 소재에 쓴 돈"],["노출","사용자에게 보여진 횟수"],["클릭","눌린 횟수"],["CTR","클릭률 = 클릭÷노출",1,"높을수록 좋음"],["CPC","클릭 1번당 비용",1,"낮을수록 좋음"],["설치","이 소재로 생긴 앱 설치 수(어트리뷰션)"],["eCPI","설치 1건당 비용",1,"낮을수록 좋음"],["CPA","전환(모든 인앱 액션) 1건당 비용 — 구글 ACE 기본 획득단가 = 비용÷전환수",1,"낮을수록 좋음"],["신규 단가","신규 유저(앱 최초 실행) 1명당 비용 — 구글 AEO 채점 1순위 = 비용÷first_open",1,"낮을수록 좋음"],["홈 단가","홈 도달 1건당 비용 — 구글 ACE '홈 기준' 토글 시 채점 = 비용÷home",1,"낮을수록 좋음"],["신규 실행","앱 최초 실행 = 새로 유입된 신규 유저 수 (구글 first_open)"],["홈 도달","홈 화면 도달 = 주요 인앱 액션 수 (구글 home)"],["활성 유저","설치 후 실제로 앱을 쓴 사람 (구글은 '인앱 액션' 값이 여기 담김)"],["eCPA","활성 유저 1명당 비용",1,"낮을수록 좋음"],["신규+재활성 eCPA","신규·복귀 유저 1명당 비용 — 몰로코·메타 채점 1순위",1,"낮을수록 좋음"],["완주율","영상을 끝까지 본 비율 (노출 가중 평균)",1,"높을수록 좋음"],["신규+재활성","신규 유저 + 휴면에서 돌아온 유저 수"],["설치(몰로코)","몰로코 리포트 자체 집계 설치 수 — MMP 어트리뷰션과 다를 수 있음"],["D1 잔존율","설치 다음날 앱에 돌아온 비율 (AppsFlyer 코호트 실측) — 데려온 유저의 질 (메타 14%·몰로코 6% 반영)",1,"높을수록 좋음"],["D7 잔존율","설치 7일 뒤에도 남아 있는 비율 (AF 코호트)",1,"높을수록 좋음"],["ROAS D7","설치 후 7일 코호트 매출 ÷ 광고비 (AF 실측 매출 · 참고용)",1,"높을수록 좋음"],["신규 설치","AppsFlyer 기준 순수 신규 설치 수 (재참여 제외)"],["재참여","리인게이지먼트 — 기존 설치 유저를 다시 활동시킨 수 (AF)"],["점수","효율(85%)+규모(15%) 종합, 0~100 · 효율은 매체별 획득단가(신규+재활성 eCPA·신규 단가·CPA) 중심, 규모는 데려온 유저 수의 광고비 가중 백분위 · ROAS·CPM은 점수 제외(실데이터 검증) · 표본 적은 지표는 중앙으로 축소"],["학습중","집행 2주 미만 또는 전환 30건 미만 — 표본 축적 중이라 점수 변동 가능, 볼륨 확대 판단 보류 권장"]];
 function renderGlossary(){$("#glossGrid").innerHTML=GLOSSARY.map(g=>`<div><b>${g[0]}</b> — ${g[1]}${g[2]?`<span class="dir">${g[3]}</span>`:""}</div>`).join("");}
 $("#glossBtn").onclick=()=>$("#gloss").classList.add("show");
 $("#glossClose").onclick=()=>$("#gloss").classList.remove("show");
@@ -3380,14 +3564,16 @@ function show(ds){scope(ds);
 function setActive(k){if(!DATASETS[k])return;active=k;
   tableShowAll=false;tState={sort:"score",dir:-1,q:""};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;
   tMarkView="all";tServices=new Set();tCreators=new Set();mineAs=null;_mselSig={svc:"",cr:"",ma:""}; /* 마크/서비스/제작자 필터도 리셋 — 데이터 재로드·스탠드얼론에서 필터가 새어 빈 표로 고착되는 것 방지 */
+  tGallery=false;_galShown=100;const _gvc=$("#galleryView");if(_gvc)_gvc.checked=false;
   if($("#search"))$("#search").value="";if($("#showAll"))$("#showAll").checked=false;
   show(DATASETS[k]);}
 /* 매체별 점수 가중치 바 — SCORING 상수에서 직접 생성(코드와 표기가 어긋날 수 없음) */
 function scoreWeightsHTML(){
   const MEDIA=[
-    {lab:"몰로코 · 메타",specs:SCORING.ad,note:"완주율은 영상 소재만 · D1 잔존율은 데이터 있는 소재군만(없으면 자동 제외·재정규화)"},
-    {lab:"구글 AEO (신규 유저)",specs:SCORING.google_aeo},
-    {lab:"구글 ACE (리타겟팅)",specs:SCORING.google_ace,note:"'홈 기준' 토글 시 CPA 대신 홈 단가(비용÷home)"},
+    {lab:"몰로코 (리타겟 중심 채널)",specs:SCORING.moloco,note:"데려온 유저의 99.4%가 재참여 — CTR이 강한 선행지표(ρ=-0.70) · 완주율은 영상만"},
+    {lab:"메타 (신규 UA 채널)",specs:SCORING.meta,note:"D1 잔존율 표본 풍부(중앙값 1,212명) · CTR은 역방향(+0.18)이라 소액"},
+    {lab:"구글 AEO (신규 유저)",specs:SCORING.google_aeo,note:"신규 전환율 = 신규 실행÷상호작용"},
+    {lab:"구글 ACE (리타겟팅)",specs:SCORING.google_ace,note:"'홈 기준' 토글 시 CPA 대신 홈 단가(CPA와 ρ=0.97 등가)"},
   ];
   const COLS=["var(--c2)","var(--g1)","var(--g2)","var(--karrot)","var(--w1)","var(--mid)","var(--faint)"];
   const wPct=w=>{const p=w*100;return p%1?p.toFixed(1):String(Math.round(p));};
@@ -3401,7 +3587,7 @@ function renderFooter(){$("#ft").innerHTML=`
   <summary>점수 읽는 법 (한눈에)</summary>
   <ul class="ft-key">
     <li><b>점수 = 상대평가.</b> 같은 매체·기간 비교군 내 위치 — 1등 90점대 후반 · 평균 ≈50 · 절대 합격선 아님 (40점 = "하위 40% 부근")</li>
-    <li><b>점수 = 효율 75% + 규모(노출) 20% + 표본신뢰 5%.</b> 효율의 매체별 가중치는 바로 아래 ↓</li>
+    <li><b>점수 = 효율 85% + 규모 15%.</b> 규모 = <b>데려온 유저 수</b>(신규+재활성 / 신규 실행 / 전환수)의 광고비 가중 백분위 — 노출이 아니라 성과량. 표본 신뢰는 지표별 축소로 내재화(별도 축 폐지). 효율의 매체별 가중치는 바로 아래 ↓</li>
     <li><b>상세의 주차별 점수도 '그 주' 비교군 상대평가</b> — 내 지표가 그대로여도 그 주 다른 소재가 좋아지면 내려감</li>
     <li>소재별 계산 내역은 상세(행 클릭) <b>점수 구성</b> 패널에서 그대로 확인</li>
   </ul>
@@ -3410,7 +3596,8 @@ function renderFooter(){$("#ft").innerHTML=`
   <ul class="ft-key">
     <li><b>구글 ROAS는 점수 0% 반영.</b> 전환가치가 계정 설정에 따라 널뛰는 모델링 값 — 실사례: 한 소재의 주간 전환가치가 50만원 → 5.7억원(1,000배) 점프. 표·그래프에선 '참고' 카테고리로만 표시</li>
     <li><b>ROAS D7(몰로코·메타)은 AF 실측</b> 코호트 매출 — 믿을 수 있으나 점수엔 미반영(참고 지표)</li>
-    <li><b>D1 잔존율 = 유저 질.</b> 단가만 싸고 다음날 아무도 안 돌아오는 소재(허수 유입)는 점수가 깎임 (몰로코·메타 12%)</li>
+    <li><b>D1 잔존율 = 유저 질.</b> 단가만 싸고 다음날 아무도 안 돌아오는 소재(허수 유입)는 점수가 깎임 (메타 14% · 몰로코는 표본이 작아 6%+강한 축소)</li>
+    <li><b>CPM·활성 eCPA는 채점에서 제외/강등</b> — 실데이터 검증에서 CPM은 성과와 역방향(비싼 네이티브/영상 지면일수록 획득이 쌈, ρ=-0.53), 활성 eCPA는 신규+재활성 eCPA와 ρ=0.95 중복(메타는 리테인드 오염). 표엔 참고용으로 남음</li>
     <li><b>최신 주는 단가가 부풀어 보임</b> — 전환 집계가 덜 끝난 상태(전환 지연). 그 주 판단은 보류</li>
     <li><b>표본 적으면 중앙(50)으로 축소</b> — 전환 30건 미만·집행 2주 미만은 '학습중', 볼륨 확대 판단 보류</li>
     <li><b>등급(매우좋음~매우나쁨) = 계정 내 5분위</b> — 계정 전체가 좋아지면 같은 점수도 등급이 내려갈 수 있음</li>
@@ -3420,10 +3607,11 @@ function renderFooter(){$("#ft").innerHTML=`
 <details>
   <summary>계산식·통계 보정 (상세)</summary>
   <div class="ft-formula">
-    <b>원점수</b> = 100 × (0.75·<b>E</b> + 0.20·<b>R</b> + 0.05·<b>C</b>)<br>
+    <b>원점수</b> = 100 × (0.85·<b>E</b> + 0.15·<b>R</b>)<br>
     &nbsp;&nbsp;<b>E</b> = Σ (w<sub>i</sub> · g′<sub>i</sub>)&nbsp;&nbsp;→ 지표별 <b>광고비 가중 백분위</b>의 축소 추정치 가중 평균<br>
     &nbsp;&nbsp;&nbsp;&nbsp;g′ = 0.5 + (g − 0.5) · n/(n+n₀)&nbsp;&nbsp;→ 표본(n) 적으면 중앙(50)으로 축소 · n₀: 전환류 50 · 클릭 100 · 노출 2,000 · D1 잔존 base 150<br>
-    &nbsp;&nbsp;<b>R</b> = pctRank(노출 수) · <b>C</b> = min(1, ln(1+전환)/ln(1+30))<br>
+    &nbsp;&nbsp;<b>R</b> = 데려온 유저 수(신규+재활성 / first_open / 전환수)의 광고비 가중 백분위 — 데이터 없으면 노출 폴백<br>
+    &nbsp;&nbsp;(신뢰 C 축은 폐지 — 적격 소재 전원이 전환≥30으로 포화 상수였음. 표본 보정은 지표별 축소로 일원화)<br>
     &nbsp;&nbsp;<b>표시 점수</b> = 원점수를 비교군 분포 기준 재배치(5백분위→12 · 95백분위→92 · 끝은 점근 압축 2~99 · 순위 보존 · 비교군 8개 미만이면 원점수 그대로)
   </div>
   <ul class="ft-key">
@@ -3435,47 +3623,27 @@ function renderFooter(){$("#ft").innerHTML=`
 </details>
 
 <details>
-  <summary>매체별 가중치 — 지표 선정 근거 (상세)</summary>
-  <h4>Google Ads — AEO(신규)·ACE(리타겟팅) 분리 · 획득단가 중심</h4>
-  <table class="ft-tbl">
-    <thead><tr><th>지표</th><th class="n">AEO</th><th class="n">ACE</th><th>방향</th><th>근거</th></tr></thead>
-    <tbody>
-      <tr><td><b>CPI</b>(설치당, AEO) · <b>CPA</b>(인앱액션당, ACE)</td><td class="n">50%</td><td class="n">50%</td><td>↓ 낮을수록</td><td>캠페인 목표 획득단가 — Target CPI/CPA 자동입찰 최적화 대상</td></tr>
-      <tr><td>CTR</td><td class="n">22%</td><td class="n">22%</td><td>↑ 높을수록</td><td>Quality Score의 <i>Expected CTR</i></td></tr>
-      <tr><td>전환율 (Conv Rate)</td><td class="n">16%</td><td class="n">16%</td><td>↑ 높을수록</td><td>상호작용 → 전환 전환력</td></tr>
-      <tr><td>CPM</td><td class="n">12%</td><td class="n">12%</td><td>↓ 낮을수록</td><td>노출 도달 효율 — 소재 품질이 낮으면 CPM 상승</td></tr>
-    </tbody>
-  </table>
-
-  <h4>몰로코 · 메타 — 신규/복귀 획득단가 + 데려온 유저의 질</h4>
-  <table class="ft-tbl">
-    <thead><tr><th>지표</th><th class="n">가중치</th><th>방향</th><th>근거</th></tr></thead>
-    <tbody>
-      <tr><td><b>신규+재활성 eCPA</b></td><td class="n">36%</td><td>↓ 낮을수록</td><td>신규·복귀 유저 1인당 비용 — 목적에 가장 직결</td></tr>
-      <tr><td>활성 유저 eCPA</td><td class="n">19%</td><td>↓ 낮을수록</td><td>전체 활성 유저 기준 CPA — 진성 유입 지표</td></tr>
-      <tr><td>CTR</td><td class="n">15%</td><td>↑ 높을수록</td><td>Meta Ad Relevance의 <i>Engagement Rate Ranking</i> — 창의성/후킹</td></tr>
-      <tr><td><b>D1 잔존율</b></td><td class="n">12%</td><td>↑ 높을수록</td><td>설치 다음날 복귀 비율(AF 코호트 실측) — 유입의 '질'. 표본(base) 적으면 자동 축소, 데이터 없는 매체는 자동 제외</td></tr>
-      <tr><td>영상 완주율 (VCR)</td><td class="n">7%</td><td>↑ 높을수록</td><td>영상 소재 한정 — 크리에이티브 주목도 (몰로코 제공 시)</td></tr>
-      <tr><td>eCPI (Cost per Install)</td><td class="n">5.5%</td><td>↓ 낮을수록</td><td>설치 단가 — 신규 획득의 상위 보조 지표</td></tr>
-      <tr><td>CPM</td><td class="n">5.5%</td><td>↓ 낮을수록</td><td>Meta의 <i>Quality Ranking</i>과 상관 — 저품질 시 CPM 상승</td></tr>
-    </tbody>
-  </table>
-  <p>리포트에 없는 지표(예: 완주율·신규 eCPA가 없는 매체)는 자동 제외되며, 남은 지표의 가중치가 재정규화됩니다.</p>
-
+  <summary>매체별 가중치 — 지표 선정 근거 (2026-07 실데이터 검증, 소재 1,292개 순위상관)</summary>
+  <ul class="ft-key">
+    <li><b>검증 방법</b>: 소재 단위 집계(비용≥30만) 후 지표 간 스피어만 순위상관(ρ) + 반기 분할 재현성. 채점에 남긴 지표 = 획득 성과와 방향·독립성·안정성이 확인된 것만</li>
+    <li><b>몰로코 = 리타겟 채널</b> (데려온 유저의 99.4%가 재참여): 신규+재활성 eCPA 70%(반기 재현성 0.90) · CTR 12% <b>이미지만</b>(교차검증: 풀링 ρ=-0.70은 포맷 혼합의 심슨 역설 — 포맷 내에선 이미지 -0.48 유효 · 영상 +0.01 무신호) · 완주율 12%(영상 크리에이티브 신호) · D1 잔존 6%(base 중앙값 13명 — 소액+강한 축소)</li>
+    <li><b>메타 = 신규/재참여 혼합 채널</b>(소재 단위 재참여 우세 47%): 신규+재활성 eCPA 65% · D1 잔존 14%(base 중앙값 1,212명 — 효율과 직교하는 질 축) · 신규 설치 단가 12%(계측 보완 · ρ=0.85 중복이라 소폭) · CTR 9%(정합성 부재 +0.18)</li>
+    <li><b>구글 AEO</b>: 신규 단가 76% · 신규 전환율 12%(기존 전환율 ρ=+0.09 무상관 대체 — 단, 분자 공유 준중복이라 소액) · CTR 12% <b>동영상만</b>(포맷 내 ρ: 동영상 -0.36 · 이미지 -0.01)</li>
+    <li><b>구글 ACE</b>: CPA 78% · 전환율 10%(CPA와 ρ=-0.71 준중복이라 소액) · CPM 12%(ACE에서만 성과와 정합 ρ=+0.52) · CTR 제외(ρ=-0.09 무상관) · 홈 단가 토글은 CPA와 ρ=0.97 등가</li>
+    <li><b>제외한 것</b>: CPM(몰로코·AEO — 포맷별 방향이 상충하거나 역방향; ACE만 정합해 유지) · 활성 eCPA(신규+재활성과 ρ=0.95~0.98 중복 + 메타 리테인드 부풀림 소재 부양 — 시뮬레이션 확인) · eCPI(어트리뷰션의 94~99.7%가 재참여 이벤트라 '설치 단가' 아님 — 신규 설치 단가로 대체) · ACE CTR(무상관) · ROAS(모델링 값)</li>
+    <li><b>지표가 없으면</b> 자동 제외되고 남은 가중치가 재정규화됩니다</li>
+  </ul>
   <h4>Adset(광고세트) 레벨</h4>
-  <p>세트 단위는 개별 소재 CTR보다 <b>후속 전환 효율</b>(활성 eCPA)이 훨씬 안정적으로 관측되므로 가중치를 재조정했습니다:
-  활성 eCPA 35% · eCPI 25% · CTR 20% · CPM 15% · CPC 5%.</p>
-
+  <p>활성 eCPA 35% · eCPI 25% · CTR 20% · CPM 15% · CPC 5% (세트 단위는 후속 전환 효율이 안정적)</p>
   <h4>Campaign(캠페인) 레벨</h4>
-  <p>캠페인은 목표·예산 배분 축이라 소재 품질 신호가 희석됩니다. 따라서 <b>노출 단가와 클릭 효율</b> 중심으로만 산정:
-  CTR 50% · CPC 30% · CPM 20%.</p>
+  <p>CTR 50% · CPC 30% · CPM 20% (소재 품질 신호가 희석되는 축이라 반응 중심)</p>
 </details>
 
 <details>
   <summary>등급·제외·표기 규칙</summary>
   <ul class="ft-key">
     <li><b>등급 = 계정 내 5분위</b>: 매우 좋음(상위 20%) · 좋음(20–40%) · 보통(40–60%) · 나쁨(60–80%) · 매우 나쁨(하위 20%) — 상대 등급이라 계정 전체가 좋아지면 같은 점수도 등급 하락 가능</li>
-    <li><b>채점 제외</b>: 광고비 하위 15% 미만(실험 노이즈) · 핵심 지표(가중 15%+) 결측 소재 · 비활성(광고비 0)은 표에서 기본 숨김("비활성도 보기"로 표시)</li>
+    <li><b>채점 제외</b>: 광고비 하위 15% 미만(실험 노이즈) · 핵심 지표(가중 15%+) 결측 소재 · 비활성(광고비 0)은 표에서 기본 숨김("비활성 포함"으로 표시)</li>
     <li><b>학습중</b>: 집행 2주 미만 또는 전환 30건 미만 — 점수 변동 큼, 볼륨 확대 판단 보류</li>
     <li><b>독보적(👑)</b>: 1순위 지표가 계정 중앙값 대비 1.8배 이상 우위 + 2위와 3점 이상 격차 + 광고비 중앙값 이상일 때만</li>
   </ul>
@@ -3507,6 +3675,7 @@ function refreshAll(){if(!active||!DATASETS[active])active=TAB_ORDER.find(k=>DAT
 function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;tableShowAll=false;
   tState={sort:"score",dir:-1,q:""};tQuickFo=null;tGroupBy=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;ISLE.name=null;
   tMarkView="all";tServices=new Set();tCreators=new Set();mineAs=null;_mselSig={svc:"",cr:"",ma:""};
+  tGallery=false;_galShown=100;const _gvc2=$("#galleryView");if(_gvc2)_gvc2.checked=false;
   const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
 function dropZone(e){if(!e||e.clientY==null)return null;
   const H=window.innerHeight||800,W=window.innerWidth||1200;
@@ -3678,6 +3847,7 @@ document.addEventListener("keydown",ev=>{
     if(tr)toggleIsland(curDS,ISLE.name,tr);
     else{const ir=document.querySelector(".isle-row");if(ir)ir.remove();ISLE.name=null;}}});
 $("#showAll").addEventListener("change",e=>{tableShowAll=e.target.checked;tPage=1;if(active)renderTable(DATASETS[active]);});
+$("#galleryView").addEventListener("change",e=>{tGallery=e.target.checked;_galShown=100;if(active)renderTable(DATASETS[active]);});
 $("#table tbody").addEventListener("input",_renameInput);
 $("#table tbody").addEventListener("click",e=>{
   /* 이름 편집 모드에선 소재명 클릭이 커서만 두게 하고 행 펼침·별·칩 클릭은 막는다 */
@@ -3764,7 +3934,7 @@ async function loadMarks(){
   try{const r=await sbRpc("cr_marks_load",{pw:cloudPw});
     const me=(r&&r.me)||null;const fav=new Set(),myMine=new Set(),mineByKey=new Map();
     for(const x of (r&&r.fav)||[])fav.add(markKey(x.c,x.a));
-    for(const x of (r&&r.mine)||[]){const k=markKey(x.c,x.a);let a=mineByKey.get(k);if(!a){a=[];mineByKey.set(k,a);}a.push(x.n);if(me&&x.n===me)myMine.add(k);}
+    for(const x of (r&&r.mine)||[]){const k=markKey(x.c,x.a);let a=mineByKey.get(k);if(!a){a=[];mineByKey.set(k,a);}if(!a.includes(x.n))a.push(x.n); /* 키 통합(서브채널·마커 정규화)으로 서버 행이 겹칠 때 같은 이름 중복 방지 */ if(me&&x.n===me)myMine.add(k);}
     MARKS={me,fav,myMine,mineByKey};
   }catch(e){}}
 /* 별 버튼 — 개별 소재는 자기 상태, 그룹 행은 파생 상태(멤버 전원 표시 시 그룹도 표시).
