@@ -355,6 +355,7 @@
   .abl-rank0{background:linear-gradient(135deg,#FDF3D0,#F7E29B);border:1px solid #E8CD6F}
   .abl-rank1{background:linear-gradient(135deg,#F3F4F7,#E2E4EA);border:1px solid #C9CCD6}
   .abl-rank2{background:linear-gradient(135deg,#F6E7DB,#EAD0BC);border:1px solid #D9B394}
+  .abl-tie{color:var(--karrot);font-weight:800;cursor:help}
   .abl-fo{margin-left:6px;font-size:10px;font-weight:700;color:var(--faint);background:var(--surface-3);padding:1px 6px;border-radius:4px;vertical-align:1px}
   .abl-v .tthumb{width:28px;height:28px;border-radius:6px}
   .abl-v .tthumb .vb{width:11px;height:11px;font-size:6.5px;right:1px;bottom:1px}
@@ -1548,15 +1549,17 @@ const SCORING={
     {k:"_g_foRate",w:0.12,dir:1,lab:"신규 전환율"},
     {k:"CTR",w:0.12,dir:1,lab:"CTR",entFo:"영상"},
   ],
-  google_ace:[ /* 구글 ACE(리타겟팅) — CPA 중심 · CTR(ρ=-0.09 무상관) 제외 · CPM은 ACE에서만 정합(ρ=+0.52) 유지 */
-    {k:"_g_costPerConv",w:0.78,dir:-1,lab:"CPA"},
-    {k:"_g_conversionRate",w:0.10,dir:1,lab:"전환율"},
-    {k:"CPM",w:0.12,dir:-1,lab:"CPM"},
+  google_ace:[ /* 구글 ACE(리타겟팅) — CPA 1순위 유지, 지배 완화(0.78→0.55). ACE의 CPA는 4매체 중 최대 노이즈원
+       (단독 반쪽 재현성 0.64)이라 가중을 낮출수록 점수 재현성이 0.70→0.76으로 개선(2026-07 민감도 분석 격자).
+       잔여분은 기존 비율대로 전환율·CPM에 재배분 · CTR(ρ=-0.09 무상관)은 계속 제외 */
+    {k:"_g_costPerConv",w:0.55,dir:-1,lab:"CPA"},
+    {k:"_g_conversionRate",w:0.20,dir:1,lab:"전환율"},
+    {k:"CPM",w:0.25,dir:-1,lab:"CPM"},
   ],
-  google_ace_home:[ /* 구글 ACE — 홈 도달 단가 기준 토글 (CPA와 ρ=0.97 사실상 등가) */
-    {k:"_g_cpHome",w:0.78,dir:-1,lab:"홈 단가"},
-    {k:"_g_conversionRate",w:0.10,dir:1,lab:"전환율"},
-    {k:"CPM",w:0.12,dir:-1,lab:"CPM"},
+  google_ace_home:[ /* 구글 ACE — 홈 도달 단가 기준 토글 (CPA와 ρ=0.97 사실상 등가 · 가중은 ACE와 동일 유지) */
+    {k:"_g_cpHome",w:0.55,dir:-1,lab:"홈 단가"},
+    {k:"_g_conversionRate",w:0.20,dir:1,lab:"전환율"},
+    {k:"CPM",w:0.25,dir:-1,lab:"CPM"},
   ],
   google:[ /* 유형 미상 구글 — CPA 중심 폴백 */
     {k:"_g_costPerConv",w:0.72,dir:-1,lab:"전환당 비용"},
@@ -1572,12 +1575,14 @@ const SCORING={
     {k:"영상 완주율",w:0.12,dir:1,lab:"완주율",videoOnly:true},
     {k:"_q_retD1",w:0.06,dir:1,lab:"D1 잔존율"},
   ],
-  meta:[ /* 메타 = 신규/재참여 혼합 채널(소재 단위 재참여 우세 47%) — 합산 획득단가 중심.
-       신규 설치 단가는 계측 보완용 소폭(ρ=0.85 대부분 중복 신호) · D1 잔존율(base 중앙값 1,212명 · 효율과 직교하는 질 축) ·
-       CTR은 이 채널에선 정합성 부재(+0.18)라 소액 · CPM·활성 eCPA(리테인드 부풀림 소재 부양) 제거 */
-    {k:"신규+재활성 eCPA",w:0.65,dir:-1,lab:"신규+재활성 eCPA"},
-    {k:"_q_retD1",w:0.14,dir:1,lab:"D1 잔존율"},
-    {k:"_q_cpNewInstall",w:0.12,dir:-1,lab:"신규 설치 단가"},
+  meta:[ /* 메타 = 신규/재참여 혼합 채널(소재 단위 재참여 우세 47%) — 합산 획득단가 1순위, 지배 완화(0.65→0.55).
+       eCPA를 낮추고 D1 잔존율(질 축)을 0.14→0.22로 — 외부 근거: '싼 저질 유저로의 최적화'는 단가+리텐션 블렌드로
+       구조 차단(AppsFlyer 크리에이티브 가이드 등), 메타는 D1 표본이 풍부(base 중앙값 1,212명)해 질 축이 감당 가능.
+       내부 민감도 분석에서 eCPA 완화가 유일하게 중립(재현성 무손실)인 매체이기도 함.
+       신규 설치 단가는 계측 보완용 소폭(ρ=0.85 대부분 중복 신호) · CTR은 정합성 부재(+0.18)라 소액 유지 */
+    {k:"신규+재활성 eCPA",w:0.55,dir:-1,lab:"신규+재활성 eCPA"},
+    {k:"_q_retD1",w:0.22,dir:1,lab:"D1 잔존율"},
+    {k:"_q_cpNewInstall",w:0.14,dir:-1,lab:"신규 설치 단가"},
     {k:"CTR",w:0.09,dir:1,lab:"CTR"},
   ],
   ad:[ /* 매체 미상 ad 레벨(일반 CSV) 폴백 — 보수적 구성 */
@@ -3104,8 +3109,14 @@ function renderAB(ds){const el=$("#abBody"),meta=$("#abMeta"),cnt=$("#abCnt");
     const dispBase=f.base.replace(/[_\-\s.]{2,}/g,"_").replace(/^[_\s]+|[_\s]+$/g,"");
     const seq=f.rows.map((r,i)=>{
       const top=r.mem.slice().sort((x,y)=>((y.score??-1)-(x.score??-1))||((y.비용||0)-(x.비용||0)))[0];
-      return `<span class="abl-v${i<3?" abl-rank"+i:""}">${AB_MEDAL(i)}<b>${escHtml(String(r.variant))}</b>${top?thumbHTML(top):""}</span>`;
-    }).join('<span class="abl-gt">›</span>');
+      const sp=`<span class="abl-v${i<3?" abl-rank"+i:""}">${AB_MEDAL(i)}<b>${escHtml(String(r.variant))}</b>${top?thumbHTML(top):""}</span>`;
+      if(i===0)return sp;
+      /* 박빙 표시 — 인접 순위의 주지표 차이가 5% 미만이면 메달 순서는 노이즈 범위(사실상 동점).
+         Meta A/B 공식 문서도 소표본·근소 격차의 승자 판정을 불신하라고 경고 */
+      const a=f.rows[i-1].pv,b=r.pv;
+      const tie=a!=null&&b!=null&&Math.min(Math.abs(a),Math.abs(b))>0&&Math.abs(a-b)/Math.min(Math.abs(a),Math.abs(b))<0.05;
+      return (tie?`<span class="abl-gt abl-tie" title="박빙 — ${escAttr(primary.lab)} 차이 5% 미만. 사실상 동점이라 순위를 확정하지 마세요">≈</span>`:`<span class="abl-gt">›</span>`)+sp;
+    }).join('');
     return `<div class="abl" data-fi="${fi}">
       <div class="abl-row" data-fi="${fi}">
         <span class="abl-name">${escHtml(dispBase)}${f.fo&&f.fo!=="기타"?`<span class="abl-fo">${escHtml(f.fo)}</span>`:""}</span>
@@ -3600,6 +3611,8 @@ function renderFooter(){$("#ft").innerHTML=`
     <li><b>CPM·활성 eCPA는 채점에서 제외/강등</b> — 실데이터 검증에서 CPM은 성과와 역방향(비싼 네이티브/영상 지면일수록 획득이 쌈, ρ=-0.53), 활성 eCPA는 신규+재활성 eCPA와 ρ=0.95 중복(메타는 리테인드 오염). 표엔 참고용으로 남음</li>
     <li><b>최신 주는 단가가 부풀어 보임</b> — 전환 집계가 덜 끝난 상태(전환 지연). 그 주 판단은 보류</li>
     <li><b>표본 적으면 중앙(50)으로 축소</b> — 전환 30건 미만·집행 2주 미만은 '학습중', 볼륨 확대 판단 보류</li>
+    <li><b>±3점 이내는 사실상 동점.</b> 소재 단위 전환 표본으로는 그 이하 격차를 통계적으로 구분 못함(Lewis &amp; Rao 2015 · Meta A/B 공식 문서의 소표본 경고와 동일 원리). AB 테스트의 <b>≈</b> 표시가 같은 뜻</li>
+    <li><b>규모는 15%로 고정</b> — 더 키우면 점수가 소재의 힘이 아니라 예산 배분을 보상함(데려온 유저 백분위 ↔ 광고비 ρ=0.81~0.94, 2026-07 민감도 분석). 규모의 본기능은 가점이 아니라 자격 게이트(광고비 컷·학습중)</li>
     <li><b>등급(매우좋음~매우나쁨) = 계정 내 5분위</b> — 계정 전체가 좋아지면 같은 점수도 등급이 내려갈 수 있음</li>
   </ul>
 </details>
@@ -3623,14 +3636,17 @@ function renderFooter(){$("#ft").innerHTML=`
 </details>
 
 <details>
-  <summary>매체별 가중치 — 지표 선정 근거 (2026-07 실데이터 검증, 소재 1,292개 순위상관)</summary>
+  <summary>매체별 가중치 — 지표 선정 근거 (2026-07 실데이터 검증 + 가중치 민감도 분석 + 외부 문헌 대조)</summary>
   <ul class="ft-key">
-    <li><b>검증 방법</b>: 소재 단위 집계(비용≥30만) 후 지표 간 스피어만 순위상관(ρ) + 반기 분할 재현성. 채점에 남긴 지표 = 획득 성과와 방향·독립성·안정성이 확인된 것만</li>
+    <li><b>검증 방법</b>: ① 소재 단위 집계(비용≥30만) 후 지표 간 스피어만 순위상관(ρ) + 반기 분할 재현성 ② 가중치 격자 민감도 분석(1차지표 가중 ×3 × 규모 가중 ×3, 매체별 split-half 재현성·홀드아웃 4주 예측력) ③ 플랫폼 공식 문서·학술 연구 대조(아래 참고 문헌). 채점에 남긴 지표 = 획득 성과와 방향·독립성·안정성이 확인된 것만</li>
+    <li><b>'효율 1순위' 자체는 표준 관행</b>(Meta A/B 승자 판정 = 단일 cost-per-result) — 단, 반드시 통계 가드와 함께: 이 대시보드에선 표본 축소(shrinkage)·광고비 컷·학습중 게이트·±3점 동점 안내가 그 역할. 반대로 <b>규모 가중 확대는 기각</b> — 데려온 유저 백분위가 광고비와 ρ=0.81~0.94라 예산 배분 역류(민감도 분석: 규모 35% 시 eCPA 3,151원짜리 대형 지출 소재가 322계단 승격)</li>
+    <li><b>eCPA 지배 완화는 매체별 차등</b>(일괄 아님): 몰로코·AEO는 eCPA 가중을 낮추면 홀드아웃 예측력이 하락(0.73→0.62 · 0.56→0.47)해 유지, ACE는 CPA 자체가 노이즈원이라 완화 시 재현성 개선(0.70→0.76)해 0.78→0.55, 메타는 중립이라 질 축(D1) 강화 목적으로 0.65→0.55</li>
     <li><b>몰로코 = 리타겟 채널</b> (데려온 유저의 99.4%가 재참여): 신규+재활성 eCPA 70%(반기 재현성 0.90) · CTR 12% <b>이미지만</b>(교차검증: 풀링 ρ=-0.70은 포맷 혼합의 심슨 역설 — 포맷 내에선 이미지 -0.48 유효 · 영상 +0.01 무신호) · 완주율 12%(영상 크리에이티브 신호) · D1 잔존 6%(base 중앙값 13명 — 소액+강한 축소)</li>
-    <li><b>메타 = 신규/재참여 혼합 채널</b>(소재 단위 재참여 우세 47%): 신규+재활성 eCPA 65% · D1 잔존 14%(base 중앙값 1,212명 — 효율과 직교하는 질 축) · 신규 설치 단가 12%(계측 보완 · ρ=0.85 중복이라 소폭) · CTR 9%(정합성 부재 +0.18)</li>
+    <li><b>메타 = 신규/재참여 혼합 채널</b>(소재 단위 재참여 우세 47%): 신규+재활성 eCPA 55% · D1 잔존 22%(base 중앙값 1,212명 — 효율과 직교하는 질 축. '싸게 데려와 다음날 이탈'하는 소재를 단가+리텐션 블렌드로 차단하는 업계 권고 반영) · 신규 설치 단가 14%(계측 보완 · ρ=0.85 중복이라 소폭) · CTR 9%(정합성 부재 +0.18)</li>
     <li><b>구글 AEO</b>: 신규 단가 76% · 신규 전환율 12%(기존 전환율 ρ=+0.09 무상관 대체 — 단, 분자 공유 준중복이라 소액) · CTR 12% <b>동영상만</b>(포맷 내 ρ: 동영상 -0.36 · 이미지 -0.01)</li>
-    <li><b>구글 ACE</b>: CPA 78% · 전환율 10%(CPA와 ρ=-0.71 준중복이라 소액) · CPM 12%(ACE에서만 성과와 정합 ρ=+0.52) · CTR 제외(ρ=-0.09 무상관) · 홈 단가 토글은 CPA와 ρ=0.97 등가</li>
+    <li><b>구글 ACE</b>: CPA 55%(단독 재현성 0.64로 최다 노이즈원이라 지배 완화) · 전환율 20%(CPA와 ρ=-0.71 준중복) · CPM 25%(ACE에서만 성과와 정합 ρ=+0.52) · CTR 제외(ρ=-0.09 무상관) · 홈 단가 토글은 CPA와 ρ=0.97 등가</li>
     <li><b>제외한 것</b>: CPM(몰로코·AEO — 포맷별 방향이 상충하거나 역방향; ACE만 정합해 유지) · 활성 eCPA(신규+재활성과 ρ=0.95~0.98 중복 + 메타 리테인드 부풀림 소재 부양 — 시뮬레이션 확인) · eCPI(어트리뷰션의 94~99.7%가 재참여 이벤트라 '설치 단가' 아님 — 신규 설치 단가로 대체) · ACE CTR(무상관) · ROAS(모델링 값)</li>
+    <li><b>CTR을 소액(9~12%)·포맷 조건부로만 쓰는 이유</b>: 외부 연구는 CTR이 전환·매출과 무상관 내지 역상관(dunnhumby 2회 재현 r=-0.28 · Flashtalking: 최고 성과 소재의 CTR이 최저보다 낮음)이라 독립 가중치를 0 근처로 권고 — 단 그 근거는 디스플레이/FMCG 맥락. 클릭이 설치 퍼널의 필수 단계인 앱 UA에서, 우리 데이터에서 포맷 내 상관이 실제 확인된 곳(몰로코 이미지 -0.48 · AEO 영상 -0.36)에만 예외적으로 유지</li>
     <li><b>지표가 없으면</b> 자동 제외되고 남은 가중치가 재정규화됩니다</li>
   </ul>
   <h4>Adset(광고세트) 레벨</h4>
@@ -3663,6 +3679,12 @@ function renderFooter(){$("#ft").innerHTML=`
     <li>Analytic Partners — <i>ROI Genome</i> (2023 annual report)</li>
     <li>Efron, B. & Morris, C. (1977) — <i>Stein's Paradox in Statistics</i> (empirical Bayes shrinkage 원리)</li>
     <li>AppsFlyer — <a href="https://www.appsflyer.com/glossary/ecpi/" target="_blank" rel="noopener">eCPI: Effective Cost per Install 정의</a></li>
+    <li><a href="https://en-gb.facebook.com/business/help/166313650471318" target="_blank" rel="noopener">Meta Business — A/B 테스트 승자 판정(cost-per-result + 시뮬레이션 신뢰도, 소표본 경고)</a></li>
+    <li><a href="https://support.google.com/google-ads/answer/6310436" target="_blank" rel="noopener">Google Ads — 앱 캠페인 애셋 평가(Low/Good/Best 상대 랭킹 · Learning 상태)</a></li>
+    <li><a href="https://support.appsflyer.com/hc/en-us/articles/18564718580625-Creative-Optimization-guide" target="_blank" rel="noopener">AppsFlyer — Creative Optimization guide(참여·효율·유저 질 다지표 병렬 평가)</a></li>
+    <li>Lewis, R. & Rao, J. (2015) — <i>The Unfavorable Economics of Measuring the Returns to Advertising</i> (QJE — 광고 성과 측정의 소표본 노이즈 정량화)</li>
+    <li>Dalessandro, B., Perlich, C., Provost, F. et al. (2015) — <i>Evaluating and Optimizing Online Advertising: Forget the Click, but There Are Good Proxies</i> (클릭 기반 평가의 한계)</li>
+    <li>dunnhumby (2017·2019) · Flashtalking (2018) — CTR–매출 상관 연구(r=-0.28 · 최고 성과 소재의 저CTR)</li>
   </ul>
 </details>
 
