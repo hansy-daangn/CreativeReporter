@@ -94,7 +94,7 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 - 세 테이블 모두 **RLS deny-all**: anon 키로는 SELECT/INSERT 자체가 불가능.
 - 모든 데이터 접근은 **SECURITY DEFINER RPC**를 통해서만 하고, 각 RPC 첫 줄에서 `_cr_check_pw(pw)`가 비밀번호를 검사(불일치 시 예외).
 - **읽기 게이트 `_cr_check_pw`**: 입력 비번이 레거시 `0715` 이거나 **승인됨 사용자의 비번**이면 통과(읽기). 신청함·거절됨은 차단.
-- **쓰기 게이트 `_cr_check_editor`**: `cr_save`·`cr_kv_merge`(저장·이름매핑·그룹정보·유튜브제목)는 **승인됨 + role=editor** 만 통과. 0715·뷰어는 거부(프론트도 `canEdit`로 미리 막아 드롭은 분석만 되고 저장은 건너뜀).
+- **데이터 저장 게이트 `_cr_check_admin_role`** (2026-07-11): `cr_save`(주간 성과)·`cr_kv_merge`의 드롭 유래 키(gmap·ginfo·ocr 등)는 **승인됨 + role=admin(현재 hansy)** 만 통과. 에디터·뷰어의 드롭은 화면 분석만 되고 저장은 서버가 거부(프론트 `isAdmin` 게이트 + 안내 토스트). 예외: `ytt`(유튜브 제목 자동 캐시)만 에디터 허용(`_cr_check_editor` — admin 포함하도록 정상화).
 - 클라이언트의 publishable key는 공개되어도 되는 값(설계상 공개키). 실질 게이트는 비밀번호.
 - 비밀번호는 브라우저 sessionStorage(탭 단위)에만 저장(`crpw`) — 새로고침 유지, 탭 종료 시 소멸. 로그인한 daangn name은 `crname`(탭)·`cr_uploader`(localStorage, 기기)에 저장돼 업로드·수정 서명에 쓰인다.
 - **관리자 게이트**는 사용자 비번과 완전히 분리된 별도 시크릿(`_cr_check_admin`). admin.html에서 런타임 입력만 하고 **리포지토리엔 저장하지 않는다**(GitHub Pages 공개 파일). 관리 RPC(`cr_admin_*`)만 이 시크릿으로 게이트.
