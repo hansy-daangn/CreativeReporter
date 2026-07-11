@@ -319,7 +319,7 @@
   td.name .nwrap{display:flex;gap:9px;align-items:flex-start;min-width:0}
   td.name .ntxt{min-width:0;flex:1}
   .tthumb{position:relative;width:46px;height:46px;flex:0 0 auto;border-radius:8px;overflow:hidden;background:#E9E8E1;display:grid;place-items:center;color:var(--faint);cursor:zoom-in;user-select:none}
-  .tthumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .tthumb img,.tthumb video{width:100%;height:100%;object-fit:cover;display:block;background:#101010}
   .tthumb.ph{background:#26251F;color:#fff;font-size:12px}
   .tthumb .vb{position:absolute;right:3px;bottom:3px;width:15px;height:15px;border-radius:4px;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;font-size:8.5px;pointer-events:none}
   .tthumb.err img{display:none}
@@ -1217,7 +1217,7 @@ function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n")
   return{headers:["date","ad_name","비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수"],data:rows,kind};}
 
 /* 구글 '광고그룹 보고서' — 그룹 메타(이름·캠페인·상태·타겟 CPA)와 보고 기간 누적 성과 스냅샷.
-   주간 데이터가 아니므로 weekly 저장소가 아니라 cr_kv(ginfo)에 광고그룹 ID 기준으로 보관·갱신한다 */
+   주간 데이터가 아니므로 weekly 저장소가 아니라 sr_kv(ginfo)에 광고그룹 ID 기준으로 보관·갱신한다 */
 function parseGroupReport(text){
   const lines=String(text).replace(/\r\n?/g,"\n").split("\n");
   let hdrIdx=-1;
@@ -2255,7 +2255,8 @@ function thumbHTML(e){const url=previewUrlOf(e);if(!url)return "";
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
   if(yt){const tu=`https://img.youtube.com/vi/${yt[1]}/default.jpg`;return `<span class="tthumb" data-purl="${escAttr(url)}"><img src="${imgSrc(tu)}" data-osrc="${tu}" loading="lazy" referrerpolicy="no-referrer" onload="imgOk(this)" onerror="imgRetry(this)"><span class="vb">▶</span></span>`;}
   if(isImageUrl(url))return `<span class="tthumb" data-purl="${escAttr(url)}"><img src="${imgSrc(url)}" data-osrc="${escAttr(url)}" loading="lazy" referrerpolicy="no-referrer" onload="imgOk(this)" onerror="imgRetry(this)">${vidMark?'<span class="vb">▶</span>':""}</span>`;
-  if(isVideoUrl(url))return `<span class="tthumb ph" data-purl="${escAttr(url)}" title="올려서 미리보기 · 행 클릭 → 재생">▶</span>`;
+  /* 직접 영상(mp4 등): 갤러리처럼 첫 프레임을 보여준다(#t=0.1로 포스터 프레임 강제 — 예전엔 검은 ▶ 플레이스홀더만) */
+  if(isVideoUrl(url))return `<span class="tthumb" data-purl="${escAttr(url)}" title="올려서 미리보기 · 행 클릭 → 재생"><video class="tvid" src="${escAttr(safeUrl(url))}#t=0.1" preload="metadata" muted playsinline></video><span class="vb">▶</span></span>`;
   if(isAdManagerUrl(url))return `<span class="tthumb ph meta-th" title="Meta 광고관리자에서 보기 — 소재 상세에서 링크가 열립니다">Meta</span>`;
   return "";}
 function assetShortType(t){if(!t)return "";const s=String(t);

@@ -17,7 +17,7 @@
 
 ```sql
 -- 주간 성과 원본
-create table weekly_creative_stats (
+create table sr_weekly_creative_stats (
   id bigint generated always as identity primary key,
   channel text not null,
   week_start date not null,
@@ -28,7 +28,7 @@ create table weekly_creative_stats (
   unique (channel, week_start, ad_name)
 );
 -- 콘솔 조회용 파생 컬럼 (쓰기 경로와 무관)
-alter table weekly_creative_stats
+alter table sr_weekly_creative_stats
   add column cost_krw     numeric generated always as (nullif(payload->>'비용','')::numeric) stored,
   add column impressions  numeric generated always as (nullif(payload->>'노출 수','')::numeric) stored,
   add column clicks       numeric generated always as (nullif(payload->>'클릭 수','')::numeric) stored,
@@ -36,7 +36,7 @@ alter table weekly_creative_stats
   add column active_users numeric generated always as (nullif(payload->>'활성 유저 수','')::numeric) stored;
 
 -- 보조 저장소 (이름 매핑·그룹 정보·OCR·유튜브 제목)
-create table cr_kv (
+create table sr_kv (
   k text primary key,
   v jsonb not null,
   updated_at timestamptz default now(),
@@ -44,7 +44,7 @@ create table cr_kv (
 );
 
 -- 사용자 계정 + 승인 워크플로 (신청함/승인됨/거절됨). 비번은 sha256 해시만 저장.
-create table cr_users (
+create table sr_users (
   id bigint generated always as identity primary key,
   daangn_name text not null,
   name_lower  text generated always as (lower(daangn_name)) stored,
@@ -52,23 +52,23 @@ create table cr_users (
   status      text not null default '신청함' check (status in ('신청함','승인됨','거절됨')),
   created_at  timestamptz not null default now(),
   reviewed_at timestamptz, reviewed_by text);
-create unique index cr_users_name_uq   on cr_users(name_lower);   -- 대소문자 무관 유일(사칭 방지)
-create unique index cr_users_pwhash_uq on cr_users(pw_hash);      -- 비번만으로 로그인 → 전역 유일
+create unique index cr_users_name_uq   on sr_users(name_lower);   -- 대소문자 무관 유일(사칭 방지)
+create unique index cr_users_pwhash_uq on sr_users(pw_hash);      -- 비번만으로 로그인 → 전역 유일
 -- pgcrypto의 digest는 extensions 스키마 → 항상 extensions.digest(...)로 스키마 명시 호출
 
 -- RLS 전면 차단: 접근은 오직 SECURITY DEFINER RPC로만
-alter table weekly_creative_stats enable row level security;
-alter table cr_kv enable row level security;
-alter table cr_users enable row level security;
+alter table sr_weekly_creative_stats enable row level security;
+alter table sr_kv enable row level security;
+alter table sr_users enable row level security;
 
--- 권한 컬럼: cr_users.role text default 'viewer' check (role in ('viewer','editor','admin'))
+-- 권한 컬럼: sr_users.role text default 'viewer' check (role in ('viewer','editor','admin'))
 --   admin = 에디터 상위(에디터 권한 포함) + 소재 이름 수동 변경. 현재 admin은 hansy만.
 -- 읽기 게이트: 레거시 '<PASSWORD>' 또는 '승인됨' 사용자의 비번이면 통과
 create or replace function _cr_check_pw(pw text) returns void
 language plpgsql security definer set search_path to 'public' as $$
 begin
   if pw = '<PASSWORD>' then return; end if;
-  if exists (select 1 from cr_users where status='승인됨'
+  if exists (select 1 from sr_users where status='승인됨'
              and pw_hash = encode(extensions.digest(pw,'sha256'),'hex')) then return; end if;
   raise exception 'invalid password' using errcode = '28000';
 end $$;
@@ -77,7 +77,7 @@ create or replace function _cr_check_admin_role(pw text) returns void
 language plpgsql security definer set search_path to 'public' as $$
 begin
   if pw = '<PASSWORD>' then raise exception 'viewer cannot edit' using errcode='28000'; end if;
-  if exists (select 1 from cr_users where status='승인됨' and role='admin'
+  if exists (select 1 from sr_users where status='승인됨' and role='admin'
              and pw_hash = encode(extensions.digest(pw,'sha256'),'hex')) then return; end if;
   raise exception 'admin only' using errcode='28000';
 end $$;
@@ -86,19 +86,19 @@ create or replace function _cr_check_editor(pw text) returns void
 language plpgsql security definer set search_path to 'public' as $$
 begin
   if pw = '<PASSWORD>' then raise exception 'viewer cannot edit' using errcode='28000'; end if;
-  if exists (select 1 from cr_users where status='승인됨' and role in ('editor','admin')
+  if exists (select 1 from sr_users where status='승인됨' and role in ('editor','admin')
              and pw_hash = encode(extensions.digest(pw,'sha256'),'hex')) then return; end if;
   raise exception 'not editor' using errcode='28000';
 end $$;
 -- cr_save는 perform _cr_check_admin_role(pw) · cr_kv_merge는 key='ytt'면 editor, 그 외 admin 게이트.
 
--- 비밀번호 열람/관리: cr_users.pw_enc bytea(pgcrypto pgp_sym로 암호화, 키는 함수 본문). 가입·생성·변경 시 hash와 함께 저장.
+-- 비밀번호 열람/관리: sr_users.pw_enc bytea(pgcrypto pgp_sym로 암호화, 키는 함수 본문). 가입·생성·변경 시 hash와 함께 저장.
 --   cr_admin_list가 pgp_sym_decrypt로 복호화해 pw 반환(관리자만). cr_admin_create(이름·비번·권한→승인됨 생성)·cr_admin_setpw(hash·enc 동시 갱신).
 -- 관리자 게이트(_cr_check_admin, 별도 시크릿) + cr_register/cr_login/cr_admin_list/cr_admin_set.
 -- 비번 규칙 _cr_pwok(p): length(p) >= 4 (복잡도 없음). register·admin_create·setpw 공통. 중복은 pw_taken, 예약 0715 별도 거부.
 -- cr_pending_count(pw): perform _cr_check_pw(pw) 후 신청함 수 반환(admin.html 알림용).
 -- cr_admin_set에 p_name(이름 변경) 추가. 관리자 로그인 계정 admin/7132(editor) 시드(정책 우회 직접 insert).
--- 즐겨찾기/내 소재: cr_user_marks(user_name,channel,ad_name,kind in (fav,mine), unique 4개조). RLS deny-all.
+-- 즐겨찾기/내 소재: sr_user_marks(user_name,channel,ad_name,kind in (fav,mine), unique 4개조). RLS deny-all.
 --   _cr_uname(pw): 승인 계정 비번→이름(0715/미존재 null). cr_mark_set(pw,ch,ad,kind,on): 도출 이름으로 upsert/delete(0715 거부).
 --   cr_marks_load(pw): mine 전체(등록자 이름 n 포함, 공개) + fav 본인 것만. anon grant.
 --   cr_mark_set_many(pw,p_channel,p_ads jsonb,p_kind,p_on): 그룹 일괄 토글 — ad 배열을 한 번에 upsert(ON CONFLICT DO NOTHING)/delete. anon grant.
@@ -106,8 +106,8 @@ end $$;
 --   _cr_is_admin(pw) boolean: 승인됨 + role=admin + 비번 해시 일치.
 --   cr_names_merge(pw,p_map jsonb): _cr_is_admin 아니면 예외. kv 'nameovr'에 얕은 병합(값 ''/null=키 삭제). 키는 클라이언트가 매체+원본명으로 생성. anon grant. 읽기는 cr_kv_get(pw,'nameovr').
 --   cr_svc_merge(pw,p_map jsonb): 동일 게이트/형식으로 kv 'svcovr'(서비스 분류 오버라이드) 병합. 읽기 cr_kv_get(pw,'svcovr').
---   cr_admin_mark_set(pw,p_channel,p_ad,p_user,p_kind default 'mine',p_on default true): _cr_is_admin 게이트. 특정인 p_user 이름으로 cr_user_marks 행 upsert/delete → 관리자가 제작자(내 소재) 칩을 대신 붙이거나 뗀다.
--- cr_admin_set: p_role 허용값에 'admin' 추가. **이름(p_name) 변경 시 옛 이름을 쓰는 cr_user_marks.user_name·weekly_creative_stats.uploaded_by까지 새 이름으로 UPDATE**(본 페이지 닉네임·본인 마크 매칭 유지).
+--   cr_admin_mark_set(pw,p_channel,p_ad,p_user,p_kind default 'mine',p_on default true): _cr_is_admin 게이트. 특정인 p_user 이름으로 sr_user_marks 행 upsert/delete → 관리자가 제작자(내 소재) 칩을 대신 붙이거나 뗀다.
+-- cr_admin_set: p_role 허용값에 'admin' 추가. **이름(p_name) 변경 시 옛 이름을 쓰는 sr_user_marks.user_name·sr_weekly_creative_stats.uploaded_by까지 새 이름으로 UPDATE**(본 페이지 닉네임·본인 마크 매칭 유지).
 -- cr_register: 이름 ^[A-Za-z][A-Za-z0-9]{1,23}$·_cr_pwok 통과·예약비번 '<PASSWORD>' 금지·이름/해시 중복 거부(같은 비번 계정 금지) → 신청함·viewer.
 -- cr_login(p_pw): '<PASSWORD>'=이름없는 뷰어 {found,viewer:true,role:viewer,status:승인됨}. 그 외는 해시 조회 → {found,name,status,role,viewer:false}.
 -- cr_admin_list(admin_pw): 신청함 먼저·role 포함. cr_admin_set(admin_pw,p_id,p_status default null,reviewer,p_role default null): status·role 각각 nullable(하나만 변경 가능).
@@ -123,7 +123,7 @@ begin
   select coalesce(jsonb_agg(
     jsonb_build_object('channel',w.channel,'week_start',w.week_start,'ad_name',w.ad_name,'payload',w.payload)
     order by w.week_start, w.channel, w.ad_name),'[]'::jsonb)
-  into res from weekly_creative_stats w;
+  into res from sr_weekly_creative_stats w;
   return res;
 end $$;
 
@@ -136,7 +136,7 @@ begin
   up := coalesce(nullif(trim(uploader),''),'unknown');
   if length(up) > 40 then up := left(up,40); end if;
   with ins as (
-    insert into weekly_creative_stats (channel, week_start, ad_name, payload, uploaded_by)
+    insert into sr_weekly_creative_stats (channel, week_start, ad_name, payload, uploaded_by)
     select r->>'channel', (r->>'week_start')::date, r->>'ad_name', coalesce(r->'payload','{}'::jsonb), up
     from jsonb_array_elements(rows) r
     where coalesce(r->>'channel','') not in ('','기타')
@@ -162,9 +162,9 @@ begin
     'first_week', min(week_start), 'last_week', max(week_start),
     'unsigned_rows', count(*) filter (where uploaded_by is null or uploaded_by in ('','unknown')),
     'uploaders', (select coalesce(jsonb_object_agg(u, c), '{}'::jsonb)
-                  from (select uploaded_by u, count(*) c from weekly_creative_stats group by 1) t),
+                  from (select uploaded_by u, count(*) c from sr_weekly_creative_stats group by 1) t),
     'last_upload', max(uploaded_at))
-  into res from weekly_creative_stats;
+  into res from sr_weekly_creative_stats;
   return res;
 end $$;
 
@@ -174,7 +174,7 @@ language plpgsql security definer set search_path to 'public' as $$
 declare res jsonb;
 begin
   perform _cr_check_pw(pw);
-  select v into res from cr_kv where k = key;
+  select v into res from sr_kv where k = key;
   return coalesce(res, 'null'::jsonb);
 end $$;
 
@@ -183,7 +183,7 @@ language plpgsql security definer set search_path to 'public' as $$
 declare cur jsonb; merged jsonb; topk text;
 begin
   perform _cr_check_pw(pw);
-  select v into cur from cr_kv where k = key;
+  select v into cur from sr_kv where k = key;
   if cur is null then merged := val;
   else
     merged := cur;
@@ -195,7 +195,7 @@ begin
       end if;
     end loop;
   end if;
-  insert into cr_kv(k, v, updated_at, updated_by) values(key, merged, now(), coalesce(nullif(uploader,''),'unknown'))
+  insert into sr_kv(k, v, updated_at, updated_by) values(key, merged, now(), coalesce(nullif(uploader,''),'unknown'))
   on conflict (k) do update set v = excluded.v, updated_at = now(), updated_by = excluded.updated_by;
   return merged;
 end $$;
