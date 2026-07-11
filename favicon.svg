@@ -1,15 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="성과분석툴">
-  <!-- 클립보드 판 -->
-  <rect x="8" y="7" width="48" height="52" rx="7.5" fill="#A6B1C3"/>
-  <!-- 흰 종이 -->
-  <rect x="13.5" y="13.5" width="37" height="40" rx="4" fill="#FCFCFD"/>
-  <!-- 상단 클립 -->
-  <rect x="23.5" y="3.5" width="17" height="9.5" rx="2.6" fill="#4B4B4B"/>
-  <!-- 상승 막대 3개 (코랄) -->
-  <rect x="18.5" y="35" width="7.4" height="12.5" rx="1.6" fill="#F8B49A"/>
-  <rect x="28.3" y="30" width="7.4" height="17.5" rx="1.6" fill="#F58F66"/>
-  <rect x="38.1" y="25" width="7.4" height="22.5" rx="1.6" fill="#F26F35"/>
-  <!-- 상승 추세선 + 화살촉 -->
-  <path d="M17 41 L26 32 L32 37.5 L45 23.5" fill="none" stroke="#3B342D" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M38.5 23.5 L45 23.5 L45 30" fill="none" stroke="#3B342D" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 46.24 17.25 A 20.5 20.5 0 1 0 46.24 46.75" fill="none" stroke="#F5821F" stroke-width="15.0" stroke-linecap="round"/>
+  <path d="M 47.7 18.82 A 20.5 20.5 0 0 1 51.89 27.04" fill="none" stroke="#FBD066" stroke-width="15.0" stroke-linecap="round"/>
+  <path d="M 51.89 36.96 A 20.5 20.5 0 0 1 47.7 45.18" fill="none" stroke="#FBB03B" stroke-width="15.0" stroke-linecap="round"/>
 </svg>
