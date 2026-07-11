@@ -16,10 +16,10 @@
                ▼
 ┌──────────────────────────────────────────────────────┐
 │  Supabase (Postgres)                                  │
-│  weekly_creative_stats  ← 주간 성과 원본 (JSONB)        │
-│  cr_kv                  ← gmap·ginfo·ocr·ytt·nameovr·svcovr│
-│  cr_users               ← 사용자 계정·승인 상태·권한       │
-│  cr_user_marks          ← 즐겨찾기·내 소재 (계정 단위)     │
+│  sr_weekly_creative_stats  ← 주간 성과 원본 (JSONB)        │
+│  sr_kv                  ← gmap·ginfo·ocr·ytt·nameovr·svcovr│
+│  sr_users               ← 사용자 계정·승인 상태·권한       │
+│  sr_user_marks          ← 즐겨찾기·내 소재 (계정 단위)     │
 └──────────────────────────────────────────────────────┘
 
 배포: GitHub Pages (main 머지 → Actions 자동 배포, 실패 시 백오프 재시도 3회)
@@ -32,7 +32,7 @@
 
 ## 2. 데이터 모델
 
-### weekly_creative_stats — 주간 성과 원본
+### sr_weekly_creative_stats — 주간 성과 원본
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | bigint identity | PK |
@@ -53,9 +53,10 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 - **출처**: 수퍼셋 크리에이티브 대시보드 dataset 내보내기(`week_start,channel,creative_name,…,cost_krw,…,ret_d1_*,cohort_revenue_*,af_installs,re_engagements,video_play_*`). 몰로코(`moloco_int`)+메타(`Facebook Ads`)가 한 파일.
 - **자동 반영**: 사이트가 이 형식을 자동 감지(`isQualityExport`)해 채널별로 분리 파싱(`parseQualityExport`) → 누적·저장. 관리자가 파일만 떨어뜨리면 됨. ₩1,500 미만 행 제외, 파생지표(잔존율=Users/Base, ROAS D7=revD7/비용)는 로드 시 재계산.
 - **활용**: 표 '질' 컬럼 그룹(D1/D7 잔존·ROAS D7·신규 설치(단가)·재참여(단가)) · 효율지도 축 · 상세 '유저 질' 탭(잔존 vs 중앙값·주차 추이·코호트 매출·유입 구성·표본 신뢰) · **채점: D1 잔존율 — 몰로코 6%·메타 22%**(SPEC_EVIDENCE den=retD1Base·n0=150, 데이터 없는 매체는 가용성 게이트로 자동 제외) · 자동 해석 '유저 질 최고' 라인.
-- 2026-07-10 일괄 마이그레이션: 몰로코 11,357 + 메타 863행 업서트(주간 최신 2026-06-29 포함, 백업 `weekly_creative_stats_mm_bak_20260710`).
+- 2026-07-10 일괄 마이그레이션: 몰로코 11,357 + 메타 863행 업서트(주간 최신 2026-06-29 포함).
+- **2026-07-11 스키마 정리**: CR 테이블 전부 `sr_` 접두사로 통일(`weekly_creative_stats`→`sr_weekly_creative_stats` 등). 프론트는 RPC(함수)로만 접근하므로 함수 이름/시그니처는 그대로 → **사이트 무변경**. RLS 꺼진 채 공개 노출되던 7/10 백업 테이블 2개 + CR 무관 빈 테이블 3개(site_data·persona_site_state·creative_rule_snapshots) 삭제. `creative_names`(19행)는 CR 미사용이나 타 앱 소유 가능성으로 보존.
 
-### cr_kv — 보조 저장소 (k, v jsonb, updated_at, updated_by)
+### sr_kv — 보조 저장소 (k, v jsonb, updated_at, updated_by)
 | 키 | 내용 | 채워지는 경로 |
 |---|---|---|
 | `gmap` | `{adgroup:{id:이름}, campaign:{id:이름}, asset:{항목ID:공식이름}}` | 이름 매핑 CSV·광고그룹 보고서 드롭, 이미지 매칭 배치 |
@@ -63,7 +64,7 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 | `ocr` | `{항목ID:이미지에서 추출한 광고 카피}` | 비전 OCR 오프라인 배치(신규)·PaddleOCR(과거) |
 | `ytt` | `{유튜브ID:영상 제목}` | 사이트가 로드 시 자동 조회(noembed) 후 저장 |
 
-### cr_users — 사용자 계정과 승인 워크플로
+### sr_users — 사용자 계정과 승인 워크플로
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | bigint identity | PK |
@@ -76,10 +77,10 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 | created_at·reviewed_at·reviewed_by | | 신청 시각 · 승인/거절/권한 처리 시각·처리자 |
 
 - **비밀번호만으로 로그인**: 입력 비번의 sha256 해시로 사용자를 찾아 이름·상태·권한을 반환(`cr_login`). 그래서 pw_hash를 전역 유일로 강제(가입 시 중복 비번 거부).
-- **레거시 `0715`는 이름 없는 뷰어 하드코딩 로그인** — cr_login이 `{viewer:true}`를 반환(이름 없음), 데이터는 읽되 저장·수정은 불가. cr_users 행이 아니므로 가입 시 예약 비번 `0715`는 거부.
+- **레거시 `0715`는 이름 없는 뷰어 하드코딩 로그인** — cr_login이 `{viewer:true}`를 반환(이름 없음), 데이터는 읽되 저장·수정은 불가. sr_users 행이 아니므로 가입 시 예약 비번 `0715`는 거부.
 - 권한 모델: **뷰어**(0715 또는 role=viewer 사용자) = 읽기 전용 · **에디터**(승인됨 + role=editor) = 저장·수정 가능 · **관리자**(승인됨 + role=admin) = 에디터 권한 + 소재 이름 수동 변경(`/namechange`). 관리자는 에디터 권한을 포함(canEdit=true). 소유자는 계정을 만들어 admin.html에서 자신을 에디터/관리자로 승인. 관리자용 로그인 계정 `admin`(editor) 시드. **관리자 권한(admin role)은 admin.html 마스터 게이트(별도 시크릿)와 다른 개념** — role=admin은 앱 내 최상위 사용자 등급, `_cr_check_admin`은 계정 관리 콘솔용 마스터 비번.
 
-### cr_user_marks — 즐겨찾기 / 내 소재 (개별 계정 단위)
+### sr_user_marks — 즐겨찾기 / 내 소재 (개별 계정 단위)
 | 컬럼 | 설명 |
 |---|---|
 | user_name | 마크 소유자 daangn_name |
@@ -133,7 +134,7 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 | `cr_admin_create(admin_pw, p_name, p_pw, p_role, reviewer)` | 관리자가 계정 직접 추가(승인됨으로 생성, 형식·중복 검증) |
 | `cr_admin_setpw(admin_pw, p_id, p_new_pw, reviewer)` | 관리자가 비밀번호 변경(hash·enc 동시 갱신, 규칙·예약비번·중복 금지) |
 | `cr_pending_count(pw)` | 대기(신청함) 수 반환 — admin.html 알림용 |
-| `cr_admin_set(...,p_name)` | 상태·권한(viewer/editor/admin)·**이름(daangn_name)** 변경 (모두 nullable). **이름 변경 시 `cr_user_marks.user_name`·`weekly_creative_stats.uploaded_by`까지 연쇄 갱신** → 본 페이지 닉네임(내 소재 등록자·업로드 서명)·본인 마크 매칭 유지 |
+| `cr_admin_set(...,p_name)` | 상태·권한(viewer/editor/admin)·**이름(daangn_name)** 변경 (모두 nullable). **이름 변경 시 `sr_user_marks.user_name`·`sr_weekly_creative_stats.uploaded_by`까지 연쇄 갱신** → 본 페이지 닉네임(내 소재 등록자·업로드 서명)·본인 마크 매칭 유지 |
 | `cr_admin_create` / `cr_admin_setpw` | 계정 추가 / 비번 변경 (규칙·중복 검증) |
 | `cr_mark_set(pw, ch, ad, kind, on)` | 즐겨찾기/내 소재 토글 (비번→사용자 도출, 0715 거부) |
 | `cr_mark_set_many(pw, ch, p_ads[], kind, on)` | 그룹 일괄 토글 — 멤버 ad 배열을 한 번에 on/off (`ON CONFLICT DO NOTHING`) |
@@ -180,7 +181,7 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 ### 오프라인 이름 보강 배치 (필요 시 재실행)
 - **비전 OCR(현행 방식)**: 이름이 `tpc.googlesyndication.com/simgad/…` URL로 남은 구글 이미지 애셋을 사람이 읽을 헤드라인으로 채운다. **사이트 접속과 무관한 오프라인 사전 채움**이 원칙 — 브라우저에서 즉석 OCR하지 않고 `ocr` kv에 미리 넣어둔다.
   - 절차: ①gap 조회(아래 SQL) → ②이미지 다운로드 → ③각 이미지를 비전으로 읽어 **가장 큰 헤드라인 한 줄만 한국어 verbatim** 추출(로고 워드마크·CTA·법적고지 제외) → ④`ocr` kv에 `{항목ID:헤드라인}` jsonb 병합(`v = v || '{…}'::jsonb`). 이 이미지들은 이미 Google 공개 광고 CDN에 게시된 라이브 크리에이티브라 노출 민감도가 낮다.
-  - gap 조회: `weekly_creative_stats`의 `_g_assetType`이 이미지인 distinct `_g_assetId` 중 `ocr`·`gmap.asset` 어디에도 없는 것 = OCR 필요분. **마이그레이션 직후 항상 이 조회로 0인지 확인**하고 남으면 위 절차를 돌린다.
+  - gap 조회: `sr_weekly_creative_stats`의 `_g_assetType`이 이미지인 distinct `_g_assetId` 중 `ocr`·`gmap.asset` 어디에도 없는 것 = OCR 필요분. **마이그레이션 직후 항상 이 조회로 0인지 확인**하고 남으면 위 절차를 돌린다.
   - 품질 주의: 크롭으로 가격/숫자가 잘린 소재는 잘못된 값(예 `0원`)을 단정하지 말고 일반 문구로. `삶은당근` 같은 브랜드 카피는 그대로 유지.
 - **PaddleOCR(korean, 과거 방식·참고)**: 200장 일괄 OCR. `OMP_THREAD_LIMIT=1`, 숫자 라인 신뢰도 0.55, 박스 좌표 기하 정렬, 로고 오인 후처리. 전문(全文) 덤프라 이름이 길고 지저분 → 신규분은 비전 방식으로 대체.
 - **dHash 이미지 매칭**: 몰로코 IMAGE 소재(이름 있음)와 구글 simgad 이미지의 지각 해시(9×8 dHash, 해밍 ≤6 + 종횡비 ±12%)로 동일 이미지를 찾아 몰로코의 실명을 구글 애셋에 부여 → `gmap.asset`.
@@ -235,6 +236,6 @@ Score = 100 × (0.85·E + 0.15·R)          ← 신뢰 축(C) 폐지: 적격 소
 ## 8. 운영
 
 - **감사**: 모든 주간 기록에 `uploaded_by`/`uploaded_at`, kv에 `updated_by`/`updated_at`. `cr_status`가 업로더 분포·최근 업로드 반환 → ☁️ 줄 툴팁.
-- 특정 업로더/기간 삭제 예시: `delete from weekly_creative_stats where uploaded_by <> 'hansy' and uploaded_at >= '2026-08-01';`
+- 특정 업로더/기간 삭제 예시: `delete from sr_weekly_creative_stats where uploaded_by <> 'hansy' and uploaded_at >= '2026-08-01';`
 - **배포 실패 대응**: pages.yml이 deployment 3회 재시도(90초 → 5분 백오프).
 - **무결성 체크 7종**(수시 실행): 중복·비월요일 주차·₩1,500 미만·잘못된 채널·빈 이름·빈 날짜·빈 업로더 — 전부 0이어야 정상.

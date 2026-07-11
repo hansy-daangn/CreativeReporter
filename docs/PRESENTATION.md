@@ -132,9 +132,9 @@ flowchart TD
     GOOG["Google<br/>AEO · ACE"] --> W
 
     subgraph STORE["② 저장 · Supabase — 접근은 검증된 함수(RPC)로만"]
-      W["weekly_creative_stats<br/>주차×소재 원본 (JSONB)"]
-      KV["cr_kv<br/>이름·그룹·OCR·자막"]
-      MK["cr_users · cr_user_marks<br/>계정 · 즐겨찾기 · 내 소재"]
+      W["sr_weekly_creative_stats<br/>주차×소재 원본 (JSONB)"]
+      KV["sr_kv<br/>이름·그룹·OCR·자막"]
+      MK["sr_users · sr_user_marks<br/>계정 · 즐겨찾기 · 내 소재"]
     end
 
     subgraph BROW["③ 처리 · 브라우저 index.html (의존성 0)"]
@@ -498,17 +498,17 @@ eligibility: 광고비 ≥ 15퍼센타일 && 가중 .15 이상 핵심 지표 모
 
 ## 부록 B. 데이터 모델
 
-### weekly_creative_stats (주간 성과 원본)
+### sr_weekly_creative_stats (주간 성과 원본)
 - 유일 제약: **UNIQUE(channel, week_start, ad_name)** → 재업로드 중복은 DB에서 무시
 - `channel`: Meta / Moloco / Google · `week_start`: 월요일 · `ad_name`: 소재 식별자(구글은 URL)
 - `payload`(JSONB): 그 주 원본 수치 전부 (매체별 스키마 25종+ 유연 수용)
 - `uploaded_by`/`uploaded_at`: 감사 서명
 - 주요 필드: `비용·노출 수·클릭 수·어트리뷰션 수·활성 유저 수·신규+재활성 유저 수·_vcrNum/_vcrDen(완주율)·_v25~_v100(영상 구간)·_g_conversions/_g_convValue/_g_allConv·_m_url/_m_ctype/_m_res·_g_assetType/_g_adGroupId/_g_campaignId`
 
-### cr_kv (보조 저장소, 목적별 키)
+### sr_kv (보조 저장소, 목적별 키)
 `gmap`(이름 매핑) · `ginfo`(광고그룹 정보) · `nameovr`(이름 오버라이드) · `svcovr`(서비스 오버라이드) · `ocr`(카피 추출) · `ytt`(유튜브 제목). 최상위 키별 얕은 병합 + 수정자 기록.
 
-### cr_users · cr_user_marks
+### sr_users · sr_user_marks
 - 계정: `daangn_name` · `role`(viewer/editor/admin) · `status`(신청함/승인됨/거절됨)
 - 마크: `(user_name, channel, ad_name, kind)` — kind `fav`(비공개) / `mine`(공개). 구글은 정규화 채널 `Google`로 저장(AEO/ACE 분리와 무관하게 마크 유지)
 
