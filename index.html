@@ -120,6 +120,7 @@
   .gi-k{color:var(--muted);white-space:nowrap} .gi-v{color:var(--ink);font-weight:650;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .lcard.gold .chip,.lcard.bad .chip{background:rgba(255,255,255,.55)}
   .chip.fo{background:var(--surface-3);color:var(--muted)} .lcard.gold .chip.fo,.lcard.bad .chip.fo{background:rgba(255,255,255,.6)}
+  .chip.warn{background:rgba(240,165,0,.16);color:#c07a00;font-weight:650;cursor:help}
   .lfoot{display:flex;align-items:center;gap:9px;margin-top:1px}
   .lfoot .sp{flex:0 0 auto;font-size:12.5px;padding:2px 8px}
   .lreason{font-size:11px;color:var(--muted);line-height:1.38} .lreason b{color:var(--ink);font-weight:650}
@@ -1467,6 +1468,14 @@ async function fetchYtTitle(id){
   }catch(e){_ytTitles[id]=null;return null;}}
 
 let WEEKS=[];/* 실데이터 로드 시 rebuildAllDatasets()가 채움 — 하드코딩 주차 없음 */
+/* ── 지표 신뢰성 게이트 ──
+   실측(2026-07 전수 스윕): 구글 AEO 캠페인 일부 애셋의 '노출 수'가 실제 대비 최대 40배 과소집계
+   (클릭·신규 실행은 전 기간 0.85 비율로 정상 유지 · 비용 대비 노출만 붕괴 · 이상 125/126행이 한 캠페인에 집중)
+   → CTR 20~65% 같은 물리 불가값 발생. 건강한 소재의 최대 CTR은 전 채널 10.2%(소재 단위 실측)라
+   15%가 정상·오염의 분리 경계 — 넘으면 노출·상호작용 분모의 비율 지표를 통째 무효화(표 '–' + ⚠),
+   분모가 전환 추적인 단가·건수 지표(신규 단가·홈 단가 등)는 정상이라 유지 */
+const CTR_PLAUSIBLE_MAX=0.15;
+const IMP_RATE_KEYS=["CTR","CPM","_g_hpm","_g_interactionRate","_g_trueViewRate","_g_conversionRate","_g_foRate"];
 function aggregate(data,L){const map=new Map();
   for(const r of data){let nm=r[L.nameCol];if(nm==null||nm===""||nm==="nan")nm="(미지정)";
     if(!map.has(nm))map.set(nm,{name:nm,비용:0,"노출 수":0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0});
@@ -1495,7 +1504,11 @@ function aggregate(data,L){const map=new Map();
       e["_g_cpHome"]=(e["_g_home"]||0)>0?e.비용/e["_g_home"]:null; /* 홈 도달 단가 */
       e["_g_hpm"]=e["노출 수"]>0?(e["_g_home"]||0)/e["노출 수"]*1000:null; /* 홈 도달율(노출 1,000회당) — IPM식 소재력 지표(경매 단가 요인 배제) */
       e["_g_ROAS"]=e.비용>0?(e["_g_convValue"]||0)/e.비용:null;
-      e["_g_convValuePerConv"]=(e["_g_convValue"]||0)>0&&(e["_g_allConv"]||0)>0?e["_g_convValue"]/e["_g_allConv"]:null;}
+      e["_g_convValuePerConv"]=(e["_g_convValue"]||0)>0&&(e["_g_allConv"]||0)>0?e["_g_convValue"]/e["_g_allConv"]:null;
+      /* 신뢰성 게이트(구글) — 물리 불가 CTR = 노출 과소집계 신호. 상단 CTR_PLAUSIBLE_MAX 주석 참고 */
+      if(e.CTR!=null&&e.CTR>CTR_PLAUSIBLE_MAX){
+        if((e["클릭 수"]||0)>=50)e._impBad=1; /* 표본 있는 구조적 이상만 ⚠ 배지(소표본 우연은 무효화만) */
+        for(const k of IMP_RATE_KEYS)e[k]=null;}}
     e._wkCnt=e._wkSet?e._wkSet.size:0;e._wkSet=null;
     e.tags=tagEntity(e.name,e);return e;});
   /* 몰로코 '네이티브 영상' 오등록 보정 — 이 리포트가 완주율을 제공하는데(영상이면 값이 찍혀야 함)
@@ -1504,6 +1517,9 @@ function aggregate(data,L){const map=new Map();
   if(arr.some(x=>(x._vcrDen||0)>0))for(const x of arr){
     if(x._m_ctype&&/VIDEO/.test(x._m_ctype)&&(x._vcrDen||0)<=0&&/\.(png|jpe?g|gif|webp)(\?|$)/i.test(String(x._m_url||""))){
       x.tags.fo="이미지";x._foFix=1;}}
+  /* 몰로코 영상 '클릭' = 재생 혼입(실측: 영상 소재 CTR 중앙값 31% · 25% 재생수≈클릭수 · 영상 내 CTR↔eCPA 무상관 +0.02)
+     → 클릭률·CPC는 랜딩 클릭 지표로 성립 불가라 무효화. 영상의 반응 신호는 완주율이 담당(채점도 동일) */
+  for(const x of arr)if(x._m_ctype&&/VIDEO/.test(x._m_ctype)&&x.tags.fo!=="이미지"){x.CTR=null;x.CPC=null;x._clkMix=1;}
   arr.sort((a,b)=>b.비용-a.비용);return arr;}
 /* '학습중' — 집행 2주 미만이거나 1순위 지표의 증거량(표본·지출) 부족: 지표 변동성이 커서 점수가 아직 흔들리는 소재.
    증거량은 채점과 같은 evidenceW(지출 기반 축소 포함)라 배지와 점수 보정이 항상 같은 기준을 쓴다 */
@@ -1597,11 +1613,13 @@ const SCORING={
     {k:"_g_hpm",w:0.14,dir:1,lab:"홈 도달율"},
   ],
   moloco:[ /* 몰로코 = 리타겟(RE) 채널(데려온 유저의 99.4%가 재참여) — 합산 획득단가 중심.
-       교차검증(심슨 역설 보정): CTR의 예측력은 '이미지에서만' 유효(포맷 내 ρ: 이미지 -0.48 · 영상 +0.01)라 포맷 조건부,
+       교차검증(심슨 역설 보정, 2단계): 이미지 풀링 ρ=-0.48은 지면 혼합의 산물 — 지면(ctype) 내 실측은
+       외부 지면 이미지(IMAGE) ρ=-0.447(n=191)만 유효, 네이티브 이미지 +0.078·영상 +0.02 무신호.
+       CTR 분포도 지면이 지배(IMAGE 중앙값 10.5% vs NATIVE 1.4% — 8배)라 IMAGE끼리만 채점·비교(entCt),
        영상의 크리에이티브 신호는 완주율이 담당 · D1 잔존은 코호트 base 중앙값 13명이라 소액+강한 축소 ·
        eCPI(성과의 0.6%)·CPM(포맷별 방향 상충)·활성 eCPA(ρ=0.98 완전 중복) 제거 — 신규+재활성 결측 데이터셋은 ad 폴백이 처리 */
     {k:"신규+재활성 eCPA",w:0.70,dir:-1,lab:"신규+재활성 eCPA"},
-    {k:"CTR",w:0.12,dir:1,lab:"CTR",entFo:"이미지"},
+    {k:"CTR",w:0.12,dir:1,lab:"CTR",entCt:"IMAGE"},
     {k:"영상 완주율",w:0.12,dir:1,lab:"완주율",videoOnly:true},
     {k:"_q_retD1",w:0.06,dir:1,lab:"D1 잔존율"},
   ],
@@ -1673,6 +1691,8 @@ function evidenceW(e,k){const s=SPEC_EVIDENCE[k];if(!s)return 1;
   return w;}
 /* 미디어 단가 지표는 인벤토리 특성(네이티브 영상 vs 배너)이 달라 같은 포맷 안에서만 상대 평가 */
 const MEDIA_COHORT_KEYS=new Set(["CTR","CPM","CPC","영상 완주율","_g_interactionRate","_g_trueViewRate","_g_hpm"]);
+/* 코호트 축 — 지면 조건부(entCt) 지표는 리포트 지면 타입(_m_ctype)끼리, 그 외는 포맷(영상/이미지)끼리 */
+function specCohortOf(s,e){return s.entCt?String(e._m_ctype||"기타"):((e.tags&&e.tags.fo)||"기타");}
 /* 공용 점수 코어 — computeScores(소재)와 scoreGroupAgg(그룹 집계)가 같은 규칙을 쓴다 */
 /* 규모(R) 축의 기준 지표 — 노출이 아니라 "데려온 유저"(매체별: 신규+재활성 / first_open / ACE=홈 도달).
    실데이터 검증: 몰로코 노출↔데려온 유저 ρ=-0.02(노출은 싼 인벤토리만 보상), 메타 노출↔광고비 ρ=0.94(예산 순환 보상).
@@ -1689,7 +1709,7 @@ function runScoring(pop,elig,specs,reachKey){
     dists[s.k]=buildWDist(pop.filter(e=>e[s.k]!=null).map(e=>[e[s.k],Math.max(e.비용||0,1)]));
     if(MEDIA_COHORT_KEYS.has(s.k)){
       const byFo=new Map();
-      for(const e of pop){if(e[s.k]==null)continue;const fo=(e.tags&&e.tags.fo)||"기타";
+      for(const e of pop){if(e[s.k]==null)continue;const fo=specCohortOf(s,e);
         let arr=byFo.get(fo);if(!arr){arr=[];byFo.set(fo,arr);}arr.push([e[s.k],Math.max(e.비용||0,1)]);}
       const m=new Map();for(const[fo,arr]of byFo){if(arr.length>=8)m.set(fo,buildWDist(arr));}
       if(m.size)foDists[s.k]=m;}}
@@ -1701,9 +1721,10 @@ function runScoring(pop,elig,specs,reachKey){
     let composite=0,wsum=0;e._specPct={};
     e._evW=specs.length?evidenceW(e,specs[0].k):null; /* 1순위 지표 증거량 — 학습중 배지·투명성 공용 */
     for(const s of specs){if(e[s.k]==null||!dists[s.k].vals.length)continue;
-      if(s.entFo&&((e.tags&&e.tags.fo)||"")!==s.entFo)continue; /* 포맷 조건부 지표 — 해당 포맷에서만 채점(예: 몰로코 CTR=이미지만) */
+      if(s.entFo&&((e.tags&&e.tags.fo)||"")!==s.entFo)continue; /* 포맷 조건부 지표 — 해당 포맷에서만 채점(예: AEO CTR=영상만) */
+      if(s.entCt&&String(e._m_ctype||"")!==s.entCt)continue; /* 지면 조건부 — 몰로코 CTR은 신호가 실측된 외부 지면(IMAGE)만 */
       let d=dists[s.k];
-      const fm=foDists[s.k];if(fm){const fo=(e.tags&&e.tags.fo)||"기타";if(fm.has(fo))d=fm.get(fo);}
+      const fm=foDists[s.k];if(fm){const fo=specCohortOf(s,e);if(fm.has(fo))d=fm.get(fo);}
       const p=wPctRank(d,e[s.k]);let g=s.dir<0?1-p:p;
       const w=evidenceW(e,s.k);g=0.5+(g-0.5)*w;
       e._specPct[s.k]={g,w};
@@ -1773,7 +1794,8 @@ function renderSideKpis(ds){const a=ds.data,L=ds.L,sum=c=>a.reduce((s,r)=>s+(num
     const tNu=sum("신규+재활성 유저 수");
     if(tNu>0)rows.push({k:"신규+재활성 유저",v:fmtInt(tNu),s:`<span class="sgood">1명당 ${fmtWon(tC/tNu)} · 낮을수록 좋음</span>`});
   }else{/* 설치·활성 데이터가 없는 매체(예: Google 확장 소재 리포트) → 클릭·전환 지표로 대체 */
-    const cov=a.filter(r=>(num(r["노출 수"])||0)>0),ci=cov.reduce((s,r)=>s+(num(r["노출 수"])||0),0),cc=cov.reduce((s,r)=>s+(num(r["클릭 수"])||0),0);
+    const badNames=new Set((ds.agg||[]).filter(x=>x._impBad).map(x=>x.name)); /* 노출 과소집계 소재는 평균 CTR 분모 왜곡 → 제외 */
+    const cov=a.filter(r=>(num(r["노출 수"])||0)>0&&!badNames.has(r[L.nameCol])),ci=cov.reduce((s,r)=>s+(num(r["노출 수"])||0),0),cc=cov.reduce((s,r)=>s+(num(r["클릭 수"])||0),0);
     rows.push({k:"총 클릭",v:fmtInt(tClk),s:sdelta(d("클릭 수"))},
     {k:"평균 CTR",v:fmtPct(ci>0?cc/ci:null),s:`<span class="sgood">노출 대비 클릭률 · 높을수록 좋음</span>`},
     {k:"평균 CPC",v:fmtWon(tClk>0?tC/tClk:null),s:`<span class="sgood">클릭 1회당 비용 · 낮을수록 좋음</span>`});
@@ -1793,7 +1815,9 @@ function chipsHTML(t,e){
   /* 서비스 칩 — 관리자가 수동 지정했으면 그 값(주황 강조), 아니면 자동(ve) */
   const _svcOv=svcOverrideFor(e);
   const veChip=_svcOv?`<span class="chip svc-ovr" title="관리자가 지정한 서비스">${escHtml(_svcOv)}</span>`:(t.ve&&mk("ve",t.ve));
-  const arr=[veChip,foChip,t.nat==="네이티브"&&mk("nat","네이티브"),t.size&&mk("size",t.size)];
+  /* 리포트 이상 배지 — 노출 과소집계가 실측 확인된 소재(물리 불가 CTR). 무효화된 지표와 정상 지표를 명시 */
+  const anomChip=e&&e._impBad?`<span class="chip warn" title="리포트 이상 감지 — 이 소재는 구글 리포트의 노출수가 실제 대비 크게 과소집계되어(클릭·전환 추적은 정상) CTR·CPM·홈도달율·전환율이 물리적으로 불가능한 값이 됩니다. 해당 지표는 표시·채점에서 자동 제외했고, 단가·건수 지표(신규 단가·홈 단가 등)는 정상입니다">⚠ 노출 과소집계</span>`:"";
+  const arr=[veChip,foChip,anomChip,t.nat==="네이티브"&&mk("nat","네이티브"),t.size&&mk("size",t.size)];
   if(e&&e._isGroup){
     /* 그룹 행: 이름 분절 칩 — 접두(Google UA 등)·날짜·수식어. 서비스(ve)는 위 공통 경로로 이미 표시 */
     if(t.pre)arr.unshift(mk("gpre",t.pre));
@@ -2344,8 +2368,9 @@ function weeklyScoresOf(ds,e){
         let comp=0,wsum=0;
         for(const sp of C.specs){const v=x[sp.k];if(v==null)continue;
           if(sp.entFo&&((x.tags&&x.tags.fo)||"")!==sp.entFo)continue;
+          if(sp.entCt&&String(x._m_ctype||"")!==sp.entCt)continue;
           const d0=C.dists[sp.k];if(!d0||!d0.vals.length)continue;
-          let d=d0;const fm=C.foDists[sp.k];if(fm){const fo=(x.tags&&x.tags.fo)||"기타";if(fm.has(fo))d=fm.get(fo);}
+          let d=d0;const fm=C.foDists[sp.k];if(fm){const fo=specCohortOf(sp,x);if(fm.has(fo))d=fm.get(fo);}
           const p=wPctRank(d,v);let g=sp.dir<0?1-p:p;
           const ww=evidenceW(x,sp.k);g=0.5+(g-0.5)*ww;
           comp+=g*sp.w;wsum+=sp.w;}
@@ -2387,7 +2412,15 @@ function creativeTrendHTML(ds,e){
     "영상 완주율":{fmt:fmtPct,of:o=>o.vd>0?o.vn/o.vd:null},
     "_q_retD1":{fmt:fmtPct,of:o=>o.rB>0?o.rU/o.rB:null},
   };
-  const specs=(typeof specsFor==="function"?specsFor(ds):[])||[];
+  /* 이 소재에 실제 점수 반영되는 지표만 선·툴팁으로 — 포맷/지면 조건 불일치(예: 이미지 소재의 CTR 선)나
+     신뢰성 게이트로 무효화된 지표(노출 과소집계·클릭 재생 혼입)가 점수 변동의 원인처럼 읽히는 오독 방지 */
+  const _impRateSet=new Set(IMP_RATE_KEYS);
+  const specs=((typeof specsFor==="function"?specsFor(ds):[])||[]).filter(sp=>{
+    if(sp.entFo&&((e.tags&&e.tags.fo)||"")!==sp.entFo)return false;
+    if(sp.entCt&&String(e._m_ctype||"")!==sp.entCt)return false;
+    if(e._impBad&&_impRateSet.has(sp.k))return false;
+    if(e._clkMix&&(sp.k==="CTR"||sp.k==="CPC"))return false;
+    return true;});
   const wPct=w=>{const p=w*100;return p%1?p.toFixed(1):String(Math.round(p));};
   const LINE_COLS=["var(--c2)","var(--g2)","var(--w1)"];
   const lines=[];const tipSpecs=[];
@@ -2755,7 +2788,7 @@ function tableCols(L,ds){const meta=[{k:"name",t:L.name},{k:"score",t:"점수",h
     nums.push(
       {k:"_g_conversions",t:"전환",f:"int",help:"Google 전환 수(모든 인앱 액션)",sub:1,grp:"gcost"},
       /* 반응·전환력 */
-      {k:"CTR",t:"CTR",f:"pct",help:"클릭률 = 클릭÷노출 · 높을수록 좋음",lead:1,grp:"clk"},
+      {k:"CTR",t:"CTR",f:"pct",help:"클릭률 = 클릭÷노출 · 높을수록 좋음 · 물리 불가값(15% 초과)은 노출 과소집계 이상이라 자동 제외(–, ⚠ 배지 참고)",lead:1,grp:"clk"},
       {k:"클릭 수",t:"클릭",f:"int",help:"눌린 횟수",sub:1,grp:"clk"},
       {k:"CPC",t:"CPC",f:"won",help:"클릭당 비용 · 낮을수록 좋음",sub:1,grp:"clk"},
       {k:"_g_conversionRate",t:"전환율",f:"pct",help:"전환÷상호작용 (Google 관례) · 뷰스루 전환이 섞여 100%를 넘을 수 있음(ACE 소재 절반) — 참고만, 채점 제외",sub:1,grp:"clk"},
@@ -2787,8 +2820,8 @@ function tableCols(L,ds){const meta=[{k:"name",t:L.name},{k:"score",t:"점수",h
       {k:"_q_retD7",t:"D7 잔존",f:"pct",help:"설치 7일 뒤에도 남아 있는 비율 (AF 코호트) · 높을수록 좋음",sub:1,grp:"qual"},
       {k:"_q_roasD7",t:"ROAS D7",f:"num",help:"설치 후 7일 코호트 매출 ÷ 광고비 (AF 실측 매출) · 점수 미반영 참고",sub:1,grp:"qual"});
     nums.push(
-      {k:"CTR",t:"CTR",f:"pct",help:"클릭률 = 클릭÷노출 · 높을수록 좋음",lead:1,grp:"clk"},
-      {k:"클릭 수",t:"클릭",f:"int",help:"눌린 횟수",sub:1,grp:"clk"},
+      {k:"CTR",t:"CTR",f:"pct",help:"클릭률 = 클릭÷노출 · 높을수록 좋음"+(isM?" · 몰로코 영상 소재는 리포트 '클릭'에 재생이 혼입돼(중앙값 31%) 산출 제외(–) — 영상 반응은 완주율이 담당":""),lead:1,grp:"clk"},
+      {k:"클릭 수",t:"클릭",f:"int",help:"눌린 횟수"+(isM?" · 몰로코 영상 소재는 재생 혼입 주의":""),sub:1,grp:"clk"},
       {k:"CPC",t:"CPC",f:"won",help:"클릭당 비용 · 낮을수록 좋음",sub:1,grp:"clk"});
     if(isM)nums.push({k:"영상 완주율",t:"완주율",f:"pct",help:"영상을 끝까지 본 비율 (노출 가중 평균) · 높을수록 좋음 · 영상 소재만 채점 반영",lead:1,grp:"vid"});
   }else{
@@ -2875,6 +2908,10 @@ function buildAdGroupAgg(ds){
     g._g_cpHome=isGg&&(g._g_home||0)>0?cost/g._g_home:null;
     g._g_ROAS=isGg&&cost>0?(g._g_convValue||0)/cost:null;
     g._g_convValuePerConv=isGg&&(g._g_conversions||0)>0&&(g._g_convValue||0)>0?g._g_convValue/g._g_conversions:null;
+    g._g_hpm=isGg&&imp>0?(g._g_home||0)/imp*1000:null; /* 소재 레벨과 동일 — ACE 채점 지표(홈 도달율)의 그룹 값 누락 보수 */
+    /* 신뢰성 게이트 상속 — 오염 멤버(노출 과소집계·클릭 재생 혼입)가 섞인 합계 분모는 그룹 값도 신뢰 불가 */
+    if(g._members.some(m=>m._impBad)||(isGg&&g.CTR!=null&&g.CTR>CTR_PLAUSIBLE_MAX)){g._impBad=1;for(const k of IMP_RATE_KEYS)g[k]=null;}
+    if(g._members.some(m=>m._clkMix)){g.CTR=null;g.CPC=null;g._clkMix=1;}
     const fos=new Set(g._members.map(m=>m.tags&&m.tags.fo).filter(Boolean));
     if(fos.size===1)g.tags.fo=[...fos][0];
     else if(fos.size>1)g.tags.fo="혼합";});
@@ -3167,6 +3204,9 @@ function renderAB(ds){const el=$("#abBody"),meta=$("#abMeta"),cnt=$("#abCnt");
         eCPI:attr>0?cost/attr:null,"활성 유저 eCPA":act>0?cost/act:null,"신규+재활성 eCPA":nu>0?cost/nu:null,CTR:imp>0?clk/imp:null,CPM:imp>0?cost/imp*1000:null,CPC:clk>0?cost/clk:null,
         _g_ROAS:cost>0&&gv>0?gv/cost:null,_g_costPerConv:gc>0?cost/gc:null,_g_cpFirstOpen:gfo>0?cost/gfo:null,_g_cpHome:ghome>0?cost/ghome:null,_g_hpm:imp>0?ghome/imp*1000:null,vcr:vd>0?vn/vd:null,
         learning:mem.every(isLearning)};
+      /* 신뢰성 게이트 상속(소재 레벨과 동일 규칙) */
+      if(mem.some(e=>e._impBad)){r.CTR=null;r.CPM=null;r._g_hpm=null;}
+      if(mem.some(e=>e._clkMix)){r.CTR=null;r.CPC=null;}
       const sc=mem.filter(e=>e.score!=null);
       r.score=sc.length?Math.round(sc.reduce((s,e)=>s+e.score*(e.비용||1),0)/sc.reduce((s,e)=>s+(e.비용||1),0)*10)/10:null;
       r.pv=r[primary.k];
@@ -3668,15 +3708,15 @@ function scoreWeightsHTML(){
   const COLS=["var(--c2)","var(--g1)","var(--g2)","var(--karrot)","var(--w1)","var(--mid)","var(--faint)"];
   const RCOL="var(--ink)";
   const wPct=w=>{const p=w*100;return p%1?p.toFixed(1):String(Math.round(p));};
-  const condOf=s=>s.entFo?` · ${s.entFo} 소재만`:s.videoOnly?" · 영상 소재만":"";
+  const condOf=s=>s.entCt?" · 외부 지면 이미지(IMAGE)만 — 신호가 실측된 지면":s.entFo?` · ${s.entFo} 소재만`:s.videoOnly?" · 영상 소재만":"";
   return `<div class="ftw">`+MEDIA.map(m=>{
     /* 효율 지표 = 명목 가중 × 85%(효율 축) — 규모 15%와 합치면 정확히 총점 100% 분해 */
-    const parts=m.specs.map((s,i)=>({lab:s.lab+ (s.entFo?`(${s.entFo}만)`:s.videoOnly?"(영상만)":""),w:s.w*SCORING.EFF_W,dir:s.dir,col:COLS[i%COLS.length],tip:s.lab+" — 명목 "+wPct(s.w)+"% × 효율축 85% = 총점의 "+wPct(s.w*SCORING.EFF_W)+"% · "+(s.dir<0?"낮을수록 좋음":"높을수록 좋음")+condOf(s)}))
+    const parts=m.specs.map((s,i)=>({lab:s.lab+ (s.entCt?"(외부지면 이미지만)":s.entFo?`(${s.entFo}만)`:s.videoOnly?"(영상만)":""),w:s.w*SCORING.EFF_W,dir:s.dir,col:COLS[i%COLS.length],tip:s.lab+" — 명목 "+wPct(s.w)+"% × 효율축 85% = 총점의 "+wPct(s.w*SCORING.EFF_W)+"% · "+(s.dir<0?"낮을수록 좋음":"높을수록 좋음")+condOf(s)}))
       .concat([{lab:m.reach,w:SCORING.REACH_W,dir:1,col:RCOL,tip:m.reach+" — 총점의 "+wPct(SCORING.REACH_W)+"% · 광고비 가중 백분위(많이 데려올수록 좋음)"}]);
     const segs=parts.map(p=>`<i style="width:${(p.w*100).toFixed(1)}%;background:${p.col}" title="${escAttr(p.tip)}"></i>`).join("");
     const lgd=parts.map(p=>`<span><i class="lgd" style="background:${p.col}"></i>${escHtml(p.lab)} <b>${wPct(p.w)}%</b> ${p.dir<0?"↓":"↑"}</span>`).join("");
     return `<div class="ftw-row"><div class="ftw-lab">${escHtml(m.lab)}</div><div class="ftw-bar">${segs}</div><div class="ftw-lgd">${lgd}${m.note?`<span class="ftw-note"> · ${escHtml(m.note)}</span>`:""}</div></div>`;
-  }).join("")+`<div class="ftw-common">모든 지표 공통 — '계정 내 위치'는 <b>광고비 가중</b>(돈이 실제 흐르는 곳 대비) · 표본·지출 적으면 <b>50으로 축소</b> · CTR·CPM·완주율은 <b>같은 포맷(영상/이미지)끼리</b> 비교</div></div>`;}
+  }).join("")+`<div class="ftw-common">모든 지표 공통 — '계정 내 위치'는 <b>광고비 가중</b>(돈이 실제 흐르는 곳 대비) · 표본·지출 적으면 <b>50으로 축소</b> · CTR·CPM·완주율은 <b>같은 포맷(영상/이미지)·같은 지면끼리</b> 비교</div></div>`;}
 function renderFooter(){$("#ft").innerHTML=`
 <details open>
   <summary>점수 읽는 법 (한눈에)</summary>
@@ -3694,6 +3734,7 @@ function renderFooter(){$("#ft").innerHTML=`
     <li><b>"광고비를 늘리면 단가가 나빠져 불리한 것 아닌가요?"</b> — 비교 기준 자체가 광고비 가중이라 대형 소재는 사실상 대형끼리 비교되고, 실측으로도 이 계정은 지출 구간별 중앙 단가가 평평(AEO 3분위: 4,026→4,628→4,147원)해 증액 불이익이 없어요. 소액 쪽 운빨만 축소로 차단</li>
     <li><b>D1 잔존율 = 유저 질</b> — 싸게 데려와도 다음날 다 사라지는 소재는 감점 (메타 22% · 몰로코 6%)</li>
     <li><b>ACE '전환수'는 유저 수가 아님</b>(액션 구성이 소재마다 다른 이벤트 뭉치) — ACE는 홈 도달 실측 기준, 전환수·전환율은 참고</li>
+    <li><b>물리적으로 불가능한 CTR(15% 초과)은 리포트 이상</b> — 구글 일부 소재의 노출이 실제 대비 최대 40배 과소집계(클릭·전환은 정상)돼 CTR 30~60%처럼 보임. 해당 소재는 ⚠ 배지와 함께 노출 분모 지표(CTR·CPM·홈도달율·전환율)를 표시·채점에서 자동 제외 · 몰로코 영상은 '클릭'에 재생이 혼입(중앙값 31%)돼 CTR·CPC 자체를 제외</li>
     <li><b>CPM·활성 eCPA·메타 CTR은 검증 탈락으로 채점 제외</b>(역방향·중복 실측) — 표엔 참고로 남음</li>
     <li><b>표본·지출이 적으면 '학습중' 배지 + 점수 50 쪽 축소</b> — 볼륨 확대 판단 보류</li>
     <li><b>총점은 주차 점수의 평균이 아님</b> — 선택 기간 전체를 합산한 성과의 점수라, 광고비가 몰린 주의 성과가 지배(소액 집행 주가 30점대여도 합산 영향은 미미)</li>
@@ -3716,7 +3757,7 @@ function renderFooter(){$("#ft").innerHTML=`
   </div>
   <ul class="ft-key">
     <li><b>광고비 가중 백분위</b> — "돈이 실제로 흐르는 곳 대비 얼마나 효율적인가". 저광고비 실험 소재 수백 개가 분포를 왜곡하지 못하게 함</li>
-    <li><b>포맷 코호트</b> — CTR·CPM·CPC·완주율은 인벤토리 특성이 달라 같은 포맷(영상/이미지)끼리만 비교</li>
+    <li><b>포맷·지면 코호트</b> — CTR·CPM·CPC·완주율은 인벤토리 특성이 달라 같은 포맷(영상/이미지)끼리만 비교 · 몰로코 CTR은 지면(외부 IMAGE vs 네이티브)이 분포를 8배 지배해 지면(ctype)끼리 비교</li>
     <li><b>표본 축소(shrinkage)</b> — 전환 몇십 건짜리가 운으로 최상·최하위를 차지하는 것 방지 (경험적 베이지안, Efron &amp; Morris 1977). 상세의 '표본보정' 표기가 그 흔적</li>
     <li>구성 방식은 Google Quality Score·Meta Ad Relevance처럼 <b>다차원 지표 정규화 후 가중합</b>이 표준 (Farris et al., <i>Marketing Metrics</i>)</li>
   </ul>
@@ -3728,12 +3769,12 @@ function renderFooter(){$("#ft").innerHTML=`
     <li><b>검증 방법</b>: ① 소재 단위 집계(비용≥30만) 후 지표 간 스피어만 순위상관(ρ) + 반기 분할 재현성 ② 가중치 격자 민감도 분석(1차지표 가중 ×3 × 규모 가중 ×3, 매체별 split-half 재현성·홀드아웃 4주 예측력) ③ 플랫폼 공식 문서·학술 연구 대조(아래 참고 문헌) ④ 지출 구간별 단가 재현성 곡선(소액 소재의 '운빨 단가' 정량화 → 지출 기반 축소 눈금 100만원 도출). 채점에 남긴 지표 = 획득 성과와 방향·독립성·안정성이 확인된 것만</li>
     <li><b>'효율 1순위' 자체는 표준 관행</b>(Meta A/B 승자 판정 = 단일 cost-per-result) — 단, 반드시 통계 가드와 함께: 이 대시보드에선 표본 축소(shrinkage)·광고비 컷·학습중 게이트·±3점 동점 안내가 그 역할. 반대로 <b>규모 가중 확대는 기각</b> — 데려온 유저 백분위가 광고비와 ρ=0.81~0.94라 예산 배분 역류(민감도 분석: 규모 35% 시 eCPA 3,151원짜리 대형 지출 소재가 322계단 승격)</li>
     <li><b>eCPA 지배 완화는 매체별 차등</b>(일괄 아님): 몰로코·AEO는 eCPA 가중을 낮추면 홀드아웃 예측력이 하락(0.73→0.62 · 0.56→0.47)해 유지, ACE는 CPA 자체가 노이즈원이라 완화 시 재현성 개선(0.70→0.76)해 0.78→0.55, 메타는 중립이라 질 축(D1) 강화 목적으로 0.65→0.55</li>
-    <li><b>몰로코 = 리타겟 채널</b> (데려온 유저의 99.4%가 재참여): 신규+재활성 eCPA 70%(반기 재현성 0.90) · CTR 12% <b>이미지만</b>(교차검증: 풀링 ρ=-0.70은 포맷 혼합의 심슨 역설 — 포맷 내에선 이미지 -0.48 유효 · 영상 +0.01 무신호) · 완주율 12%(영상 크리에이티브 신호) · D1 잔존 6%(base 중앙값 13명 — 소액+강한 축소)</li>
+    <li><b>몰로코 = 리타겟 채널</b> (데려온 유저의 99.4%가 재참여): 신규+재활성 eCPA 70%(반기 재현성 0.90) · CTR 12% <b>외부 지면 이미지(IMAGE)만</b>(2단계 심슨 역설 보정 — 풀링 ρ=-0.70·이미지 풀링 -0.48은 포맷·지면 혼합의 산물, 지면 내 실측은 IMAGE -0.447(n=191)만 유효 · 네이티브 이미지 +0.08·영상 +0.02 무신호. 영상은 '클릭'에 재생 혼입(중앙값 31%)이라 CTR 성립 불가) · 완주율 12%(영상 크리에이티브 신호) · D1 잔존 6%(base 중앙값 13명 — 소액+강한 축소)</li>
     <li><b>메타 = 신규/재참여 혼합 채널</b>(실측 유입 재참여 88.5% · 소재 단위 우세 49:51): 신규+재활성 eCPA 60% · D1 잔존 22%(base 중앙값 1,212명 — 효율과 직교하는 질 축. '싸게 데려와 다음날 이탈'하는 소재를 단가+리텐션 블렌드로 차단하는 업계 권고 반영) · 신규 설치 단가 18%(계측 보완 · ρ=0.85 중복이라 소폭) · <b>CTR 제거</b>(실측 방향이 역 +0.18 — 클릭베이트 보상 방지)</li>
     <li><b>구글 AEO</b>: 신규 단가 64% · <b>홈 단가 12%</b>(신규 캠페인이어도 기존 유저의 재활성 방문은 실질 기여 — 신규 단가와 ρ=0.36 독립 신호 · "신규 집중이어도 재활성 무시 금지") · 신규 전환율 12%(기존 전환율 ρ=+0.09 무상관 대체 — 분자 공유 준중복이라 소액) · CTR 12% <b>동영상만</b>(포맷 내 ρ: 동영상 -0.36 · 이미지 -0.01)</li>
     <li><b>구글 ACE</b>: <b>홈 단가 55%(기본)</b> · 홈 도달율 20%(노출 1,000회당 홈 도달 — IPM식 소재력) · CPM 25%(ACE에서만 성과와 정합 ρ=+0.52) · CTR 제외(ρ=-0.09 무상관). 전환수 기반 CPA는 토글로 강등 — ACE '전환'은 소재·그룹마다 액션 구성이 다른 이벤트 뭉치(홈 대비 0.84~1.06배)라 개별 소재 순위가 뒤집히고(실사례 45.2 vs 85.4점 역전), '전환율'은 뷰스루 혼입으로 430개 중 219개가 100% 초과(802~1,515%)라 지표 성립 불가 → 제거. 리드 열·규모축도 홈 도달로 일원화</li>
     <li><b>제외한 것</b>: CPM(몰로코·AEO — 포맷별 방향이 상충하거나 역방향; ACE만 정합해 유지) · 활성 eCPA(신규+재활성과 ρ=0.95~0.98 중복 + 메타 리테인드 부풀림 소재 부양 — 시뮬레이션 확인) · eCPI(어트리뷰션의 94~99.7%가 재참여 이벤트라 '설치 단가' 아님 — 신규 설치 단가로 대체) · ACE CTR(무상관) · ROAS(모델링 값)</li>
-    <li><b>CTR은 실측 상관이 확인된 곳에만</b>: 외부 연구는 CTR이 전환·매출과 무상관 내지 역상관(dunnhumby 2회 재현 r=-0.28 · Flashtalking)이라 독립 가중치를 0 근처로 권고. 우리 실측도 매체별 상이 — 포맷 내 상관이 확인된 <b>몰로코 이미지(-0.48)·AEO 영상(-0.36)만 12%</b>, 메타는 역방향(+0.18)이라 제거, ACE는 무상관(-0.09)이라 제거</li>
+    <li><b>CTR은 실측 상관이 확인된 곳에만</b>: 외부 연구는 CTR이 전환·매출과 무상관 내지 역상관(dunnhumby 2회 재현 r=-0.28 · Flashtalking)이라 독립 가중치를 0 근처로 권고. 우리 실측도 매체별 상이 — 지면·포맷 내 상관이 확인된 <b>몰로코 외부 지면 이미지(-0.447)·AEO 영상(-0.36)만 12%</b>, 메타는 역방향(+0.18)이라 제거, ACE는 무상관(-0.09)이라 제거. 물리 불가 CTR(>15%)은 신뢰성 게이트가 자동 무효화(노출 과소집계 실측 — 위 '함정' 참고)</li>
     <li><b>지표가 없으면</b> 자동 제외되고 남은 가중치가 재정규화됩니다</li>
   </ul>
   <h4>Adset(광고세트) 레벨</h4>
