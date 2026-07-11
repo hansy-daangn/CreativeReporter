@@ -256,6 +256,11 @@
   th.csub,td.csub{background:#F7F6F1}
   .colx{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 2px;margin-left:5px;border-radius:5px;background:var(--surface-3);color:var(--muted);font-weight:800;font-size:12px;cursor:pointer;vertical-align:-3px}
   .thident{display:none;font-size:12px;color:var(--faint);margin:0 2px 6px}
+  .scb{white-space:nowrap}
+  .scb>*{vertical-align:middle}
+  .scb svg{width:16px;height:16px;vertical-align:middle}
+  .scb .thumbs{display:inline-flex;gap:1px;align-items:center;vertical-align:middle}
+  .scb .dom-tag{font-size:9px;font-weight:800;color:var(--gold);background:var(--gold-f);padding:2px 6px;border-radius:5px;letter-spacing:.02em}
   .thident.on{display:block}
   .colx:hover{background:var(--karrot-f);color:var(--karrot)}
   /* 갤러리 보기 — 미디어 중심 카드 그리드 (점수·지표 없음, 이름·태그만) */
@@ -2714,7 +2719,8 @@ function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-r
 /* 표 컬럼 — 매체별로 '점수에 중요한 순서'의 MECE 상위 카테고리(대표 컬럼)로 구성.
    대표(lead)만 기본 표시, +를 누르면 그 카테고리의 하위(sub)가 펼쳐진다.
    매체와 연관 없는 지표(예: 구글의 eCPI/활성유저, 몰로코의 구글 전환류)는 아예 만들지 않는다. */
-function tableCols(L,ds){const meta=[{k:"_b",t:""},{k:"name",t:L.name},{k:"score",t:"점수",help:"복합 지표 가중 종합 — 같은 매체·기간 비교군 내 상대평가"}];
+/* 뱃지 전용 열 폐지 — 등급 뱃지(왕관·엄지·독보적)는 점수 칸에 흡수(같은 정보의 중복 열 제거) */
+function tableCols(L,ds){const meta=[{k:"name",t:L.name},{k:"score",t:"점수",help:"복합 지표 가중 종합 — 같은 매체·기간 비교군 내 상대평가 · 옆 뱃지 = 등급(왕관 TOP·엄지·독보적)"}];
   const isM=ds&&ds.agg&&ds.agg.some(e=>e._m_ctype),isG=ds&&ds.agg&&ds.agg.some(e=>e._g_assetType);
   const isQ=ds&&ds.agg&&ds.agg.some(e=>e._q_retD1!=null||e._q_afInstalls!=null||e._q_reEng!=null);
   const nums=[
@@ -2814,7 +2820,7 @@ function fitTableCols(){
   let note=$("#tHiddenNote");
   if(!note){note=document.createElement("div");note.id="tHiddenNote";note.className="thident";wrap.parentElement.insertBefore(note,wrap);}
   if(hidden.length){note.classList.add("on");
-    note.textContent="화면이 좁아 중요도 낮은 열을 잠시 숨겼어요: "+hidden.map(g=>T_GRP_LAB[g]||g).join(" · ")+" — 창을 넓히면 자동으로 다시 보여요";}
+    note.textContent="좁은 화면이라 잠시 숨김: "+hidden.map(g=>T_GRP_LAB[g]||g).join(" · ")+" · 창을 넓히면 복귀";}
   else{note.classList.remove("on");note.textContent="";}}
 let _ftcT=null;window.addEventListener("resize",()=>{clearTimeout(_ftcT);_ftcT=setTimeout(()=>{try{fitTableCols()}catch(_){}},150);});
 function tierBadge(e){if(e.dom==="good")return `<span class="dom-tag" title="독보적으로 잘 나옴">독보적</span>`;
@@ -2937,7 +2943,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
   const _isleName=ISLE.name,_keepIsle=_isleName?tbody.querySelector(".isle-row"):null;
   const cols=allCols.filter(c=>!c.sub||tExp.has(c.grp));
   thead.innerHTML="<tr>"+cols.map(c=>{const sorted=tState.sort===c.k,arr=sorted?(tState.dir<0?"▼":"▲"):"";
-    const cl=(c.k==="name"?"name ":c.k==="_b"?"bdg ":"")+(c.help?"help ":"")+(c.sub?"csub ":"")+(sorted?"sorted":"");
+    const cl=(c.k==="name"?"name ":"")+(c.help?"help ":"")+(c.sub?"csub ":"")+(sorted?"sorted":"");
     const hasSubs=c.lead&&allCols.some(x=>x.sub&&x.grp===c.grp);
     const xp=hasSubs?`<span class="colx" data-g="${c.grp}" title="${tExp.has(c.grp)?"세부 지표 접기":"세부 지표 펼치기"}">${tExp.has(c.grp)?"−":"+"}</span>`:"";
     return `<th class="${cl.trim()}${c.grp?" cg-"+c.grp:""}" data-k="${c.k}" ${c.help?`title="${c.help}"`:""}>${c.t} <span class="arr">${arr}</span>${xp}</th>`;}).join("")+"</tr>";
@@ -2945,7 +2951,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
   const rows=orderedRowsForTable(ds);
   renderTFilter(ds);
   const colSorted={};
-  for(const c of cols){if(c.k==="_b"||c.k==="name"||c.k==="score")continue;
+  for(const c of cols){if(c.k==="name"||c.k==="score")continue;
     colSorted[c.k]=rows.map(r=>r[c.k]).filter(v=>v!=null&&isFinite(v)).sort((a,b)=>a-b);}
   const totalRows=rows.length;
   const totalPages=Math.max(1,Math.ceil(totalRows/PAGE_SIZE));
@@ -2956,7 +2962,8 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
   const liveOn=tLiveOnly&&!standaloneMode&&ds.liveWeek;
   const html=visible.map(r=>{
     const score=r.score!=null?`<span class="sp sd${Math.min(9,Math.max(0,Math.floor(r.score/10)))}">${fmtScore(r.score)}</span>`:`<span class="sp sp-na">–</span>`;
-    return `<tr class="row" data-name="${escAttr(r.name)}">`+cols.map(c=>{if(c.k==="_b")return `<td class="bdg">${tierBadge(r)}</td>`;
+    const bdg=tierBadge(r);
+    return `<tr class="row" data-name="${escAttr(r.name)}">`+cols.map(c=>{
       if(c.k==="name"){const th=thumbHTML(r);const dn=displayNameOf(r);
         const gst=r._isGroup?giStatusChip(groupInfoOf(r._g_adGroupId||r._m_group)):"";
         const mb=markBtnsHTML(ds.media,r);
@@ -2964,7 +2971,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
           ? `<span class="nm-text editing" contenteditable="true" spellcheck="false" data-nm="${escAttr(r.name)}">${escHtml(dn)}</span>`
           : `<span class="nm-text">${escHtml(trunc(dn,60))}</span>`;
         return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}>${liveBadge(ds,r)}${lrnBadge(r)}${nmHtml}${mb}${gst}<div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
-      if(c.k==="score")return `<td>${score}</td>`;
+      if(c.k==="score")return `<td class="scb">${score}${bdg?" "+bdg:""}</td>`;
       const dir=COL_DIR[c.k]||0;
       const t=dir?cellTier(r[c.k],colSorted[c.k],dir):"m";
       return `<td class="num c-${t}${c.sub?" csub":""}${c.grp?" cg-"+c.grp:""}">${fcell(r[c.k],c.f)}</td>`;}).join("")+"</tr>";}).join("");
@@ -3018,10 +3025,10 @@ function orderedRowsForTable(ds){
   rows=applyTFilter(rows,ds);
   if(tState.q){const q=tState.q.toLowerCase();rows=rows.filter(r=>r.name.toLowerCase().includes(q)||displayNameOf(r).toLowerCase().includes(q));}
   /* 매체 전환 후 현재 매체에 없는 컬럼(예: ACE 홈 단가)으로 정렬 상태가 남으면 조용히 무정렬되므로 점수순 폴백 */
-  if(tState.sort!=="name"&&tState.sort!=="_b"&&tState.sort!=="score"&&!tableCols(ds.L,ds).some(c=>c.k===tState.sort))tState.sort="score";
+  if(tState.sort!=="name"&&tState.sort!=="score"&&!tableCols(ds.L,ds).some(c=>c.k===tState.sort))tState.sort="score";
   rows.sort((a,b)=>{
     if(tState.sort==="name")return tState.dir*a.name.localeCompare(b.name);
-    const k=(tState.sort==="_b")?"score":tState.sort;
+    const k=tState.sort;
     let x=a[k],y=b[k];
     if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1;
     return tState.dir*((x>y?1:x<y?-1:0));});
@@ -3163,7 +3170,8 @@ function renderAB(ds){const el=$("#abBody"),meta=$("#abMeta"),cnt=$("#abCnt");
       return primary.dir<0?a.pv-b.pv:b.pv-a.pv;});});
   fams.sort((a,b)=>b.cost-a.cost);
   if(cnt)cnt.textContent=fams.length?String(fams.length):"";
-  if(meta)meta.innerHTML=fams.length?`<b>${fams.length}</b>개 테스트 그룹 · 판정 기준 <b>${escHtml(primary.lab)}</b> · 변형 접미(_A·_B, 끝 숫자 1~5, v1·v2 등) 자동 인식`:"";
+  if(meta){meta.innerHTML=fams.length?`<b>${fams.length}</b>개 그룹 · 판정 기준 <b>${escHtml(primary.lab)}</b>`:"";
+    meta.title="소재명의 변형 접미(_A·_B, 끝 숫자 1~5, v1·v2 등)를 자동 인식해 묶어요";} /* 인식 규칙 설명은 툴팁으로 — 상시 노출 문구 최소화 */
   if(!fams.length){el.innerHTML=`<div class="bd-empty">변형 네이밍(_A·_B·_C, 이름 끝 숫자 1~5, v1·v2 등)으로 묶이는 소재가 없습니다. 소재명 끝에 "_A", "_B"처럼 변형 표기를 붙이면 자동으로 여기에 모입니다.</div>`;return;}
   _abFams=fams;_abPrimary=primary;_abFmt=pFmt;
   el.innerHTML=fams.map((f,fi)=>{
