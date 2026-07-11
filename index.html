@@ -410,7 +410,9 @@
   .ispark-h span{font-weight:500;color:var(--faint)}
   .ispark-h span b{font-weight:700;color:var(--muted)}
   .ispark-h .lgd{display:inline-block;width:7px;height:7px;border-radius:2px;margin:0 3px 0 7px;vertical-align:-0.5px}
-  .ispark-svg{width:100%;height:auto;display:block}
+  .ispark-svg{width:100%;height:auto;display:block;direction:ltr}
+  /* 전 기간 추이 — 주가 많으면 가로 스크롤. direction:rtl 트릭으로 처음부터 오른쪽(최신 주)이 보인다 */
+  .ispark-scroll{overflow-x:auto;direction:rtl}
   .ispk-b{cursor:pointer}.ispk-b:hover{fill-opacity:.85}
   /* 상세 가운데(그래프) 열 탭 — [주차별 추이|영상 시청|포지셔닝]. 선택은 소재를 옮겨 다녀도 유지 */
   .gtabs{margin:0 0 12px}
@@ -1789,12 +1791,11 @@ function chipsHTML(t,e){
     if(gid){const raw=e._m_group?gid:adGroupLabel(gid);
       const glab=raw?groupPrettyName(raw):"그룹 …"+String(gid).slice(-4);
       arr.push(mk("grp",gid,"grp",trunc(glab,24)));}}
-  /* 내 소재 칩(등록자 이름) — 남이 등록한 것만 칩으로. 본인 것은 켜진 하늘색 별로 충분하므로 칩 생략.
+  /* 내 소재 칩(등록자 이름) — 본인 포함 전 제작자 표시(누가 만든 소재인지 항상 보이게).
      즐겨찾기는 칩 없이 소재명 우측 노란 별로만 표시 */
   if(e&&!e._isGroup){const ch=(t&&t.ch)||(curDS&&curDS.media)||"";const k=markKey(ch,e.name);
     const mineNames=MARKS.mineByKey.get(k);
     if(mineNames&&mineNames.length)for(const nm of mineNames){
-      if(nm===MARKS.me)continue;
       const sel=tCreators.has(nm)?" crsel":"";
       arr.push(`<span class="chip mine-chip${sel}" data-cr="${escAttr(nm)}" title="${escAttr(nm)} 제작 소재만 보기 (제작자 필터)">${SEAL_SVG} ${escHtml(nm)}</span>`);}}
   return arr.filter(Boolean).join("");}
@@ -2349,9 +2350,10 @@ function weeklyScoresOf(ds,e){
   return w=>{const wm=ds[key].get(w);return (wm&&wm.get(id))||null;};}
 function creativeTrendHTML(ds,e){
   const all=weeklyAggOf(ds,e);
-  const ws=all.ws.slice(-13);
+  /* 선택 기간 안의 모든 주를 표시(13주 자름 폐지) — 주가 많으면 가로 스크롤(최신이 먼저 보이게 오른쪽 정렬) */
+  const ws=all.ws;
   if(ws.length<2)return "";
-  const os=all.os.slice(-13);
+  const os=all.os;
   /* 선(라인) = 이 매체의 '점수 반영 지표'만, 가중치 큰 순으로 최대 3개.
      점수에 안 들어가는 지표(예: 구글 ROAS — 전환가치가 모델링 값)는 그리지 않는다:
      점수와 무관한 선이 점수 변동의 원인처럼 읽히는 오독 방지 */
@@ -2385,7 +2387,8 @@ function creativeTrendHTML(ds,e){
     const mx=Math.max(...vals.filter(v=>v!=null))*1.12||1;
     let last=null;for(let i=vals.length-1;i>=0;i--)if(vals[i]!=null){last=vals[i];break;}
     lines.push({lab:sp.lab,w:sp.w,col:LINE_COLS[lines.length],fmt:wm.fmt,vals,mx,last});}
-  const W=300,H=lines.length>=3?104:92,pl=4,pr=4,pt=8,pb=24,iw=W-pl-pr,ih=H-pt-pb;
+  const H=lines.length>=3?104:92,pl=4,pr=4,pt=8,pb=24;
+  const W=Math.max(300,pl+pr+ws.length*23),iw=W-pl-pr,ih=H-pt-pb; /* 주당 폭 고정(≈23) — 주가 많으면 차트가 길어지고 스크롤 */
   const cmax=Math.max(...os.map(o=>o.c))||1;
   const bw=5; /* 고정 얇은 막대 */
   const slot=iw/ws.length,xat=i=>pl+(i+0.5)*slot;
@@ -2408,8 +2411,9 @@ function creativeTrendHTML(ds,e){
       p+=st?` L ${x.toFixed(1)} ${y.toFixed(1)}`:`M ${x.toFixed(1)} ${y.toFixed(1)}`;st=true;
       dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.4" fill="${ln.col}"/>`;});
     s+=`<path d="${p}" fill="none" stroke="${ln.col}" stroke-width="1.5" stroke-opacity="0.95"/>${dots}`;}
-  const leg=lines.map(ln=>`<i class="lgd" style="background:${ln.col}"></i>${ln.lab}(${wPct(ln.w)}%) <b>${ln.last!=null?ln.fmt(ln.last):"–"}</b>`).join(" ");
-  return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · 막대 광고비 · 선 = 점수 반영 지표(가중치) ${leg} · 막대 아래 그 주 점수 = 그 주 상대평가</span></div><svg class="ispark-svg" viewBox="0 0 ${W} ${H}">${s}</svg></div>`;}
+  /* 범례는 최소한으로: 주 수 · 색=지표 매핑 · 최신값. 비율·설명은 푸터/툴팁이 담당(중복 금지) */
+  const leg=lines.map(ln=>`<span><i class="lgd" style="background:${ln.col}"></i>${ln.lab} <b>${ln.last!=null?ln.fmt(ln.last):"–"}</b></span>`).join(" ");
+  return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · <i class="lgd" style="background:var(--karrot);opacity:.55"></i>광고비 ${leg}</span></div><div class="ispark-scroll"><svg class="ispark-svg" viewBox="0 0 ${W} ${H}" style="width:${Math.round(W*1.6)}px;min-width:100%;height:auto">${s}</svg></div></div>`;}
 /* 상세 '영상 시청' — 어디까지 많이 보고 어디서 이탈했는지 (영상 소재만).
    구간 도달 곡선 데이터 우선순위: ① 소재 자체 구간별 재생수(_v25~_v100 ÷ 노출, 선택 기간)
    ② 구글 광고그룹 보고서 누적 퍼널 v25~v100(소재별 데이터가 없어 그룹 단위임을 캡션에 명시).
@@ -3676,6 +3680,7 @@ function renderFooter(){$("#ft").innerHTML=`
     <li><b>ACE '전환수'는 유저 수가 아님</b>(액션 구성이 소재마다 다른 이벤트 뭉치) — ACE는 홈 도달 실측 기준, 전환수·전환율은 참고</li>
     <li><b>CPM·활성 eCPA·메타 CTR은 검증 탈락으로 채점 제외</b>(역방향·중복 실측) — 표엔 참고로 남음</li>
     <li><b>표본·지출이 적으면 '학습중' 배지 + 점수 50 쪽 축소</b> — 볼륨 확대 판단 보류</li>
+    <li><b>총점은 주차 점수의 평균이 아님</b> — 선택 기간 전체를 합산한 성과의 점수라, 광고비가 몰린 주의 성과가 지배(소액 집행 주가 30점대여도 합산 영향은 미미)</li>
     <li><b>±3점 이내는 사실상 동점</b> — AB 테스트의 ≈ 표시가 같은 뜻</li>
     <li><b>최신 주 단가는 부풀어 보임</b>(전환 집계 지연) — 그 주 판단은 보류</li>
     <li><b>등급 = 계정 내 5분위</b> · 규모는 15% 고정(더 키우면 예산 배분을 보상 — 근거는 아래 상세) · 창이 좁으면 중요도 낮은 열부터 자동 숨김</li>
