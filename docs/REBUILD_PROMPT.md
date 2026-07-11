@@ -72,15 +72,25 @@ begin
              and pw_hash = encode(extensions.digest(pw,'sha256'),'hex')) then return; end if;
   raise exception 'invalid password' using errcode = '28000';
 end $$;
--- 쓰기 게이트: 승인됨 + role=editor 만 통과 ('<PASSWORD>'·뷰어 거부). cr_save/cr_kv_merge가 perform _cr_check_editor(pw).
+-- 데이터 저장 게이트: 승인됨 + role='admin' 만 통과 — cr_save(주간 성과)와 cr_kv_merge의 드롭 유래 키(gmap·ginfo·ocr 등)가 사용.
+create or replace function _cr_check_admin_role(pw text) returns void
+language plpgsql security definer set search_path to 'public' as $$
+begin
+  if pw = '<PASSWORD>' then raise exception 'viewer cannot edit' using errcode='28000'; end if;
+  if exists (select 1 from cr_users where status='승인됨' and role='admin'
+             and pw_hash = encode(extensions.digest(pw,'sha256'),'hex')) then return; end if;
+  raise exception 'admin only' using errcode='28000';
+end $$;
+-- 에디터 게이트(admin 포함 — 에디터 상위): cr_kv_merge의 'ytt'(유튜브 제목 캐시)만 사용.
 create or replace function _cr_check_editor(pw text) returns void
 language plpgsql security definer set search_path to 'public' as $$
 begin
   if pw = '<PASSWORD>' then raise exception 'viewer cannot edit' using errcode='28000'; end if;
-  if exists (select 1 from cr_users where status='승인됨' and role='editor'
+  if exists (select 1 from cr_users where status='승인됨' and role in ('editor','admin')
              and pw_hash = encode(extensions.digest(pw,'sha256'),'hex')) then return; end if;
   raise exception 'not editor' using errcode='28000';
 end $$;
+-- cr_save는 perform _cr_check_admin_role(pw) · cr_kv_merge는 key='ytt'면 editor, 그 외 admin 게이트.
 
 -- 비밀번호 열람/관리: cr_users.pw_enc bytea(pgcrypto pgp_sym로 암호화, 키는 함수 본문). 가입·생성·변경 시 hash와 함께 저장.
 --   cr_admin_list가 pgp_sym_decrypt로 복호화해 pw 반환(관리자만). cr_admin_create(이름·비번·권한→승인됨 생성)·cr_admin_setpw(hash·enc 동시 갱신).
@@ -122,7 +132,7 @@ create or replace function cr_save(pw text, rows jsonb, uploader text default 'u
 language plpgsql security definer set search_path to 'public' as $$
 declare n_inserted int; up text;
 begin
-  perform _cr_check_pw(pw);
+  perform _cr_check_admin_role(pw);  -- 주간 성과 저장은 관리자(role=admin) 전용
   up := coalesce(nullif(trim(uploader),''),'unknown');
   if length(up) > 40 then up := left(up,40); end if;
   with ins as (
