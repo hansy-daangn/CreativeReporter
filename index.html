@@ -471,9 +471,12 @@
   .isle-frame{width:100%;height:280px;background:var(--surface-3);border-radius:12px;display:grid;place-items:center;overflow:hidden;position:relative}
   .isle.ar-v .isle-frame{height:396px}
   .isle.ar-h .isle-frame{height:250px}
-  .isle-frame img{max-width:100%;max-height:100%;width:auto;height:auto;display:block}
-  .isle-frame video{width:100%;height:100%;object-fit:contain;display:block;background:#141410;border-radius:12px}
-  .isle-frame .asset-yt{width:100%;height:100%;border:0}
+  /* 미디어는 프레임 안에서 전체가 보이게 수납(세로형 위·아래 잘림 방지).
+     프레임(position:relative·height 확정) 기준 절대배치 + margin:auto로 중앙 정렬 →
+     max-width/height:100%가 확정 높이에 제대로 걸려 비율 유지로 항상 contain. (grid % max-height 미적용 버그 우회) */
+  .isle-frame img,.isle-frame video{position:absolute;inset:0;margin:auto;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block}
+  .isle-frame video{background:#141410;border-radius:12px}
+  .isle-frame .asset-yt{position:absolute;inset:0;width:100%;height:100%;border:0}
   .isle-frame .asset-err{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:11px;color:var(--muted)}
   .meta-pv-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;width:100%;height:100%;padding:20px;box-sizing:border-box;text-decoration:none;text-align:center;background:linear-gradient(160deg,#EEF3FF,#E4ECFA);color:var(--ink);transition:background .12s}
   .meta-pv-card:hover{background:linear-gradient(160deg,#E4ECFF,#D8E4F8)}
@@ -3213,7 +3216,7 @@ let _abFams=[],_abPrimary=null,_abFmt="won";
 function abRepOf(r){return r.mem.slice().sort((x,y)=>((y.score??-1)-(x.score??-1))||((y.비용||0)-(x.비용||0)))[0];}
 function buildABSplit(f){
   const rankOf=new Map();f.rows.forEach((r,i)=>rankOf.set(r.variant,i));
-  const cols=f.rows.slice().sort((a,b)=>String(a.variant).localeCompare(String(b.variant),undefined,{numeric:true}));
+  const cols=f.rows.slice(); /* 잘된 순(성과 1위 → 꼴찌)으로 왼쪽부터 — 접힌 메달 순서와 동일 */
   const primary=_abPrimary||{k:"eCPI",lab:"eCPI",dir:-1};
   const METS=[
     {lab:primary.lab,get:r=>r.pv,fmt:v=>sFmt(v,_abFmt),dir:primary.dir,pri:true},
