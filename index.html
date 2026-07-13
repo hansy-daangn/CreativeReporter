@@ -64,6 +64,29 @@
   .pcustom select option{color:#1B1A16;background:#fff}
   .pcustom button{height:29px;padding:0 12px;border-radius:7px;background:var(--karrot);color:#fff;border:0;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
   .pcustom button:hover{background:#ff7d24}
+  /* 좌측 상단 화면 전환 탭(다크) */
+  .side-nav{margin-bottom:22px}
+  .side-nav .mtabs{position:static;padding:0;margin:0;background:transparent;display:block}
+  .side-nav .mtabs-in{display:flex;gap:3px;width:100%;background:var(--side-2);border-radius:11px;padding:3px}
+  .side-nav .mtabs button{flex:1;padding:9px 4px;border-radius:8px;font-size:12.5px;font-weight:700;color:var(--side-muted);white-space:nowrap;background:transparent;box-shadow:none;transition:.12s}
+  .side-nav .mtabs button:hover{color:var(--side-ink);background:rgba(255,255,255,.05)}
+  .side-nav .mtabs button.on{background:var(--karrot);color:#fff;box-shadow:none}
+  .side-nav .mtabs button .tc{color:#fff;margin-left:3px}
+  /* 커스텀 드롭다운(매체) — 네이티브 select 대체 */
+  .sf-dd{position:relative}
+  .sf-dd-btn{width:100%;height:36px;display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.15);border-radius:9px;background:var(--side-2);color:var(--side-ink);font:inherit;font-size:12.5px;font-weight:650;padding:0 11px;cursor:pointer}
+  .sf-dd-btn:hover{border-color:rgba(255,255,255,.28)}
+  .sf-dd.open .sf-dd-btn{border-color:var(--karrot)}
+  .sf-dd-cur{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sf-dd-btn em,.sf-dd-menu em{font-style:normal;font-size:10.5px;color:var(--side-faint);margin-left:5px}
+  .sf-dd-btn svg{width:12px;height:12px;flex:0 0 auto;color:var(--side-muted);transition:transform .15s}
+  .sf-dd.open .sf-dd-btn svg{transform:rotate(180deg)}
+  .sf-dd-menu{position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:60;background:#2E2D25;border:1px solid rgba(255,255,255,.14);border-radius:11px;box-shadow:0 14px 34px rgba(0,0,0,.45);padding:5px;max-height:288px;overflow:auto}
+  .sf-dd-menu[hidden]{display:none}
+  .sf-dd-menu button{width:100%;display:flex;align-items:center;text-align:left;padding:9px 10px;border-radius:8px;background:transparent;color:var(--side-muted);font:inherit;font-size:12.5px;font-weight:650;border:0;cursor:pointer}
+  .sf-dd-menu button:hover{background:rgba(255,255,255,.08);color:var(--side-ink)}
+  .sf-dd-menu button.on{color:#fff}
+  .sf-dd-menu button.on::after{content:"✓";margin-left:auto;color:var(--karrot-2);font-weight:800}
 
   .side-foot{margin-top:auto; padding-top:20px; display:flex; flex-direction:column; gap:11px}
   .src{font-size:10.5px; color:var(--side-faint); padding:0 2px}
@@ -830,6 +853,10 @@
   .sc-dir.up{color:var(--g1);background:var(--g1-f)} .sc-dir.dn{color:var(--w2);background:var(--w2-f)}
   .sc-cond{font-size:10px;font-weight:700;color:var(--w1);background:var(--w1-f);padding:1px 6px;border-radius:5px;white-space:nowrap}
   .sc-cond.scl{color:var(--c2);background:rgba(61,90,128,.12)}
+  .sc-desc{font-size:10.5px;color:var(--faint);margin-top:3px;line-height:1.4}
+  .sc-condtag{font-size:9px;font-weight:700;color:var(--w1);background:var(--w1-f);padding:1px 5px;border-radius:5px;white-space:nowrap;vertical-align:1px;margin-left:3px}
+  .sc-chk-nm{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .sc-chk-desc{font-style:normal;font-size:10.5px;color:var(--faint);font-weight:500}
   .sc-slider{flex:1;height:26px;position:relative;display:flex;align-items:center;cursor:pointer;touch-action:none;min-width:60px}
   .sc-slider:focus{outline:none} .sc-slider:focus-visible .sc-knob{box-shadow:0 0 0 3px var(--karrot-f),0 1px 4px rgba(0,0,0,.26)}
   .sc-track{width:100%;height:8px;border-radius:5px;background:var(--surface-3);overflow:hidden}
@@ -906,6 +933,14 @@
 <div class="app">
   <!-- SIDEBAR: identity + media + summary + actions -->
   <aside class="side">
+    <!-- 화면 전환(분석/목록/AB) — 본문 헤더에서 좌측 nav 최상단으로 이동 -->
+    <div class="side-nav">
+      <div class="mtabs" id="mtabs"><div class="mtabs-in">
+        <button data-t="analysis" class="on" type="button">분석</button>
+        <button data-t="table" type="button">전체 목록</button>
+        <button data-t="ab" type="button">AB<span class="tc" id="abCnt"></span></button>
+      </div></div>
+    </div>
     <!-- 필터: 매체(드롭다운) · 기간 · 보기. 모바일은 3개를 가로 드롭다운으로 압축 -->
     <div class="side-filters">
       <div class="sf-item" id="msegSec" hidden>
@@ -923,7 +958,6 @@
     </div>
     <div class="pcustom-wrap" id="pcustomWrap"></div>
     <div class="side-foot">
-      <div class="src" id="cloudLine" style="cursor:pointer" title="클릭 — 비밀번호 입력 또는 저장소 새로고침">☁️ 저장소 미연결</div>
       <div class="side-actions">
         <button class="sbtn act-cfg" id="scoreCfgBtn" title="매체별 채점 지표와 비중을 직접 골라 조절해요 — 저장하면 점수에 바로 반영">
           <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 13a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.36.53.75 1.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>채점 설정</button>
@@ -937,14 +971,6 @@
   <div class="main">
     <div id="fmtBar" hidden><span id="fmtBarMsg"></span><button id="fmtBarBack" type="button">☁️ 저장소로 돌아가기</button></div>
     <div class="content">
-
-      <div class="mtabs" id="mtabs">
-        <div class="mtabs-in">
-          <button data-t="analysis" class="on" type="button">분석</button>
-          <button data-t="table" type="button">전체 목록</button>
-          <button data-t="ab" type="button">AB테스트<span class="tc" id="abCnt"></span></button>
-        </div>
-      </div>
 
       <section class="card" id="tabAnalysis">
         <div class="keyrow" id="keyrow"></div>
@@ -1726,31 +1752,39 @@ const REACH_LAB={moloco:"규모 · 데려온 유저",meta:"규모 · 데려온 �
 const SCORE_NOTE={moloco:"리타겟(재참여) 채널 — 규모는 데려온 유저(신규+재활성) 수예요.",meta:"신규/재참여 혼합 채널 — CTR은 기본 제외예요(역방향 실측).",google_aeo:"신규 유저 획득 — 규모는 신규 실행(first_open)이에요.",google_ace_home:"리타겟팅 — 규모는 홈 도달(재활성 방문)이에요."};
 /* 지표 메타(추가 가능 지표의 라벨·방향·그룹). 기본 지표는 SCORING의 lab/dir을 그대로 쓴다. */
 const SGROUP={eff:"효율 · 단가",quality:"유저 질",reaction:"소재 반응",scale:"규모"};
+/* 지표 메타 — lab(이름) · dir(채점 방향, UI엔 안 보임) · grp(라이브러리 분류) · desc(작은 회색 설명) · 조건부 플래그.
+   desc는 "이게 뭐에 대한 건지" 한 줄 설명 — 좋고 나쁨은 사이트가 표현하므로 화살표는 표시하지 않는다. */
 const MET_META={
-  "신규+재활성 eCPA":{lab:"신규+재활성 eCPA",dir:-1,grp:"eff"},
-  "활성 유저 eCPA":{lab:"활성 eCPA",dir:-1,grp:"eff"},
-  "eCPI":{lab:"eCPI (설치 단가)",dir:-1,grp:"eff"},
-  "_q_cpNewInstall":{lab:"신규 설치 단가",dir:-1,grp:"eff"},
-  "_g_cpFirstOpen":{lab:"신규 단가",dir:-1,grp:"eff"},
-  "_g_cpHome":{lab:"홈 단가",dir:-1,grp:"eff"},
-  "_g_costPerConv":{lab:"CPA (전환당 비용)",dir:-1,grp:"eff"},
-  "CPM":{lab:"CPM",dir:-1,grp:"eff"},
-  "CPC":{lab:"CPC",dir:-1,grp:"eff"},
-  "CTR":{lab:"CTR",dir:1,grp:"reaction"},
-  "영상 완주율":{lab:"영상 완주율",dir:1,grp:"reaction",videoOnly:true},
-  "_g_foRate":{lab:"신규 전환율",dir:1,grp:"reaction"},
-  "_g_conversionRate":{lab:"전환율",dir:1,grp:"reaction"},
-  "_g_hpm":{lab:"홈 도달율",dir:1,grp:"reaction"},
-  "_q_retD1":{lab:"D1 잔존율",dir:1,grp:"quality"},
-  "_q_retD7":{lab:"D7 잔존율",dir:1,grp:"quality"},
+  "신규+재활성 eCPA":{lab:"신규+재활성 eCPA",dir:-1,grp:"eff",desc:"데려온 유저 1명당 광고비"},
+  "활성 유저 eCPA":{lab:"활성 eCPA",dir:-1,grp:"eff",desc:"앱을 쓴 유저 1명당 광고비"},
+  "eCPI":{lab:"eCPI (설치 단가)",dir:-1,grp:"eff",desc:"설치 1건당 광고비"},
+  "_q_cpNewInstall":{lab:"신규 설치 단가",dir:-1,grp:"eff",desc:"AF 신규 설치 1건당 광고비"},
+  "_q_cpReEng":{lab:"재참여 단가",dir:-1,grp:"eff",desc:"복귀 유도(리인게이지) 1건당 광고비"},
+  "_g_cpFirstOpen":{lab:"신규 단가",dir:-1,grp:"eff",desc:"신규 앱 실행(first open) 1건당 광고비"},
+  "_g_cpHome":{lab:"홈 단가",dir:-1,grp:"eff",desc:"홈 도달 1건당 광고비"},
+  "_g_costPerConv":{lab:"CPA",dir:-1,grp:"eff",desc:"전환(인앱 액션) 1건당 광고비"},
+  "CPM":{lab:"CPM",dir:-1,grp:"eff",desc:"노출 1,000회당 광고비"},
+  "CPC":{lab:"CPC",dir:-1,grp:"eff",desc:"클릭 1회당 광고비"},
+  "CTR":{lab:"CTR",dir:1,grp:"reaction",desc:"노출 대비 클릭 비율"},
+  "영상 완주율":{lab:"영상 완주율",dir:1,grp:"reaction",videoOnly:true,desc:"영상을 끝까지 본 비율"},
+  "_g_foRate":{lab:"신규 전환율",dir:1,grp:"reaction",desc:"상호작용 대비 신규 앱 실행"},
+  "_g_conversionRate":{lab:"전환율",dir:1,grp:"reaction",desc:"상호작용 대비 전환 (뷰스루 혼입 주의)"},
+  "_g_interactionRate":{lab:"상호작용율",dir:1,grp:"reaction",desc:"노출 대비 상호작용(클릭·조회 등)"},
+  "_g_trueViewRate":{lab:"조회율",dir:1,grp:"reaction",desc:"노출 대비 영상 조회(TrueView)"},
+  "_g_hpm":{lab:"홈 도달율",dir:1,grp:"reaction",desc:"노출 1,000회당 홈 도달"},
+  "_q_retD1":{lab:"D1 잔존율",dir:1,grp:"quality",desc:"설치 다음날 돌아온 비율"},
+  "_q_retD7":{lab:"D7 잔존율",dir:1,grp:"quality",desc:"설치 7일 뒤에도 남아있는 비율"},
+  "_q_roasD7":{lab:"ROAS D7",dir:1,grp:"quality",desc:"7일 코호트 매출 ÷ 광고비 (AF 실측)"},
+  "_g_ROAS":{lab:"ROAS (모델)",dir:1,grp:"quality",desc:"전환가치 ÷ 광고비 (모델 추정값)"},
 };
-/* 매체별 추가 가능 지표(ROAS·활성eCPA 등은 실데이터 검증상 채점 제외라 목록에서 뺌 — 신규 추가는 여기서) */
+/* 매체별 추가 가능 지표 — 실제 계산되는(집계 시 파생) 지표만. 데이터 없으면 채점 시 자동 제외·재정규화 */
 const SCORE_ADDABLE={
-  moloco:["활성 유저 eCPA","eCPI","CPM","CPC","_q_retD7"],
-  meta:["CTR","활성 유저 eCPA","eCPI","CPM","_q_retD7"],
-  google_aeo:["CPM","CPC","_g_hpm"],
-  google_ace_home:["_g_costPerConv","CTR","_g_conversionRate","CPC"],
+  moloco:["활성 유저 eCPA","eCPI","CPM","CPC","_q_cpReEng","_q_retD7","_q_roasD7"],
+  meta:["CTR","활성 유저 eCPA","eCPI","CPM","CPC","_q_cpReEng","_q_retD7","_q_roasD7"],
+  google_aeo:["_g_costPerConv","CPM","CPC","_g_conversionRate","_g_interactionRate","_g_trueViewRate","_g_hpm","_g_ROAS"],
+  google_ace_home:["_g_costPerConv","_g_cpFirstOpen","CTR","CPM","CPC","_g_conversionRate","_g_interactionRate","_g_trueViewRate","_g_ROAS"],
 };
+function descOf(s){if(s&&s.isReach)return "이 소재가 데려온 유저의 양(규모)";return (s&&MET_META[s.k]&&MET_META[s.k].desc)||"";}
 function grpOf(k){return (MET_META[k]&&MET_META[k].grp)||"eff";}
 /* 채점 매체 키 산출(오버라이드 조회·specsFor 공용) */
 function scoreKeyOf(ds){const a=ds.agg,isG=isGoogleDs(a);
@@ -1793,6 +1827,11 @@ const SPEC_EVIDENCE={
   "_g_foRate":{den:e=>e._g_interactions,n0:300},
   "_q_cpNewInstall":{den:e=>e._q_afInstalls,n0:50},
   "_q_retD1":{den:e=>e._q_retD1Base,n0:150}, /* 잔존율 표본 = D1 코호트 base — 표본 적은 소재의 운빨 잔존율 축소 */
+  "_q_retD7":{den:e=>e._q_retD7Base,n0:150},
+  "_q_cpReEng":{den:e=>e._q_reEng,n0:50},
+  "_q_roasD7":{den:e=>e.비용,n0:1000000}, /* ROAS 재현성은 지출이 지배 → 지출 기반 축소 */
+  "_g_interactionRate":{den:e=>e["노출 수"],n0:2000},
+  "_g_trueViewRate":{den:e=>e["노출 수"],n0:2000},
 };
 function evidenceW(e,k){const s=SPEC_EVIDENCE[k];if(!s)return 1;
   const d=s.den(e)||0;let w=d>0?d/(d+s.n0):0;
@@ -3789,14 +3828,20 @@ function renderViewSeg(){const el=$("#vseg"),sec=$("#viewSec");if(!el||!sec)retu
     tPage=1;renderViewSeg();if(active)renderTable(DATASETS[active]);};
   el.querySelectorAll(".seg3 button").forEach(b=>b.onclick=()=>setView(b.dataset.v));
   const vsel=el.querySelector(".seg-m");if(vsel)vsel.onchange=()=>setView(vsel.value);}
+function closeAllDD(){document.querySelectorAll(".sf-dd.open").forEach(dd=>{dd.classList.remove("open");const m=dd.querySelector(".sf-dd-menu");if(m)m.hidden=true;const b=dd.querySelector(".sf-dd-btn");if(b)b.setAttribute("aria-expanded","false");});}
 function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)return;
   if(dsMode!=="channeled"||!ds.channels||!ds.channels.length){sec.hidden=true;el.innerHTML="";return;}
   sec.hidden=false;
-  /* 매체는 소재 수 많은 순 정렬 · 드롭다운 */
+  /* 매체 = 커스텀 드롭다운(소재 수 많은 순) — 네이티브 select 대신 사이트 톤에 맞춘 팝업 */
   const counts=new Map(ds.channels.map(ch=>[ch,windowCount(ds,ch)]));
   const chans=ds.channels.slice().sort((a,b)=>counts.get(b)-counts.get(a));
-  el.innerHTML=`<select class="sf-sel" aria-label="매체 선택">`+chans.map(ch=>`<option value="${escAttr(ch)}"${ch===ds.media?" selected":""}>${escHtml(ch)} · ${counts.get(ch).toLocaleString()}개</option>`).join("")+`</select>`;
-  const sel=el.querySelector("select");if(sel)sel.onchange=()=>{const m=sel.value;if(ds.media===m)return;ds.media=m;tPage=1;show(ds);};}
+  const cur=ds.media;
+  el.innerHTML=`<div class="sf-dd" id="mediaDD">
+    <button class="sf-dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="sf-dd-cur">${escHtml(cur)} <em>${(counts.get(cur)||0).toLocaleString()}</em></span><svg viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+    <div class="sf-dd-menu" role="listbox" hidden>${chans.map(ch=>`<button type="button" role="option" data-m="${escAttr(ch)}" class="${ch===cur?"on":""}">${escHtml(ch)} <em>${counts.get(ch).toLocaleString()}</em></button>`).join("")}</div></div>`;
+  const dd=el.querySelector(".sf-dd"),btn=dd.querySelector(".sf-dd-btn"),menu=dd.querySelector(".sf-dd-menu");
+  btn.onclick=e=>{e.stopPropagation();const willOpen=menu.hidden;closeAllDD();if(willOpen){dd.classList.add("open");menu.hidden=false;btn.setAttribute("aria-expanded","true");}};
+  menu.querySelectorAll("button").forEach(b=>b.onclick=()=>{const m=b.dataset.m;closeAllDD();if(ds.media===m)return;ds.media=m;tPage=1;show(ds);});}
 function show(ds){scope(ds);
   renderMediaSeg(ds);renderPeriodSeg();renderViewSeg();renderKeyrow(ds);renderAutoInsight(ds);
   requestAnimationFrame(()=>{renderQuad(ds);renderQuadTierLegend();
@@ -4170,6 +4215,8 @@ function updateLandingVisibility(){const el=document.getElementById("landing");i
   /* 첫 화면이면 비밀번호 입력에 바로 포커스 (다른 입력 사용 중일 땐 건드리지 않음) */
   if(!hasData&&!cloudPw&&!cloudBooting){const p=$("#pwIn");if(p&&(document.activeElement===document.body||document.activeElement==null))try{p.focus({preventScroll:true});}catch(e){}}}
 $$("#mtabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.t));
+document.addEventListener("click",()=>closeAllDD()); /* 커스텀 드롭다운 바깥 클릭 시 닫기 */
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeAllDD();});
 renderGlossary();renderFooter();refreshAll();updateLandingVisibility();
 /* 클라우드 저장소 UI 배선 */
 /* 비밀번호 규칙 — 4자 이상이면 OK (서버 _cr_pwok과 동일). 중복은 pw_taken로 별도 차단 */
@@ -4675,8 +4722,8 @@ function renderScBody(){
   const rowsHtml=list.map((s,i)=>{
     const pw=s.w*100,cond=condLabelOf(s);
     return `<div class="sc-row" data-i="${i}">
-      <div class="sc-info"><div class="sc-nm">${escHtml(s.lab)}</div>
-        <div class="sc-sub2"><span class="sc-dir ${s.dir<0?"dn":"up"}">${s.dir<0?"↓ 낮을수록":"↑ 높을수록"}</span>${cond?`<span class="sc-cond">${escHtml(cond)}만</span>`:""}${s.isReach?`<span class="sc-cond scl">규모</span>`:""}</div></div>
+      <div class="sc-info"><div class="sc-nm">${escHtml(s.lab)}${cond?` <span class="sc-condtag">${escHtml(cond)}만</span>`:""}</div>
+        <div class="sc-desc">${escHtml(descOf(s))}</div></div>
       <div class="sc-slider" tabindex="0" role="slider" aria-label="${escAttr(s.lab)} 비중" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pw)}">
         <div class="sc-track"><div class="sc-fill" style="width:${pw.toFixed(1)}%;background:${_scPalette(i)}"></div></div>
         <div class="sc-knob" style="left:${pw.toFixed(1)}%"></div></div>
@@ -4686,8 +4733,8 @@ function renderScBody(){
   const grpOrder=["eff","quality","reaction"];
   const libInner=grpOrder.map(g=>{
     const items=avail.filter(k=>grpOf(k)===g);if(!items.length)return "";
-    return `<div class="sc-lib-grp">${SGROUP[g]}</div>`+items.map(k=>{const m=MET_META[k]||{lab:k,dir:1};
-      return `<label class="sc-chk"><input type="checkbox" data-k="${k}"><span>${escHtml(m.lab)}</span><span class="sc-dir ${m.dir<0?"dn":"up"}" style="margin-left:2px">${m.dir<0?"↓":"↑"}</span><span class="sc-lib-tag">추가</span></label>`;}).join("");
+    return `<div class="sc-lib-grp">${SGROUP[g]}</div>`+items.map(k=>{const m=MET_META[k]||{lab:k};
+      return `<label class="sc-chk"><input type="checkbox" data-k="${k}"><span class="sc-chk-nm">${escHtml(m.lab)}<em class="sc-chk-desc">${escHtml(m.desc||"")}</em></span><span class="sc-lib-tag">추가</span></label>`;}).join("");
   }).join("");
   body.innerHTML=`<div class="sc-list">${rowsHtml}</div>`+
     (libInner?`<div class="sc-lib" id="scLib"><button type="button" class="sc-lib-h" id="scLibH" aria-expanded="false" aria-controls="scLibBody"><span>＋ 지표 추가</span><span class="sc-lib-cnt">${avail.length}</span><span class="sc-car">▸</span></button><div class="sc-lib-body" id="scLibBody" hidden>${libInner}</div></div>`
