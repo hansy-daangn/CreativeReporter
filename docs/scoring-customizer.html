@@ -145,9 +145,9 @@
   #pane-b .blk-row{display:flex;align-items:center;gap:10px}
   #pane-b .blk-hold{flex:1;min-width:0;height:46px;border-radius:11px;background:var(--surface-3);position:relative;overflow:hidden}
   #pane-b .blk-hold::after{content:"";position:absolute;inset:0;border-radius:11px;box-shadow:inset 0 0 0 1px rgba(20,20,15,.05);pointer-events:none}
-  #pane-b .blk{position:absolute;left:0;top:0;height:100%;border-radius:11px;display:flex;align-items:center;gap:6px;padding:0 22px 0 13px;color:#fff;min-width:88px;overflow:hidden;user-select:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);transition:filter .12s}
+  #pane-b .blk{position:absolute;left:0;top:0;height:100%;border-radius:11px;display:flex;align-items:center;gap:5px;padding:0 21px 0 12px;color:#fff;min-width:100px;overflow:hidden;user-select:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);transition:filter .12s}
   #pane-b .blk .b-nm{flex:1;min-width:0;font-size:12.5px;font-weight:800;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.24);overflow:hidden;text-overflow:ellipsis}
-  #pane-b .blk .b-dir{font-size:10px;font-weight:800;background:rgba(255,255,255,.24);padding:1px 6px;border-radius:5px;flex:0 0 auto}
+  #pane-b .blk .b-nm .b-ar{font-weight:800;margin-right:4px;opacity:.92}
   #pane-b .blk .b-star{font-size:13px;font-weight:800;color:#fff;flex:0 0 auto;cursor:help;line-height:1}
   #pane-b .blk .grip{position:absolute;right:0;top:0;height:100%;width:18px;cursor:ew-resize;display:flex;align-items:center;justify-content:center;border-radius:0 11px 11px 0;touch-action:none}
   #pane-b .blk .grip::before{content:"";width:3px;height:20px;border-radius:3px;background:rgba(255,255,255,.9)}
@@ -606,8 +606,7 @@ function buildPane(cid, editorFactory){
         <div class="blk-row" data-k="${s.k}">
           <div class="blk-hold">
             <div class="blk" style="width:${(s.w*100).toFixed(3)}%;background:${colOf(i)}">
-              <span class="b-nm">${s.short}</span>
-              <span class="b-dir">${s.dir<0?'↓':'↑'}</span>
+              <span class="b-nm"><b class="b-ar">${s.dir<0?'↓':'↑'}</b>${s.short}</span>
               ${s.cond?`<span class="b-star" title="${s.cond}만 채점">*</span>`:''}
               <span class="grip" title="너비 드래그"></span>
             </div>
