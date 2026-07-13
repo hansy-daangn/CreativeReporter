@@ -65,12 +65,13 @@
   .pcustom button{height:29px;padding:0 12px;border-radius:7px;background:var(--karrot);color:#fff;border:0;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
   .pcustom button:hover{background:#ff7d24}
   /* 좌측 상단 화면 전환 탭(다크) */
+  /* 화면 전환 탭 — 다크 세그먼트 컨트롤(어두운 인셋 트랙 + 주황 활성). 본문용 .mtabs 라이트 규칙을 이기도록 .side-nav .mtabs 로 명시 */
   .side-nav{margin-bottom:22px}
   .side-nav .mtabs{position:static;padding:0;margin:0;background:transparent;display:block}
-  .side-nav .mtabs-in{display:flex;gap:3px;width:100%;background:var(--side-2);border-radius:11px;padding:3px}
-  .side-nav .mtabs button{flex:1;padding:9px 4px;border-radius:8px;font-size:12.5px;font-weight:700;color:var(--side-muted);white-space:nowrap;background:transparent;box-shadow:none;transition:.12s}
-  .side-nav .mtabs button:hover{color:var(--side-ink);background:rgba(255,255,255,.05)}
-  .side-nav .mtabs button.on{background:var(--karrot);color:#fff;box-shadow:none}
+  .side-nav .mtabs .mtabs-in{display:flex;gap:2px;width:100%;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:3px}
+  .side-nav .mtabs button{flex:1;padding:8px 4px;border-radius:7px;font-size:12.5px;font-weight:700;color:var(--side-muted);white-space:nowrap;background:transparent;box-shadow:none;transition:.12s}
+  .side-nav .mtabs button:hover{color:var(--side-ink);background:rgba(255,255,255,.06)}
+  .side-nav .mtabs button.on{background:var(--karrot);color:#fff;box-shadow:0 1px 6px rgba(255,111,15,.35)}
   .side-nav .mtabs button .tc{color:#fff;margin-left:3px}
   /* 커스텀 드롭다운(매체) — 네이티브 select 대체 */
   .sf-dd{position:relative}
