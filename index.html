@@ -73,6 +73,8 @@
   .sbtn{flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:9px; border-radius:9px; background:rgba(255,255,255,.07); color:var(--side-ink); font-size:12px; font-weight:600; transition:.13s}
   .sbtn:hover{background:rgba(255,255,255,.13)}
   .sbtn.pri{background:var(--karrot); color:#fff}.sbtn.pri:hover{background:#ff7d24}
+  .sbtn.wide{width:100%;flex:none}
+  .side-foot .side-h.stool{padding:2px 6px 8px;margin:0}
   .sbtn svg{width:14px;height:14px}
 
   /* ===== main ===== */
@@ -575,6 +577,9 @@
   .ftw-lgd .lgd{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:3px;vertical-align:-0.5px}
   .ftw-note{color:var(--faint)}
   .ftw-common{font-size:11px;color:var(--muted);margin-top:8px;padding-top:7px;border-top:1px dashed var(--surface-3);line-height:1.8}
+  .ftw-custom{font-size:9px;font-weight:800;color:var(--karrot);background:var(--karrot-f);padding:1px 6px;border-radius:5px;vertical-align:1px;letter-spacing:.02em}
+  .ftw-edit{background:none;border:0;color:var(--karrot);font:inherit;font-size:11px;font-weight:700;cursor:pointer;padding:0}
+  .ftw-edit:hover{text-decoration:underline}
   .ft ul.ft-key{margin:6px 0 10px;padding-left:18px;font-size:12.5px;line-height:1.85}
   .ft ul.ft-key li{margin:3px 0}
   /* glossary overlay */
@@ -800,6 +805,66 @@
   .ep-cancel:hover{color:var(--ink)}
   .ep-save{background:var(--karrot);color:#fff;border-color:var(--karrot)}
   .ep-save:hover{background:var(--karrot-2)}
+
+  /* ===== 채점 설정 모달 ===== */
+  .sc-ov{position:fixed;inset:0;z-index:100000;background:rgba(22,20,16,.5);display:flex;align-items:center;justify-content:center;padding:20px}
+  .sc-modal{width:min(560px,96vw);max-height:90vh;display:flex;flex-direction:column;background:var(--surface);border-radius:18px;box-shadow:0 26px 74px rgba(0,0,0,.36);border:1px solid var(--surface-3)}
+  .sc-head{display:flex;align-items:flex-start;gap:12px;padding:18px 20px 12px}
+  .sc-ttl{font-size:16px;font-weight:800;color:var(--ink)}
+  .sc-sub{font-size:11.5px;color:var(--muted);line-height:1.55;margin-top:4px} .sc-sub b{color:var(--ink);font-weight:700}
+  .sc-close{border:0;background:none;font-size:15px;color:var(--faint);cursor:pointer;line-height:1;padding:4px 6px;margin-left:auto;flex:0 0 auto}
+  .sc-close:hover{color:var(--ink)}
+  .sc-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:2px 20px 0}
+  .sc-tabs button{padding:7px 14px;border-radius:9px;background:var(--surface-2);color:var(--muted);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;transition:.12s;border:0}
+  .sc-tabs button:hover{background:var(--surface-3)}
+  .sc-tabs button.on{background:var(--ink);color:#fff}
+  .sc-note{font-size:11.5px;color:var(--muted);padding:10px 20px 2px}
+  .sc-body{padding:4px 20px 6px;overflow:auto}
+  .sc-list{display:flex;flex-direction:column}
+  .sc-row{display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:1px solid var(--surface-2)}
+  .sc-info{width:146px;flex:0 0 auto;min-width:0}
+  .sc-nm{font-size:12.5px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sc-sub2{display:flex;gap:5px;margin-top:3px;align-items:center;flex-wrap:wrap}
+  .sc-dir{font-size:10px;font-weight:800;padding:0 5px;border-radius:5px;line-height:16px;white-space:nowrap}
+  .sc-dir.up{color:var(--g1);background:var(--g1-f)} .sc-dir.dn{color:var(--w2);background:var(--w2-f)}
+  .sc-cond{font-size:10px;font-weight:700;color:var(--w1);background:var(--w1-f);padding:1px 6px;border-radius:5px;white-space:nowrap}
+  .sc-cond.scl{color:var(--c2);background:rgba(61,90,128,.12)}
+  .sc-slider{flex:1;height:26px;position:relative;display:flex;align-items:center;cursor:pointer;touch-action:none;min-width:60px}
+  .sc-slider:focus{outline:none} .sc-slider:focus-visible .sc-knob{box-shadow:0 0 0 3px var(--karrot-f),0 1px 4px rgba(0,0,0,.26)}
+  .sc-track{width:100%;height:8px;border-radius:5px;background:var(--surface-3);overflow:hidden}
+  .sc-fill{height:100%;border-radius:5px}
+  .sc-knob{position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.26),0 0 0 1px rgba(0,0,0,.05);transform:translateX(-50%);top:4px;pointer-events:none}
+  .sc-knob::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--karrot)}
+  .sc-numwrap{position:relative;display:inline-flex;align-items:center;flex:0 0 auto}
+  .sc-numwrap::after{content:"%";position:absolute;right:8px;font-size:11px;font-weight:700;color:var(--faint);pointer-events:none}
+  .sc-num{width:66px;border:1.5px solid var(--surface-3);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:13px;font-weight:800;text-align:right;padding:5px 20px 5px 7px;font-variant-numeric:tabular-nums;-moz-appearance:textfield;appearance:textfield}
+  .sc-num::-webkit-inner-spin-button,.sc-num::-webkit-outer-spin-button{-webkit-appearance:none;appearance:none;margin:0}
+  .sc-num:focus{outline:none;border-color:var(--karrot);box-shadow:0 0 0 3px var(--karrot-f)}
+  .sc-rm{flex:0 0 auto;color:var(--faint);font-size:13px;width:24px;height:24px;border-radius:7px;cursor:pointer;background:none;border:0}
+  .sc-rm:hover{background:var(--w2-f);color:var(--w2)}
+  .sc-lib{margin-top:14px;border:1.5px solid var(--surface-3);border-radius:12px;overflow:hidden}
+  .sc-lib-h{display:flex;align-items:center;gap:9px;width:100%;padding:11px 13px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:700;color:var(--ink);background:var(--surface-2);border:0;text-align:left}
+  .sc-lib-h:hover{background:var(--surface-3)}
+  .sc-lib-cnt{font-size:11px;font-weight:700;color:var(--faint);background:var(--surface);padding:1px 7px;border-radius:6px}
+  .sc-car{margin-left:auto;color:var(--faint);font-size:12px;transition:transform .15s}
+  .sc-lib-body{padding:4px 8px 10px}
+  .sc-lib-body[hidden]{display:none}
+  .sc-lib-grp{font-size:10px;font-weight:800;letter-spacing:.04em;color:var(--faint);text-transform:uppercase;padding:10px 8px 4px}
+  .sc-chk{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:650;color:var(--ink)}
+  .sc-chk:hover{background:var(--surface-2)}
+  .sc-chk input{appearance:none;-webkit-appearance:none;width:17px;height:17px;border:1.5px solid #cfcdc4;border-radius:5px;flex:0 0 auto;position:relative;cursor:pointer;margin:0}
+  .sc-chk input:checked{background:var(--karrot);border-color:var(--karrot)}
+  .sc-chk input:checked::after{content:"";position:absolute;left:5px;top:1.5px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+  .sc-lib-tag{margin-left:auto;font-size:10.5px;color:var(--karrot);font-weight:700}
+  .sc-lib-none{margin-top:14px;font-size:11.5px;color:var(--faint);padding:4px 2px}
+  .sc-foot{display:flex;align-items:center;gap:9px;padding:14px 20px 18px;border-top:1px solid var(--surface-2)}
+  .sc-foot-sp{flex:1}
+  .sc-reset{height:34px;padding:0 14px;border-radius:9px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;background:var(--surface);color:var(--muted);border:1px solid var(--surface-3)}
+  .sc-reset:hover{color:var(--ink)}
+  .sc-cancel,.sc-save{height:38px;padding:0 20px;border-radius:10px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--surface-3)}
+  .sc-cancel{background:var(--surface);color:var(--muted)} .sc-cancel:hover{color:var(--ink)}
+  .sc-save{background:var(--karrot);color:#fff;border-color:var(--karrot)} .sc-save:hover{background:var(--karrot-2)}
+  @media(max-width:520px){.sc-row{gap:9px}.sc-info{width:104px}.sc-slider{min-width:44px}}
 </style>
 </head>
 <body>
@@ -859,15 +924,19 @@
       <div class="side-sec" style="margin-top:4px">
         <div class="skpi" id="skpi"></div>
       </div>
-      <div class="side-foot">
+    </details>
+    <!-- 도구/상태: '요약' 접힘과 무관하게 항상 노출(모바일 포함) — 채점 설정 등 중요 기능 -->
+    <div class="side-foot">
         <div class="src" id="cloudLine" style="cursor:pointer" title="클릭 — 비밀번호 입력 또는 저장소 새로고침">☁️ 저장소 미연결</div>
+        <div class="side-h stool">도구</div>
+        <button class="sbtn wide" id="scoreCfgBtn" title="매체별 채점 지표와 비중을 직접 골라 조절해요 — 저장하면 점수에 바로 반영">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 13a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.36.53.75 1.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>채점 설정</button>
+        <button class="sbtn pri xtract" id="exportBtn" title="선택한 조건의 소재 성과를 AI가 읽기 좋은 파일로 내보내요">내 자료 추출하기</button>
         <div class="sbtns">
           <button class="sbtn" id="glossBtn"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>용어</button>
           <label class="sbtn icon-only" id="drop" title="CSV 파일 넣기 · 드래그해서 놓아도 됩니다"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15V4m0 0L8 8m4-4l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input type="file" id="file" accept=".csv,text/csv" multiple hidden></label>
         </div>
-        <button class="sbtn pri xtract" id="exportBtn" title="선택한 조건의 소재 성과를 AI가 읽기 좋은 파일로 내보내요">내 자료 추출하기</button>
       </div>
-    </details>
   </aside>
 
   <!-- MAIN -->
@@ -1651,17 +1720,63 @@ const SCORING={
     {k:"CPM",w:0.20,dir:-1,lab:"CPM"},
   ],
 };
-function specsFor(ds){const a=ds.agg,isG=isGoogleDs(a);
-  let key;
-  if(isG)key=ds.media==="Google AEO"?"google_aeo":ds.media==="Google ACE"?(gHomeEff?"google_ace_home":"google_ace"):"google";
-  else if((ds.L.key||"ad")==="ad"){
-    /* 몰로코(RE 채널) vs 메타(UA 채널) 스펙 분리 — CTR·D1·eCPI의 유효성이 두 채널에서 정반대 (AEO/ACE 분리와 동일 논리) */
-    if(a.some(e=>e._m_ctype))key="moloco";
-    else if(a.some(e=>e._q_afInstalls!=null||e._q_retD1!=null||isAdManagerUrl(e._m_url||"")))key="meta";
-    else key="ad";}
-  else key=ds.L.key;
+/* ===== 사용자 커스텀 채점 비중 (이 기기에 저장 · localStorage) =====
+   저장형태 SCFG[key] = { reachW, specs:[{k,w,dir,lab,entCt?,entFo?,videoOnly?}] }
+   · 규모(reach)도 하나의 조절 대상 — reachW = 규모 비중, 효율 지표는 specs[].w(총점 대비 비율, computeScores가 자기들끼리 재정규화)
+   · 저장된 매체만 오버라이드, 나머지는 기본 SCORING 사용. 기본과 같으면 저장 안 함(delete)해 코드 기본을 계속 따른다. */
+let SCFG=(()=>{try{return JSON.parse(localStorage.getItem("cr_scoring"))||{};}catch(e){return{};}})();
+function scfgSave(){try{localStorage.setItem("cr_scoring",JSON.stringify(SCFG));}catch(e){}}
+/* 커스터마이즈 가능한 매체 키(= specsFor가 내는 키와 동일). 구글 ACE는 기본(홈 기준) 스펙을 편집한다. */
+const SCORE_MEDIA=[["moloco","몰로코"],["meta","메타"],["google_aeo","구글 AEO"],["google_ace_home","구글 ACE"]];
+const REACH_LAB={moloco:"규모 · 데려온 유저",meta:"규모 · 데려온 유저",google_aeo:"규모 · 신규 실행",google_ace_home:"규모 · 홈 도달",google_ace:"규모 · 홈 도달",google:"규모 · 데려온 유저",ad:"규모 · 데려온 유저"};
+const SCORE_NOTE={moloco:"리타겟(재참여) 채널 — 규모는 데려온 유저(신규+재활성) 수예요.",meta:"신규/재참여 혼합 채널 — CTR은 기본 제외예요(역방향 실측).",google_aeo:"신규 유저 획득 — 규모는 신규 실행(first_open)이에요.",google_ace_home:"리타겟팅 — 규모는 홈 도달(재활성 방문)이에요."};
+/* 지표 메타(추가 가능 지표의 라벨·방향·그룹). 기본 지표는 SCORING의 lab/dir을 그대로 쓴다. */
+const SGROUP={eff:"효율 · 단가",quality:"유저 질",reaction:"소재 반응",scale:"규모"};
+const MET_META={
+  "신규+재활성 eCPA":{lab:"신규+재활성 eCPA",dir:-1,grp:"eff"},
+  "활성 유저 eCPA":{lab:"활성 eCPA",dir:-1,grp:"eff"},
+  "eCPI":{lab:"eCPI (설치 단가)",dir:-1,grp:"eff"},
+  "_q_cpNewInstall":{lab:"신규 설치 단가",dir:-1,grp:"eff"},
+  "_g_cpFirstOpen":{lab:"신규 단가",dir:-1,grp:"eff"},
+  "_g_cpHome":{lab:"홈 단가",dir:-1,grp:"eff"},
+  "_g_costPerConv":{lab:"CPA (전환당 비용)",dir:-1,grp:"eff"},
+  "CPM":{lab:"CPM",dir:-1,grp:"eff"},
+  "CPC":{lab:"CPC",dir:-1,grp:"eff"},
+  "CTR":{lab:"CTR",dir:1,grp:"reaction"},
+  "영상 완주율":{lab:"영상 완주율",dir:1,grp:"reaction",videoOnly:true},
+  "_g_foRate":{lab:"신규 전환율",dir:1,grp:"reaction"},
+  "_g_conversionRate":{lab:"전환율",dir:1,grp:"reaction"},
+  "_g_hpm":{lab:"홈 도달율",dir:1,grp:"reaction"},
+  "_q_retD1":{lab:"D1 잔존율",dir:1,grp:"quality"},
+  "_q_retD7":{lab:"D7 잔존율",dir:1,grp:"quality"},
+};
+/* 매체별 추가 가능 지표(ROAS·활성eCPA 등은 실데이터 검증상 채점 제외라 목록에서 뺌 — 신규 추가는 여기서) */
+const SCORE_ADDABLE={
+  moloco:["활성 유저 eCPA","eCPI","CPM","CPC","_q_retD7"],
+  meta:["CTR","활성 유저 eCPA","eCPI","CPM","_q_retD7"],
+  google_aeo:["CPM","CPC","_g_hpm"],
+  google_ace_home:["_g_costPerConv","CTR","_g_conversionRate","CPC"],
+};
+function grpOf(k){return (MET_META[k]&&MET_META[k].grp)||"eff";}
+/* 채점 매체 키 산출(오버라이드 조회·specsFor 공용) */
+function scoreKeyOf(ds){const a=ds.agg,isG=isGoogleDs(a);
+  if(isG)return ds.media==="Google AEO"?"google_aeo":ds.media==="Google ACE"?(gHomeEff?"google_ace_home":"google_ace"):"google";
+  if((ds.L.key||"ad")==="ad"){
+    /* 몰로코(RE 채널) vs 메타(UA 채널) 스펙 분리 — CTR·D1·eCPI의 유효성이 두 채널에서 정반대 */
+    if(a.some(e=>e._m_ctype))return "moloco";
+    if(a.some(e=>e._q_afInstalls!=null||e._q_retD1!=null||isAdManagerUrl(e._m_url||"")))return "meta";
+    return "ad";}
+  return ds.L.key;}
+/* 효율 지표 스펙(커스텀 오버라이드 or 기본 SCORING) — 항상 복사본 반환 */
+function baseSpecsOf(key){
+  const cfg=SCFG[key];
+  if(cfg&&cfg.specs&&cfg.specs.length)return cfg.specs.map(s=>({...s}));
+  return (SCORING[key]||SCORING.ad).map(s=>({...s}));}
+/* 규모(reach) 비중 — 커스텀 or 기본 0.15 */
+function reachWFor(ds){const cfg=SCFG[scoreKeyOf(ds)];return cfg&&typeof cfg.reachW==="number"?cfg.reachW:SCORING.REACH_W;}
+function specsFor(ds){const a=ds.agg,key=scoreKeyOf(ds);
   const isVideo=a.some(e=>(e._g_assetType&&/동영상|video/i.test(e._g_assetType))||(e._m_ctype&&e._m_ctype.includes("VIDEO")));
-  return SCORING[key].filter(s=>!s.videoOnly||isVideo).map(s=>({...s}));}
+  return baseSpecsOf(key).filter(s=>!s.videoOnly||isVideo);}
 /* 지표별 증거량(표본) — 백분위를 g'=0.5+(g−0.5)·n/(n+n₀)로 축소해
    전환 몇 건짜리 소재가 순전히 운으로 최상·최하위를 차지하는 winner's curse를 막는다 (경험적 베이지안 축소) */
 const SPEC_EVIDENCE={
@@ -1703,7 +1818,8 @@ function reachKeyFor(ds){
   const k=isG?(ds.media==="Google ACE"?"_g_home":"_g_firstOpen"):"신규+재활성 유저 수";
   const av=ds&&ds.fieldAvail?ds.fieldAvail[k]:null;
   return av!=null&&av>=0.5?k:"노출 수";}
-function runScoring(pop,elig,specs,reachKey){
+function runScoring(pop,elig,specs,reachKey,reachW){
+  const rw=(typeof reachW==="number")?reachW:SCORING.REACH_W; /* 규모 비중(커스텀 가능) · 효율축 = 1-rw */
   const dists={},foDists={};
   for(const s of specs){
     dists[s.k]=buildWDist(pop.filter(e=>e[s.k]!=null).map(e=>[e[s.k],Math.max(e.비용||0,1)]));
@@ -1733,7 +1849,7 @@ function runScoring(pop,elig,specs,reachKey){
     const R=reachDist.vals.length?wPctRank(reachDist,e[rk]||0):0.5;
     const C=Math.min(1,Math.log(1+convOf(e))/denomLn);
     e._E=E;e._R=R;e._C=C;
-    e._raw=100*(SCORING.EFF_W*E+SCORING.REACH_W*R+SCORING.CONF_W*C);});
+    e._raw=100*((1-rw)*E+rw*R);});
   /* 원점수는 다지표 평균+표본 수축 탓에 실제로 25~85 구간에 몰린다. 상대평가답게
      비교군 내 위치로 재배치: 원점수 5백분위→12점, 95백분위→92점 선형. 양 끝은 하드 클램프 대신
      점근 압축(위 99·아래 2)이라 극단값들이 한 점수로 뭉치지 않고 순위가 완전히 보존된다.
@@ -1746,7 +1862,7 @@ function runScoring(pop,elig,specs,reachKey){
   const sc=elig.map(e=>e.score).sort((x,y)=>x-y);
   elig.forEach(e=>{const p=pctRank(sc,e.score);e.tier=p>=0.8?"g2":p>=0.6?"g1":p>=0.4?"m":p>=0.2?"w1":"w2";});
   /* 채점 자(ruler) 반환 — 주차별 점수가 총점과 "같은 분포·같은 재배치"로 계산되도록 컨텍스트 공유 */
-  return {dists,foDists,reachDist,rk,rLo,rHi,useLin:(elig.length>=8&&rHi>rLo),sc,specs};}
+  return {dists,foDists,reachDist,rk,rLo,rHi,useLin:(elig.length>=8&&rHi>rLo),sc,specs,rw};}
 function computeScores(ds){const L=ds.L,a=ds.agg;
   ds.fieldAvail=computeFieldAvail(a);
   const av=ds.fieldAvail;
@@ -1761,7 +1877,7 @@ function computeScores(ds){const L=ds.L,a=ds.agg;
   const coreSpecs=specs.filter(s=>s.w>=0.15);
   const elig=a.filter(e=>(e.비용||0)>=minSpend&&coreSpecs.every(s=>e[s.k]!=null));
   if(elig.length<3)return{best:[],worst:[],med:null,goodCol:specs[0]?.k||"score",goodDir:specs[0]?.dir||1,goodLabel:specs[0]?.lab||"점수",goodFmt:specs[0]?.k==="_g_ROAS"?"num":"int",goodHelp:"복합 지표",volCol:"비용",eligCount:0,specs};
-  ds._scoreCtx=runScoring(a,elig,specs,reachKeyFor(ds));
+  ds._scoreCtx=runScoring(a,elig,specs,reachKeyFor(ds),reachWFor(ds));
   const best=elig.slice().sort((x,y)=>y.score-x.score);
   best.forEach((e,i)=>{e.rank=i+1;});
   const primary=specs[0],pkey=primary.k,pdir=primary.dir;
@@ -2390,7 +2506,7 @@ function weeklyScoresOf(ds,e){
         if(!(wsum>0))continue; /* 그 주에 채점 가능한 지표가 하나도 없을 때만 – */
         const E=comp/wsum;
         const R=wkReach.vals.length?wPctRank(wkReach,x[C.rk]||0):0.5;
-        const raw=100*(SCORING.EFF_W*E+SCORING.REACH_W*R);
+        const raw=100*((1-(C.rw??SCORING.REACH_W))*E+(C.rw??SCORING.REACH_W)*R);
         const scv=Math.round(Math.max(2,Math.min(99.4,soft(lin(raw))))*10)/10;
         const p2=C.sc&&C.sc.length?pctRank(C.sc,scv):0.5;
         const t=p2>=0.8?"g2":p2>=0.6?"g1":p2>=0.4?"m":p2>=0.2?"w1":"w2";
@@ -2941,7 +3057,7 @@ function scoreGroupAgg(ds,rows){
   const elig=rows.filter(e=>(e.비용||0)>=minSpend&&coreSpecs.every(s=>e[s.k]!=null));
   rows.forEach(g=>{g.score=null;g.tier="na";g.dom=null;});
   if(elig.length<3)return;
-  runScoring(rows,elig,specs,reachKeyFor(ds));
+  runScoring(rows,elig,specs,reachKeyFor(ds),reachWFor(ds));
   const best=elig.slice().sort((x,y)=>y.score-x.score);best.forEach((e,i)=>{e.rank=i+1;});
 }
 function getRowsForTable(ds){
@@ -3715,24 +3831,24 @@ function setActive(k){if(!DATASETS[k])return;active=k;
 /* 매체별 점수 가중치 바 — SCORING 상수에서 직접 생성(코드와 표기가 어긋날 수 없음).
    총점 100% 구성을 그대로 보여준다: 효율 지표들(각 가중치 × 85%) + 규모 15%(매체별 '데려온' 지표) */
 function scoreWeightsHTML(){
-  const MEDIA=[
-    {lab:"몰로코 (리타겟·재참여 채널)",specs:SCORING.moloco,reach:"규모 — 데려온 유저",note:"유입의 99.4%가 재참여인 리타겟 채널"},
-    {lab:"메타 (신규/재참여 혼합 채널)",specs:SCORING.meta,reach:"규모 — 데려온 유저",note:"유입 혼합(재참여 88.5%) · CTR은 역방향 실측이라 제외"},
-    {lab:"구글 AEO (신규 유저)",specs:SCORING.google_aeo,reach:"규모 — 신규 실행",note:"홈 단가 = 재활성 방문 기여도 함께 반영"},
-    {lab:"구글 ACE (리타겟팅)",specs:SCORING.google_ace_home,reach:"규모 — 홈 도달",note:"전환수·전환율은 왜곡(뷰스루)이라 홈 도달 실측 기준"},
-  ];
+  const MEDIA=[["moloco","몰로코 (리타겟·재참여 채널)","유입의 99.4%가 재참여인 리타겟 채널"],
+    ["meta","메타 (신규/재참여 혼합 채널)","유입 혼합(재참여 88.5%) · CTR은 역방향 실측이라 제외"],
+    ["google_aeo","구글 AEO (신규 유저)","홈 단가 = 재활성 방문 기여도 함께 반영"],
+    ["google_ace_home","구글 ACE (리타겟팅)","전환수·전환율은 왜곡(뷰스루)이라 홈 도달 실측 기준"]];
   const COLS=["var(--c2)","var(--g1)","var(--g2)","var(--karrot)","var(--w1)","var(--mid)","var(--faint)"];
   const RCOL="var(--ink)";
   const wPct=w=>{const p=w*100;return p%1?p.toFixed(1):String(Math.round(p));};
-  const condOf=s=>s.entCt?" · 외부 지면 이미지(IMAGE)만 — 신호가 실측된 지면":s.entFo?` · ${s.entFo} 소재만`:s.videoOnly?" · 영상 소재만":"";
-  return `<div class="ftw">`+MEDIA.map(m=>{
-    /* 효율 지표 = 명목 가중 × 85%(효율 축) — 규모 15%와 합치면 정확히 총점 100% 분해 */
-    const parts=m.specs.map((s,i)=>({lab:s.lab+ (s.entCt?"(외부지면 이미지만)":s.entFo?`(${s.entFo}만)`:s.videoOnly?"(영상만)":""),w:s.w*SCORING.EFF_W,dir:s.dir,col:COLS[i%COLS.length],tip:s.lab+" — 명목 "+wPct(s.w)+"% × 효율축 85% = 총점의 "+wPct(s.w*SCORING.EFF_W)+"% · "+(s.dir<0?"낮을수록 좋음":"높을수록 좋음")+condOf(s)}))
-      .concat([{lab:m.reach,w:SCORING.REACH_W,dir:1,col:RCOL,tip:m.reach+" — 총점의 "+wPct(SCORING.REACH_W)+"% · 광고비 가중 백분위(많이 데려올수록 좋음)"}]);
+  const anyCustom=SCORE_MEDIA.some(([k])=>!!SCFG[k]);
+  /* 통합 지표 목록(효율 + 규모)을 총점 대비 실제 비중(%)으로 그대로 보여준다 — 커스텀 오버라이드가 있으면 그 값 */
+  return `<div class="ftw">`+MEDIA.map(([key,lab,note])=>{
+    const list=unifiedSpecs(key),custom=!!SCFG[key];
+    const parts=list.map((s,i)=>{const cond=condLabelOf(s);
+      return {lab:s.lab+(cond&&!s.isReach?`(${cond}만)`:""),w:s.w,dir:s.dir,col:s.isReach?RCOL:COLS[i%COLS.length],
+        tip:s.lab+" — 총점의 "+wPct(s.w)+"% · "+(s.dir<0?"낮을수록 좋음":"높을수록 좋음")+(cond?" · "+cond+"만 채점":"")};});
     const segs=parts.map(p=>`<i style="width:${(p.w*100).toFixed(1)}%;background:${p.col}" title="${escAttr(p.tip)}"></i>`).join("");
     const lgd=parts.map(p=>`<span><i class="lgd" style="background:${p.col}"></i>${escHtml(p.lab)} <b>${wPct(p.w)}%</b> ${p.dir<0?"↓":"↑"}</span>`).join("");
-    return `<div class="ftw-row"><div class="ftw-lab">${escHtml(m.lab)}</div><div class="ftw-bar">${segs}</div><div class="ftw-lgd">${lgd}${m.note?`<span class="ftw-note"> · ${escHtml(m.note)}</span>`:""}</div></div>`;
-  }).join("")+`<div class="ftw-common">모든 지표 공통 — '계정 내 위치'는 <b>광고비 가중</b>(돈이 실제 흐르는 곳 대비) · 표본·지출 적으면 <b>50으로 축소</b> · CTR·CPM·완주율은 <b>같은 포맷(영상/이미지)·같은 지면끼리</b> 비교</div></div>`;}
+    return `<div class="ftw-row"><div class="ftw-lab">${escHtml(lab)}${custom?` <span class="ftw-custom">커스텀</span>`:""}</div><div class="ftw-bar">${segs}</div><div class="ftw-lgd">${lgd}<span class="ftw-note"> · ${escHtml(note)}</span></div></div>`;
+  }).join("")+`<div class="ftw-common">모든 지표 공통 — '계정 내 위치'는 <b>광고비 가중</b>(돈이 실제 흐르는 곳 대비) · 표본·지출 적으면 <b>50으로 축소</b> · CTR·CPM·완주율은 <b>같은 포맷·지면끼리</b> 비교 &nbsp;·&nbsp; <button type="button" class="ftw-edit" id="ftwEdit">지표·비중 직접 편집 →</button>${anyCustom?` <span class="ftw-custom">커스텀 적용됨</span>`:""}</div></div>`;}
 function renderFooter(){$("#ft").innerHTML=`
 <details open>
   <summary>점수 읽는 법 (한눈에)</summary>
@@ -4509,6 +4625,133 @@ function openExportModal(){
     closeExportModal();toast("추출 파일을 내려받았어요 📄");};
   document.addEventListener("keydown",_xtEsc,true);}
 {const _xb=$("#exportBtn");if(_xb)_xb.onclick=openExportModal;}
+
+/* ===== 채점 설정 모달 (지표 비중 커스터마이즈 · 믹서형) ===== */
+let _scDraft=null,_scKey=null,_scEsc=null,_scDrag=null;
+const _scPalette=i=>["var(--karrot)","var(--g2)","var(--g1)","var(--w1)","var(--c2)","var(--karrot-2)","var(--w2)","var(--mid)"][i%8];
+const fmtScW=w=>String(Math.round((w>0?w:0)*1000)/10);
+function condLabelOf(s){return s.entCt?"외부 지면 이미지":s.entFo?s.entFo:s.videoOnly?"영상":null;}
+function catalogKeys(key){const seen=new Set(),out=[];for(const s of (SCORING[key]||[]))if(!seen.has(s.k)){seen.add(s.k);out.push(s.k);}for(const k of (SCORE_ADDABLE[key]||[]))if(!seen.has(k)){seen.add(k);out.push(k);}return out;}
+/* 매체 key의 통합 지표 목록(효율 지표 + 규모). 커스텀 있으면 그걸, 없으면 기본 SCORING×(1-규모) + 규모 */
+function unifiedSpecs(key,useDefault){
+  const cfg=useDefault?null:SCFG[key];
+  let eff,rw;
+  if(cfg&&cfg.specs){eff=cfg.specs.map(s=>({...s}));rw=(typeof cfg.reachW==="number")?cfg.reachW:SCORING.REACH_W;}
+  else{eff=(SCORING[key]||[]).map(s=>({...s}));rw=SCORING.REACH_W;}
+  const es=eff.reduce((a,s)=>a+(s.w>0?s.w:0),0)||1;
+  const list=eff.map(s=>({k:s.k,lab:s.lab||(MET_META[s.k]&&MET_META[s.k].lab)||s.k,dir:s.dir,w:(s.w/es)*(1-rw),grp:grpOf(s.k),entCt:s.entCt,entFo:s.entFo,videoOnly:s.videoOnly}));
+  list.push({k:"__reach",lab:REACH_LAB[key]||"규모",dir:1,w:rw,grp:"scale",isReach:true});
+  return list;}
+function _scSig(reachW,specs){return Math.round(reachW*1000)+"|"+specs.map(s=>s.k+":"+Math.round(s.w*1000)).sort().join(",");}
+function _scIsDefault(key,reachW,specs){
+  const d=unifiedSpecs(key,true),tot=d.reduce((a,s)=>a+s.w,0)||1;
+  const dr=d.find(s=>s.isReach).w/tot,ds=d.filter(s=>!s.isReach).map(s=>({k:s.k,w:s.w/tot}));
+  return _scSig(reachW,specs)===_scSig(dr,ds);}
+/* 통합 draft → SCFG 저장형태(합계 100% 자동 정규화). 기본과 같으면 오버라이드 제거 */
+function commitScoreDraft(){
+  for(const [key] of SCORE_MEDIA){
+    const list=_scDraft[key];if(!list)continue;
+    const tot=list.reduce((a,s)=>a+(s.w>0?s.w:0),0)||1;
+    const reach=list.find(s=>s.isReach),reachW=reach?Math.max(0,reach.w)/tot:SCORING.REACH_W;
+    const specs=list.filter(s=>!s.isReach&&s.w>0).map(s=>{const o={k:s.k,w:s.w/tot,dir:s.dir,lab:s.lab};if(s.entCt)o.entCt=s.entCt;if(s.entFo)o.entFo=s.entFo;if(s.videoOnly)o.videoOnly=s.videoOnly;return o;});
+    if(!specs.length){delete SCFG[key];continue;} /* 효율 지표가 하나도 없으면 기본으로 */
+    if(_scIsDefault(key,reachW,specs))delete SCFG[key];else SCFG[key]={reachW,specs};}
+  scfgSave();}
+function applyScoreCfg(){
+  commitScoreDraft();
+  for(const k in DATASETS){DATASETS[k]._wkScore=null;DATASETS[k]._wkScoreG=null;} /* 주차 점수 캐시 무효화 */
+  if(typeof renderFooter==="function")renderFooter();
+  if(active&&DATASETS[active])show(DATASETS[active]);}
+function closeScoreModal(){const ov=$("#scOv");if(ov)ov.remove();if(_scEsc){document.removeEventListener("keydown",_scEsc,true);_scEsc=null;}_scDraft=null;}
+function openScoreModal(){
+  closeScoreModal();
+  _scDraft={};for(const [key] of SCORE_MEDIA)_scDraft[key]=unifiedSpecs(key);
+  _scKey=SCORE_MEDIA[0][0];
+  const ov=document.createElement("div");ov.className="sc-ov";ov.id="scOv";
+  ov.innerHTML=`<div class="sc-modal" role="dialog" aria-modal="true" aria-label="채점 설정">`+
+    `<div class="sc-head"><div><div class="sc-ttl">채점 설정</div><div class="sc-sub">매체마다 어떤 지표를 어느 비중으로 채점할지 직접 정해요. <b>저장하면</b> 표·효율지도·상세 점수에 바로 반영돼요. 비중은 각자 독립이라 합이 100%가 아니어도 되고, 저장할 때 자동으로 100%에 맞춰요.</div></div><button type="button" class="sc-close" aria-label="닫기">✕</button></div>`+
+    `<div class="sc-tabs" id="scTabs" role="tablist"></div>`+
+    `<div class="sc-note" id="scNote"></div>`+
+    `<div class="sc-body" id="scBody"></div>`+
+    `<div class="sc-foot"><button type="button" class="sc-reset" id="scReset">↺ 이 매체 기본값</button><div class="sc-foot-sp"></div><button type="button" class="sc-cancel" id="scCancel">취소</button><button type="button" class="sc-save" id="scSave">저장</button></div>`+
+  `</div>`;
+  document.body.appendChild(ov);
+  const tabs=ov.querySelector("#scTabs");
+  tabs.innerHTML=SCORE_MEDIA.map(([k,lab])=>`<button type="button" role="tab" data-k="${k}" aria-selected="${k===_scKey}" class="${k===_scKey?"on":""}">${lab}</button>`).join("");
+  tabs.querySelectorAll("button").forEach(b=>b.onclick=()=>{_scKey=b.dataset.k;tabs.querySelectorAll("button").forEach(x=>{const on=x===b;x.classList.toggle("on",on);x.setAttribute("aria-selected",on);});renderScBody();});
+  ov.querySelector(".sc-close").onclick=closeScoreModal;
+  ov.querySelector("#scCancel").onclick=closeScoreModal;
+  ov.querySelector("#scReset").onclick=()=>{_scDraft[_scKey]=unifiedSpecs(_scKey,true);renderScBody();toast(SCORE_MEDIA.find(m=>m[0]===_scKey)[1]+" 지표를 기본값으로 되돌렸어요");};
+  ov.querySelector("#scSave").onclick=()=>{applyScoreCfg();closeScoreModal();toast("채점 설정을 저장했어요 — 점수를 다시 매겼어요 ✅");};
+  ov.addEventListener("click",e=>{if(e.target===ov)closeScoreModal();});
+  ov.querySelector(".sc-modal").addEventListener("click",e=>e.stopPropagation());
+  _scEsc=e=>{if(e.key==="Escape"){e.stopPropagation();closeScoreModal();}};
+  document.addEventListener("keydown",_scEsc,true);
+  _scDrag=null;wireScBodyOnce(ov.querySelector("#scBody")); /* 본문 리스너는 모달당 1회만(재렌더 중복 방지) */
+  renderScBody();}
+function renderScBody(){
+  const key=_scKey,list=_scDraft[key],body=$("#scBody"),note=$("#scNote");if(!body)return;
+  note.textContent=SCORE_NOTE[key]||"";
+  const active=new Set(list.map(s=>s.k));
+  const avail=catalogKeys(key).filter(k=>!active.has(k));
+  const rowsHtml=list.map((s,i)=>{
+    const pw=s.w*100,cond=condLabelOf(s);
+    return `<div class="sc-row" data-i="${i}">
+      <div class="sc-info"><div class="sc-nm">${escHtml(s.lab)}</div>
+        <div class="sc-sub2"><span class="sc-dir ${s.dir<0?"dn":"up"}">${s.dir<0?"↓ 낮을수록":"↑ 높을수록"}</span>${cond?`<span class="sc-cond">${escHtml(cond)}만</span>`:""}${s.isReach?`<span class="sc-cond scl">규모</span>`:""}</div></div>
+      <div class="sc-slider" tabindex="0" role="slider" aria-label="${escAttr(s.lab)} 비중" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pw)}">
+        <div class="sc-track"><div class="sc-fill" style="width:${pw.toFixed(1)}%;background:${_scPalette(i)}"></div></div>
+        <div class="sc-knob" style="left:${pw.toFixed(1)}%"></div></div>
+      <span class="sc-numwrap"><input class="sc-num" type="number" min="0" max="100" step="0.5" value="${fmtScW(s.w)}" aria-label="${escAttr(s.lab)} 비중 퍼센트"></span>
+      <button type="button" class="sc-rm" aria-label="${escAttr(s.lab)} 빼기" title="빼기"${(s.isReach||list.filter(x=>!x.isReach).length<=1)?' style="visibility:hidden"':""}>✕</button>
+    </div>`;}).join("");
+  const grpOrder=["eff","quality","reaction"];
+  const libInner=grpOrder.map(g=>{
+    const items=avail.filter(k=>grpOf(k)===g);if(!items.length)return "";
+    return `<div class="sc-lib-grp">${SGROUP[g]}</div>`+items.map(k=>{const m=MET_META[k]||{lab:k,dir:1};
+      return `<label class="sc-chk"><input type="checkbox" data-k="${k}"><span>${escHtml(m.lab)}</span><span class="sc-dir ${m.dir<0?"dn":"up"}" style="margin-left:2px">${m.dir<0?"↓":"↑"}</span><span class="sc-lib-tag">추가</span></label>`;}).join("");
+  }).join("");
+  body.innerHTML=`<div class="sc-list">${rowsHtml}</div>`+
+    (libInner?`<div class="sc-lib" id="scLib"><button type="button" class="sc-lib-h" id="scLibH" aria-expanded="false" aria-controls="scLibBody"><span>＋ 지표 추가</span><span class="sc-lib-cnt">${avail.length}</span><span class="sc-car">▸</span></button><div class="sc-lib-body" id="scLibBody" hidden>${libInner}</div></div>`
+      :`<div class="sc-lib-none">이 매체의 지표를 모두 쓰고 있어요.</div>`);
+  wireScLib();}
+/* 행 값 표시 갱신 — 항상 현재 매체(_scKey)의 draft를 읽는다 */
+function _scUpdateRow(i,exceptInput){const body=$("#scBody");if(!body)return;const s=_scDraft[_scKey][i],r=body.querySelector(`.sc-row[data-i="${i}"]`);if(!s||!r)return;
+  const pw=s.w*100;r.querySelector(".sc-fill").style.width=pw.toFixed(1)+"%";r.querySelector(".sc-knob").style.left=pw.toFixed(1)+"%";
+  r.querySelector(".sc-slider").setAttribute("aria-valuenow",String(Math.round(pw)));
+  const ni=r.querySelector(".sc-num");if(ni&&ni!==exceptInput)ni.value=fmtScW(s.w);}
+/* 라이브러리(열기/닫기·추가) — 매 렌더마다 새 요소라 안전(중복 없음) */
+function wireScLib(){
+  const libH=$("#scLibH");
+  if(libH)libH.onclick=()=>{const b=$("#scLibBody"),open=b.hasAttribute("hidden");if(open){b.removeAttribute("hidden");libH.setAttribute("aria-expanded","true");libH.querySelector(".sc-car").style.transform="rotate(90deg)";}else{b.setAttribute("hidden","");libH.setAttribute("aria-expanded","false");libH.querySelector(".sc-car").style.transform="";}};
+  const lib=$("#scLibBody");
+  if(lib)lib.onchange=e=>{const cb=e.target.closest("input[type=checkbox]");if(!cb)return;
+    const key=_scKey,list=_scDraft[key],k=cb.dataset.k,def=(SCORING[key]||[]).find(s=>s.k===k),m=MET_META[k]||{lab:k,dir:1};
+    const spec={k,lab:(def&&def.lab)||m.lab,dir:(def?def.dir:m.dir),w:0.1,grp:grpOf(k)};
+    if(def){if(def.entCt)spec.entCt=def.entCt;if(def.entFo)spec.entFo=def.entFo;if(def.videoOnly)spec.videoOnly=def.videoOnly;}else if(m.videoOnly)spec.videoOnly=true;
+    const ri=list.findIndex(s=>s.isReach);list.splice(ri<0?list.length:ri,0,spec);renderScBody();};}
+/* 본문(슬라이더·숫자·빼기) 리스너 — 모달당 1회만. 현재 매체 draft를 동적으로 읽어 재렌더에도 안전 */
+function wireScBodyOnce(body){
+  body.addEventListener("input",e=>{const inp=e.target.closest(".sc-num");if(!inp)return;
+    const list=_scDraft[_scKey],i=+inp.closest(".sc-row").dataset.i;let v=parseFloat(inp.value);if(isNaN(v))return;
+    list[i].w=Math.max(0,Math.min(100,v))/100;_scUpdateRow(i,inp);});
+  body.addEventListener("click",e=>{const rm=e.target.closest(".sc-rm");if(!rm)return;
+    _scDraft[_scKey].splice(+rm.closest(".sc-row").dataset.i,1);renderScBody();});
+  const setFromX=(i,cx,slider)=>{const list=_scDraft[_scKey],t=slider.querySelector(".sc-track").getBoundingClientRect();let v=(cx-t.left)/t.width;v=Math.max(0,Math.min(1,v));list[i].w=Math.round(v*200)/200;_scUpdateRow(i);};
+  body.addEventListener("pointerdown",e=>{const sl=e.target.closest(".sc-slider");if(!sl)return;
+    const i=+sl.closest(".sc-row").dataset.i;_scDrag={i,sl};sl.setPointerCapture(e.pointerId);setFromX(i,e.clientX,sl);e.preventDefault();});
+  body.addEventListener("pointermove",e=>{if(_scDrag)setFromX(_scDrag.i,e.clientX,_scDrag.sl);});
+  body.addEventListener("pointerup",()=>{_scDrag=null;});
+  body.addEventListener("pointercancel",()=>{_scDrag=null;});
+  body.addEventListener("keydown",e=>{const sl=e.target.closest(".sc-slider");if(!sl)return;
+    const list=_scDraft[_scKey],i=+sl.closest(".sc-row").dataset.i;let step=0;
+    if(e.key==="ArrowRight"||e.key==="ArrowUp")step=0.005;else if(e.key==="ArrowLeft"||e.key==="ArrowDown")step=-0.005;
+    else if(e.key==="PageUp")step=0.05;else if(e.key==="PageDown")step=-0.05;
+    else if(e.key==="Home"){list[i].w=0;_scUpdateRow(i);e.preventDefault();return;}
+    else if(e.key==="End"){list[i].w=1;_scUpdateRow(i);e.preventDefault();return;}else return;
+    list[i].w=Math.max(0,Math.min(1,list[i].w+step));_scUpdateRow(i);e.preventDefault();});}
+{const _sb=$("#scoreCfgBtn");if(_sb)_sb.onclick=openScoreModal;}
+document.addEventListener("click",e=>{const t=e.target;if(t&&t.closest&&t.closest("#ftwEdit"))openScoreModal();});
 /* 로그인 — 비밀번호만으로 사용자 식별. cr_login이 {found,name,status,role,viewer} 반환:
    승인됨=데이터 열고 환영(권한별) · 신청함=승인 대기 · 거절됨=거절 안내 · 미존재=흔들기.
    0715=이름 없는 뷰어 · editor=마크·부가 캐시(canEdit) · 데이터 저장은 admin만(isAdmin — 서버도 동일 게이트) */

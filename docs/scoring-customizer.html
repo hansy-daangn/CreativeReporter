@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>커스텀 채점 · 지표 비중 편집기 (UI 시안)</title>
+<style>
+  :root{
+    --canvas:#ECECE7; --surface:#FFFFFF; --surface-2:#F4F4F0; --surface-3:#EDEDE7;
+    --ink:#1B1A16; --muted:#74726A; --faint:#A4A299;
+    --side:#1F1E18; --side-2:#2A2922; --side-ink:#EDEBE3; --side-muted:#9B998E; --side-faint:#6F6D63;
+    --karrot:#FF6F0F; --karrot-2:#FF8A3D; --karrot-f:#FFEDDF;
+    --g2:#1E88E5; --g2-f:#D6ECFB; --g1:#1C8A6E; --g1-f:#E0F1EA;
+    --mid:#8A887E; --mid-f:#EBEBE4;
+    --w1:#C2871C; --w1-f:#F7EBD0; --w2:#C73F54; --w2-f:#F8DCE1;
+    --gold:#C8961A; --gold-f:#F7EDC9; --silver:#94969C; --bronze:#AE7740;
+    --c2:#3D5A80;
+    --r:16px; --r-sm:10px;
+    --sh:0 1px 2px rgba(20,20,15,.05), 0 8px 24px -16px rgba(20,20,15,.22);
+    --sans:"Pretendard Variable",Pretendard,system-ui,-apple-system,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--canvas); color:var(--ink); font-family:var(--sans); font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased}
+  button{font-family:inherit;border:0;cursor:pointer;background:none;color:inherit}
+  input{font-family:inherit}
+  input[type=number]{-moz-appearance:textfield;appearance:textfield}
+  input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;appearance:none;margin:0}
+
+  /* ===== page shell ===== */
+  .wrap{max-width:1180px;margin:0 auto;padding:26px 22px 80px}
+  .pghead h1{font-size:23px;font-weight:800;letter-spacing:-.02em;margin:0 0 6px}
+  .pghead p{color:var(--muted);font-size:13.5px;margin:0;max-width:760px;line-height:1.6}
+  .pghead .kbd{background:var(--surface);border:1px solid var(--surface-3);border-radius:6px;padding:1px 7px;font-size:12px;font-weight:700;color:var(--ink)}
+
+  /* concept switcher */
+  .cswitch{display:flex;gap:8px;margin:22px 0 6px;flex-wrap:wrap}
+  .cswitch button{flex:1 1 240px;text-align:left;background:var(--surface);border:1.5px solid var(--surface-3);border-radius:14px;padding:13px 15px;transition:.14s;position:relative}
+  .cswitch button:hover{border-color:#dedcd2}
+  .cswitch button.on{border-color:var(--karrot);box-shadow:0 0 0 3px var(--karrot-f)}
+  .cswitch .cs-tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;color:var(--karrot);background:var(--karrot-f);padding:2px 7px;border-radius:6px;margin-bottom:7px}
+  .cswitch .cs-t{font-size:14.5px;font-weight:800;letter-spacing:-.01em;margin-bottom:2px}
+  .cswitch .cs-d{font-size:11.5px;color:var(--muted);line-height:1.45}
+
+  .pane{display:none;margin-top:18px}
+  .pane.on{display:block}
+  .pane-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
+  @media(max-width:920px){.pane-grid{grid-template-columns:minmax(0,1fr)}}
+  @media(max-width:560px){.wrap{padding:20px 14px 70px}}
+
+  .card{background:var(--surface);border-radius:var(--r);box-shadow:var(--sh);padding:18px 18px 20px}
+  .card > .card-h{display:flex;align-items:center;gap:10px;margin:0 0 4px}
+  .card-h h2{font-size:15px;font-weight:800;margin:0;letter-spacing:-.01em}
+  .card-h .sub{font-size:12px;color:var(--muted)}
+  .spacer{flex:1}
+
+  /* ===== media tabs ===== */
+  .mtabs{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 16px}
+  .mtab{padding:7px 13px;border-radius:9px;background:var(--surface-2);color:var(--muted);font-size:12.5px;font-weight:700;transition:.12s;display:flex;align-items:center;gap:7px}
+  .mtab .mt-c{font-size:10px;font-weight:700;color:var(--faint);background:var(--surface-3);padding:1px 6px;border-radius:5px}
+  .mtab:hover{background:var(--surface-3)}
+  .mtab.on{background:var(--ink);color:#fff}
+  .mtab.on .mt-c{background:rgba(255,255,255,.16);color:#fff}
+  .mnote{font-size:11.5px;color:var(--faint);margin:-8px 0 16px;line-height:1.5}
+
+  /* ===== buttons ===== */
+  .btn{padding:8px 14px;border-radius:9px;background:var(--surface-2);color:var(--muted);font-size:12.5px;font-weight:700;transition:.12s;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{background:var(--surface-3)}
+  .btn.pri{background:var(--karrot);color:#fff}
+  .btn.pri:hover{background:#ff7d24}
+  .btn.ghost{background:transparent;border:1.5px solid var(--surface-3)}
+  .btn.sm{padding:5px 10px;font-size:11.5px}
+
+  /* direction / condition chips */
+  .dir{font-size:10.5px;font-weight:800;padding:0 5px;border-radius:5px;line-height:17px;display:inline-block;vertical-align:1px}
+  .dir.up{color:var(--g1);background:var(--g1-f)}
+  .dir.dn{color:var(--w2);background:var(--w2-f)}
+  .cond{font-size:10px;font-weight:700;color:var(--w1);background:var(--w1-f);padding:1px 6px;border-radius:5px;white-space:nowrap}
+  .gtag{font-size:10px;font-weight:700;color:var(--muted);background:var(--surface-3);padding:1px 7px;border-radius:5px}
+
+  /* number input */
+  .num{width:64px;border:1.5px solid var(--surface-3);border-radius:8px;background:var(--surface);color:var(--ink);font-size:13px;font-weight:800;text-align:right;padding:5px 22px 5px 8px}
+  .num:focus{outline:none;border-color:var(--karrot);box-shadow:0 0 0 3px var(--karrot-f)}
+  .numwrap{position:relative;display:inline-flex;align-items:center}
+  .numwrap::after{content:"%";position:absolute;right:8px;font-size:11px;font-weight:700;color:var(--faint);pointer-events:none}
+
+  /* ===== live leaderboard (shared) ===== */
+  .board .card-h{margin-bottom:12px}
+  .lb-list{display:flex;flex-direction:column;gap:0}
+  .lb-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--surface-2);will-change:transform}
+  .lb-row:last-child{border-bottom:0}
+  .lb-rk{width:19px;text-align:center;font-size:12px;font-weight:800;color:var(--faint);flex:0 0 auto}
+  .lb-nm{flex:1;min-width:0;font-size:12px;font-weight:700;line-height:1.25;overflow:hidden}
+  .lb-nm em{display:block;font-style:normal;font-size:10px;font-weight:600;color:var(--faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lb-sc{display:flex;align-items:center;gap:8px;flex:0 0 auto;width:118px}
+  .lb-bar{flex:1;height:7px;border-radius:4px;background:var(--surface-3);overflow:hidden}
+  .lb-bar i{display:block;height:100%;border-radius:4px;transition:width .42s cubic-bezier(.2,.7,.2,1)}
+  .lb-sc b{width:34px;text-align:right;font-size:13px;font-weight:800;letter-spacing:-.01em}
+  .board .foot{font-size:10.5px;color:var(--faint);margin-top:12px;line-height:1.5;border-top:1px dashed var(--surface-3);padding-top:10px}
+
+  /* composition summary (shared helper markup) */
+  .sumbar{display:flex;height:15px;border-radius:6px;overflow:hidden;background:var(--surface-3);margin:2px 0 8px}
+  .sumbar i{display:block;height:100%;min-width:2px;transition:width .3s ease}
+  .totline{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--muted)}
+  .totline b{color:var(--ink)}
+  .totline .warn{color:var(--w2)}
+  .totline .ok{color:var(--g1)}
+
+  .hint{font-size:11.5px;color:var(--muted);line-height:1.55;background:var(--surface-2);border-radius:10px;padding:10px 12px;margin:0 0 14px;display:flex;gap:8px}
+  .hint .i{color:var(--karrot);font-weight:800;flex:0 0 auto}
+
+  .pgfoot{margin-top:34px;padding-top:18px;border-top:1px solid var(--surface-3);color:var(--faint);font-size:11.5px;line-height:1.7;max-width:820px}
+  .pgfoot b{color:var(--muted)}
+
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:13px;font-weight:700;padding:11px 20px;border-radius:12px;box-shadow:0 10px 30px -8px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:.25s;z-index:50}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== 시안 A · 배분 막대 ===== */
+  #pane-a .albar{position:relative;height:46px;border-radius:11px;display:flex;background:var(--surface-3);user-select:none;touch-action:none;margin:2px 0 2px}
+  #pane-a .alseg{position:relative;height:100%;display:flex;align-items:center;justify-content:center;min-width:0;color:#fff;overflow:hidden}
+  #pane-a .alseg:first-child{border-radius:11px 0 0 11px} #pane-a .alseg:last-child{border-radius:0 11px 11px 0}
+  #pane-a .alseg span{padding:0 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:800;font-size:11.5px;text-shadow:0 1px 2px rgba(0,0,0,.28)}
+  #pane-a .alhandle{position:absolute;top:-5px;height:56px;width:16px;transform:translateX(-50%);cursor:ew-resize;display:flex;align-items:center;justify-content:center;z-index:3;touch-action:none}
+  #pane-a .alhandle::before{content:"";width:3px;height:26px;border-radius:3px;background:rgba(255,255,255,.92);box-shadow:0 0 0 1px rgba(0,0,0,.18)}
+  #pane-a .alhandle:hover::before,#pane-a .alhandle.drag::before{background:#fff;height:36px;box-shadow:0 0 0 1px rgba(0,0,0,.28)}
+  #pane-a .alleg{margin-top:16px;display:flex;flex-direction:column;gap:1px}
+  #pane-a .alrow{display:flex;align-items:center;gap:9px;padding:8px 4px;border-bottom:1px solid var(--surface-2)}
+  #pane-a .alrow .sw{width:12px;height:12px;border-radius:4px;flex:0 0 auto}
+  #pane-a .alrow .nm{font-size:12.5px;font-weight:700;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #pane-a .alrow .dir,#pane-a .alrow .cond,#pane-a .alrow .numwrap,#pane-a .alrow .rm{flex:0 0 auto}
+  #pane-a .alrow .rm{color:var(--faint);font-size:15px;line-height:1;width:24px;height:24px;border-radius:7px;flex:0 0 auto}
+  #pane-a .alrow .rm:hover{background:var(--w2-f);color:var(--w2)}
+  #pane-a .allib{margin-top:18px;background:var(--surface-2);border-radius:12px;padding:13px 14px}
+  #pane-a .allib h4{margin:0 0 10px;font-size:11px;font-weight:800;letter-spacing:.04em;color:var(--faint);text-transform:uppercase}
+  #pane-a .allib-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  @media(max-width:560px){#pane-a .allib-grid{grid-template-columns:1fr}}
+  #pane-a .chk{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;background:var(--surface);cursor:pointer;font-size:12px;font-weight:650}
+  #pane-a .chk:hover{background:#fff;box-shadow:0 0 0 1px var(--surface-3)}
+  #pane-a .chk input{appearance:none;-webkit-appearance:none;width:16px;height:16px;border:1.5px solid #cfcdc4;border-radius:5px;flex:0 0 auto;position:relative;cursor:pointer}
+  #pane-a .chk input:checked{background:var(--karrot);border-color:var(--karrot)}
+  #pane-a .chk input:checked::after{content:"";position:absolute;left:4.5px;top:1.5px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+  #pane-a .chk .g{margin-left:auto}
+/* ===== 시안 B · 블록 캔버스 ===== */
+  #pane-b .blk-track{display:flex;flex-direction:column;gap:9px;padding:2px 0}
+  #pane-b .blk-row{display:flex;align-items:center;gap:10px}
+  #pane-b .blk-hold{flex:1;min-width:0;height:46px;border-radius:11px;background:var(--surface-3);position:relative;overflow:hidden}
+  #pane-b .blk-hold::after{content:"";position:absolute;inset:0;border-radius:11px;box-shadow:inset 0 0 0 1px rgba(20,20,15,.05);pointer-events:none}
+  #pane-b .blk{position:absolute;left:0;top:0;height:100%;border-radius:11px;display:flex;align-items:center;gap:5px;padding:0 21px 0 12px;color:#fff;min-width:100px;overflow:hidden;user-select:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);transition:filter .12s}
+  #pane-b .blk .b-nm{flex:1;min-width:0;font-size:12.5px;font-weight:800;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.24);overflow:hidden;text-overflow:ellipsis}
+  #pane-b .blk .b-nm .b-ar{font-weight:800;margin-right:4px;opacity:.92}
+  #pane-b .blk .b-star{font-size:13px;font-weight:800;color:#fff;flex:0 0 auto;cursor:help;line-height:1}
+  #pane-b .blk .grip{position:absolute;right:0;top:0;height:100%;width:18px;cursor:ew-resize;display:flex;align-items:center;justify-content:center;border-radius:0 11px 11px 0;touch-action:none}
+  #pane-b .blk .grip::before{content:"";width:3px;height:20px;border-radius:3px;background:rgba(255,255,255,.9)}
+  #pane-b .blk .grip:hover::before,#pane-b .blk.drag .grip::before{height:30px;background:#fff}
+  #pane-b .blk.drag{filter:brightness(1.06)}
+  #pane-b .b-num{flex:0 0 auto;display:flex;align-items:center;background:var(--surface);border:1.5px solid var(--surface-3);border-radius:8px;padding:4px 8px 4px 6px}
+  #pane-b .b-num input{width:40px;border:0;background:transparent;color:var(--ink);font-weight:800;font-size:12.5px;text-align:right}
+  #pane-b .b-num input:focus{outline:none} #pane-b .b-num i{font-size:11px;font-weight:700;color:var(--faint);font-style:normal;margin-left:2px}
+  #pane-b .b-num:focus-within{border-color:var(--karrot);box-shadow:0 0 0 3px var(--karrot-f)}
+  #pane-b .b-rm{flex:0 0 auto;color:var(--faint);font-size:16px;width:24px;height:24px;border-radius:7px}
+  #pane-b .b-rm:hover{background:var(--w2-f);color:var(--w2)}
+  #pane-b .blk-note{font-size:10.5px;color:var(--faint);margin-top:12px;font-weight:600}
+  #pane-b .palette{margin-top:18px;background:var(--surface-2);border-radius:12px;padding:13px 14px}
+  #pane-b .palette h4{margin:0 0 10px;font-size:11px;font-weight:800;letter-spacing:.04em;color:var(--faint);text-transform:uppercase}
+  #pane-b .pchips{display:flex;flex-wrap:wrap;gap:7px}
+  #pane-b .pchip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:var(--surface);border:1.5px solid var(--surface-3);font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;transition:.12s}
+  #pane-b .pchip:hover{border-color:var(--karrot);color:var(--karrot);background:#fff}
+  #pane-b .pchip .plus{font-size:15px;font-weight:800;color:var(--karrot);line-height:1}
+  #pane-b .pchip .cdir{font-size:10px;font-weight:800}
+  #pane-b .palette .empty{font-size:11.5px;color:var(--faint)}
+/* ===== 시안 C · 믹서 패널 ===== */
+  #pane-c .mixhead{display:flex;align-items:center;gap:8px;margin:6px 0 2px;font-size:11px;font-weight:800;letter-spacing:.04em;color:var(--faint);text-transform:uppercase}
+  #pane-c .mixrow{display:flex;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px solid var(--surface-2)}
+  #pane-c .mixrow .mx-info{width:148px;flex:0 0 auto;min-width:0}
+  #pane-c .mixrow .mx-nm{font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #pane-c .mixrow .mx-sub{display:flex;gap:5px;margin-top:3px;align-items:center;flex-wrap:wrap}
+  #pane-c .mixrow .mx-slider{flex:1;height:26px;position:relative;display:flex;align-items:center;cursor:pointer;touch-action:none;min-width:70px}
+  #pane-c .mixrow .mx-track{width:100%;height:8px;border-radius:5px;background:var(--surface-3);overflow:hidden}
+  #pane-c .mixrow .mx-fill{height:100%;border-radius:5px}
+  #pane-c .mixrow .mx-knob{position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.26),0 0 0 1px rgba(0,0,0,.05);transform:translateX(-50%);top:4px;pointer-events:none}
+  #pane-c .mixrow .mx-knob::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--karrot)}
+  #pane-c .mixrow .mx-rm{color:var(--faint);font-size:16px;width:24px;height:24px;border-radius:7px;flex:0 0 auto}
+  #pane-c .mixrow .mx-rm:hover{background:var(--w2-f);color:var(--w2)}
+  #pane-c .mix-tools{display:flex;gap:7px;margin:14px 0 2px;flex-wrap:wrap}
+  #pane-c .lib2{margin-top:16px;border:1.5px solid var(--surface-3);border-radius:12px;overflow:hidden}
+  #pane-c .lib2-h{display:flex;align-items:center;gap:9px;padding:11px 13px;cursor:pointer;font-size:12.5px;font-weight:700;background:var(--surface-2);user-select:none}
+  #pane-c .lib2-h .cnt{font-size:11px;font-weight:700;color:var(--faint);background:var(--surface);padding:1px 7px;border-radius:6px}
+  #pane-c .lib2-h .car{margin-left:auto;color:var(--faint);transition:.15s;font-size:12px}
+  #pane-c .lib2.open .lib2-h .car{transform:rotate(90deg)}
+  #pane-c .lib2-body{display:none;padding:4px 8px 10px}
+  #pane-c .lib2.open .lib2-body{display:block}
+  #pane-c .lib2-grp{font-size:10px;font-weight:800;letter-spacing:.04em;color:var(--faint);text-transform:uppercase;padding:11px 8px 4px}
+  #pane-c .chk2{display:flex;align-items:center;gap:11px;padding:8px 9px;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:650}
+  #pane-c .chk2:hover{background:var(--surface-2)}
+  #pane-c .chk2 input{appearance:none;-webkit-appearance:none;width:17px;height:17px;border:1.5px solid #cfcdc4;border-radius:5px;flex:0 0 auto;position:relative;cursor:pointer}
+  #pane-c .chk2 input:checked{background:var(--karrot);border-color:var(--karrot)}
+  #pane-c .chk2 input:checked::after{content:"";position:absolute;left:5px;top:1.5px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+  #pane-c .chk2 .c-dir{margin-left:2px} #pane-c .chk2 .c-g{margin-left:auto;font-size:10.5px}
+  @media(max-width:560px){
+    #pane-c .mixrow{gap:9px} #pane-c .mixrow .mx-info{width:104px} #pane-c .mixrow .mx-slider{min-width:52px}
+    #pane-a .allib-grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="pghead">
+    <h1>커스텀 채점 &middot; 지표 비중 편집기 <span style="font-size:13px;font-weight:800;color:var(--karrot)">UI 시안 3종</span></h1>
+    <p>각 매체가 어떤 지표를 <b>어느 비중</b>으로 채점할지 직접 고르고 조절하는 편집기입니다. 지표를 <b>체크해 추가</b>하거나 <b>해제해 빼고</b>, <b>네모 블록의 너비를 드래그</b>하거나 <b>숫자를 입력</b>해 비중을 바꾸면 오른쪽 <b>미리보기 순위</b>가 즉시 다시 매겨집니다. 아래 세 가지 인터랙션 시안을 눌러 비교해 보세요.</p>
+  </div>
+
+  <div class="cswitch" id="cswitch">
+    <button data-c="a" class="on">
+      <span class="cs-tag">시안 A</span>
+      <div class="cs-t">배분 막대 (Allocation Bar)</div>
+      <div class="cs-d">지표들이 하나의 100% 막대를 나눠 갖습니다. 조각 사이 <b>경계를 드래그</b>해 옆 지표와 비중을 주고받습니다.</div>
+    </button>
+    <button data-c="b">
+      <span class="cs-tag">시안 B</span>
+      <div class="cs-t">블록 캔버스 (Resizable Blocks)</div>
+      <div class="cs-d">지표마다 독립된 <b>네모 블록</b>. 각 블록의 <b>오른쪽 손잡이를 끌어</b> 너비를 키우면 나머지가 자동 재분배됩니다.</div>
+    </button>
+    <button data-c="c">
+      <span class="cs-tag">시안 C</span>
+      <div class="cs-t">믹서 패널 (Mixer / Equalizer)</div>
+      <div class="cs-d">지표별 <b>슬라이더 + 숫자 입력</b> 한 줄. <b>라이브러리 체크박스</b>로 지표를 켜고 끕니다. 정밀 편집·확장에 강합니다.</div>
+    </button>
+  </div>
+
+  <section class="pane on" id="pane-a"></section>
+  <section class="pane" id="pane-b"></section>
+  <section class="pane" id="pane-c"></section>
+
+  <div class="pgfoot">
+    <b>이 페이지는 UI 시안(프로토타입)입니다.</b> 표시되는 순위는 각 시안의 조작을 체감할 수 있도록 <b>가상의 샘플 소재 10개</b>를 실제 채점 로직(지표별 광고비 가중 백분위 → 비중 가중합 → 비교군 내 재배치)의 축약판으로 매긴 것입니다. 저장 버튼은 데모용이라 실제로 저장되지 않습니다. 기본값은 현재 사이트의 매체별 가중치(효율 85% + 규모 15%)를 그대로 재현합니다 — 세 시안 모두 규모(데려온 유저)를 다른 지표와 동등한 하나의 조절 대상으로 통합해, 앞으로 새 기준을 자유롭게 추가/조정하는 방향을 함께 제안합니다.
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   KIT — 세 시안이 공유하는 토큰/샘플데이터/채점엔진/리더보드
+   ============================================================ */
+const KIT=(function(){
+  const EFF_W=0.85, REACH_W=0.15;
+  const lerp=(a,b,t)=>a+(b-a)*t, clamp01=x=>x<0?0:x>1?1:x;
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  const comma=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,",");
+
+  /* 지표 사전 — label/group/dir/fmt/샘플분포(lo,hi)/품질상관(rho: 원값과 소재품질의 상관) */
+  const MET={
+    ncr_ecpa:{label:"신규+재활성 eCPA",group:"eff",dir:-1,fmt:"won",lo:2500,hi:9000,rho:-0.66},
+    act_ecpa:{label:"활성 유저 eCPA",group:"eff",dir:-1,fmt:"won",lo:2000,hi:8000,rho:-0.6},
+    ecpi:{label:"eCPI (설치 단가)",group:"eff",dir:-1,fmt:"won",lo:3000,hi:12000,rho:-0.5},
+    cp_new:{label:"신규 설치 단가",group:"eff",dir:-1,fmt:"won",lo:4000,hi:16000,rho:-0.62},
+    cp_first:{label:"신규 단가",group:"eff",dir:-1,fmt:"won",lo:3500,hi:11000,rho:-0.68},
+    cp_home:{label:"홈 단가",group:"eff",dir:-1,fmt:"won",lo:1200,hi:6000,rho:-0.64},
+    cpa:{label:"전환당 비용 (CPA)",group:"eff",dir:-1,fmt:"won",lo:3000,hi:12000,rho:-0.5},
+    cpm:{label:"CPM",group:"eff",dir:-1,fmt:"won",lo:1500,hi:9000,rho:-0.2},
+    cpc:{label:"CPC",group:"eff",dir:-1,fmt:"won",lo:300,hi:1800,rho:-0.3},
+    ctr:{label:"CTR",group:"reaction",dir:1,fmt:"pct",lo:0.4,hi:12,rho:0.35},
+    vcr:{label:"영상 완주율",group:"reaction",dir:1,fmt:"pct",lo:8,hi:55,rho:0.55},
+    fo_rate:{label:"신규 전환율",group:"reaction",dir:1,fmt:"pct",lo:1,hi:9,rho:0.5},
+    conv_rate:{label:"전환율",group:"reaction",dir:1,fmt:"pct",lo:2,hi:30,rho:0.4},
+    hpm:{label:"홈 도달율",group:"reaction",dir:1,fmt:"num1",lo:2,hi:22,rho:0.5},
+    ret_d1:{label:"D1 잔존율",group:"quality",dir:1,fmt:"pct",lo:2,hi:30,rho:0.62},
+    ret_d7:{label:"D7 잔존율",group:"quality",dir:1,fmt:"pct",lo:1,hi:14,rho:0.6},
+    roas:{label:"ROAS D7",group:"quality",dir:1,fmt:"mult",lo:0.1,hi:2.4,rho:0.58},
+  };
+  const GROUP_LABELS={eff:"효율 · 단가",quality:"유저 질",reaction:"소재 반응",scale:"규모"};
+  const PALETTE=["#FF6F0F","#1E88E5","#1C8A6E","#C2871C","#3D5A80","#8A887E","#C73F54","#FF8A3D","#5FA8D3","#7E57C2"];
+
+  /* 매체 정의 — def:[key,효과가중(합1.0),조건?] · add:추가가능 지표 · reach:규모지표 라벨/상관 */
+  const MEDIA=[
+    {id:"moloco",label:"몰로코",count:412,note:"유입의 99.4%가 재참여인 리타겟(RE) 채널. 규모 = 데려온 유저(신규+재활성).",
+      reach:{label:"규모 · 데려온 유저",rho:0.3},
+      def:[["ncr_ecpa",0.595],["ctr",0.102,"외부 지면 이미지"],["vcr",0.102,"영상"],["ret_d1",0.051],["reach",0.15]],
+      add:["act_ecpa","ecpi","cpm","cpc","ret_d7","roas"]},
+    {id:"meta",label:"메타",count:337,note:"신규/재참여 혼합 채널(재참여 88.5%). CTR은 실측 역방향이라 기본 제외. 규모 = 데려온 유저.",
+      reach:{label:"규모 · 데려온 유저",rho:0.3},
+      def:[["ncr_ecpa",0.51],["ret_d1",0.187],["cp_new",0.153],["reach",0.15]],
+      add:["ctr","act_ecpa","ecpi","cpm","ret_d7","roas"]},
+    {id:"google_aeo",label:"구글 AEO",count:206,note:"신규 유저 획득 최적화. 규모 = 신규 실행(first_open).",
+      reach:{label:"규모 · 신규 실행",rho:0.3},
+      def:[["cp_first",0.544],["cp_home",0.102],["fo_rate",0.102],["ctr",0.102,"영상"],["reach",0.15]],
+      add:["cpm","cpc","hpm","roas"]},
+    {id:"google_ace",label:"구글 ACE",count:158,note:"리타겟팅(인앱 액션). 전환수·전환율은 왜곡이라 홈 도달 실측 기준. 규모 = 홈 도달.",
+      reach:{label:"규모 · 홈 도달",rho:0.3},
+      def:[["cp_home",0.4675],["hpm",0.17],["cpm",0.2125],["reach",0.15]],
+      add:["cpa","ctr","conv_rate","cpc"]},
+  ];
+  const mediaOf=mid=>MEDIA.find(m=>m.id===mid);
+  const SEED={moloco:12011,meta:23407,google_aeo:31905,google_ace:47713};
+
+  function metaOf(mid,k){
+    if(k==="reach"){const m=mediaOf(mid);return {k:"reach",label:m.reach.label,short:"규모",dir:1,group:"scale",fmt:"count"};}
+    const b=MET[k];const short=b.label.split(/[ (·]/)[0];
+    return {k,label:b.label,short,dir:b.dir,group:b.group,fmt:b.fmt};
+  }
+  /* 매체의 전체 지표 카탈로그(기본 지표 우선, 이어서 추가 가능 지표) */
+  function catalog(mid){
+    const m=mediaOf(mid),out=[],seen={};
+    m.def.forEach(d=>{const mo=metaOf(mid,d[0]);out.push({...mo,def:true,defW:d[1],cond:d[2]||null});seen[d[0]]=1;});
+    m.add.forEach(k=>{if(seen[k])return;const mo=metaOf(mid,k);out.push({...mo,def:false,defW:0,cond:null});});
+    return out;
+  }
+  function defaultSpecs(mid){
+    const m=mediaOf(mid);
+    return m.def.map(d=>{const mo=metaOf(mid,d[0]);return {k:d[0],label:mo.label,short:mo.short,dir:mo.dir,group:mo.group,fmt:mo.fmt,cond:d[2]||null,w:d[1]};});
+  }
+
+  /* 샘플 소재 10개(매체별, 결정론적) */
+  const _S={};
+  function samples(mid){
+    if(_S[mid])return _S[mid];
+    const m=mediaOf(mid),cat=catalog(mid),rnd=mulberry32(SEED[mid]),N=10;
+    const svc=["중고거래","부동산","알바","동네생활","중고차","모임","인증","공구"];
+    const fmt=["숏폼","이미지","캐러셀","스토리","배너"];
+    const arr=[];
+    for(let i=0;i<N;i++){
+      const q=rnd(),vals={};
+      for(const c of cat){
+        let rho,lo,hi;
+        if(c.k==="reach"){rho=m.reach.rho;lo=400;hi=40000;}
+        else {const b=MET[c.k];rho=b.rho;lo=b.lo;hi=b.hi;}
+        const noise=(rnd()-0.5)*0.72;
+        const v01=clamp01(0.5+rho*(q-0.5)*1.7+noise);
+        vals[c.k]=lerp(lo,hi,v01);
+      }
+      const name=svc[Math.floor(rnd()*svc.length)]+"_"+fmt[Math.floor(rnd()*fmt.length)]+"_"+(2601+i)+"_"+(rnd()<0.5?"A":"B");
+      arr.push({name,vals,q});
+    }
+    _S[mid]=arr;return arr;
+  }
+  const _col={};
+  function colSorted(mid,k){const key=mid+"|"+k;if(_col[key])return _col[key];const a=samples(mid).map(s=>s.vals[k]).filter(v=>v!=null).slice().sort((x,y)=>x-y);_col[key]=a;return a;}
+  function pctOf(mid,k,sm){const a=colSorted(mid,k),v=sm.vals[k];if(v==null||!a.length)return 0.5;let lo=0,eq=0;for(const x of a){if(x<v)lo++;else if(x===v)eq++;}return (lo+0.5*eq)/a.length;}
+  function quantile(sorted,p){if(!sorted.length)return 0;const idx=(sorted.length-1)*p,lo=Math.floor(idx),hi=Math.ceil(idx);if(lo===hi)return sorted[lo];return sorted[lo]+(sorted[hi]-sorted[lo])*(idx-lo);}
+
+  /* 채점 — specs:[{k,w,dir}] (w는 임의 양수, 내부 정규화). 반환: 점수 내림차순 리스트 */
+  function score(mid,specs){
+    const S=samples(mid),active=specs.filter(s=>s.w>0);
+    const wsum=active.reduce((a,s)=>a+s.w,0)||1;
+    const raws=S.map(sm=>{let e=0;for(const s of active){const p=pctOf(mid,s.k,sm);const g=s.dir<0?1-p:p;e+=s.w*g;}return e/wsum;});
+    const sorted=[...raws].sort((a,b)=>a-b);
+    const lo=quantile(sorted,0.05),hi=quantile(sorted,0.95);
+    const useLin=S.length>=8&&hi>lo;
+    const lin=useLin?(v=>20+(v-lo)/(hi-lo)*72):(v=>v*100);
+    const out=S.map((sm,i)=>{let sc=lin(raws[i]);sc=Math.max(8,Math.min(98,sc));return {name:sm.name,vals:sm.vals,sm,score:Math.round(sc*10)/10};});
+    out.sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name));
+    out.forEach((o,i)=>{const p=out.length>1?i/(out.length-1):0;o.tier=p<=0.2?"g2":p<=0.4?"g1":p<=0.6?"m":p<=0.8?"w1":"w2";});
+    return out;
+  }
+
+  function fmtVal(mid,k,v){
+    if(v==null)return "–";
+    const f=metaOf(mid,k).fmt;
+    if(f==="won")return "₩"+comma(Math.round(v/10)*10);
+    if(f==="pct")return (Math.round(v*10)/10)+"%";
+    if(f==="num1")return String(Math.round(v*10)/10);
+    if(f==="mult")return (Math.round(v*100)/100).toFixed(2)+"x";
+    if(f==="count")return comma(Math.round(v/10)*10);
+    return String(Math.round(v));
+  }
+  const fmtW=w=>{const p=w*100;return (Math.round(p*10)/10)+"";};
+
+  /* 공유 리더보드 — FLIP 재정렬 애니메이션 */
+  function renderLeaderboard(el,mid,specs){
+    const rows=score(mid,specs);
+    const top=specs.filter(s=>s.w>0).slice().sort((a,b)=>b.w-a.w).slice(0,2);
+    const prev=new Map();
+    el.querySelectorAll(".lb-row").forEach(r=>prev.set(r.dataset.name,r.getBoundingClientRect().top));
+    el.innerHTML=rows.map((o,i)=>{
+      const tc="var(--"+o.tier+")";
+      const pv=top.map(s=>metaOf(mid,s.k).short+" "+fmtVal(mid,s.k,o.vals[s.k])).join("  ·  ")||"—";
+      return `<div class="lb-row" data-name="${o.name}">
+        <span class="lb-rk">${i+1}</span>
+        <span class="lb-nm">${o.name}<em>${pv}</em></span>
+        <span class="lb-sc"><span class="lb-bar"><i style="width:${o.score}%;background:${tc}"></i></span><b style="color:${tc}">${o.score.toFixed(1)}</b></span>
+      </div>`;
+    }).join("");
+    el.querySelectorAll(".lb-row").forEach(r=>{
+      const old=prev.get(r.dataset.name);if(old==null)return;
+      const now=r.getBoundingClientRect().top,dy=old-now;
+      if(dy){r.style.transform="translateY("+dy+"px)";r.style.transition="none";
+        requestAnimationFrame(()=>{r.style.transition="transform .42s cubic-bezier(.2,.7,.2,1)";r.style.transform="";});}
+    });
+  }
+
+  return {EFF_W,REACH_W,MEDIA,MET,GROUP_LABELS,PALETTE,mediaOf,metaOf,catalog,defaultSpecs,samples,score,fmtVal,fmtW,renderLeaderboard};
+})();
+
+/* toast helper */
+let _tt;
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("on");clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove("on"),1800);}
+
+/* concept switcher */
+(function(){
+  const sw=document.getElementById("cswitch");
+  sw.addEventListener("click",e=>{
+    const b=e.target.closest("button[data-c]");if(!b)return;
+    sw.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
+    ["a","b","c"].forEach(c=>document.getElementById("pane-"+c).classList.toggle("on",c===b.dataset.c));
+  });
+})();
+
+/* ============================================================
+   buildPane — 세 시안 공통 골격(매체 탭 · 라이브 리더보드 · 액션).
+   concept-specific 코드는 editorFactory(ctx) 하나뿐.
+   ctx = { mount, mediaId, getSpecs(), setSpecs(arr), refresh() }
+   ============================================================ */
+function buildPane(cid, editorFactory){
+  const pane=document.getElementById("pane-"+cid);
+  const state={mediaId:KIT.MEDIA[0].id, specs:KIT.defaultSpecs(KIT.MEDIA[0].id)};
+  pane.innerHTML=`
+   <div class="pane-grid">
+     <div class="card">
+       <div class="card-h"><h2>채점 지표 · 비중</h2><div class="spacer"></div><span class="sub">매체별로 따로 저장</span></div>
+       <div class="mtabs"></div>
+       <div class="mnote"></div>
+       <div class="ed-mount"></div>
+       <div class="ed-actions" style="display:flex;gap:8px;margin-top:20px;flex-wrap:wrap;align-items:center">
+         <button class="btn ghost sm ed-reset">↺ 기본값으로 복원</button>
+         <div class="spacer"></div>
+         <button class="btn pri ed-save">이 설정 저장</button>
+       </div>
+     </div>
+     <aside>
+       <div class="card board">
+         <div class="card-h"><h2>미리보기 순위</h2><div class="spacer"></div><span class="sub board-media"></span></div>
+         <div class="lb-list"></div>
+         <div class="totline" style="margin-top:12px"><span>지표 비중 합계</span><div class="spacer"></div><b class="tot-v"></b><span class="tot-st"></span></div>
+         <div class="foot">가상 샘플 소재 10개 기준. 지표·비중을 바꾸면 순위가 즉시 재계산됩니다. 합계는 채점 시 100%로 정규화돼요.</div>
+       </div>
+     </aside>
+   </div>`;
+  const mtabs=pane.querySelector(".mtabs"), edMount=pane.querySelector(".ed-mount"),
+        board=pane.querySelector(".lb-list"), mnote=pane.querySelector(".mnote"),
+        totV=pane.querySelector(".tot-v"), totSt=pane.querySelector(".tot-st"),
+        boardMedia=pane.querySelector(".board-media");
+  mtabs.innerHTML=KIT.MEDIA.map(m=>`<button class="mtab" data-m="${m.id}"><span>${m.label}</span><span class="mt-c">${m.count}</span></button>`).join("");
+  function refresh(){
+    KIT.renderLeaderboard(board, state.mediaId, state.specs);
+    const sum=state.specs.reduce((a,s)=>a+(s.w>0?s.w:0),0)*100;
+    totV.textContent=(Math.round(sum*10)/10)+"%";
+    const near=Math.abs(sum-100)<0.6;
+    totSt.textContent=near?" ✓":" → 100% 정규화";
+    totSt.className="tot-st "+(near?"ok":"warn");
+  }
+  function selectMedia(mid){
+    state.mediaId=mid; state.specs=KIT.defaultSpecs(mid);
+    mtabs.querySelectorAll(".mtab").forEach(b=>b.classList.toggle("on",b.dataset.m===mid));
+    mnote.textContent=KIT.mediaOf(mid).note;
+    boardMedia.textContent=KIT.mediaOf(mid).label;
+    editorFactory({
+      mount:edMount, mediaId:mid,
+      getSpecs:()=>state.specs,
+      setSpecs:(arr)=>{state.specs=arr;refresh();},
+      refresh
+    });
+    refresh();
+  }
+  mtabs.addEventListener("click",e=>{const b=e.target.closest(".mtab");if(b)selectMedia(b.dataset.m);});
+  pane.querySelector(".ed-reset").addEventListener("click",()=>{selectMedia(state.mediaId);toast("기본값으로 되돌렸어요");});
+  pane.querySelector(".ed-save").addEventListener("click",()=>toast(KIT.mediaOf(state.mediaId).label+" 채점 설정을 저장했어요 (데모)"));
+  selectMedia(KIT.MEDIA[0].id);
+}
+</script>
+
+<script>
+/* ===== 시안 A · 배분 막대 (Allocation Bar) ===== */
+(function(){
+  const MIN=0.01;
+  const colOf=i=>KIT.PALETTE[i%KIT.PALETTE.length];
+  function editorA(ctx){
+    const {mount,mediaId,getSpecs,setSpecs,refresh}=ctx;
+    mount.innerHTML=`
+      <div class="hint"><span class="i">↔</span><div>색 막대는 총점 100%를 지표별로 나눈 것이에요. 조각 사이 <b>흰 손잡이를 좌우로 끌어</b> 옆 지표와 비중을 주고받으세요. 아래 숫자 칸에 직접 입력하거나, 라이브러리에서 <b>체크해 넣고 뺄</b> 수도 있어요.</div></div>
+      <div class="albar"></div>
+      <div class="alleg"></div>
+      <div class="allib"><h4>지표 추가 · 제거</h4><div class="allib-grid"></div></div>`;
+    const bar=mount.querySelector(".albar"), leg=mount.querySelector(".alleg"), lib=mount.querySelector(".allib-grid");
+
+    function renderBar(){
+      const specs=getSpecs();
+      bar.innerHTML="";
+      specs.forEach((s,i)=>{
+        const seg=document.createElement("div");seg.className="alseg";seg.style.background=colOf(i);
+        seg.innerHTML=`<span>${s.short} ${KIT.fmtW(s.w)}%</span>`;bar.appendChild(seg);
+      });
+      for(let i=0;i<specs.length-1;i++){const h=document.createElement("div");h.className="alhandle";h.dataset.i=i;bar.appendChild(h);}
+      updateBar();
+    }
+    function updateBar(){
+      const specs=getSpecs(),segs=bar.querySelectorAll(".alseg"),handles=bar.querySelectorAll(".alhandle");let acc=0;
+      specs.forEach((s,i)=>{
+        if(segs[i]){segs[i].style.width=(s.w*100).toFixed(3)+"%";const sp=segs[i].querySelector("span");if(sp)sp.textContent=s.short+" "+KIT.fmtW(s.w)+"%";}
+        acc+=s.w;if(handles[i])handles[i].style.left=(acc*100).toFixed(3)+"%";
+      });
+    }
+    function renderLeg(){
+      const specs=getSpecs();
+      leg.innerHTML=specs.map((s,i)=>`
+        <div class="alrow" data-k="${s.k}">
+          <span class="sw" style="background:${colOf(i)}"></span>
+          <span class="nm">${s.label}</span>
+          <span class="dir ${s.dir<0?'dn':'up'}">${s.dir<0?'↓ 낮을수록':'↑ 높을수록'}</span>
+          ${s.cond?`<span class="cond">${s.cond}만</span>`:''}
+          <div class="spacer"></div>
+          <span class="numwrap"><input class="num" type="number" min="0" max="100" step="0.5" value="${KIT.fmtW(s.w)}"></span>
+          <button class="rm" title="빼기"${specs.length<=1?' style="visibility:hidden"':''}>×</button>
+        </div>`).join("");
+    }
+    function renderLib(){
+      const active=new Set(getSpecs().map(s=>s.k));
+      lib.innerHTML=KIT.catalog(mediaId).map(c=>`
+        <label class="chk">
+          <input type="checkbox" data-k="${c.k}"${active.has(c.k)?' checked':''}>
+          <span>${c.short}</span>
+          <span class="dir ${c.dir<0?'dn':'up'}" style="margin-left:2px">${c.dir<0?'↓':'↑'}</span>
+          <span class="g gtag">${KIT.GROUP_LABELS[c.group]}</span>
+        </label>`).join("");
+    }
+    function syncNums(exceptInput){
+      const specs=getSpecs();
+      leg.querySelectorAll(".alrow").forEach(row=>{const sp=specs.find(s=>s.k===row.dataset.k);const ni=row.querySelector(".num");if(sp&&ni&&ni!==exceptInput)ni.value=KIT.fmtW(sp.w);});
+    }
+    function renderAll(){renderBar();renderLeg();renderLib();refresh();}
+
+    /* 숫자 입력 → 나머지는 비율 유지하며 100% 재분배 */
+    leg.addEventListener("input",e=>{
+      const inp=e.target.closest(".num");if(!inp)return;
+      const k=inp.closest(".alrow").dataset.k,specs=getSpecs();
+      let v=parseFloat(inp.value);if(isNaN(v))return;v=Math.max(0,Math.min(100,v))/100;
+      const idx=specs.findIndex(s=>s.k===k),rem=Math.max(0,1-v);
+      const others=specs.filter((s,i)=>i!==idx),osum=others.reduce((a,s)=>a+s.w,0);
+      specs[idx].w=v;
+      if(osum>0)others.forEach(s=>s.w=s.w/osum*rem);else others.forEach(s=>s.w=rem/(others.length||1));
+      updateBar();syncNums(inp);refresh();
+    });
+    /* 빼기 */
+    leg.addEventListener("click",e=>{
+      const rm=e.target.closest(".rm");if(!rm)return;
+      const k=rm.closest(".alrow").dataset.k;let specs=getSpecs().filter(s=>s.k!==k);
+      const sum=specs.reduce((a,s)=>a+s.w,0)||1;specs.forEach(s=>s.w/=sum);
+      setSpecs(specs);renderAll();
+    });
+    /* 라이브러리 체크 → 추가/제거 */
+    lib.addEventListener("change",e=>{
+      const cb=e.target.closest("input[type=checkbox]");if(!cb)return;
+      const k=cb.dataset.k;let specs=getSpecs();
+      if(cb.checked){
+        const c=KIT.catalog(mediaId).find(x=>x.k===k),dw=Math.min(0.15,Math.max(0.08,c.defW||0.1));
+        specs.forEach(s=>s.w*=(1-dw));
+        specs.push({k:c.k,label:c.label,short:c.short,dir:c.dir,group:c.group,fmt:c.fmt,cond:c.cond,w:dw});
+      }else{
+        if(specs.length<=1){cb.checked=true;return;}
+        specs=specs.filter(s=>s.k!==k);const sum=specs.reduce((a,s)=>a+s.w,0)||1;specs.forEach(s=>s.w/=sum);
+      }
+      setSpecs(specs);renderAll();
+    });
+    /* 손잡이 드래그 → 인접 두 지표끼리 비중 교환(합 유지) */
+    let drag=null;
+    bar.addEventListener("pointerdown",e=>{
+      const h=e.target.closest(".alhandle");if(!h)return;
+      const i=+h.dataset.i,specs=getSpecs();
+      drag={i,startX:e.clientX,w0:specs[i].w,w1:specs[i+1].w,px:bar.getBoundingClientRect().width,h};
+      h.classList.add("drag");h.setPointerCapture(e.pointerId);e.preventDefault();
+    });
+    bar.addEventListener("pointermove",e=>{
+      if(!drag)return;const specs=getSpecs();
+      const dw=(e.clientX-drag.startX)/drag.px,pair=drag.w0+drag.w1;
+      const lo=Math.min(MIN,pair/2),hi=pair-lo;                 /* pair가 2·MIN보다 작아도 음수 폭이 안 나오게 */
+      const nw0=Math.max(lo,Math.min(hi,drag.w0+dw));
+      specs[drag.i].w=nw0;specs[drag.i+1].w=pair-nw0;
+      updateBar();refresh();
+      const rows=leg.querySelectorAll(".alrow");
+      [drag.i,drag.i+1].forEach(ix=>{const r=rows[ix];if(r){const ni=r.querySelector(".num");if(ni)ni.value=KIT.fmtW(specs[ix].w);}});
+    });
+    function endDrag(){if(!drag)return;drag.h.classList.remove("drag");drag=null;}
+    bar.addEventListener("pointerup",endDrag);bar.addEventListener("pointercancel",endDrag);
+
+    renderAll();
+  }
+  buildPane("a",editorA);
+})();
+</script>
+<script>
+/* ===== 시안 B · 블록 캔버스 (Resizable Blocks) ===== */
+(function(){
+  const MIN=0.02;
+  const colOf=i=>KIT.PALETTE[i%KIT.PALETTE.length];
+  function editorB(ctx){
+    const {mount,mediaId,getSpecs,setSpecs,refresh}=ctx;
+    mount.innerHTML=`
+      <div class="hint"><span class="i">⇥</span><div>지표마다 <b>독립된 네모 블록</b>이에요. 블록의 <b>오른쪽 손잡이를 끌어</b> 너비(=비중)를 키우면 나머지가 비율대로 자동 조정돼요. 블록 안 숫자를 직접 입력하거나, 아래 팔레트에서 <b>＋로 넣고 ×로 뺄</b> 수 있어요.</div></div>
+      <div class="blk-track"></div>
+      <div class="blk-note" style="display:none">* 표시 = 조건부 지표 (특정 포맷·지면에서만 채점돼요) · 옅은 바탕 = 100% 기준선</div>
+      <div class="palette"><h4>지표 팔레트 (＋ 추가)</h4><div class="pchips"></div></div>`;
+    const track=mount.querySelector(".blk-track"), pal=mount.querySelector(".pchips"), note=mount.querySelector(".blk-note");
+
+    function renderBlocks(){
+      const specs=getSpecs();
+      track.innerHTML=specs.map((s,i)=>`
+        <div class="blk-row" data-k="${s.k}">
+          <div class="blk-hold">
+            <div class="blk" style="width:${(s.w*100).toFixed(3)}%;background:${colOf(i)}">
+              <span class="b-nm"><b class="b-ar">${s.dir<0?'↓':'↑'}</b>${s.short}</span>
+              ${s.cond?`<span class="b-star" title="${s.cond}만 채점">*</span>`:''}
+              <span class="grip" title="너비 드래그"></span>
+            </div>
+          </div>
+          <span class="b-num"><input type="number" min="0" max="100" step="0.5" value="${KIT.fmtW(s.w)}"><i>%</i></span>
+          <button class="b-rm" title="빼기"${specs.length<=1?' style="visibility:hidden"':''}>×</button>
+        </div>`).join("");
+      note.style.display=specs.some(s=>s.cond)?"block":"none";
+    }
+    function updateBlocks(exceptInput){
+      const specs=getSpecs(),rows=track.querySelectorAll(".blk-row");
+      specs.forEach((s,i)=>{const row=rows[i];if(!row)return;row.querySelector(".blk").style.width=(s.w*100).toFixed(3)+"%";const ni=row.querySelector("input");if(ni&&ni!==exceptInput)ni.value=KIT.fmtW(s.w);});
+    }
+    function renderPalette(){
+      const active=new Set(getSpecs().map(s=>s.k));
+      const avail=KIT.catalog(mediaId).filter(c=>!active.has(c.k));
+      pal.innerHTML=avail.length?avail.map(c=>`<button class="pchip" data-k="${c.k}"><span class="plus">＋</span>${c.short}<span class="cdir dir ${c.dir<0?'dn':'up'}">${c.dir<0?'↓':'↑'}</span></button>`).join(""):`<span class="empty">이 매체의 지표를 모두 사용 중이에요.</span>`;
+    }
+    function renderAll(){renderBlocks();renderPalette();refresh();}
+
+    /* 블록 숫자 입력 → 나머지 비율 유지 재분배 */
+    track.addEventListener("input",e=>{
+      const inp=e.target.closest("input");if(!inp)return;
+      const k=inp.closest(".blk-row").dataset.k,specs=getSpecs();
+      let v=parseFloat(inp.value);if(isNaN(v))return;v=Math.max(0,Math.min(100,v))/100;
+      const idx=specs.findIndex(s=>s.k===k),rem=Math.max(0,1-v);
+      const others=specs.filter((s,i)=>i!==idx),osum=others.reduce((a,s)=>a+s.w,0);
+      specs[idx].w=v;
+      if(osum>0)others.forEach(s=>s.w=s.w/osum*rem);else others.forEach(s=>s.w=rem/(others.length||1));
+      updateBlocks(inp);refresh();
+    });
+    /* 빼기 */
+    track.addEventListener("click",e=>{
+      const rm=e.target.closest(".b-rm");if(!rm)return;
+      const k=rm.closest(".blk-row").dataset.k;let specs=getSpecs().filter(s=>s.k!==k);
+      const sum=specs.reduce((a,s)=>a+s.w,0)||1;specs.forEach(s=>s.w/=sum);
+      setSpecs(specs);renderAll();
+    });
+    /* 팔레트 ＋추가 */
+    pal.addEventListener("click",e=>{
+      const chip=e.target.closest(".pchip");if(!chip)return;
+      const c=KIT.catalog(mediaId).find(x=>x.k===chip.dataset.k);if(!c)return;
+      const dw=Math.min(0.15,Math.max(0.08,c.defW||0.1)),specs=getSpecs();
+      specs.forEach(s=>s.w*=(1-dw));
+      specs.push({k:c.k,label:c.label,short:c.short,dir:c.dir,group:c.group,fmt:c.fmt,cond:c.cond,w:dw});
+      setSpecs(specs);renderAll();
+    });
+    /* 손잡이 드래그 → 이 블록 너비 = 비중, 나머지는 비율 유지 */
+    let drag=null;
+    track.addEventListener("pointerdown",e=>{
+      const grip=e.target.closest(".grip");if(!grip)return;
+      const row=grip.closest(".blk-row"),blk=grip.closest(".blk"),k=row.dataset.k,specs=getSpecs(),idx=specs.findIndex(s=>s.k===k);
+      const r=row.querySelector(".blk-hold").getBoundingClientRect();
+      drag={idx,left:r.left,px:r.width,w0:specs.map(s=>s.w),grip,blk};
+      blk.classList.add("drag");grip.setPointerCapture(e.pointerId);e.preventDefault();
+    });
+    track.addEventListener("pointermove",e=>{
+      if(!drag)return;const specs=getSpecs();
+      let nw=(e.clientX-drag.left)/drag.px;nw=Math.max(MIN,Math.min(0.98,nw));
+      const wi0=drag.w0[drag.idx],rest0=1-wi0,rest=1-nw;
+      specs.forEach((s,i)=>{s.w=i===drag.idx?nw:(rest0>0?drag.w0[i]*rest/rest0:rest/(specs.length-1||1));});
+      updateBlocks();refresh();
+    });
+    function endDrag(){if(!drag)return;drag.grip.closest(".blk").classList.remove("drag");drag=null;}
+    track.addEventListener("pointerup",endDrag);track.addEventListener("pointercancel",endDrag);
+
+    renderAll();
+  }
+  buildPane("b",editorB);
+})();
+</script>
+<script>
+/* ===== 시안 C · 믹서 패널 (Mixer / Equalizer) ===== */
+(function(){
+  const colOf=i=>KIT.PALETTE[i%KIT.PALETTE.length];
+  function editorC(ctx){
+    const {mount,mediaId,getSpecs,setSpecs,refresh}=ctx;
+    mount.innerHTML=`
+      <div class="hint"><span class="i">≡</span><div>지표마다 <b>슬라이더 + 숫자</b> 한 줄이에요. 막대를 <b>드래그</b>하거나 숫자를 입력해 비중을 정하고, 아래 <b>라이브러리 체크박스</b>로 지표를 켜고 끄세요. 비중은 각자 독립이라 합이 100%가 아니어도 되고, 채점 때 자동 정규화돼요 (정밀 편집·기준 확장에 강한 방식).</div></div>
+      <div class="mixhead">사용 중인 지표</div>
+      <div class="mixlist"></div>
+      <div class="mix-tools">
+        <button class="btn sm mx-eq">⚖ 균등 분배</button>
+        <button class="btn sm mx-norm">Σ 100%로 맞추기</button>
+      </div>
+      <div class="lib2">
+        <div class="lib2-h"><span>＋ 지표 라이브러리</span><span class="cnt"></span><span class="car">▸</span></div>
+        <div class="lib2-body"></div>
+      </div>`;
+    const list=mount.querySelector(".mixlist"), lib=mount.querySelector(".lib2"),
+          libBody=mount.querySelector(".lib2-body"), libCnt=mount.querySelector(".cnt");
+
+    function renderList(){
+      const specs=getSpecs();
+      list.innerHTML=specs.map((s,i)=>`
+        <div class="mixrow" data-k="${s.k}">
+          <div class="mx-info">
+            <div class="mx-nm">${s.label}</div>
+            <div class="mx-sub"><span class="dir ${s.dir<0?'dn':'up'}">${s.dir<0?'↓ 낮을수록':'↑ 높을수록'}</span>${s.cond?`<span class="cond">${s.cond}만</span>`:''}</div>
+          </div>
+          <div class="mx-slider">
+            <div class="mx-track"><div class="mx-fill" style="width:${(s.w*100).toFixed(2)}%;background:${colOf(i)}"></div></div>
+            <div class="mx-knob" style="left:${(s.w*100).toFixed(2)}%"></div>
+          </div>
+          <span class="numwrap"><input class="num" type="number" min="0" max="100" step="0.5" value="${KIT.fmtW(s.w)}"></span>
+          <button class="mx-rm" title="빼기"${specs.length<=1?' style="visibility:hidden"':''}>×</button>
+        </div>`).join("");
+    }
+    function updateRow(k,exceptInput){
+      const s=getSpecs().find(x=>x.k===k),row=list.querySelector(`.mixrow[data-k="${k}"]`);if(!s||!row)return;
+      row.querySelector(".mx-fill").style.width=(s.w*100).toFixed(2)+"%";
+      row.querySelector(".mx-knob").style.left=(s.w*100).toFixed(2)+"%";
+      const ni=row.querySelector(".num");if(ni&&ni!==exceptInput)ni.value=KIT.fmtW(s.w);
+    }
+    function renderLib(){
+      const active=new Set(getSpecs().map(s=>s.k)),cat=KIT.catalog(mediaId);
+      libCnt.textContent=active.size+"/"+cat.length;
+      const groups=["eff","quality","reaction","scale"];
+      libBody.innerHTML=groups.map(g=>{
+        const items=cat.filter(c=>c.group===g);if(!items.length)return"";
+        return `<div class="lib2-grp">${KIT.GROUP_LABELS[g]}</div>`+items.map(c=>`
+          <label class="chk2">
+            <input type="checkbox" data-k="${c.k}"${active.has(c.k)?' checked':''}>
+            <span>${c.label}</span>
+            <span class="c-dir dir ${c.dir<0?'dn':'up'}">${c.dir<0?'↓':'↑'}</span>
+            <span class="c-g gtag">${active.has(c.k)?KIT.fmtW(getSpecs().find(s=>s.k===c.k).w)+'%':'추가'}</span>
+          </label>`).join("");
+      }).join("");
+    }
+    function renderAll(){renderList();renderLib();refresh();}
+
+    /* 숫자 입력 (독립) */
+    list.addEventListener("input",e=>{
+      const inp=e.target.closest(".num");if(!inp)return;
+      const k=inp.closest(".mixrow").dataset.k,s=getSpecs().find(x=>x.k===k);
+      let v=parseFloat(inp.value);if(isNaN(v))return;s.w=Math.max(0,Math.min(100,v))/100;
+      updateRow(k,inp);refresh();renderLib();
+    });
+    /* 빼기 */
+    list.addEventListener("click",e=>{
+      const rm=e.target.closest(".mx-rm");if(!rm)return;
+      const k=rm.closest(".mixrow").dataset.k;setSpecs(getSpecs().filter(s=>s.k!==k));renderAll();
+    });
+    /* 슬라이더 드래그(독립) */
+    let drag=null;
+    list.addEventListener("pointerdown",e=>{
+      const sl=e.target.closest(".mx-slider");if(!sl)return;
+      const k=sl.closest(".mixrow").dataset.k,r=sl.querySelector(".mx-track").getBoundingClientRect();
+      drag={k,left:r.left,px:r.width,sl};sl.setPointerCapture(e.pointerId);
+      move(e);e.preventDefault();
+    });
+    function move(e){
+      if(!drag)return;const s=getSpecs().find(x=>x.k===drag.k);
+      let v=(e.clientX-drag.left)/drag.px;v=Math.max(0,Math.min(1,v));s.w=Math.round(v*200)/200;
+      updateRow(drag.k);refresh();
+    }
+    list.addEventListener("pointermove",move);
+    function endDrag(){if(!drag)return;renderLib();drag=null;}
+    list.addEventListener("pointerup",endDrag);list.addEventListener("pointercancel",endDrag);
+
+    /* 라이브러리 열기/닫기 · 체크 토글 */
+    mount.querySelector(".lib2-h").addEventListener("click",()=>lib.classList.toggle("open"));
+    libBody.addEventListener("change",e=>{
+      const cb=e.target.closest("input[type=checkbox]");if(!cb)return;
+      const k=cb.dataset.k;let specs=getSpecs();
+      if(cb.checked){
+        const c=KIT.catalog(mediaId).find(x=>x.k===k);
+        specs.push({k:c.k,label:c.label,short:c.short,dir:c.dir,group:c.group,fmt:c.fmt,cond:c.cond,w:Math.max(0.1,c.defW||0.1)});
+      }else{
+        if(specs.length<=1){cb.checked=true;return;}
+        specs=specs.filter(s=>s.k!==k);
+      }
+      setSpecs(specs);renderAll();
+    });
+    /* 도구: 균등 분배 · 100% 정규화 */
+    mount.querySelector(".mx-eq").addEventListener("click",()=>{
+      const specs=getSpecs(),w=1/specs.length;specs.forEach(s=>s.w=w);renderAll();toast("모든 지표를 균등 분배했어요");
+    });
+    mount.querySelector(".mx-norm").addEventListener("click",()=>{
+      const specs=getSpecs(),sum=specs.reduce((a,s)=>a+(s.w>0?s.w:0),0)||1;specs.forEach(s=>s.w=(s.w>0?s.w:0)/sum);renderAll();toast("합계를 100%로 맞췄어요");
+    });
+
+    renderAll();
+  }
+  buildPane("c",editorC);
+})();
+</script>
+</body>
+</html>
