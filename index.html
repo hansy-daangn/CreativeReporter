@@ -38,43 +38,43 @@
   /* ===== sidebar (fill-based separation, dark) ===== */
   .side{background:var(--side); color:var(--side-ink); position:sticky; top:0; height:100vh; overflow-x:hidden; overflow-y:auto; display:flex; flex-direction:column; padding:20px 14px; min-width:0}
   .side *{min-width:0}
-  .side-duo{display:contents}
-  .side-duo .side-sec:first-child{margin-top:2px}
-  /* 요약 토글 — 데스크톱은 항상 펼침(display:contents로 flex 유지), 모바일은 기본 접힘.
-     display:contents는 닫힘 상태 숨김을 깨뜨리므로 데스크톱(항상 open)에만 사용 */
-  .side-more{display:contents}
-  @media(max-width:900px){.side-more{display:block;margin-top:4px}}
-  .side-more>summary{cursor:pointer;list-style:none;margin-top:22px}
-  .side-more>summary::-webkit-details-marker{display:none}
-  .side-more>summary::after{content:" ▸";color:var(--side-faint)}
-  .side-more[open]>summary::after{content:" ▾"}
-  .mseg{display:flex;flex-direction:column;gap:3px}
-  .mseg button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:8px 11px;border-radius:8px;background:transparent;color:var(--side-muted);font-size:12px;font-weight:650;transition:.12s}
-  .mseg button:hover{background:var(--side-2);color:var(--side-ink)}
-  .mseg button.on{background:rgba(255,255,255,.13);color:#fff}
-  .mseg button .c{font-size:10px;font-weight:600;color:var(--side-faint);background:rgba(255,255,255,.06);padding:1px 6px;border-radius:5px}
-  .mseg button.on .c{color:#fff;background:rgba(255,255,255,.14)}
-  .side-sec{margin-top:22px}
-  .side-h{font-size:10.5px; font-weight:700; letter-spacing:.06em; color:var(--side-faint); text-transform:uppercase; padding:0 6px 9px}
-  .skpi{display:flex; flex-direction:column; gap:14px; padding:2px 6px}
-  .skpi .row{display:flex; flex-direction:column; gap:2px}
-  .skpi .k{font-size:11.5px; color:var(--side-muted)}
-  .skpi .v{font-size:20px; font-weight:740; letter-spacing:-.02em; color:#fff; line-height:1}
-  .skpi .v .u{font-size:12px;font-weight:600;color:var(--side-muted);margin-left:1px}
-  .skpi .s{font-size:10.5px; color:var(--side-faint); display:flex; align-items:center; gap:5px}
-  .sdelta{font-weight:700;padding:0 5px;border-radius:5px;font-size:10px}
-  .sdelta.up{color:#5FD0A8;background:rgba(95,208,168,.14)} .sdelta.down{color:#F58AA0;background:rgba(245,138,160,.14)} .sdelta.flat{color:var(--side-muted);background:rgba(255,255,255,.06)}
-  .sgood{color:#5FD0A8}
+  /* ── 사이드바 필터: 매체(드롭다운) · 기간 · 보기 ── */
+  .side-filters{display:flex;flex-direction:column;gap:20px}
+  .side-h{font-size:10.5px; font-weight:700; letter-spacing:.06em; color:var(--side-faint); text-transform:uppercase; padding:0 2px 8px}
+  /* 사이드바 드롭다운(매체 항상 · 모바일 기간/보기) */
+  .sf-sel{width:100%;height:36px;border:1px solid rgba(255,255,255,.15);border-radius:9px;background:var(--side-2);color:var(--side-ink);font:inherit;font-size:12.5px;font-weight:650;padding:0 30px 0 11px;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%239B998E' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:12px}
+  .sf-sel:hover{border-color:rgba(255,255,255,.28)}
+  .sf-sel:focus{outline:none;border-color:var(--karrot)}
+  .sf-sel option{color:#1B1A16;background:#fff}
+  /* 가로 세그먼트(데스크톱 기간·보기) */
+  .seg3{display:flex;border:1px solid rgba(255,255,255,.13);border-radius:9px;overflow:hidden}
+  .seg3 button{flex:1;border:0;border-left:1px solid rgba(255,255,255,.10);background:transparent;color:var(--side-muted);font:inherit;font-size:12px;font-weight:650;padding:8px 4px;cursor:pointer;transition:.12s;min-width:0}
+  .seg3 button:first-child{border-left:0}
+  .seg3 button:hover{background:var(--side-2);color:var(--side-ink)}
+  .seg3 button.on{background:rgba(255,255,255,.15);color:#fff}
+  .seg-custlink{margin-top:8px;background:none;border:0;color:var(--side-faint);font:inherit;font-size:11px;font-weight:650;cursor:pointer;padding:1px 2px;display:inline-block}
+  .seg-custlink:hover{color:var(--side-ink)}
+  .seg-custlink.on{color:var(--karrot-2)}
+  .seg-m{display:none} /* 모바일 전용 셀렉트 — 데스크톱 숨김 */
+  .pcustom-wrap:empty{display:none}
+  .pcustom-wrap{margin-top:14px}
+  .pcustom{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--side-muted);flex-wrap:wrap}
+  .pcustom input{width:48px;height:29px;border:1px solid rgba(255,255,255,.15);border-radius:7px;background:var(--side-2);color:var(--side-ink);font:inherit;padding:0 7px}
+  .pcustom select{height:29px;border:1px solid rgba(255,255,255,.15);border-radius:7px;background:var(--side-2);color:var(--side-ink);font:inherit;padding:0 6px}
+  .pcustom select option{color:#1B1A16;background:#fff}
+  .pcustom button{height:29px;padding:0 12px;border-radius:7px;background:var(--karrot);color:#fff;border:0;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+  .pcustom button:hover{background:#ff7d24}
 
-  .side-foot{margin-top:auto; padding-top:20px; display:flex; flex-direction:column; gap:9px}
-  .src{font-size:10.5px; color:var(--side-faint); padding:0 6px}
+  .side-foot{margin-top:auto; padding-top:20px; display:flex; flex-direction:column; gap:11px}
+  .src{font-size:10.5px; color:var(--side-faint); padding:0 2px}
   .src b{color:var(--side-muted); font-weight:600}
-  .sbtns{display:flex; gap:7px}
-  .sbtn{flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:9px; border-radius:9px; background:rgba(255,255,255,.07); color:var(--side-ink); font-size:12px; font-weight:600; transition:.13s}
+  .side-actions{display:flex; flex-wrap:wrap; gap:7px}
+  .sbtn{flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:10px 6px; border-radius:9px; background:rgba(255,255,255,.07); color:var(--side-ink); font-size:12px; font-weight:650; white-space:nowrap; transition:.13s; border:0; cursor:pointer}
   .sbtn:hover{background:rgba(255,255,255,.13)}
   .sbtn.pri{background:var(--karrot); color:#fff}.sbtn.pri:hover{background:#ff7d24}
-  .sbtn.wide{width:100%;flex:none}
-  .side-foot .side-h.stool{padding:2px 6px 8px;margin:0}
+  .sbtn.icon-only{flex:0 0 auto;width:42px;padding:10px 0}
+  /* 좁은 데스크톱 컬럼: 채점 설정은 한 줄 전체 · 자료추출+용어(ⓘ)가 다음 줄. 모바일(넓음)은 3개 한 줄 */
+  .side-actions .act-cfg{flex:1 1 100%} .side-actions .act-xt{flex:1 1 auto}
   .sbtn svg{width:14px;height:14px}
 
   /* ===== main ===== */
@@ -576,6 +576,7 @@
   .ftw-lgd span{margin-right:9px;white-space:nowrap}
   .ftw-lgd .lgd{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:3px;vertical-align:-0.5px}
   .ftw-note{color:var(--faint)}
+  .ftw-lgd .ftw-note{white-space:normal} /* 긴 설명 문구는 줄바꿈 허용(모바일 가로 오버플로 방지) */
   .ftw-common{font-size:11px;color:var(--muted);margin-top:8px;padding-top:7px;border-top:1px dashed var(--surface-3);line-height:1.8}
   .ftw-custom{font-size:9px;font-weight:800;color:var(--karrot);background:var(--karrot-f);padding:1px 6px;border-radius:5px;vertical-align:1px;letter-spacing:.02em}
   .ftw-edit{background:none;border:0;color:var(--karrot);font:inherit;font-size:11px;font-weight:700;cursor:pointer;padding:0}
@@ -625,14 +626,16 @@
   /* responsive shell */
   @media(max-width:900px){
     .app{grid-template-columns:1fr}
-    .side{position:static;height:auto;flex-direction:column}
-    .side-sec{margin-top:16px}
-    .skpi{flex-direction:row;flex-wrap:wrap;gap:18px}
-    .side-foot{margin-top:16px}
+    .side{position:static;height:auto;flex-direction:column;padding:14px 14px 12px}
+    /* 매체·기간·보기를 가로 3열 드롭다운으로 압축 */
+    .side-filters{flex-direction:row;gap:10px;align-items:flex-end}
+    .side-filters .sf-item{flex:1;min-width:0}
+    .side-h{padding-bottom:5px}
+    .seg-d{display:none} .seg-m{display:block} /* 세그먼트→셀렉트 */
+    .pcustom-wrap{margin-top:11px}
+    .side-foot{margin-top:14px}
+    .side-actions .act-cfg{flex:1 1 auto} /* 모바일: 채점설정·자료추출·용어 3개 한 줄 */
     .content{padding:18px 18px 4px}.card{padding:0}
-    /* 세로 화면: 매체·기간은 좌우 2분할 (전체 너비 낭비 방지) */
-    .side-duo{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:start}
-    .side-duo .side-sec,.side-duo .side-sec:first-child{margin-top:16px}
     /* 세로 화면: 소재 이름 숨김 — 미리보기·점수 중심으로 */
     td.name .ntxt{display:none}
     th.name,td.name{min-width:64px;max-width:80px}
@@ -757,9 +760,7 @@
   .ep-rchip:hover{border-color:var(--karrot);color:var(--ink)}
   .ep-rchip.on{background:#E3F1FB;border-color:#8FC3EE;color:#2478C7}
   /* 자료 추출 모달 */
-  .sbtn.icon-only{flex:0 0 auto;width:40px;padding-left:0;padding-right:0;justify-content:center}
   .sbtn.icon-only svg{margin:0}
-  .sbtn.pri.xtract{width:100%;margin-top:2px}
   .xt-ov{position:fixed;inset:0;z-index:100000;background:rgba(22,20,16,.5);display:flex;align-items:center;justify-content:center;padding:20px}
   .xt-modal{width:min(470px,94vw);max-height:88vh;overflow:auto;background:var(--surface);border-radius:18px;box-shadow:0 26px 74px rgba(0,0,0,.36);border:1px solid var(--surface-3)}
   .xt-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 4px}
@@ -905,38 +906,31 @@
 <div class="app">
   <!-- SIDEBAR: identity + media + summary + actions -->
   <aside class="side">
-    <div class="side-duo">
-      <div class="side-sec" id="msegSec" hidden>
+    <!-- 필터: 매체(드롭다운) · 기간 · 보기. 모바일은 3개를 가로 드롭다운으로 압축 -->
+    <div class="side-filters">
+      <div class="sf-item" id="msegSec" hidden>
         <div class="side-h">매체</div>
-        <div class="mseg" id="mseg"></div>
+        <div id="mseg"></div>
       </div>
-      <div class="side-sec" id="periodSec" hidden>
+      <div class="sf-item" id="periodSec" hidden>
         <div class="side-h">기간</div>
-        <div class="mseg" id="pseg"></div>
+        <div id="pseg"></div>
+      </div>
+      <div class="sf-item" id="viewSec" hidden>
+        <div class="side-h">보기</div>
+        <div id="vseg"></div>
       </div>
     </div>
-    <div class="side-sec" id="viewSec" hidden>
-      <div class="side-h">보기</div>
-      <div class="mseg" id="vseg"></div>
-    </div>
-    <details class="side-more" id="sideMore" open>
-      <summary class="side-h">요약</summary>
-      <div class="side-sec" style="margin-top:4px">
-        <div class="skpi" id="skpi"></div>
-      </div>
-    </details>
-    <!-- 도구/상태: '요약' 접힘과 무관하게 항상 노출(모바일 포함) — 채점 설정 등 중요 기능 -->
+    <div class="pcustom-wrap" id="pcustomWrap"></div>
     <div class="side-foot">
-        <div class="src" id="cloudLine" style="cursor:pointer" title="클릭 — 비밀번호 입력 또는 저장소 새로고침">☁️ 저장소 미연결</div>
-        <div class="side-h stool">도구</div>
-        <button class="sbtn wide" id="scoreCfgBtn" title="매체별 채점 지표와 비중을 직접 골라 조절해요 — 저장하면 점수에 바로 반영">
+      <div class="src" id="cloudLine" style="cursor:pointer" title="클릭 — 비밀번호 입력 또는 저장소 새로고침">☁️ 저장소 미연결</div>
+      <div class="side-actions">
+        <button class="sbtn act-cfg" id="scoreCfgBtn" title="매체별 채점 지표와 비중을 직접 골라 조절해요 — 저장하면 점수에 바로 반영">
           <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 13a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.36.53.75 1.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>채점 설정</button>
-        <button class="sbtn pri xtract" id="exportBtn" title="선택한 조건의 소재 성과를 AI가 읽기 좋은 파일로 내보내요">내 자료 추출하기</button>
-        <div class="sbtns">
-          <button class="sbtn" id="glossBtn"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>용어</button>
-          <label class="sbtn icon-only" id="drop" title="CSV 파일 넣기 · 드래그해서 놓아도 됩니다"><svg viewBox="0 0 24 24" fill="none"><path d="M12 15V4m0 0L8 8m4-4l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input type="file" id="file" accept=".csv,text/csv" multiple hidden></label>
-        </div>
+        <button class="sbtn pri act-xt" id="exportBtn" title="선택한 조건의 소재 성과를 AI가 읽기 좋은 파일로 내보내요">자료 추출</button>
+        <button class="sbtn icon-only" id="glossBtn" title="용어 풀이" aria-label="용어 풀이"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
       </div>
+    </div>
   </aside>
 
   <!-- MAIN -->
@@ -1897,29 +1891,6 @@ function computeScores(ds){const L=ds.L,a=ds.agg;
   const goodFmt=pkey==="_g_ROAS"?"num":(pkey==="CTR"||pkey==="CPM"||pkey.endsWith("Rate")?(pkey==="CPM"?"won":"pct"):"won");
   return{best,worst,med,goodCol:pkey,goodDir:pdir,goodLabel:primary.lab,goodFmt,goodHelp:pdir<0?"낮을수록 좋음":"높을수록 좋음",volCol:"비용",eligCount:elig.length,specs,gSpecs:specs};}
 function sFmt(v,f){return f==="pct"?fmtPct(v):f==="num"?(v!=null&&isFinite(v)?v.toFixed(1)+"×":"–"):f==="int"?fmtInt(v):fmtWon(v);}
-/* sidebar KPIs */
-function renderSideKpis(ds){const a=ds.data,L=ds.L,sum=c=>a.reduce((s,r)=>s+(num(r[c])||0),0);
-  const tC=sum("비용"),tClk=sum("클릭 수"),tAttr=sum("어트리뷰션 수"),tAct=sum("활성 유저 수");
-  const wk=ds.weekly,last=wk.at(-1)||{},prev=wk.length>=2?wk.at(-2):null,d=c=>(prev&&prev[c]>0)?(last[c]-prev[c])/prev[c]:null;
-  const rows=[{k:"총 광고비",v:fmtKRW(tC),u:"원",s:sdelta(d("비용"))}];
-  const isGSrc=a.some(r=>r._g_assetType); /* 구글 확장 소재: '활성'이 인앱 액션이라 설치 KPI 무의미 → 전환·ROAS 폴백 */
-  if(L.hasConv&&!isGSrc&&(tAttr>0||tAct>0)){rows.push({k:"총 설치",v:fmtInt(tAttr),s:sdelta(d("어트리뷰션 수"))},
-    {k:"평균 eCPI",v:fmtWon(tAttr>0?tC/tAttr:null),s:`<span class="sgood">설치 1건당 비용 · 낮을수록 좋음</span>`},
-    {k:"총 활성 유저",v:fmtInt(tAct),s:sdelta(d("활성 유저 수"))},
-    {k:"활성 eCPA",v:fmtWon(tAct>0?tC/tAct:null),s:`<span class="sgood">활성 유저 1명당 비용 · 낮을수록 좋음</span>`});
-    const tNu=sum("신규+재활성 유저 수");
-    if(tNu>0)rows.push({k:"신규+재활성 유저",v:fmtInt(tNu),s:`<span class="sgood">1명당 ${fmtWon(tC/tNu)} · 낮을수록 좋음</span>`});
-  }else{/* 설치·활성 데이터가 없는 매체(예: Google 확장 소재 리포트) → 클릭·전환 지표로 대체 */
-    const badNames=new Set((ds.agg||[]).filter(x=>x._impBad).map(x=>x.name)); /* 노출 과소집계 소재는 평균 CTR 분모 왜곡 → 제외 */
-    const cov=a.filter(r=>(num(r["노출 수"])||0)>0&&!badNames.has(r[L.nameCol])),ci=cov.reduce((s,r)=>s+(num(r["노출 수"])||0),0),cc=cov.reduce((s,r)=>s+(num(r["클릭 수"])||0),0);
-    rows.push({k:"총 클릭",v:fmtInt(tClk),s:sdelta(d("클릭 수"))},
-    {k:"평균 CTR",v:fmtPct(ci>0?cc/ci:null),s:`<span class="sgood">노출 대비 클릭률 · 높을수록 좋음</span>`},
-    {k:"평균 CPC",v:fmtWon(tClk>0?tC/tClk:null),s:`<span class="sgood">클릭 1회당 비용 · 낮을수록 좋음</span>`});
-    const tConv=sum("_g_conversions"),tVal=sum("_g_convValue");
-    if(tConv>0)rows.push({k:"총 전환",v:fmtInt(tConv),s:`<span class="sgood">Google 전환수</span>`});
-    if(tVal>0&&tC>0)rows.push({k:"ROAS",v:(tVal/tC).toFixed(1)+"×",s:`<span class="sgood">전환가치 ÷ 광고비 · 높을수록 좋음</span>`});}
-  $("#skpi").innerHTML=rows.map(r=>`<div class="row"><div class="k">${r.k}</div><div class="v num">${r.v}${r.u?`<span class="u">${r.u}</span>`:""}</div><div class="s num">${r.s||""}</div></div>`).join("");}
-function sdelta(dd){if(dd==null)return"<span>지난주 –</span>";const c=Math.abs(dd)<0.005?"flat":dd>0?"up":"down";return `<span class="sdelta ${c}">${dd>0?"+":""}${(dd*100).toFixed(1)}%</span><span>지난주</span>`;}
 
 /* leaderboard */
 /* 이름 아래 태그 칩 — 표에서는 클릭하면 그 값으로 필터 (data-ck 있는 칩만) */
@@ -3772,18 +3743,24 @@ function scope(ds){
   while(ds.weekly.length>2&&(ds.weekly[ds.weekly.length-1].비용||0)===0)ds.weekly.pop();
   ds.S=computeScores(ds);
   ds._wkScore=null;ds._wkScoreG=null; /* 상세 주차별 점수 캐시 — 스코프 바뀌면 다시 계산 */}
-function renderPeriodSeg(){const el=$("#pseg"),sec=$("#periodSec");if(!el||!sec)return;
+function renderPeriodSeg(){const el=$("#pseg"),sec=$("#periodSec"),cw=$("#pcustomWrap");if(!el||!sec)return;
   /* 임시 분석(비규격 파일)에서는 날짜가 주 단위가 아닐 수 있어 기간 필터 숨김 */
   const ds=active&&DATASETS[active];
   const hasData=ds&&ds.dataAll.length&&!standaloneMode;
-  sec.hidden=!hasData;if(!hasData)return;
-  const cLab=periodN==="custom"?`최근 ${customNVal}${customUnit==="m"?"달":"주"}`:"직접 설정";
-  const opts=[["4","최근 1달"],["13","최근 3달"],["all","전체"],["custom",cLab]];
-  el.innerHTML=opts.map(([v,lab])=>`<button data-p="${v}" class="${v===periodN?"on":""}">${lab}</button>`).join("")
-    +(periodN==="custom"?`<div class="pcustom">최근 <input type="number" id="pN" min="1" max="104" value="${customNVal}"><select id="pU"><option value="w"${customUnit==="w"?" selected":""}>주</option><option value="m"${customUnit==="m"?" selected":""}>달</option></select><button id="pGo" type="button">적용</button></div>`:"");
-  $$("#pseg > button").forEach(b=>b.onclick=()=>{const v=b.dataset.p;
-    if(periodN===v&&v!=="custom")return;
-    periodN=v;tPage=1;if(active)show(DATASETS[active]);});
+  sec.hidden=!hasData;if(cw)cw.innerHTML="";if(!hasData){el.innerHTML="";return;}
+  const presets=[["4","1달"],["13","3달"],["all","전체"]];
+  const isCustom=periodN==="custom",custLab=`최근 ${customNVal}${customUnit==="m"?"달":"주"}`;
+  /* 데스크톱=세그먼트 + '직접 설정' 링크 · 모바일=드롭다운 · 직접설정 입력은 필터 아래 전폭(#pcustomWrap) */
+  el.innerHTML=
+    `<div class="seg-d"><div class="seg3">`+presets.map(([v,l])=>`<button type="button" data-p="${v}" class="${v===periodN?"on":""}">${l}</button>`).join("")+`</div>`+
+      `<button type="button" class="seg-custlink${isCustom?" on":""}" data-p="custom">직접 설정${isCustom?` · ${custLab}`:""}</button></div>`+
+    `<select class="sf-sel seg-m" aria-label="기간 선택">`+
+      presets.map(([v,l])=>`<option value="${v}"${v===periodN?" selected":""}>${v==="all"?"전체":"최근 "+l}</option>`).join("")+
+      `<option value="custom"${isCustom?" selected":""}>직접 설정${isCustom?` (${custLab})`:""}</option></select>`;
+  if(isCustom&&cw)cw.innerHTML=`<div class="pcustom">최근 <input type="number" id="pN" min="1" max="104" value="${customNVal}"><select id="pU"><option value="w"${customUnit==="w"?" selected":""}>주</option><option value="m"${customUnit==="m"?" selected":""}>달</option></select><button id="pGo" type="button">적용</button></div>`;
+  const setP=v=>{if(v==="custom"){periodN="custom";}else{if(periodN===v)return;periodN=v;}tPage=1;if(active)show(DATASETS[active]);};
+  el.querySelectorAll(".seg3 button,.seg-custlink").forEach(b=>b.onclick=()=>setP(b.dataset.p));
+  const psel=el.querySelector(".seg-m");if(psel)psel.onchange=()=>setP(psel.value);
   const go=$("#pGo");
   if(go)go.onclick=()=>{const n=Math.max(1,Math.min(104,Math.round(+$("#pN").value||0)));
     if(!n){toast("숫자로 입력해 주세요");return;}
@@ -3804,21 +3781,24 @@ function windowCount(ds,ch){
 function renderViewSeg(){const el=$("#vseg"),sec=$("#viewSec");if(!el||!sec)return;
   const on=!!MARKS.me&&!standaloneMode&&active&&DATASETS[active]&&DATASETS[active].dataAll&&DATASETS[active].dataAll.length;
   sec.hidden=!on;if(!on){el.innerHTML="";return;}
-  const opts=[["all","전체"],["mine","내 소재"],["fav","즐겨찾기"]];
-  el.innerHTML=opts.map(([v,lab])=>`<button data-v="${v}" class="${v===tMarkView?"on":""}">${lab}</button>`).join("");
-  $$("#vseg button").forEach(b=>b.onclick=()=>{const v=b.dataset.v;if(tMarkView===v)return;tMarkView=v;
-    if(v!=="all"&&tGroupBy){tGroupBy=false;renderQuickFo();} /* 마크 필터는 그룹뷰와 공존 불가(그룹은 마크 대상 아님) → 개별뷰로 */
-    tPage=1;renderViewSeg();if(active)renderTable(DATASETS[active]);});}
+  const opts=[["all","전체","전체"],["mine","My","내 소재"],["fav","★","즐겨찾기"]];
+  el.innerHTML=`<div class="seg-d"><div class="seg3">`+opts.map(([v,l,t])=>`<button type="button" data-v="${v}" class="${v===tMarkView?"on":""}" title="${t}" aria-label="${t}">${l}</button>`).join("")+`</div></div>`+
+    `<select class="sf-sel seg-m" aria-label="보기 선택">`+opts.map(([v,l,t])=>`<option value="${v}"${v===tMarkView?" selected":""}>${t}</option>`).join("")+`</select>`;
+  const setView=v=>{if(tMarkView===v)return;tMarkView=v;
+    if(v!=="all"&&tGroupBy){tGroupBy=false;renderQuickFo();} /* 마크 필터는 그룹뷰와 공존 불가 → 개별뷰로 */
+    tPage=1;renderViewSeg();if(active)renderTable(DATASETS[active]);};
+  el.querySelectorAll(".seg3 button").forEach(b=>b.onclick=()=>setView(b.dataset.v));
+  const vsel=el.querySelector(".seg-m");if(vsel)vsel.onchange=()=>setView(vsel.value);}
 function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)return;
   if(dsMode!=="channeled"||!ds.channels||!ds.channels.length){sec.hidden=true;el.innerHTML="";return;}
   sec.hidden=false;
-  /* 매체는 소재 수 많은 순으로 정렬 */
+  /* 매체는 소재 수 많은 순 정렬 · 드롭다운 */
   const counts=new Map(ds.channels.map(ch=>[ch,windowCount(ds,ch)]));
   const chans=ds.channels.slice().sort((a,b)=>counts.get(b)-counts.get(a));
-  el.innerHTML=chans.map(ch=>`<button data-m="${ch}" class="${ch===ds.media?"on":""}">${ch}<span class="c">${counts.get(ch).toLocaleString()}</span></button>`).join("");
-  $$("#mseg button").forEach(b=>b.onclick=()=>{const m=b.dataset.m;if(ds.media===m)return;ds.media=m;tPage=1;show(ds);});}
+  el.innerHTML=`<select class="sf-sel" aria-label="매체 선택">`+chans.map(ch=>`<option value="${escAttr(ch)}"${ch===ds.media?" selected":""}>${escHtml(ch)} · ${counts.get(ch).toLocaleString()}개</option>`).join("")+`</select>`;
+  const sel=el.querySelector("select");if(sel)sel.onchange=()=>{const m=sel.value;if(ds.media===m)return;ds.media=m;tPage=1;show(ds);};}
 function show(ds){scope(ds);
-  renderMediaSeg(ds);renderPeriodSeg();renderViewSeg();renderSideKpis(ds);renderKeyrow(ds);renderAutoInsight(ds);
+  renderMediaSeg(ds);renderPeriodSeg();renderViewSeg();renderKeyrow(ds);renderAutoInsight(ds);
   requestAnimationFrame(()=>{renderQuad(ds);renderQuadTierLegend();
     renderTrend(ds);
     requestAnimationFrame(()=>{renderTlegend();curDS=ds;renderQuickFo();renderTable(ds);renderAB(ds);});});}
@@ -4098,9 +4078,7 @@ function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(
       if(--pending===0)done();};
     rd.onerror=()=>{failed.push(f.name);if(--pending===0)done();};
     rd.readAsText(f,"utf-8");});}
-const fileInput=$("#file"),dropOv=$("#dropOv");
-/* value를 비워야 같은 파일을 다시 선택/드롭해도 change가 발생한다 (재업로드 무반응 방지) */
-fileInput.addEventListener("change",e=>{handleFiles(e.target.files);e.target.value="";});
+const dropOv=$("#dropOv"); /* CSV는 드래그&드롭으로 업로드(사이드바 버튼 제거) */
 let _dragDepth=0;
 function _hasFiles(e){return e.dataTransfer&&[...e.dataTransfer.types||[]].includes("Files");}
 function _updateHot(e){const z=dropZone(e);const g=$("#dzGoogle"),m=$("#dzMoloco"),me=$("#dzMeta");if(!g)return;
@@ -4818,8 +4796,6 @@ if(cloudPw){
   setTimeout(()=>{if(cloudBooting){cloudBooting=false;updateLandingVisibility();}},35000);
   cloudUnlock(cloudPw,{silent:true}).catch(()=>false).then(()=>{cloudBooting=false;updateLandingVisibility();});}
 else cloudBooting=false;
-/* 좁은 화면에서는 요약 토글 기본 접힘 */
-try{if(matchMedia("(max-width:900px)").matches){const sm=$("#sideMore");if(sm)sm.removeAttribute("open");}}catch(e){}
 const _origSetActive2=setActive;setActive=function(k){_origSetActive2(k);updateLandingVisibility();};
 const _origResetAll=resetAll;resetAll=function(){_origResetAll();updateLandingVisibility();};
 _qxRange.paint();_qyRange.paint();
