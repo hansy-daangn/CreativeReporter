@@ -1,0 +1,16 @@
+# Generated offline snapshot & media — contains real data and password hashes.
+# NEVER commit these to this public repo. They ship only in the local zip.
+data.js
+assets/
+fonts/
+index.html
+_raw/
+assets_manifest.tsv
+dl_*.tsv
+dl_*.log
+dl_fail_*
+fetch_failures.txt
+yt_ids.txt
+_asset_map_direct.json
+*.zip
+*.png
