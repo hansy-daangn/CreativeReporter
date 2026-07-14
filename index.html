@@ -28,6 +28,9 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0}
+  /* 재발 방지: 페이지의 '모든' scrollIntoView가 고정 헤더(툴바+제목행) 아래에 대상을 놓도록 스크롤 여백을 준다.
+     특정 요소에 scroll-margin을 일일이 붙이는 대신 스크롤 루트에 한 번에 걸어 이후 어떤 이동에도 헤더에 안 가림. */
+  html{scroll-padding-top:calc(var(--tbarH,64px) + 48px)}
   body{background:var(--canvas); color:var(--ink); font-family:var(--sans); font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased}
   .num{font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1}
   button{font:inherit; cursor:pointer; border:0; background:none}
@@ -109,7 +112,7 @@
   .card{background:transparent; border-radius:0; box-shadow:none; padding:0}
   .main{background:var(--surface)}
   .card-h{display:flex; align-items:baseline; gap:10px; margin:0 0 16px}
-  .card-h h2{font-size:16px; font-weight:740; margin:0; letter-spacing:-.01em}
+  .card-h h2{font-size:17px; font-weight:740; margin:0; letter-spacing:-.01em}
   .card-h .meta{font-size:12px; color:var(--muted)} .card-h .meta b{color:var(--ink);font-weight:650}
   .sub-h{font-size:12px; font-weight:700; color:var(--muted); margin:18px 0 11px; letter-spacing:.01em}
 
@@ -154,11 +157,11 @@
   /* analysis */
   .keyrow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
   @media(max-width:760px){.keyrow{grid-template-columns:1fr}}
-  .ktile{background:var(--surface-2);border-radius:var(--r-sm);padding:13px 15px}
-  .ktile .kt-k{font-size:11px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
+  .ktile{background:var(--surface);border:1px solid var(--surface-3);border-radius:var(--r-sm);padding:14px 16px}
+  .ktile .kt-k{font-size:11.5px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
   .ktile .kt-k svg{width:14px;height:14px}
-  .ktile .kt-v{font-size:14px;font-weight:700;margin-top:5px;letter-spacing:-.01em}
-  .ktile .kt-s{font-size:11px;color:var(--muted);margin-top:3px}
+  .ktile .kt-v{font-size:15.5px;font-weight:750;margin-top:5px;letter-spacing:-.01em}
+  .ktile .kt-s{font-size:11.5px;color:var(--muted);margin-top:3px}
   .ktile.g .kt-k{color:var(--g1)} .ktile.b .kt-k{color:var(--w2)} .ktile.n .kt-k{color:var(--c2)}
 
   svg.chart{display:block;overflow:visible;max-width:100%}
@@ -291,8 +294,8 @@
      제목행 고정은 thead th의 sticky top:var(--tbarH)가 담당 — 페이지를 스크롤하면 제목행이
      뷰포트에서 툴바 바로 아래에 얼어붙는다(엑셀식). 넓은 표는 fitTableCols가 열을 접어 맞춘다. */
   .tbl-scroll{overflow:visible;border-radius:10px;background:var(--surface-2)}
-  table{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
-  th,td{padding:9px 11px;text-align:right;white-space:nowrap}
+  table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+  th,td{padding:10px 11px;text-align:right;white-space:nowrap}
   tbody td{background:var(--surface)}
   th.name,td.name{text-align:left;white-space:normal;min-width:190px;max-width:330px}
   th.csub,td.csub{background:#F7F6F1}
@@ -327,7 +330,7 @@
   /* 고정 제목행은 '메인 표의 직계 thead'에만 적용(#table>thead) — 상세(isle) 안의 비교표, AB표 등
      다른 thead에 이 오프셋이 새지 않게 한다(과거 전역 `thead th`가 AB표 헤더를 엉뚱한 위치에 고정시키던 결함).
      top 폴백은 0이 아니라 툴바 평균 높이(64px): --tbarH 미설정/JS 실패 시에도 툴바와 겹치지 않는다. */
-  #table>thead th{position:sticky;top:var(--tbarH,64px);background:var(--surface-2);z-index:3;font-weight:650;color:var(--muted);cursor:pointer;user-select:none;transition:color .12s,background .12s;box-shadow:inset 0 -1px 0 var(--surface-3),0 4px 6px -5px rgba(20,20,15,.18)}
+  #table>thead th{position:sticky;top:var(--tbarH,64px);background:var(--surface-2);z-index:3;font-weight:680;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none;transition:color .12s,background .12s;box-shadow:inset 0 -1px 0 var(--surface-3),0 4px 6px -5px rgba(20,20,15,.18)}
   #table>thead th.help{text-decoration:underline dotted #cfcdc4;text-underline-offset:3px}
   #table>thead th:hover{color:var(--ink);background:var(--surface-3)}
   #table>thead th:focus-visible{outline:2px solid var(--karrot);outline-offset:-2px;color:var(--ink)}
@@ -335,11 +338,9 @@
   #table>thead th.sorted .arr{opacity:1}
   #table>thead th .arr{opacity:.5;font-size:10px}
   #table>thead th:hover .arr{opacity:.8}
-  /* 이동·페이지 넘김 시 대상 행이 고정 헤더(툴바+제목행) 아래로 오도록 여백 확보 — scrollIntoView가 헤더에 가리지 않게 */
-  #table,#table tbody tr.row,.isle-row{scroll-margin-top:calc(var(--tbarH,64px) + 46px)}
   tbody tr:hover td{background:#FBF8F4} tbody tr:hover td.name,tbody tr:hover td.bdg{background:#FBF8F4}
   tbody td{border-bottom:1px solid #F0EFE9}
-  tbody tr.row{content-visibility:auto;contain-intrinsic-size:auto 56px}
+  tbody tr.row{content-visibility:auto;contain-intrinsic-size:auto 60px}
   tbody tr.pager td{background:var(--surface-2);padding:11px;text-align:center}
   .pager-nav{display:inline-flex;align-items:center;gap:10px;font-size:12.5px}
   .pager-nav button{background:var(--surface-1);border:1px solid #E6E4DC;color:var(--ink);padding:6px 14px;border-radius:8px;font-size:12.5px;font-weight:650;cursor:pointer;transition:background .12s}
@@ -1085,6 +1086,11 @@
 
 <script>
 "use strict";
+
+/* 새로고침·재접속 시 브라우저가 이전 스크롤 위치를 복원(analysis를 읽다 새로고침하면 맨 아래로 들어옴)하는 것을
+   막는다 — 항상 첫 화면(맨 위)에서 시작. (scrollRestoration 미지원 브라우저는 무시) */
+try{if("scrollRestoration" in history)history.scrollRestoration="manual";}catch(_){}
+addEventListener("DOMContentLoaded",()=>{try{window.scrollTo(0,0);}catch(_){}});
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const tip=$("#tip");
@@ -3284,7 +3290,9 @@ function renderQuadTierLegend(){const el=$("#qTierLeg");if(!el)return;
   el.innerHTML=tiers.map((t,i)=>`<span class="qtl-item"><span class="qtl-dot" style="background:${t.c}"></span><span class="qtl-lab">${t.lab}</span></span>${i<tiers.length-1?'<span class="qtl-sep">·</span>':''}`).join("");}
 /* 제목행(thead th)이 sticky로 얼어붙을 위치 = 툴바 바로 아래. 툴바 실측 높이를 --tbarH로.
    툴바는 한 줄(nowrap)이라 높이가 안정적이므로 값이 흔들리지 않는다. 숨김(0)일 땐 덮지 않음. */
-function syncTbarH(){const t=$("#tbar"),s=$("#tabTable");if(t&&s){const h=t.offsetHeight;if(h>0)s.style.setProperty("--tbarH",h+"px");}}
+/* --tbarH는 :root(documentElement)에 둔다 — 제목행 sticky top뿐 아니라 html의 scroll-padding-top도
+   같은 값을 참조해 '모든 scrollIntoView'가 고정 헤더를 자동으로 피하게 하려는 것(재발 방지 핵심). */
+function syncTbarH(){const t=$("#tbar");if(t){const h=t.offsetHeight;if(h>0)document.documentElement.style.setProperty("--tbarH",h+"px");}}
 (function(){const t=document.getElementById("tbar");if(t&&typeof ResizeObserver!=="undefined")new ResizeObserver(()=>{try{syncTbarH()}catch(_){}}).observe(t);})();
 function renderQuickFo(){const ds=curDS;
   const hasFo=ds&&ds.agg&&ds.agg.some(e=>e.tags&&(e.tags.fo==="영상"||e.tags.fo==="이미지"));
