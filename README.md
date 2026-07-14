@@ -10,11 +10,11 @@ https://hansy-daangn.github.io/CreativeReporter/
 
 | | 시안 A · 편집형 리포트 | 시안 B · 대시보드 콘솔 |
 |---|---|---|
-| | [![시안 A](proposals/preview-a.png)](https://hansy-daangn.github.io/CreativeReporter/proposals/a-editorial.html) | [![시안 B](proposals/preview-b.png)](https://hansy-daangn.github.io/CreativeReporter/proposals/b-console.html) |
+| | [![시안 A](proposals/preview-a.png)](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/header-ui-restructure-y7wnwx/proposals/a-editorial.html) | [![시안 B](proposals/preview-b.png)](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/header-ui-restructure-y7wnwx/proposals/b-console.html) |
 | 성격 | 차분히 **'읽는'** 계기 — 따뜻한 종이 캔버스, 밝은 파치먼트 사이드바, 헤어라인 원장(ledger) 표, 강한 타이포 위계. 오렌지는 정렬된 열·핵심 수치에만 절제해서. | **'조종하는'** 콕핏 — 리치 다크 레일, 떠 있는 카드 표면, 큰 라운드·깊이, 채워진 오렌지 정렬 헤더와 생생한 티어 컬러. |
-| 열기 | **[시안 A 미리보기 →](https://hansy-daangn.github.io/CreativeReporter/proposals/a-editorial.html)** | **[시안 B 미리보기 →](https://hansy-daangn.github.io/CreativeReporter/proposals/b-console.html)** |
+| 지금 바로 열기 | **[▶ 시안 A 열기](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/header-ui-restructure-y7wnwx/proposals/a-editorial.html)** | **[▶ 시안 B 열기](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/header-ui-restructure-y7wnwx/proposals/b-console.html)** |
 
-> 링크는 `main`에 병합되면 GitHub Pages에서 바로 열립니다. PR 브랜치에서 먼저 보려면 저장소를 받아 `proposals/a-editorial.html` · `proposals/b-console.html`을 브라우저로 열면 됩니다.
+> **위 '지금 바로 열기'** 는 [raw.githack.com](https://raw.githack.com)이 이 브랜치의 파일을 그대로 렌더링해 주므로 **병합 없이 클릭 즉시** 열립니다(저장소가 공개라 가능). 병합 후에는 GitHub Pages 정식 주소로도 열립니다 → [시안 A](https://hansy-daangn.github.io/CreativeReporter/proposals/a-editorial.html) · [시안 B](https://hansy-daangn.github.io/CreativeReporter/proposals/b-console.html).
 
 **두 시안 공통 — 구조·기능 개선** (`index.html` 본 사이트에도 반영)
 - 표 툴바 2번째 줄의 **등급 범례(왕관·독보적·따봉…) 제거** — 뱃지 자체로 자명하고, 상세는 분석 탭 '점수 읽는 법'에 있음.
