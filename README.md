@@ -3,6 +3,29 @@
 퍼포먼스 소재 성과분석 대시보드입니다.<br/>
 https://hansy-daangn.github.io/CreativeReporter/
 
+## 🎨 UI 개선 시안 (2가지 방향)
+
+원래 사이트의 **미니멀함을 유지**하면서 다듬은 **두 가지 방향**입니다. 색·사이드바는 본 사이트 그대로 두고 과한 효과(카드·그림자·그라데이션)는 넣지 않았습니다.
+각 링크는 **비밀번호 없이 합성 샘플 데이터로 바로 미리보기**되며, 화면 하단 바에서 **A ↔ B를 즉시 전환**해 비교할 수 있습니다.
+
+| | 시안 A · 여백 (Airy) | 시안 B · 밀도 (Compact) |
+|---|---|---|
+| | [![시안 A](proposals/preview-a.png)](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/header-ui-restructure-y7wnwx/proposals/a-editorial.html) | [![시안 B](proposals/preview-b.png)](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/header-ui-restructure-y7wnwx/proposals/b-console.html) |
+| 성격 | **넉넉한 여백** — 행 간격을 늘리고 구분선을 옅게, 흰 제목행으로 차분하게 '읽는' 표. | **고밀도** — 행·여백을 조여 한 화면에 더 많은 소재를 담는 스캔 중심 표. |
+| 지금 바로 열기 | **[▶ 시안 A 열기](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/header-ui-restructure-y7wnwx/proposals/a-editorial.html)** | **[▶ 시안 B 열기](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/header-ui-restructure-y7wnwx/proposals/b-console.html)** |
+
+> **위 '지금 바로 열기'** 는 [raw.githack.com](https://raw.githack.com)이 이 브랜치의 파일을 그대로 렌더링해 주므로 **병합 없이 클릭 즉시** 열립니다(저장소가 공개라 가능). 병합 후에는 GitHub Pages 정식 주소로도 열립니다 → [시안 A](https://hansy-daangn.github.io/CreativeReporter/proposals/a-editorial.html) · [시안 B](https://hansy-daangn.github.io/CreativeReporter/proposals/b-console.html).
+
+**두 시안 공통 — 구조·기능 개선** (`index.html` 본 사이트에도 반영)
+- 표 툴바 2번째 줄의 **등급 범례(왕관·독보적·따봉…) 제거** — 뱃지 자체로 자명하고, 상세는 분석 탭 '점수 읽는 법'에 있음.
+- **표 제목행 스크롤 고정(엑셀식)** — 표 영역만 내부 스크롤(`overflow:auto` + `max-height`)하고 제목행(소재·점수·광고비…)은 `sticky top:0`으로 툴바 바로 아래에 얼려 둠. **어떤 창 크기·스크롤 위치에서도 툴바와 겹치거나 가려지지 않음.** 클릭 정렬·`+` 세부지표 펼치기 유지.
+- **툴바 한 줄 유지** — 여러 줄로 접히지 않게(`nowrap`), 좁으면 가로 스크롤.
+- **사이드바 액센트 회색화** — 분석/전체목록·자료추출의 강한 주황을 차분한 회색으로.
+- **리사이즈 렉 개선** — 표 탭에선 숨은 SVG 차트를 다시 그리지 않아 창 크기 조절이 매끄러움.
+- 접근성: 정렬 상태 강조, 키보드(Enter/Space)·`aria-sort`·`focus-visible`.
+
+*시안 페이지는 `proposals/`의 테마 CSS(`theme-*.css`) + 데모 부트스트랩을 `node proposals/build.mjs`로 본 앱에 주입해 생성합니다.*
+
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — 사이트 구조와 매커니즘 상세 설명
 - **[docs/REBUILD_PROMPT.md](docs/REBUILD_PROMPT.md)** — 무에서 동일 시스템을 재구축하는 완전제작 프롬프트
 

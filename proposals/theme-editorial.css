@@ -1,0 +1,29 @@
+/* ============================================================
+   시안 A — 여백 (Airy Minimal)
+   ------------------------------------------------------------
+   원래 사이트의 미니멀함을 살리되 '숨 쉴 공간'을 더한다.
+   색·사이드바는 본 사이트 그대로. 행 간격·여백·타이포 위계만
+   손봐서 더 차분하고 읽기 편하게. 과한 효과(카드·그림자·그라데이션) 없음.
+   ============================================================ */
+
+/* 타이포 위계: 제목은 조금 더 또렷하게, 라벨은 차분하게 */
+.card-h h2{font-size:16.5px;font-weight:760;letter-spacing:-.015em}
+.sub-h{color:var(--faint);font-weight:700;letter-spacing:.01em}
+
+/* 표: 행에 여백을 더해 촘촘함을 풀고, 구분선은 더 옅게 */
+th,td{padding:13px 12px}
+tbody td{border-bottom:1px solid #F1F0EA}
+tbody tr:hover td,tbody tr:hover td.name,tbody tr:hover td.bdg{background:#FBFAF6}
+thead th{background:var(--surface);color:var(--faint);font-weight:700}
+thead th.sorted{color:var(--karrot);background:var(--surface)}
+.tbl-scroll{background:var(--surface)}
+
+/* 상단 요약 타일: 칸 사이 얇은 세로 구분선만, 배경효과 없음 */
+.keyrow{gap:0}
+.keyrow>*{padding:14px 20px}
+.keyrow>*+*{border-left:1px solid var(--surface-2)}
+
+/* 미리보기 실패 썸네일을 검정 대신 옅은 톤으로 */
+.tthumb{background:#ECEAE3}
+.tthumb img,.tthumb video{background:#ECEAE3}
+.gal-media{background:#EEEDE7}
