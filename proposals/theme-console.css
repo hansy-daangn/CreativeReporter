@@ -1,30 +1,29 @@
 /* ============================================================
-   시안 B — 밀도 (Compact Minimal)
+   개선안 B — 프리미엄 (Refined)
    ------------------------------------------------------------
-   같은 미니멀 톤이되, 한 화면에 더 많은 데이터를 담는 '고밀도' 방향.
-   색·사이드바는 본 사이트 그대로. 행·여백을 조여 스캔 효율을 높이고,
-   정렬된 열만 아주 옅은 강조. 과한 효과 없음.
+   같은 미니멀 톤에서 '완성도'를 올린 방향. 여백 리듬을 조금 더 넉넉히,
+   브랜드 오렌지를 정렬·활성 지점에만 정제해서, 점수 칩·타일에 미세한
+   깊이를 줘 차분하고 premium한 느낌. 과한 카드·그림자는 없음.
    ============================================================ */
 
-/* 밀도: 행·셀을 조이고 숫자는 살짝 작게(더 많은 행이 보이도록) */
-table{font-size:12px}
-th,td{padding:7px 10px}
-tbody td{border-bottom:1px solid #F0EFE9}
-tbody tr.row{contain-intrinsic-size:auto 48px}
+/* 여백 리듬: 행·헤더에 숨 쉴 공간 조금 더 */
+th,td{padding:12px 13px}
 
-/* 제목행: 얇은 라벨 + 정렬 열만 옅은 강조(가로줄 없이 담백하게) */
-thead th{background:var(--surface-2);color:var(--muted);font-weight:700;font-size:11.5px}
-thead th.sorted{color:var(--karrot);background:var(--karrot-f)}
+/* 정렬 열: 배경 대신 오렌지 밑줄로 절제된 강조(차분함 유지) */
+#table>thead th.sorted{background:transparent;color:var(--karrot);box-shadow:inset 0 -2px 0 var(--karrot)}
+#table tbody tr.row:hover>td{background:#FCF7F2}
 
-/* 상단 요약 타일: 얇은 테두리로만 구분(그림자·라운드 최소) */
-.keyrow{gap:10px}
-.keyrow>*{border:1px solid var(--surface-2);border-radius:8px;padding:12px 14px}
+/* 점수 칩·뱃지: 라운드·미세 그림자로 또렷하되 튀지 않게 */
+.sp{border-radius:9px;box-shadow:0 1px 2px rgba(20,20,15,.07)}
+.scb .dom-tag{border-radius:7px}
 
-/* 검색·세그먼트 컨트롤을 조금 더 콤팩트하게 */
-.tbar input[type=search]{padding:7px 12px}
-.tbtn{padding:6px 11px}
+/* 상단 요약 타일: 아주 옅은 깊이 + 값 위계 */
+.ktile{box-shadow:0 1px 2px rgba(20,20,15,.05);border-color:var(--surface-2)}
+.ktile .kt-v{font-weight:780}
 
-/* 미리보기 실패 썸네일 톤 다운(검정 제거) */
-.tthumb{background:#E9E8E2;border-radius:7px}
-.tthumb img,.tthumb video{background:#E9E8E2}
-.gal-media{background:#ECEBE5}
+/* 세그먼트·검색 등 컨트롤에 브랜드 액센트를 은은하게 */
+.tbtn.on{color:var(--karrot)}
+.tbar input[type=search]:focus{box-shadow:0 0 0 3px rgba(255,111,15,.12)}
+
+/* 미리보기 실패 썸네일 톤 다운 */
+.tthumb{background:#ECEBE6}
