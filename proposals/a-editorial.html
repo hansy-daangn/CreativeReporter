@@ -310,7 +310,7 @@
   .thident{display:none;font-size:12px;color:var(--faint);margin:0 2px 6px}
   /* 점수 위치 고정: 점수는 항상 같은 x, 등급 뱃지는 그 오른쪽 고정 슬롯에. 뱃지가 없거나 짧아도 같은 공간 확보 */
   td.scb{white-space:nowrap;text-align:left}
-  .scb .sc-num{display:inline-block;vertical-align:middle}
+  .scb .sc-score{display:inline-block;vertical-align:middle}
   .scb .sc-badge{display:inline-block;vertical-align:middle;min-width:52px;margin-left:7px}
   .scb>*{vertical-align:middle}
   .scb svg{width:16px;height:16px;vertical-align:middle}
@@ -705,6 +705,8 @@
     th.name,td.name{min-width:56px;max-width:80px}
     /* 좁은 화면에선 셀 여백을 줄여 필수 열이 본문 안에 들어오게 — 가로 스크롤바 방지 */
     #table th,#table td{padding:9px 5px}
+    /* 모바일에선 점수 뱃지 고정 슬롯을 줄여 점수 열이 표를 넘치지 않게(데스크톱만 고정 슬롯) */
+    .scb .sc-badge{min-width:0;margin-left:4px}
   }
   @media(max-width:520px){.content{padding-left:12px;padding-right:12px}}
   @media(max-width:760px){.isle{grid-template-columns:1fr;gap:18px}}
@@ -3270,7 +3272,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
           ? `<span class="nm-text editing" contenteditable="true" spellcheck="false" data-nm="${escAttr(r.name)}">${escHtml(dn)}</span>`
           : `<span class="nm-text">${escHtml(trunc(dn,60))}</span>`;
         return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}><div class="nm-line">${liveBadge(ds,r)}${lrnBadge(r)}${nmHtml}${mb}${gst}</div><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
-      if(c.k==="score")return `<td class="scb"><span class="sc-num">${score}</span><span class="sc-badge">${bdg||""}</span></td>`;
+      if(c.k==="score")return `<td class="scb"><span class="sc-score">${score}</span><span class="sc-badge">${bdg||""}</span></td>`;
       const dir=COL_DIR[c.k]||0;
       const t=dir?cellTier(r[c.k],colSorted[c.k],dir):"m";
       return `<td class="num c-${t}${c.sub?" csub":""}${c.grp?" cg-"+c.grp:""}">${fcell(r[c.k],c.f)}</td>`;}).join("")+"</tr>";}).join("");
