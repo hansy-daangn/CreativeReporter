@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko" class="theme-editorial proposal-demo">
+<html lang="ko" class="theme-airy proposal-demo">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>소재분석 · 시안 A 편집형 리포트</title>
+<title>소재분석 · 시안 A 여백(Airy)</title>
 <!-- 대표 아이콘(파비콘) — 브라우저 탭·주소창·북마크에만 표시(페이지 본문엔 노출 안 됨) -->
 <link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <link rel="apple-touch-icon" href="../favicon.svg">
@@ -71,7 +71,7 @@
   .side-nav .mtabs .mtabs-in{display:flex;gap:2px;width:100%;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:3px}
   .side-nav .mtabs button{flex:1;padding:8px 4px;border-radius:7px;font-size:12.5px;font-weight:700;color:var(--side-muted);white-space:nowrap;background:transparent;box-shadow:none;transition:.12s}
   .side-nav .mtabs button:hover{color:var(--side-ink);background:rgba(255,255,255,.06)}
-  .side-nav .mtabs button.on{background:var(--karrot);color:#fff;box-shadow:0 1px 6px rgba(255,111,15,.35)}
+  .side-nav .mtabs button.on{background:rgba(255,255,255,.16);color:#fff;box-shadow:none}
   .side-nav .mtabs button .tc{color:#fff;margin-left:3px}
   /* 커스텀 드롭다운(매체) — 네이티브 select 대체 */
   .sf-dd{position:relative}
@@ -95,7 +95,7 @@
   .side-actions{display:flex; flex-wrap:wrap; gap:7px}
   .sbtn{flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:10px 6px; border-radius:9px; background:rgba(255,255,255,.07); color:var(--side-ink); font-size:12px; font-weight:650; white-space:nowrap; transition:.13s; border:0; cursor:pointer}
   .sbtn:hover{background:rgba(255,255,255,.13)}
-  .sbtn.pri{background:var(--karrot); color:#fff}.sbtn.pri:hover{background:#ff7d24}
+  .sbtn.pri{background:rgba(255,255,255,.14); color:var(--side-ink)}.sbtn.pri:hover{background:rgba(255,255,255,.2)}
   .sbtn.icon-only{flex:0 0 auto;width:42px;padding:10px 0}
   /* 좁은 데스크톱 컬럼: 채점 설정은 한 줄 전체 · 자료추출+용어(ⓘ)가 다음 줄. 모바일(넓음)은 3개 한 줄 */
   .side-actions .act-cfg{flex:1 1 100%} .side-actions .act-xt{flex:1 1 auto}
@@ -250,8 +250,10 @@
   #bd{margin-top:6px}
 
   /* table */
-  /* 전체목록 툴바 — 스티키(스크롤해도 상단 고정) + 세그먼트 클러스터 */
-  .tbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:20;background:var(--surface);padding:14px 0 12px;border-bottom:1px solid var(--surface-2)}
+  /* 전체목록 툴바 — 스티키(스크롤해도 상단 고정) + 세그먼트 클러스터. 한 줄 유지(줄바꿈 금지), 좁으면 가로 스크롤 */
+  .tbar{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;position:sticky;top:0;z-index:20;background:var(--surface);padding:14px 0 12px;border-bottom:1px solid var(--surface-2)}
+  .tbar>*{flex:0 0 auto}
+  .tbar::-webkit-scrollbar{height:6px}
   .tbar input[type=search]{flex:0 0 auto;background:var(--surface-2);border-radius:9px;padding:8px 13px;font:inherit;font-size:12.5px;width:200px;max-width:44vw;border:1px solid transparent}
   .tbar input[type=search]:focus{outline:none;border-color:var(--karrot);background:var(--surface)}
   .tbar-cl{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -285,9 +287,10 @@
   .tffoot button:hover{color:var(--ink)}
   .chk{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
   .chk input{width:15px;height:15px;accent-color:var(--karrot)}
-  /* 표준 구조: 가로 스크롤 컨테이너(overflow-x:auto). 제목행(thead th)은 sticky top:0으로 컨테이너
-     상단에 항상 밀착돼 툴바 바로 아래 '헤더 2번째 줄'을 이룬다. 어떤 창 크기에서도 툴바와 분리되지 않는다. */
-  .tbl-scroll{overflow-x:auto;overflow-y:visible;border-radius:10px;background:var(--surface-2)}
+  /* 엑셀식 고정 헤더: 표 영역만 내부 스크롤(overflow:auto + max-height)하고, 제목행(thead th)은
+     sticky top:0으로 이 영역 상단에 '얼려' 둔다. 영역이 툴바 아래에 있으므로 제목행이 툴바와 겹치거나
+     가려지는 일이 없다. 가로로 넓으면 이 영역 안에서만 가로 스크롤된다. */
+  .tbl-scroll{overflow:auto;max-height:calc(100vh - 92px);border-radius:10px;background:var(--surface-2)}
   table{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
   th,td{padding:9px 11px;text-align:right;white-space:nowrap}
   tbody td{background:var(--surface)}
@@ -321,7 +324,7 @@
   th.bdg,td.bdg{width:58px;padding-left:14px;text-align:left}
   /* 표 제목행 = 헤더의 '2번째 줄'. sticky top:0으로 표(스크롤 컨테이너) 상단에 밀착 — 툴바 바로 아래에 붙어
      어떤 창 크기·가로 스크롤에서도 분리되지 않는다. 정렬·펼치기 컨트롤을 담는다. */
-  thead th{position:sticky;top:0;background:var(--surface-2);z-index:3;font-weight:650;color:var(--muted);cursor:pointer;user-select:none;transition:color .12s,background .12s;box-shadow:inset 0 -1px 0 var(--surface-3)}
+  thead th{position:sticky;top:0;background:var(--surface-2);z-index:3;font-weight:650;color:var(--muted);cursor:pointer;user-select:none;transition:color .12s,background .12s;box-shadow:inset 0 -1px 0 var(--surface-3),0 4px 6px -5px rgba(20,20,15,.25)}
   thead th.help{text-decoration:underline dotted #cfcdc4;text-underline-offset:3px}
   thead th:hover{color:var(--ink);background:var(--surface-3)}
   thead th:focus-visible{outline:2px solid var(--karrot);outline-offset:-2px;color:var(--ink)}
@@ -920,92 +923,34 @@
 </style>
 <style id="proposal-theme">
 /* ============================================================
-   시안 A — 편집형 리포트 (Editorial Ledger)
+   시안 A — 여백 (Airy Minimal)
    ------------------------------------------------------------
-   콘셉트: 마케터가 '읽는' 사내 계기. 잘 조판된 애널리틱스 브로드시트처럼
-   따뜻한 종이·헤어라인 구조·강한 타이포 위계로 차분하게. 오렌지는
-   편집자의 빨간펜처럼 '정렬된 열·핵심 수치'에만 정밀하게 찍는다.
-   시그니처: 종이 위 원장(ledger) 표 — 굵은 잉크 룰의 2단 고정 헤더 +
-   헤어라인 행 + 탭ular 숫자가 주인공. 사이드바는 파치먼트(밝은) 방향.
+   원래 사이트의 미니멀함을 살리되 '숨 쉴 공간'을 더한다.
+   색·사이드바는 본 사이트 그대로. 행 간격·여백·타이포 위계만
+   손봐서 더 차분하고 읽기 편하게. 과한 효과(카드·그림자·그라데이션) 없음.
    ============================================================ */
 
-:root{
-  --canvas:#F4F1E8; --surface:#FFFFFF; --surface-2:#F0ECE1; --surface-3:#E5E0D2;
-  --ink:#201D15; --muted:#7C766A; --faint:#ABA492;
-  /* 파치먼트 사이드바 (밝은) */
-  --side:#ECE7DA; --side-2:#E1DBCB; --side-ink:#2A251B; --side-muted:#6F695A; --side-faint:#A39C89;
-  --karrot:#CE560A; --karrot-2:#E5701C; --karrot-f:#F6E7D6;
-  --r:10px; --r-sm:7px;
-  --sh:0 1px 1px rgba(40,32,18,.04), 0 10px 26px -20px rgba(40,32,18,.18);
-}
-body{background:var(--canvas)}
+/* 타이포 위계: 제목은 조금 더 또렷하게, 라벨은 차분하게 */
+.card-h h2{font-size:16.5px;font-weight:760;letter-spacing:-.015em}
+.sub-h{color:var(--faint);font-weight:700;letter-spacing:.01em}
 
-/* ---- 타이포 위계: 리포트 헤드라인 감각 ---- */
-.card-h h2{font-size:18px;font-weight:820;letter-spacing:-.02em}
-.sub-h{font-size:11px;font-weight:800;letter-spacing:.02em;color:var(--faint);text-transform:none}
-.side-h{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--side-faint)}
-.keyrow{gap:0;border-top:1.5px solid var(--ink);border-bottom:1px solid var(--surface-3)}
+/* 표: 행에 여백을 더해 촘촘함을 풀고, 구분선은 더 옅게 */
+th,td{padding:13px 12px}
+tbody td{border-bottom:1px solid #F1F0EA}
+tbody tr:hover td,tbody tr:hover td.name,tbody tr:hover td.bdg{background:#FBFAF6}
+thead th{background:var(--surface);color:var(--faint);font-weight:700}
+thead th.sorted{color:var(--karrot);background:var(--surface)}
+.tbl-scroll{background:var(--surface)}
 
-/* ---- 파치먼트 사이드바: 흰색-알파 → 잉크-알파로 전면 교체 ---- */
-.side{border-right:1px solid #DED8C8;padding-top:22px}
-.side-nav .mtabs .mtabs-in{background:rgba(30,24,12,.05);border:1px solid rgba(30,24,12,.08)}
-.side-nav .mtabs button{color:var(--side-muted)}
-.side-nav .mtabs button:hover{color:var(--side-ink);background:rgba(30,24,12,.05)}
-.side-nav .mtabs button.on{background:var(--karrot);color:#fff;box-shadow:0 1px 6px rgba(206,86,10,.32)}
-.sf-sel,.sf-dd-btn{border:1px solid rgba(30,24,12,.15);background:var(--side-2);color:var(--side-ink)}
-.sf-sel:hover,.sf-dd-btn:hover{border-color:rgba(30,24,12,.3)}
-.sf-dd.open .sf-dd-btn{border-color:var(--karrot)}
-.sf-dd-btn svg{color:var(--side-muted)}
-.sf-dd-menu{background:#fff;border:1px solid rgba(30,24,12,.1);box-shadow:0 16px 36px rgba(40,32,18,.18)}
-.sf-dd-menu button{color:var(--side-muted)}
-.sf-dd-menu button:hover{background:var(--surface-2);color:var(--side-ink)}
-.sf-dd-menu button.on{color:var(--ink)}
-.sf-dd-menu button.on::after{color:var(--karrot)}
-.seg3{border:1px solid rgba(30,24,12,.13)}
-.seg3 button{border-left-color:rgba(30,24,12,.08);color:var(--side-muted)}
-.seg3 button:hover{background:var(--side-2);color:var(--side-ink)}
-.seg3 button.on{background:var(--karrot);color:#fff}
-.pcustom input,.pcustom select{border:1px solid rgba(30,24,12,.15);background:var(--side-2);color:var(--side-ink)}
-.sbtn{background:rgba(30,24,12,.055);color:var(--side-ink)}
-.sbtn:hover{background:rgba(30,24,12,.1)}
-.sbtn.pri{background:var(--karrot);color:#fff}.sbtn.pri:hover{background:var(--karrot-2)}
-.src{color:var(--side-faint)}.src b{color:var(--side-muted)}
+/* 상단 요약 타일: 칸 사이 얇은 세로 구분선만, 배경효과 없음 */
+.keyrow{gap:0}
+.keyrow>*{padding:14px 20px}
+.keyrow>*+*{border-left:1px solid var(--surface-2)}
 
-/* ---- 툴바(헤더 1번째 줄): 종이 위 얇은 룰 (스크롤 콘텐츠를 가리도록 불투명) ---- */
-.tbar{background:var(--canvas);border-bottom:1px solid var(--surface-3);padding-bottom:10px}
-.tbar input[type=search]{background:var(--surface-2);border:1px solid transparent}
-.tbar input[type=search]:focus{border-color:var(--karrot);background:#fff}
-.seg-cl{background:var(--surface-2)}
-.tbtn.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(40,32,18,.12)}
-
-/* ---- 원장 표: 시그니처 ---- */
-.tbl-scroll{background:transparent;border-radius:0}
-table{font-size:12.5px}
-th,td{padding:12px 12px}
-/* 제목행 = 헤더 2번째 줄. 굵은 잉크 룰로 원장 상단선을 긋는다 */
-thead th{background:var(--canvas);color:var(--faint);font-weight:800;font-size:11.5px;letter-spacing:.01em;
-  box-shadow:inset 0 -1.5px 0 var(--ink)}
-thead th:hover{color:var(--ink);background:var(--surface-2)}
-thead th.sorted{color:var(--karrot);background:transparent;box-shadow:inset 0 -2px 0 var(--karrot)}
-thead th .arr{font-size:9px}
-tbody td{background:transparent;border-bottom:1px solid #EBE6D9}
-tbody tr:hover td,tbody tr:hover td.name,tbody tr:hover td.bdg{background:#FBF9F2}
-tbody td.num.c-g2{color:#1256C4}
-tbody td.num.c-w2{color:#B23048}
-th.csub,td.csub{background:rgba(40,32,18,.03)}
-/* 세부지표 펼침 버튼 — 헤어라인 원형 */
-.colx{background:transparent;border:1px solid rgba(30,24,12,.22);color:var(--muted);font-weight:700;border-radius:999px}
-.colx:hover{background:var(--karrot-f);border-color:var(--karrot);color:var(--karrot)}
-/* 점수 배지 — 편집형: 라운드 낮추고 잉크 대비 유지 */
-.sp{border-radius:6px;font-weight:800}
-/* 미리보기 실패 썸네일을 검정 대신 종이 톤 플레이스홀더로 */
-.tthumb{background:#E7E1D2;border-radius:8px}
-.tthumb img,.tthumb video{background:#EDE8DB}
-.gal-media{background:#EAE4D6}
-.gal-card{background:var(--surface);border:1px solid #E4DECF;border-radius:12px}
-
-/* ---- 분석 화면 카드/콜아웃: 헤어라인 편집 스타일 ---- */
-.tbl-scroll,.abf{border-radius:8px}
+/* 미리보기 실패 썸네일을 검정 대신 옅은 톤으로 */
+.tthumb{background:#ECEAE3}
+.tthumb img,.tthumb video{background:#ECEAE3}
+.gal-media{background:#EEEDE7}
 
 </style>
 <style id="proposal-chrome">
@@ -4323,7 +4268,11 @@ $("#table tbody").addEventListener("click",e=>{
     tPage=1;renderQuickFo();renderTable(curDS);return;}
   const tr=e.target.closest("tr");if(!tr||tr.classList.contains("isle-row"))return;const nm=tr.getAttribute("data-name");if(nm==null||!curDS)return;_userActed=true;toggleIsland(curDS,nm,tr);});
 $("#chipFil").addEventListener("click",()=>{tChip=null;tPage=1;renderQuickFo();if(active)renderTable(DATASETS[active]);});
-let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{if(active&&DATASETS[active]){renderQuad(DATASETS[active]);renderTrend(DATASETS[active]);}const inner=document.querySelector(".isle"),sc=document.querySelector(".tbl-scroll");if(inner&&sc)inner.style.width=sc.clientWidth+"px";syncTbarH();},140);});
+/* 리사이즈 비용 절감: 무거운 SVG 차트(효율지도·추세)는 '분석' 탭이 보일 때만 다시 그린다.
+   표/AB 탭에서 창을 조절할 땐 숨은 차트를 건드리지 않아 렉이 없다. 디바운스도 넉넉히. */
+let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{
+  if(mainTab==="analysis"&&active&&DATASETS[active]){renderQuad(DATASETS[active]);renderTrend(DATASETS[active]);}
+  const inner=document.querySelector(".isle"),sc=document.querySelector(".tbl-scroll");if(inner&&sc)inner.style.width=sc.clientWidth+"px";},200);});
 
 function _qRender(){if(active&&DATASETS[active])renderQuad(DATASETS[active]);}
 function setupDual(rootId,vertical,getQ,setQ){const el=$("#"+rootId);
@@ -5013,8 +4962,8 @@ _qxRange.paint();_qyRange.paint();
 </script>
 <div id="proposalBar" role="navigation" aria-label="UI 개선 시안 전환">
   <span class="pb-tag"><span class="pb-dot"></span><b>UI 시안</b> · 샘플 데이터</span>
-  <a href="a-editorial.html" class="pb-opt on" aria-current="page">A · 편집형 리포트</a>
-  <a href="b-console.html" class="pb-opt">B · 대시보드 콘솔</a>
+  <a href="a-editorial.html" class="pb-opt on" aria-current="page">A · 여백</a>
+  <a href="b-console.html" class="pb-opt">B · 밀도</a>
   <span class="pb-sep"></span>
   <a href="../index.html" class="pb-home" title="비밀번호로 접속하는 실제 도구">실제 도구 →</a>
 </div>

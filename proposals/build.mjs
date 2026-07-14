@@ -13,10 +13,10 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, '..');
 
 const CONFIGS = [
-  { id:'a', out:'a-editorial.html', theme:'theme-editorial.css', cls:'theme-editorial',
-    title:'소재분석 · 시안 A 편집형 리포트', label:'A · 편집형 리포트' },
-  { id:'b', out:'b-console.html', theme:'theme-console.css', cls:'theme-console',
-    title:'소재분석 · 시안 B 대시보드 콘솔', label:'B · 대시보드 콘솔' },
+  { id:'a', out:'a-editorial.html', theme:'theme-editorial.css', cls:'theme-airy',
+    title:'소재분석 · 시안 A 여백(Airy)', label:'A · 여백' },
+  { id:'b', out:'b-console.html', theme:'theme-console.css', cls:'theme-compact',
+    title:'소재분석 · 시안 B 밀도(Compact)', label:'B · 밀도' },
 ];
 
 const base = readFileSync(join(repo, 'index.html'), 'utf8');
