@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko" class="theme-airy proposal-demo">
+<html lang="ko" class="theme-readable proposal-demo">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>소재분석 · 시안 A 여백(Airy)</title>
+<title>소재분석 · 개선안 A 가독형(Readable)</title>
 <!-- 대표 아이콘(파비콘) — 브라우저 탭·주소창·북마크에만 표시(페이지 본문엔 노출 안 됨) -->
 <link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <link rel="apple-touch-icon" href="../favicon.svg">
@@ -106,7 +106,8 @@
 
   /* ===== main ===== */
   .main{min-width:0; display:flex; flex-direction:column}
-  .content{padding:28px 30px 8px; display:flex; flex-direction:column; gap:20px; width:100%; max-width:1240px; margin:0 auto}
+  /* 본문 폭을 넓히고 좌우 여백을 줄여 사이드바와의 빈 공간을 없애고 표를 넓게 — 표 줄바꿈 감소 */
+  .content{padding:26px 24px 8px; display:flex; flex-direction:column; gap:20px; width:100%; max-width:1560px; margin:0 auto}
 
   /* 본문 블록(카드) 제거 — 본문 전체가 블록 배경색(흰색)을 그대로 사용 */
   .card{background:transparent; border-radius:0; box-shadow:none; padding:0}
@@ -297,12 +298,20 @@
   table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
   th,td{padding:10px 11px;text-align:right;white-space:nowrap}
   tbody td{background:var(--surface)}
-  th.name,td.name{text-align:left;white-space:normal;min-width:190px;max-width:330px}
+  th.name,td.name{text-align:left;white-space:normal;min-width:190px;max-width:340px}
+  /* 소재 이름은 한 줄 말줄임(줄바꿈 금지), 칩도 한 줄로 — 칩은 줄어들지 않고(글자 세로쪼갬 방지) 넘치면 잘려서
+     모든 행 높이를 동일하게 유지 */
+  td.name .nm-line{display:flex;align-items:center;gap:5px;min-width:0}
+  td.name .nm-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:0 1 auto}
+  td.name .chips .chip{flex:0 0 auto;white-space:nowrap}
   th.csub,td.csub{background:#F7F6F1}
   .colx{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 2px;margin-left:5px;border-radius:5px;background:var(--surface-3);color:var(--muted);font-weight:800;font-size:12px;cursor:pointer;vertical-align:-3px;transition:background .12s,color .12s}
   .colx:focus-visible{outline:2px solid var(--karrot);outline-offset:1px}
   .thident{display:none;font-size:12px;color:var(--faint);margin:0 2px 6px}
-  .scb{white-space:nowrap}
+  /* 점수 위치 고정: 점수는 항상 같은 x, 등급 뱃지는 그 오른쪽 고정 슬롯에. 뱃지가 없거나 짧아도 같은 공간 확보 */
+  td.scb{white-space:nowrap;text-align:left}
+  .scb .sc-score{display:inline-block;vertical-align:middle}
+  .scb .sc-badge{display:inline-block;vertical-align:middle;min-width:52px;margin-left:7px}
   .scb>*{vertical-align:middle}
   .scb svg{width:16px;height:16px;vertical-align:middle}
   .scb .thumbs{display:inline-flex;gap:1px;align-items:center;vertical-align:middle}
@@ -330,7 +339,11 @@
   /* 고정 제목행은 '메인 표의 직계 thead'에만 적용(#table>thead) — 상세(isle) 안의 비교표, AB표 등
      다른 thead에 이 오프셋이 새지 않게 한다(과거 전역 `thead th`가 AB표 헤더를 엉뚱한 위치에 고정시키던 결함).
      top 폴백은 0이 아니라 툴바 평균 높이(64px): --tbarH 미설정/JS 실패 시에도 툴바와 겹치지 않는다. */
-  #table>thead th{position:sticky;top:var(--tbarH,64px);background:var(--surface-2);z-index:3;font-weight:680;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none;transition:color .12s,background .12s;box-shadow:inset 0 -1px 0 var(--surface-3),0 4px 6px -5px rgba(20,20,15,.18)}
+  /* top을 --tbarH보다 1px 위로 겹쳐 툴바와 제목행 사이 서브픽셀 이음새(뒤 tbody가 새어 보임)를 물리적으로 제거 */
+  #table>thead th{position:sticky;top:calc(var(--tbarH,64px) - 1px);background:var(--surface-2);z-index:3;font-weight:680;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none;transition:color .12s,background .12s;box-shadow:inset 0 -1px 0 var(--surface-3),0 4px 6px -5px rgba(20,20,15,.18)}
+  #table>thead th .thcount{font-weight:600;font-size:11.5px;color:var(--faint);margin-left:4px}
+  #table>thead th[data-k="score"]{text-align:left}
+  #table>thead th.sorted .thcount{color:var(--karrot)}
   #table>thead th.help{text-decoration:underline dotted #cfcdc4;text-underline-offset:3px}
   #table>thead th:hover{color:var(--ink);background:var(--surface-3)}
   #table>thead th:focus-visible{outline:2px solid var(--karrot);outline-offset:-2px;color:var(--ink)}
@@ -365,10 +378,10 @@
   tbody td.num.c-w1{color:#B87F1E}
   tbody td.num.c-w2{color:#BE3F53;font-weight:650}
   tbody td.num.c-m{color:var(--ink)}
-  td.name .chips{margin-top:4px}
+  td.name .chips{margin-top:4px;flex-wrap:nowrap;overflow:hidden}
   /* table thumbnails (creative preview) */
   td.name .nwrap{display:flex;gap:9px;align-items:flex-start;min-width:0}
-  td.name .ntxt{min-width:0;flex:1}
+  td.name .ntxt{min-width:0;flex:1;overflow:hidden}
   .tthumb{position:relative;width:46px;height:46px;flex:0 0 auto;border-radius:8px;overflow:hidden;background:#E9E8E1;display:grid;place-items:center;color:var(--faint);cursor:zoom-in;user-select:none}
   .tthumb img,.tthumb video{width:100%;height:100%;object-fit:cover;display:block;background:#101010}
   .tthumb.ph{background:#26251F;color:#fff;font-size:12px}
@@ -692,6 +705,8 @@
     th.name,td.name{min-width:56px;max-width:80px}
     /* 좁은 화면에선 셀 여백을 줄여 필수 열이 본문 안에 들어오게 — 가로 스크롤바 방지 */
     #table th,#table td{padding:9px 5px}
+    /* 모바일에선 점수 뱃지 고정 슬롯을 줄여 점수 열이 표를 넘치지 않게(데스크톱만 고정 슬롯) */
+    .scb .sc-badge{min-width:0;margin-left:4px}
   }
   @media(max-width:520px){.content{padding-left:12px;padding-right:12px}}
   @media(max-width:760px){.isle{grid-template-columns:1fr;gap:18px}}
@@ -933,34 +948,30 @@
 </style>
 <style id="proposal-theme">
 /* ============================================================
-   시안 A — 여백 (Airy Minimal)
+   개선안 A — 가독형 (Readable)
    ------------------------------------------------------------
-   원래 사이트의 미니멀함을 살리되 '숨 쉴 공간'을 더한다.
-   색·사이드바는 본 사이트 그대로. 행 간격·여백·타이포 위계만
-   손봐서 더 차분하고 읽기 편하게. 과한 효과(카드·그림자·그라데이션) 없음.
+   넓고 밀도 높은 표에서 '행 추적'과 '열 구분'을 쉽게. 은은한 줄무늬,
+   이름/점수 블록과 지표 블록 사이 구분선, 정렬 열 강조, 숫자 위계 강화.
+   색·구조는 본 사이트 그대로(효과 과함 없음).
    ============================================================ */
 
-/* 타이포 위계: 제목은 조금 더 또렷하게, 라벨은 차분하게 */
-.card-h h2{font-size:16.5px;font-weight:760;letter-spacing:-.015em}
-.sub-h{color:var(--faint);font-weight:700;letter-spacing:.01em}
+/* 은은한 얼룩말 줄 — 넓은 화면에서 시선이 행을 놓치지 않게 */
+#table tbody tr.row:nth-of-type(even)>td{background:#FAF9F4}
+#table tbody tr.row:hover>td{background:#F2EFE7}
 
-/* 표: 행에 여백을 더해 촘촘함을 풀고, 구분선은 더 옅게 */
-th,td{padding:13px 12px}
-tbody td{border-bottom:1px solid #F1F0EA}
-tbody tr:hover td,tbody tr:hover td.name,tbody tr:hover td.bdg{background:#FBFAF6}
-thead th{background:var(--surface);color:var(--faint);font-weight:700}
-thead th.sorted{color:var(--karrot);background:var(--surface)}
-.tbl-scroll{background:var(--surface)}
+/* 이름/점수 왼쪽 블록과 지표(숫자) 블록을 얇은 세로선으로 분리 — 눈이 지표 영역을 바로 찾음 */
+#table>thead th.scb,#table tbody td.scb{box-shadow:inset -1px 0 0 var(--surface-3)}
 
-/* 상단 요약 타일: 칸 사이 얇은 세로 구분선만, 배경효과 없음 */
-.keyrow{gap:0}
-.keyrow>*{padding:14px 20px}
-.keyrow>*+*{border-left:1px solid var(--surface-2)}
+/* 정렬된 열은 헤더+데이터 모두 살짝 강조해 '무엇 기준으로 보는지' 뚜렷하게 */
+#table>thead th.sorted{background:var(--karrot-f)}
+#table tbody td.num.c-m{color:var(--ink)}
 
-/* 미리보기 실패 썸네일을 검정 대신 옅은 톤으로 */
-.tthumb{background:#ECEAE3}
-.tthumb img,.tthumb video{background:#ECEAE3}
-.gal-media{background:#EEEDE7}
+/* 숫자 위계: 점수 배지·핵심 수치 또렷하게, 통화기호는 살짝 작게 */
+.sp{font-weight:820}
+td.num{font-variant-numeric:tabular-nums}
+
+/* 제목행 라벨을 조금 더 진하게(스캔 기준선) */
+#table>thead th{color:var(--muted);font-weight:720}
 
 </style>
 <style id="proposal-chrome">
@@ -3229,19 +3240,21 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
   /* 열려 있던 상세(isle)는 DOM 노드를 그대로 보존해 재렌더 후 다시 붙인다 — fillIsland 재실행/재렌더 루프 없이 열린 상태 유지 */
   const _isleName=ISLE.name,_keepIsle=_isleName?tbody.querySelector(".isle-row"):null;
   const cols=allCols.filter(c=>!c.sub||tExp.has(c.grp));
+  renderFilters(ds); /* 서비스·제작자 드롭다운 옵션·유효성 먼저 확정 → 아래 필터링과 어긋나지 않게 */
+  const rows=orderedRowsForTable(ds);
+  const totalRows=rows.length;
+  /* '소재' 제목행에 현재 필터(라이브·비디오·이미지 등) 반영 소재 수를 함께 표기 — 매체 드롭다운의 고정 숫자보다 정확 */
   thead.innerHTML="<tr>"+cols.map(c=>{const sorted=tState.sort===c.k,arr=sorted?(tState.dir<0?"▼":"▲"):"";
     const cl=(c.k==="name"?"name ":"")+(c.help?"help ":"")+(c.sub?"csub ":"")+(sorted?"sorted":"");
     const hasSubs=c.lead&&allCols.some(x=>x.sub&&x.grp===c.grp);
     const xp=hasSubs?`<span class="colx" data-g="${c.grp}" role="button" tabindex="0" aria-label="${tExp.has(c.grp)?c.t+" 세부 지표 접기":c.t+" 세부 지표 펼치기"}" title="${tExp.has(c.grp)?"세부 지표 접기":"세부 지표 펼치기"}">${tExp.has(c.grp)?"−":"+"}</span>`:"";
     const asort=sorted?(tState.dir<0?"descending":"ascending"):"none";
-    return `<th scope="col" tabindex="0" class="${cl.trim()}${c.grp?" cg-"+c.grp:""}" data-k="${c.k}" aria-sort="${asort}" ${c.help?`title="${c.help}"`:""}>${c.t} <span class="arr" aria-hidden="true">${arr}</span>${xp}</th>`;}).join("")+"</tr>";
-  renderFilters(ds); /* 서비스·제작자 드롭다운 옵션·유효성 먼저 확정 → 아래 필터링과 어긋나지 않게 */
-  const rows=orderedRowsForTable(ds);
+    const cnt=(c.k==="name")?`<span class="thcount">${totalRows.toLocaleString()}</span>`:"";
+    return `<th scope="col" tabindex="0" class="${cl.trim()}${c.grp?" cg-"+c.grp:""}" data-k="${c.k}" aria-sort="${asort}" ${c.help?`title="${c.help}"`:""}>${c.t}${cnt} <span class="arr" aria-hidden="true">${arr}</span>${xp}</th>`;}).join("")+"</tr>";
   renderTFilter(ds);
   const colSorted={};
   for(const c of cols){if(c.k==="name"||c.k==="score")continue;
     colSorted[c.k]=rows.map(r=>r[c.k]).filter(v=>v!=null&&isFinite(v)).sort((a,b)=>a-b);}
-  const totalRows=rows.length;
   const totalPages=Math.max(1,Math.ceil(totalRows/PAGE_SIZE));
   if(tPage>totalPages)tPage=totalPages;if(tPage<1)tPage=1;
   const startIdx=(tPage-1)*PAGE_SIZE;
@@ -3258,8 +3271,8 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
         const nmHtml=(renameMode&&!r._isGroup)
           ? `<span class="nm-text editing" contenteditable="true" spellcheck="false" data-nm="${escAttr(r.name)}">${escHtml(dn)}</span>`
           : `<span class="nm-text">${escHtml(trunc(dn,60))}</span>`;
-        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}>${liveBadge(ds,r)}${lrnBadge(r)}${nmHtml}${mb}${gst}<div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
-      if(c.k==="score")return `<td class="scb">${score}${bdg?" "+bdg:""}</td>`;
+        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}><div class="nm-line">${liveBadge(ds,r)}${lrnBadge(r)}${nmHtml}${mb}${gst}</div><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
+      if(c.k==="score")return `<td class="scb"><span class="sc-score">${score}</span><span class="sc-badge">${bdg||""}</span></td>`;
       const dir=COL_DIR[c.k]||0;
       const t=dir?cellTier(r[c.k],colSorted[c.k],dir):"m";
       return `<td class="num c-${t}${c.sub?" csub":""}${c.grp?" cg-"+c.grp:""}">${fcell(r[c.k],c.f)}</td>`;}).join("")+"</tr>";}).join("");
@@ -3952,7 +3965,7 @@ function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)r
   const chans=ds.channels.slice().sort((a,b)=>counts.get(b)-counts.get(a));
   const cur=ds.media;
   el.innerHTML=`<div class="sf-dd" id="mediaDD">
-    <button class="sf-dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="sf-dd-cur">${escHtml(cur)} <em>${(counts.get(cur)||0).toLocaleString()}</em></span><svg viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+    <button class="sf-dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="sf-dd-cur">${escHtml(cur)}</span><svg viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
     <div class="sf-dd-menu" role="listbox" hidden>${chans.map(ch=>`<button type="button" role="option" data-m="${escAttr(ch)}" class="${ch===cur?"on":""}">${escHtml(ch)} <em>${counts.get(ch).toLocaleString()}</em></button>`).join("")}</div></div>`;
   const dd=el.querySelector(".sf-dd"),btn=dd.querySelector(".sf-dd-btn"),menu=dd.querySelector(".sf-dd-menu");
   btn.onclick=e=>{e.stopPropagation();const willOpen=menu.hidden;closeAllDD();if(willOpen){dd.classList.add("open");menu.hidden=false;btn.setAttribute("aria-expanded","true");}};
@@ -4986,8 +4999,8 @@ _qxRange.paint();_qyRange.paint();
 </script>
 <div id="proposalBar" role="navigation" aria-label="UI 개선 시안 전환">
   <span class="pb-tag"><span class="pb-dot"></span><b>UI 시안</b> · 샘플 데이터</span>
-  <a href="a-editorial.html" class="pb-opt on" aria-current="page">A · 여백</a>
-  <a href="b-console.html" class="pb-opt">B · 밀도</a>
+  <a href="a-editorial.html" class="pb-opt on" aria-current="page">A · 가독형</a>
+  <a href="b-console.html" class="pb-opt">B · 여백형</a>
   <span class="pb-sep"></span>
   <a href="../index.html" class="pb-home" title="비밀번호로 접속하는 실제 도구">실제 도구 →</a>
 </div>

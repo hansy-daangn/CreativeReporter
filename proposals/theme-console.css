@@ -1,30 +1,30 @@
 /* ============================================================
-   시안 B — 밀도 (Compact Minimal)
+   개선안 B — 여백형 (Spacious)
    ------------------------------------------------------------
-   같은 미니멀 톤이되, 한 화면에 더 많은 데이터를 담는 '고밀도' 방향.
-   색·사이드바는 본 사이트 그대로. 행·여백을 조여 스캔 효율을 높이고,
-   정렬된 열만 아주 옅은 강조. 과한 효과 없음.
+   본 사이트(밀도형)와 정반대 축 — 행·여백을 넉넉히, 글씨·썸네일을 키워
+   한 눈에 편하게 읽는 방향. 정보량보다 '편안함·시원함'. 색은 그대로.
+   (개선안 A '가독형'이 촘촘·스캔 지향이라면, B는 넓고 차분한 지향)
    ============================================================ */
 
-/* 밀도: 행·셀을 조이고 숫자는 살짝 작게(더 많은 행이 보이도록) */
-table{font-size:12px}
-th,td{padding:7px 10px}
-tbody td{border-bottom:1px solid #F0EFE9}
-tbody tr.row{contain-intrinsic-size:auto 48px}
+/* 행·셀을 확 넓혀 시원하게 */
+table{font-size:13.5px}
+th,td{padding:15px 14px}
+tbody tr.row{contain-intrinsic-size:auto 76px}
+#table>thead th{font-size:13px;padding-top:13px;padding-bottom:13px}
 
-/* 제목행: 얇은 라벨 + 정렬 열만 옅은 강조(가로줄 없이 담백하게) */
-thead th{background:var(--surface-2);color:var(--muted);font-weight:700;font-size:11.5px}
-thead th.sorted{color:var(--karrot);background:var(--karrot-f)}
+/* 썸네일·점수도 조금 더 크게 — 여백감과 균형 */
+.tthumb{width:54px;height:54px}
+.sp{min-width:38px;font-size:13px;padding:3px 10px}
 
-/* 상단 요약 타일: 얇은 테두리로만 구분(그림자·라운드 최소) */
-.keyrow{gap:10px}
-.keyrow>*{border:1px solid var(--surface-2);border-radius:8px;padding:12px 14px}
+/* 상단 요약 타일도 넉넉하게 */
+.card-h h2{font-size:18px}
+.ktile{padding:18px 20px}
+.ktile .kt-v{font-size:17px}
+.sub-h{font-size:12.5px}
 
-/* 검색·세그먼트 컨트롤을 조금 더 콤팩트하게 */
-.tbar input[type=search]{padding:7px 12px}
-.tbtn{padding:6px 11px}
+/* 정렬 열은 배경 대신 오렌지 밑줄로 절제 강조(차분함 유지) */
+#table>thead th.sorted{background:transparent;color:var(--karrot);box-shadow:inset 0 -2px 0 var(--karrot)}
+tbody tr.row:hover>td{background:#FBF9F5}
 
-/* 미리보기 실패 썸네일 톤 다운(검정 제거) */
-.tthumb{background:#E9E8E2;border-radius:7px}
-.tthumb img,.tthumb video{background:#E9E8E2}
-.gal-media{background:#ECEBE5}
+/* 미리보기 실패 썸네일 톤 다운 */
+.tthumb{background:#ECEBE6}

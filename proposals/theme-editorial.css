@@ -1,29 +1,25 @@
 /* ============================================================
-   시안 A — 여백 (Airy Minimal)
+   개선안 A — 가독형 (Readable)
    ------------------------------------------------------------
-   원래 사이트의 미니멀함을 살리되 '숨 쉴 공간'을 더한다.
-   색·사이드바는 본 사이트 그대로. 행 간격·여백·타이포 위계만
-   손봐서 더 차분하고 읽기 편하게. 과한 효과(카드·그림자·그라데이션) 없음.
+   넓고 밀도 높은 표에서 '행 추적'과 '열 구분'을 쉽게. 은은한 줄무늬,
+   이름/점수 블록과 지표 블록 사이 구분선, 정렬 열 강조, 숫자 위계 강화.
+   색·구조는 본 사이트 그대로(효과 과함 없음).
    ============================================================ */
 
-/* 타이포 위계: 제목은 조금 더 또렷하게, 라벨은 차분하게 */
-.card-h h2{font-size:16.5px;font-weight:760;letter-spacing:-.015em}
-.sub-h{color:var(--faint);font-weight:700;letter-spacing:.01em}
+/* 은은한 얼룩말 줄 — 넓은 화면에서 시선이 행을 놓치지 않게 */
+#table tbody tr.row:nth-of-type(even)>td{background:#FAF9F4}
+#table tbody tr.row:hover>td{background:#F2EFE7}
 
-/* 표: 행에 여백을 더해 촘촘함을 풀고, 구분선은 더 옅게 */
-th,td{padding:13px 12px}
-tbody td{border-bottom:1px solid #F1F0EA}
-tbody tr:hover td,tbody tr:hover td.name,tbody tr:hover td.bdg{background:#FBFAF6}
-thead th{background:var(--surface);color:var(--faint);font-weight:700}
-thead th.sorted{color:var(--karrot);background:var(--surface)}
-.tbl-scroll{background:var(--surface)}
+/* 이름/점수 왼쪽 블록과 지표(숫자) 블록을 얇은 세로선으로 분리 — 눈이 지표 영역을 바로 찾음 */
+#table>thead th.scb,#table tbody td.scb{box-shadow:inset -1px 0 0 var(--surface-3)}
 
-/* 상단 요약 타일: 칸 사이 얇은 세로 구분선만, 배경효과 없음 */
-.keyrow{gap:0}
-.keyrow>*{padding:14px 20px}
-.keyrow>*+*{border-left:1px solid var(--surface-2)}
+/* 정렬된 열은 헤더+데이터 모두 살짝 강조해 '무엇 기준으로 보는지' 뚜렷하게 */
+#table>thead th.sorted{background:var(--karrot-f)}
+#table tbody td.num.c-m{color:var(--ink)}
 
-/* 미리보기 실패 썸네일을 검정 대신 옅은 톤으로 */
-.tthumb{background:#ECEAE3}
-.tthumb img,.tthumb video{background:#ECEAE3}
-.gal-media{background:#EEEDE7}
+/* 숫자 위계: 점수 배지·핵심 수치 또렷하게, 통화기호는 살짝 작게 */
+.sp{font-weight:820}
+td.num{font-variant-numeric:tabular-nums}
+
+/* 제목행 라벨을 조금 더 진하게(스캔 기준선) */
+#table>thead th{color:var(--muted);font-weight:720}
