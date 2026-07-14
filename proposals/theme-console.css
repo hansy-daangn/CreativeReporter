@@ -1,0 +1,83 @@
+/* ============================================================
+   시안 B — 대시보드 콘솔 (Console)
+   ------------------------------------------------------------
+   콘셉트: 마케터가 '조종하는' 퍼포먼스 콕핏. 리치 다크 레일 +
+   깊이감 있는 카드 표면 시스템 + 큰 라운드 + 생생한 티어 컬러(데이터-viz).
+   시그니처: 촉각적 컨트롤 서피스로서의 표 — 떠 있는 카드 컨테이너,
+   채워진 오렌지 정렬 헤더, 색으로 등급을 읽는 점수 칩. 밀도 높지만 정돈.
+   ============================================================ */
+
+:root{
+  --canvas:#E9E8EC; --surface:#FFFFFF; --surface-2:#F1F0F5; --surface-3:#E6E5EC;
+  --ink:#1A1922; --muted:#6C6A79; --faint:#9C9AAA;
+  /* 리치 다크 콕핏 레일 */
+  --side:#1B1A23; --side-2:#26252F; --side-ink:#EDEBF3; --side-muted:#9997A6; --side-faint:#6C6A79;
+  --karrot:#FF6A12; --karrot-2:#FF8A3D; --karrot-f:#FFE7D6;
+  --r:18px; --r-sm:12px;
+  --sh:0 1px 2px rgba(18,16,30,.05), 0 16px 34px -18px rgba(18,16,30,.30);
+}
+body{background:var(--canvas)}
+.main{background:transparent}
+.content{padding-top:24px}
+
+/* ---- 리치 다크 사이드바 레일 ---- */
+.side{background:linear-gradient(180deg,#201E29,#17161E);box-shadow:1px 0 0 rgba(0,0,0,.3)}
+.side-nav .mtabs .mtabs-in{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.05)}
+.side-nav .mtabs button.on{background:var(--karrot);color:#fff;box-shadow:0 2px 14px rgba(255,106,18,.5)}
+.sf-dd-btn,.sf-sel{background:var(--side-2);border-color:rgba(255,255,255,.09)}
+.sbtn{background:rgba(255,255,255,.06);border-radius:11px}
+.sbtn:hover{background:rgba(255,255,255,.12)}
+.sbtn.pri{box-shadow:0 4px 16px rgba(255,106,18,.4)}
+
+/* ---- 본문: 부드러운 깊이 ---- */
+.card-h h2{font-size:17px;font-weight:800;letter-spacing:-.02em}
+.sub-h{font-weight:800;color:var(--muted)}
+
+/* 상단 요약 타일 — 떠 있는 카드 */
+.keyrow{gap:14px}
+.keyrow>*{background:var(--surface);border:1px solid var(--surface-3);border-radius:var(--r);
+  box-shadow:var(--sh);padding:16px 18px;transition:transform .14s,box-shadow .14s}
+.keyrow>*:hover{transform:translateY(-2px);box-shadow:0 1px 2px rgba(18,16,30,.05),0 22px 40px -20px rgba(18,16,30,.4)}
+
+/* 툴바(헤더 1번째 줄) — 트랙형 컨트롤 강조 */
+.tbar{background:var(--canvas);border-bottom:0;padding-bottom:12px}
+.tbar input[type=search]{background:var(--surface);box-shadow:inset 0 0 0 1px var(--surface-3)}
+.tbar input[type=search]:focus{box-shadow:inset 0 0 0 1.5px var(--karrot)}
+.seg-cl{background:var(--surface);box-shadow:inset 0 0 0 1px var(--surface-3)}
+.tbtn.on{background:var(--karrot);color:#fff;box-shadow:0 2px 10px rgba(255,106,18,.35)}
+.tbtn:hover{background:var(--surface-2)}
+.qfo-btn.on{background:var(--karrot-f);border-color:var(--karrot);color:var(--karrot)}
+
+/* ---- 표 = 촉각적 컨트롤 서피스: 떠 있는 카드 ---- */
+.tbl-scroll{background:var(--surface);border:1px solid var(--surface-3);border-radius:var(--r);box-shadow:var(--sh)}
+table{font-size:12.5px}
+th,td{padding:12px 13px}
+thead th:first-child{border-top-left-radius:var(--r)}
+thead th:last-child{border-top-right-radius:var(--r)}
+/* 제목행 = 헤더 2번째 줄: 진한 그라데이션 바 + 정렬은 채워진 오렌지 */
+thead th{background:linear-gradient(180deg,#FBFAFD,#EFEEF4);color:var(--muted);font-weight:750;
+  box-shadow:inset 0 -1px 0 var(--surface-3);transition:background .12s,color .12s}
+thead th:hover{background:var(--surface-3);color:var(--ink)}
+thead th.sorted{background:linear-gradient(180deg,var(--karrot-2),var(--karrot));color:#fff;box-shadow:0 4px 12px -4px rgba(255,106,18,.5)}
+thead th.sorted .arr{opacity:1;color:#fff}
+tbody td{border-bottom:1px solid #EFEEF3}
+tbody tr:hover td,tbody tr:hover td.name,tbody tr:hover td.bdg{background:#F7F6FB}
+tbody td.num.c-g2{color:#1466D6;font-weight:700}
+tbody td.num.c-w2{color:#D0324C;font-weight:700}
+th.csub,td.csub{background:#F6F5FA}
+/* 세부지표 펼침 버튼 — 촉각적 칩 */
+.colx{background:var(--surface-3);color:var(--muted);font-weight:800;border-radius:7px}
+.colx:hover{background:var(--karrot);color:#fff}
+/* 점수 칩 — 채도·라운드·미세 그림자로 데이터-viz 감각 */
+.sp{border-radius:9px;font-weight:800;box-shadow:0 1px 2px rgba(18,16,30,.08)}
+.scb .dom-tag{border-radius:7px}
+/* 미리보기 실패 썸네일 → 브랜드 톤 플레이스홀더 */
+.tthumb{background:#EAE9EF;border-radius:10px}
+.tthumb img,.tthumb video{background:#DEDDE6}
+.gal-media{background:#E4E3EB}
+.gal-card{background:var(--surface);border:1px solid var(--surface-3);border-radius:var(--r);box-shadow:var(--sh)}
+.gal-card:hover{transform:translateY(-3px);box-shadow:0 22px 44px -20px rgba(18,16,30,.42)}
+
+/* 페이저·상세 등 라운드 통일 */
+.pager-nav button{border-radius:10px}
+.abf{border-radius:var(--r)}

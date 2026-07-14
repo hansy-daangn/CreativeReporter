@@ -1,0 +1,87 @@
+/* ============================================================
+   시안 A — 편집형 리포트 (Editorial Ledger)
+   ------------------------------------------------------------
+   콘셉트: 마케터가 '읽는' 사내 계기. 잘 조판된 애널리틱스 브로드시트처럼
+   따뜻한 종이·헤어라인 구조·강한 타이포 위계로 차분하게. 오렌지는
+   편집자의 빨간펜처럼 '정렬된 열·핵심 수치'에만 정밀하게 찍는다.
+   시그니처: 종이 위 원장(ledger) 표 — 굵은 잉크 룰의 2단 고정 헤더 +
+   헤어라인 행 + 탭ular 숫자가 주인공. 사이드바는 파치먼트(밝은) 방향.
+   ============================================================ */
+
+:root{
+  --canvas:#F4F1E8; --surface:#FFFFFF; --surface-2:#F0ECE1; --surface-3:#E5E0D2;
+  --ink:#201D15; --muted:#7C766A; --faint:#ABA492;
+  /* 파치먼트 사이드바 (밝은) */
+  --side:#ECE7DA; --side-2:#E1DBCB; --side-ink:#2A251B; --side-muted:#6F695A; --side-faint:#A39C89;
+  --karrot:#CE560A; --karrot-2:#E5701C; --karrot-f:#F6E7D6;
+  --r:10px; --r-sm:7px;
+  --sh:0 1px 1px rgba(40,32,18,.04), 0 10px 26px -20px rgba(40,32,18,.18);
+}
+body{background:var(--canvas)}
+
+/* ---- 타이포 위계: 리포트 헤드라인 감각 ---- */
+.card-h h2{font-size:18px;font-weight:820;letter-spacing:-.02em}
+.sub-h{font-size:11px;font-weight:800;letter-spacing:.02em;color:var(--faint);text-transform:none}
+.side-h{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--side-faint)}
+.keyrow{gap:0;border-top:1.5px solid var(--ink);border-bottom:1px solid var(--surface-3)}
+
+/* ---- 파치먼트 사이드바: 흰색-알파 → 잉크-알파로 전면 교체 ---- */
+.side{border-right:1px solid #DED8C8;padding-top:22px}
+.side-nav .mtabs .mtabs-in{background:rgba(30,24,12,.05);border:1px solid rgba(30,24,12,.08)}
+.side-nav .mtabs button{color:var(--side-muted)}
+.side-nav .mtabs button:hover{color:var(--side-ink);background:rgba(30,24,12,.05)}
+.side-nav .mtabs button.on{background:var(--karrot);color:#fff;box-shadow:0 1px 6px rgba(206,86,10,.32)}
+.sf-sel,.sf-dd-btn{border:1px solid rgba(30,24,12,.15);background:var(--side-2);color:var(--side-ink)}
+.sf-sel:hover,.sf-dd-btn:hover{border-color:rgba(30,24,12,.3)}
+.sf-dd.open .sf-dd-btn{border-color:var(--karrot)}
+.sf-dd-btn svg{color:var(--side-muted)}
+.sf-dd-menu{background:#fff;border:1px solid rgba(30,24,12,.1);box-shadow:0 16px 36px rgba(40,32,18,.18)}
+.sf-dd-menu button{color:var(--side-muted)}
+.sf-dd-menu button:hover{background:var(--surface-2);color:var(--side-ink)}
+.sf-dd-menu button.on{color:var(--ink)}
+.sf-dd-menu button.on::after{color:var(--karrot)}
+.seg3{border:1px solid rgba(30,24,12,.13)}
+.seg3 button{border-left-color:rgba(30,24,12,.08);color:var(--side-muted)}
+.seg3 button:hover{background:var(--side-2);color:var(--side-ink)}
+.seg3 button.on{background:var(--karrot);color:#fff}
+.pcustom input,.pcustom select{border:1px solid rgba(30,24,12,.15);background:var(--side-2);color:var(--side-ink)}
+.sbtn{background:rgba(30,24,12,.055);color:var(--side-ink)}
+.sbtn:hover{background:rgba(30,24,12,.1)}
+.sbtn.pri{background:var(--karrot);color:#fff}.sbtn.pri:hover{background:var(--karrot-2)}
+.src{color:var(--side-faint)}.src b{color:var(--side-muted)}
+
+/* ---- 툴바(헤더 1번째 줄): 종이 위 얇은 룰 (스크롤 콘텐츠를 가리도록 불투명) ---- */
+.tbar{background:var(--canvas);border-bottom:1px solid var(--surface-3);padding-bottom:10px}
+.tbar input[type=search]{background:var(--surface-2);border:1px solid transparent}
+.tbar input[type=search]:focus{border-color:var(--karrot);background:#fff}
+.seg-cl{background:var(--surface-2)}
+.tbtn.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(40,32,18,.12)}
+
+/* ---- 원장 표: 시그니처 ---- */
+.tbl-scroll{background:transparent;border-radius:0}
+table{font-size:12.5px}
+th,td{padding:12px 12px}
+/* 제목행 = 헤더 2번째 줄. 굵은 잉크 룰로 원장 상단선을 긋는다 */
+thead th{background:var(--canvas);color:var(--faint);font-weight:800;font-size:11.5px;letter-spacing:.01em;
+  box-shadow:inset 0 -1.5px 0 var(--ink)}
+thead th:hover{color:var(--ink);background:var(--surface-2)}
+thead th.sorted{color:var(--karrot);background:transparent;box-shadow:inset 0 -2px 0 var(--karrot)}
+thead th .arr{font-size:9px}
+tbody td{background:transparent;border-bottom:1px solid #EBE6D9}
+tbody tr:hover td,tbody tr:hover td.name,tbody tr:hover td.bdg{background:#FBF9F2}
+tbody td.num.c-g2{color:#1256C4}
+tbody td.num.c-w2{color:#B23048}
+th.csub,td.csub{background:rgba(40,32,18,.03)}
+/* 세부지표 펼침 버튼 — 헤어라인 원형 */
+.colx{background:transparent;border:1px solid rgba(30,24,12,.22);color:var(--muted);font-weight:700;border-radius:999px}
+.colx:hover{background:var(--karrot-f);border-color:var(--karrot);color:var(--karrot)}
+/* 점수 배지 — 편집형: 라운드 낮추고 잉크 대비 유지 */
+.sp{border-radius:6px;font-weight:800}
+/* 미리보기 실패 썸네일을 검정 대신 종이 톤 플레이스홀더로 */
+.tthumb{background:#E7E1D2;border-radius:8px}
+.tthumb img,.tthumb video{background:#EDE8DB}
+.gal-media{background:#EAE4D6}
+.gal-card{background:var(--surface);border:1px solid #E4DECF;border-radius:12px}
+
+/* ---- 분석 화면 카드/콜아웃: 헤어라인 편집 스타일 ---- */
+.tbl-scroll,.abf{border-radius:8px}
