@@ -285,11 +285,9 @@
   .tffoot button:hover{color:var(--ink)}
   .chk{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
   .chk input{width:15px;height:15px;accent-color:var(--karrot)}
-  /* 기본은 스크롤 컨테이너를 만들지 않는다(overflow:visible) — 그래야 thead가 뷰포트(툴바 아래)에 고정돼
-     '헤더 2번째 줄'로 계속 보인다. 표가 폭을 못 맞추는 좁은 화면에선 JS(fitTableCols)가 .xscroll을 붙여
-     가로 스크롤로 전환(그 경우 제목행은 표와 함께 스크롤 — 좁은 화면 예외). */
-  .tbl-scroll{overflow:visible;border-radius:10px;background:var(--surface-2)}
-  .tbl-scroll.xscroll{overflow-x:auto}
+  /* 표준 구조: 가로 스크롤 컨테이너(overflow-x:auto). 제목행(thead th)은 sticky top:0으로 컨테이너
+     상단에 항상 밀착돼 툴바 바로 아래 '헤더 2번째 줄'을 이룬다. 어떤 창 크기에서도 툴바와 분리되지 않는다. */
+  .tbl-scroll{overflow-x:auto;overflow-y:visible;border-radius:10px;background:var(--surface-2)}
   table{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
   th,td{padding:9px 11px;text-align:right;white-space:nowrap}
   tbody td{background:var(--surface)}
@@ -321,8 +319,9 @@
   .gal-more{grid-column:1/-1;margin:6px auto 2px;padding:8px 22px;border:1px solid var(--line);border-radius:999px;background:var(--surface-2);color:var(--muted);font-weight:700;font-size:12.5px;cursor:pointer}
   .gal-more:hover{background:var(--karrot-f);color:var(--karrot)}
   th.bdg,td.bdg{width:58px;padding-left:14px;text-align:left}
-  /* 표 제목행 = 헤더의 '2번째 줄'. 툴바 바로 아래 고정되며 정렬·펼치기 컨트롤을 담는다 */
-  thead th{position:sticky;top:var(--tbarH,0);background:var(--surface-2);z-index:3;font-weight:650;color:var(--muted);cursor:pointer;user-select:none;transition:color .12s,background .12s;box-shadow:inset 0 -1px 0 var(--surface-3)}
+  /* 표 제목행 = 헤더의 '2번째 줄'. sticky top:0으로 표(스크롤 컨테이너) 상단에 밀착 — 툴바 바로 아래에 붙어
+     어떤 창 크기·가로 스크롤에서도 분리되지 않는다. 정렬·펼치기 컨트롤을 담는다. */
+  thead th{position:sticky;top:0;background:var(--surface-2);z-index:3;font-weight:650;color:var(--muted);cursor:pointer;user-select:none;transition:color .12s,background .12s;box-shadow:inset 0 -1px 0 var(--surface-3)}
   thead th.help{text-decoration:underline dotted #cfcdc4;text-underline-offset:3px}
   thead th:hover{color:var(--ink);background:var(--surface-3)}
   thead th:focus-visible{outline:2px solid var(--karrot);outline-offset:-2px;color:var(--ink)}
@@ -681,9 +680,6 @@
     /* 세로 화면: 소재 이름 숨김 — 미리보기·점수 중심으로 */
     td.name .ntxt{display:none}
     th.name,td.name{min-width:64px;max-width:80px}
-    /* 모바일(좁음)은 확정적으로 가로 스크롤 — 넓은 표가 본문을 넘쳐 가로 스크롤되는 것 방지.
-       (데스크톱은 overflow:visible이라 제목행이 툴바 아래 고정) */
-    .tbl-scroll{overflow-x:auto}
   }
   @media(max-width:760px){.isle{grid-template-columns:1fr;gap:18px}}
   @media (prefers-reduced-motion: reduce){*{transition:none!important}}
@@ -3141,10 +3137,7 @@ function fitTableCols(){
   if(!note){note=document.createElement("div");note.id="tHiddenNote";note.className="thident";wrap.parentElement.insertBefore(note,wrap);}
   if(hidden.length){note.classList.add("on");
     note.textContent="좁은 화면이라 잠시 숨김: "+hidden.map(g=>T_GRP_LAB[g]||g).join(" · ")+" · 창을 넓히면 복귀";}
-  else{note.classList.remove("on");note.textContent="";}
-  /* 숨길 그룹을 다 숨겨도 여전히 넘치는 아주 좁은 화면에서만 가로 스크롤로 전환한다.
-     (평소엔 overflow:visible이라 제목행이 뷰포트=툴바 아래에 고정됨) */
-  wrap.classList.toggle("xscroll",tbl.scrollWidth>wrap.clientWidth+2);}
+  else{note.classList.remove("on");note.textContent="";}}
 let _ftcT=null;window.addEventListener("resize",()=>{clearTimeout(_ftcT);_ftcT=setTimeout(()=>{try{fitTableCols()}catch(_){}},150);});
 function tierBadge(e){if(e.dom==="good")return `<span class="dom-tag" title="독보적으로 잘 나옴">독보적</span>`;
   if(e.tier==="g2"&&e.rank&&e.rank<=7)return `<span class="b-gold" title="매우 좋음 · TOP ${e.rank}">${ICON.crown}</span>`;
@@ -3380,11 +3373,8 @@ function renderQuadTierLegend(){const el=$("#qTierLeg");if(!el)return;
     {c:"var(--w2)",lab:"매우 나쁨"},
   ];
   el.innerHTML=tiers.map((t,i)=>`<span class="qtl-item"><span class="qtl-dot" style="background:${t.c}"></span><span class="qtl-lab">${t.lab}</span></span>${i<tiers.length-1?'<span class="qtl-sep">·</span>':''}`).join("");}
-/* 컬럼 헤더(표 제목행)가 툴바 바로 아래에 고정돼 '헤더 2번째 줄'로 항상 보이도록 툴바 실측 높이를 CSS 변수로.
-   숨김 상태(offsetHeight 0)에선 마지막 유효값을 덮지 않는다 — 탭 전환 전 refreshAll에서 0으로 뭉개져
-   스크롤 시 제목행이 툴바 뒤로 숨던 버그 방지. 툴바가 줄바꿈되면 ResizeObserver가 자동 재동기화. */
-function syncTbarH(){const t=$("#tbar"),s=$("#tabTable");if(t&&s){const h=t.offsetHeight;if(h>0)s.style.setProperty("--tbarH",h+"px");}}
-(function(){const t=document.getElementById("tbar");if(t&&typeof ResizeObserver!=="undefined")new ResizeObserver(()=>{try{syncTbarH()}catch(_){}}).observe(t);})();
+/* 제목행은 sticky top:0(표 상단 밀착)이라 툴바 높이 계산이 필요 없다. 기존 호출부 호환용 no-op. */
+function syncTbarH(){}
 function renderQuickFo(){const ds=curDS;
   const hasFo=ds&&ds.agg&&ds.agg.some(e=>e.tags&&(e.tags.fo==="영상"||e.tags.fo==="이미지"));
   const hasAdGr=ds&&ds.agg&&ds.agg.some(e=>e._g_adGroupId||e._m_group);
@@ -3423,9 +3413,7 @@ function switchTab(t){mainTab=t;
   const secs={analysis:$("#tabAnalysis"),table:$("#tabTable"),ab:$("#tabAB")};
   for(const k in secs){if(secs[k])secs[k].hidden=(k!==t);}
   const ds=active&&DATASETS[active];
-  if(ds&&t==="analysis")requestAnimationFrame(()=>{renderQuad(ds);renderTrend(ds);});
-  /* 표 탭 진입 직후 툴바가 처음으로 레이아웃되므로 제목행 고정 오프셋을 다시 잡는다 */
-  if(t==="table")requestAnimationFrame(()=>{try{syncTbarH()}catch(_){}});}
+  if(ds&&t==="analysis")requestAnimationFrame(()=>{renderQuad(ds);renderTrend(ds);});}
 
 /* ===== AB테스트 — 변형 네이밍 자동 인식 =====
    인식 규칙 (오인 방지를 위해 전부 '구분자 뒤 접미' 형태만):
