@@ -87,7 +87,9 @@
   .sf-dd.open .sf-dd-btn svg{transform:rotate(180deg)}
   .sf-dd-menu{position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:60;background:#2E2D25;border:1px solid rgba(255,255,255,.14);border-radius:11px;box-shadow:0 14px 34px rgba(0,0,0,.45);padding:5px;max-height:288px;overflow:auto}
   .sf-dd-menu[hidden]{display:none}
-  .sf-dd-menu button{width:100%;display:flex;align-items:center;text-align:left;padding:9px 10px;border-radius:8px;background:transparent;color:var(--side-muted);font:inherit;font-size:12.5px;font-weight:650;border:0;cursor:pointer}
+  .sf-dd-menu button{width:100%;display:flex;align-items:center;flex-wrap:wrap;text-align:left;padding:9px 10px;border-radius:8px;background:transparent;color:var(--side-muted);font:inherit;font-size:12.5px;font-weight:650;border:0;cursor:pointer}
+  .sf-dd-rng{flex-basis:100%;font-size:10px;font-weight:500;color:var(--side-faint);margin-top:2px;letter-spacing:.01em} /* 매체별 데이터 보유 범위 */
+  .prange-info{margin-top:7px;font-size:10.5px;font-weight:500;color:var(--side-faint);letter-spacing:.01em} /* 현재 매체 보유 데이터 범위 */
   .sf-dd-menu button:hover{background:rgba(255,255,255,.08);color:var(--side-ink)}
   .sf-dd-menu button.on{color:#fff}
   .sf-dd-menu button.on::after{content:"✓";margin-left:auto;color:var(--karrot-2);font-weight:800}
@@ -3923,6 +3925,9 @@ function renderPeriodSeg(){const el=$("#pseg"),sec=$("#periodSec"),cw=$("#pcusto
     `<select class="sf-sel seg-m" aria-label="기간 선택">`+
       presets.map(([v,l])=>`<option value="${v}"${v===periodN?" selected":""}>${v==="all"?"전체":"최근 "+l}</option>`).join("")+
       `<option value="custom"${custOn?" selected":""}>직접 설정${custOn?` (${custLab})`:""}</option></select>`;
+  /* 현재 매체의 데이터 보유 범위(첫 주~마지막 주) — 기간 필터와 무관한 전체 보유분 표시 */
+  const rng=chDataRange(ds,dsMode==="channeled"?ds.media:null);
+  if(rng)el.insertAdjacentHTML("beforeend",`<div class="prange-info" title="이 매체에 저장된 주간 데이터 전체 범위(주 시작일 기준) — 위 기간 필터와 무관">💾 보유 ${escHtml(fmtRangeShort(rng))} · ${rng.weeks}주</div>`);
   /* 직접 설정 패널 — ① 최근 N 주/달(상대) ② 월별 보기(그 달의 승자+월내 추이 — 2026-07 회의) ③ 날짜 범위(절대·주 시작일 기준) */
   if(custOn&&cw){
     const allDates=[...new Set((ds.dataAll||[]).map(r=>r.date).filter(d=>/^\d{4}-\d{2}-\d{2}/.test(String(d))))].sort();
@@ -3982,16 +3987,32 @@ function renderViewSeg(){const el=$("#vseg"),sec=$("#viewSec");if(!el||!sec)retu
   el.querySelectorAll(".seg3 button").forEach(b=>b.onclick=()=>setView(b.dataset.v));
   const vsel=el.querySelector(".seg-m");if(vsel)vsel.onchange=()=>setView(vsel.value);}
 function closeAllDD(){document.querySelectorAll(".sf-dd.open").forEach(dd=>{dd.classList.remove("open");const m=dd.querySelector(".sf-dd-menu");if(m)m.hidden=true;const b=dd.querySelector(".sf-dd-btn");if(b)b.setAttribute("aria-expanded","false");});}
+/* 매체별 데이터 보유 범위 — 저장된 주간 데이터의 첫 주 ~ 마지막 주 (기간 필터와 무관한 전체 보유분) */
+function chDataRange(ds,ch){
+  let min=null,max=null;const seen=new Set();
+  for(const r of (ds.dataAll||[])){
+    if(ch&&r._ch!==ch)continue;
+    const d=String(r.date||"");
+    if(!/^\d{4}-\d{2}-\d{2}/.test(d))continue;
+    const w=d.slice(0,10);
+    if(min===null||w<min)min=w;
+    if(max===null||w>max)max=w;
+    seen.add(w);}
+  return min?{min,max,weeks:seen.size}:null;}
+function fmtRangeShort(r){if(!r)return"";const f=d=>`${d.slice(2,4)}.${+d.slice(5,7)}.${+d.slice(8,10)}`;return `${f(r.min)}~${f(r.max)}`;}
 function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)return;
   if(dsMode!=="channeled"||!ds.channels||!ds.channels.length){sec.hidden=true;el.innerHTML="";return;}
   sec.hidden=false;
-  /* 매체 = 커스텀 드롭다운(소재 수 많은 순) — 네이티브 select 대신 사이트 톤에 맞춘 팝업 */
+  /* 매체 = 커스텀 드롭다운(소재 수 많은 순) — 네이티브 select 대신 사이트 톤에 맞춘 팝업.
+     각 항목 아래에 그 매체의 데이터 보유 범위(첫 주~마지막 주 · 주 수)를 표시 */
   const counts=new Map(ds.channels.map(ch=>[ch,windowCount(ds,ch)]));
+  const ranges=new Map(ds.channels.map(ch=>[ch,chDataRange(ds,ch)]));
   const chans=ds.channels.slice().sort((a,b)=>counts.get(b)-counts.get(a));
-  const cur=ds.media;
+  const cur=ds.media,curRng=ranges.get(cur);
   el.innerHTML=`<div class="sf-dd" id="mediaDD">
-    <button class="sf-dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="sf-dd-cur">${escHtml(cur)}</span><svg viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
-    <div class="sf-dd-menu" role="listbox" hidden>${chans.map(ch=>`<button type="button" role="option" data-m="${escAttr(ch)}" class="${ch===cur?"on":""}">${escHtml(ch)} <em>${counts.get(ch).toLocaleString()}</em></button>`).join("")}</div></div>`;
+    <button class="sf-dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false"${curRng?` title="보유 데이터 ${escAttr(fmtRangeShort(curRng))} · ${curRng.weeks}주"`:""}><span class="sf-dd-cur">${escHtml(cur)}</span><svg viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+    <div class="sf-dd-menu" role="listbox" hidden>${chans.map(ch=>{const r=ranges.get(ch);
+      return `<button type="button" role="option" data-m="${escAttr(ch)}" class="${ch===cur?"on":""}"${r?` title="보유 데이터 ${escAttr(fmtRangeShort(r))} (${r.weeks}주)"`:""}>${escHtml(ch)} <em>${counts.get(ch).toLocaleString()}</em>${r?`<span class="sf-dd-rng">${escHtml(fmtRangeShort(r))} · ${r.weeks}주</span>`:""}</button>`;}).join("")}</div></div>`;
   const dd=el.querySelector(".sf-dd"),btn=dd.querySelector(".sf-dd-btn"),menu=dd.querySelector(".sf-dd-menu");
   btn.onclick=e=>{e.stopPropagation();const willOpen=menu.hidden;closeAllDD();if(willOpen){dd.classList.add("open");menu.hidden=false;btn.setAttribute("aria-expanded","true");}};
   menu.querySelectorAll("button").forEach(b=>b.onclick=()=>{const m=b.dataset.m;closeAllDD();if(ds.media===m)return;ds.media=m;tPage=1;tGroupByTouched=false;show(ds);});} /* 매체 전환 시 그룹뷰 기본값 재적용 */
