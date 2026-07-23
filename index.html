@@ -144,6 +144,7 @@
   .asset-src .ocr-mark{margin-left:0;margin-right:6px;vertical-align:0}
   .gst{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:5px;margin-left:6px;vertical-align:1px;white-space:nowrap}
   .gst.lim{background:var(--w1-f);color:var(--w1)}
+  .gst.auth{background:var(--g1-f);color:var(--g1)}
   .lvb{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--g1);margin-right:7px;vertical-align:1px;flex:0 0 auto}
   .gi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px 18px;margin-top:8px}
   .gi-r{display:flex;justify-content:space-between;gap:10px;font-size:12px;border-bottom:1px dashed var(--surface-3);padding:3px 0;min-width:0}
@@ -1399,6 +1400,25 @@ function parseGroupReport(text){
     if(cpId&&o.cpNm)names.campaign[cpId]=o.cpNm;}
   const n=Object.keys(map).length;
   return n?{map,names,count:n,from,to}:null;}
+/* 구글 '광고그룹 주간 성과' CSV — AEO·ACE 둘 다, 글자(텍스트) 애셋까지 담긴 '정확 소스'.
+   컬럼: date, adset_name, 비용, 노출 수, CPM, 클릭 수, CPC, 어트리뷰션 수, eCPI, 활성 유저 수, 활성 유저 eCPA, 신규+재활성 유저 수, 신규+재활성 유저 eCPA
+   소재 합산이 아닌 광고그룹 실측이라, 광고그룹 ID 기준 {id:{주:[비용,노출,클릭,어트리뷰션,활성,신규재활성]}}로 kv(gwstat)에 보관해 그룹뷰 표시값을 교체한다.
+   adset_name(광고그룹명)→ID는 gmap(이름 매핑)으로 역변환. 미리 계산된 eCPA 컬럼이 raw adset CSV와 구분되는 서명이라 detect()보다 먼저 태운다. */
+function isGroupWeekly(h){const s=new Set(h);return s.has("adset_name")&&s.has("활성 유저 eCPA")&&s.has("신규+재활성 유저 eCPA");}
+function parseGroupWeekly(rows){
+  const pn=v=>{const s=String(v??"").replace(/["\s,%]/g,"");if(!s||s==="--"||s==="-")return 0;const n=Number(s);return isFinite(n)?n:0;};
+  const nameToId={};const ag=(gNameMap&&gNameMap.adgroup)||{};for(const id in ag){if(ag[id])nameToId[ag[id]]=id;}
+  const map={};let n=0,unmatched=0;
+  for(const r of rows){
+    const nm=String(r.adset_name||"").trim();if(!nm)continue;
+    const wk=toWeekStart(String(r.date||"").slice(0,10));if(!/^\d{4}-\d{2}-\d{2}$/.test(String(wk||"")))continue;
+    const cost=pn(r["비용"]);if(cost<MIN_ROW_COST)continue; /* 0원대 노이즈(미매핑 잔여 전환 행 등) 제외 */
+    const id=/^\d+$/.test(nm)?nm:(nameToId[nm]||null);
+    if(!id)unmatched++;
+    const key=id||("name:"+nm);
+    (map[key]=map[key]||{})[wk]=[cost,pn(r["노출 수"]),pn(r["클릭 수"]),pn(r["어트리뷰션 수"]),pn(r["활성 유저 수"]),pn(r["신규+재활성 유저 수"])];
+    n++;}
+  return n?{map,count:n,unmatched}:null;}
 /* Moloco creative report — ad_name + creative_type/resolution/creative_preview(CDN 링크) 형식 자동 감지.
    creative_group_name은 레벨 컬럼이 아니라 소재의 소속 그룹 속성으로 취급해 소재(ad) 레벨로 분석한다. */
 function isMolocoReport(h){const s=new Set(h);
@@ -1495,6 +1515,7 @@ function attachVideoFunnelCols(headers,data){
 /* 구글 광고그룹/캠페인 ID → 이름 매핑 (매핑 CSV 업로드로 축적, 클라우드 kv에 보관) */
 let gNameMap={adgroup:{},campaign:{},asset:{}};
 let gInfoMap={}; /* 광고그룹 보고서 스냅샷 — {광고그룹ID:{nm,cpNm,st,op,rsn,tcpa,cost,…,from,to}} */
+let gWeekMap={}; /* 광고그룹 '주간 성과'(정확 소스·AEO+ACE·글자 애셋 포함) — {광고그룹ID:{주:[비용,노출,클릭,어트리뷰션,활성,신규재활성]}}. kv 'gwstat'. 그룹뷰 표시값 교체용(채점 무관) */
 let gOcrMap={}; /* 이미지 소재 OCR 추출 텍스트 — {애셋ID:텍스트}. 별도 kv(ocr) 저장: 마음에 안 들면 키 삭제만으로 전체 취소 */
 /* 소재 이름 수동 변경(관리자 전용) — kv(nameovr)에 {markKey(매체,원본명):새이름} 저장. 표시 최우선.
    NAME_PENDING = /namechange 편집 중 미저장분(''=기본명으로 되돌림). renameMode = 편집 활성 여부 */
@@ -1532,6 +1553,8 @@ function giStatusChip(gi){if(!gi)return "";
   const limited=/제한/.test(gi.op||"")||/정책/.test(gi.rsn||"");
   if(!limited)return "";
   return `<span class="gst lim" title="${escAttr(["정책 제한",gi.op||gi.st||"",gi.rsn&&gi.rsn!=="알 수 없음"?gi.rsn:""].filter(Boolean).join(" · "))}">경고</span>`;}
+/* 정확 소스 뱃지 — 이 그룹의 광고비·노출·클릭·CPM·CPC가 '광고그룹 주간 성과'(글자 애셋 포함) 실측으로 표시됨을 알림 */
+function authGwChip(n){return `<span class="gst auth" title="광고비·노출·클릭·CPM·CPC는 광고그룹 주간 성과 '정확 소스'(AEO+ACE·글자 애셋 포함) 합계로 표시${n?` · ${n}주 합산`:""}. 단가(신규/홈)·점수는 소재(영상·이미지) 기준 그대로예요 — 상세에서 진짜 유저 수를 확인하세요.">정확</span>`;}
 /* 최신 집행 주에 광고비가 나간 소재/그룹 — 매체 공통 Live 뱃지 */
 function liveBadge(ds,e){if(!ds||standaloneMode||!ds.liveWeek)return "";
   const lv=e._isGroup?(e._members||[]).some(m=>m._live):e._live;
@@ -1585,7 +1608,9 @@ async function loadNameMap(pw){
   try{const no=await sbRpc("cr_kv_get",{pw,key:"nameovr"});
     if(no&&typeof no==="object")NAME_OVR=no;}catch(e){}
   try{const so=await sbRpc("cr_kv_get",{pw,key:"svcovr"});
-    if(so&&typeof so==="object")SVC_OVR=so;}catch(e){}}
+    if(so&&typeof so==="object")SVC_OVR=so;}catch(e){}
+  try{const gw=await sbRpc("cr_kv_get",{pw,key:"gwstat"});
+    if(gw&&typeof gw==="object")gWeekMap=gw;}catch(e){}}
 /* 모든 유튜브 소재 제목을 로드 직후 백그라운드 일괄 조회(동시 4) — 클릭 없이 자동 표시, kv(ytt)로 기기 간 공유 */
 let _yttRan=false;
 async function hydrateAllYtTitles(){
@@ -2538,6 +2563,20 @@ function groupInfoHTML(gi){if(!gi)return "";
   add("평균 시청 시간/노출",gi.watch!=null?gi.watch:null);
   if(!cells.length)return "";
   return `<section><div class="ish">보고서 추가 정보 <span class="n">광고그룹 보고서${gi.from?` · ${gi.from}~${gi.to||""}`:""} 누적</span></div><div class="gi-grid">${cells.join("")}</div></section>`;}
+/* 정확 소스(gwstat) 상세 블록 — 소재 합산이 못 만드는 실측 광고비·노출·클릭 + 진짜 활성/신규유저 수(글자 애셋 포함).
+   현재 선택 기간 합산. 사이트의 '활성 유저 수'(=인앱 액션)·'신규+재활성'(=조회연결 전환)과 달리 실제 유저 수라 별도 표기. */
+function gwStatHTML(e){if(!e||!e._authGw)return "";
+  const cells=[];
+  const add=(k,v,tip)=>{if(v!=null&&v!=="")cells.push(`<div class="gi-r" ${tip?`title="${escAttr(tip)}"`:""}><span class="gi-k">${escHtml(k)}</span><b class="gi-v num">${escHtml(v)}</b></div>`);};
+  add("광고비",fmtWon(e["비용"]),"글자(텍스트) 애셋까지 포함한 실제 집행 광고비");
+  add("노출",fmtInt(e["노출 수"]));
+  add("클릭",fmtInt(e["클릭 수"]));
+  add("진짜 활성 유저",e._gwAU!=null?fmtInt(e._gwAU):null,"실제 활성 유저 수 — 사이트 표의 '활성 유저 수'(=인앱 액션)와 다른 실측 유저 수");
+  add("활성 유저 단가",e._gwAUcpa!=null?fmtWon(e._gwAUcpa):null,"광고비 ÷ 진짜 활성 유저");
+  add("진짜 신규+재활성",e._gwNU!=null?fmtInt(e._gwNU):null,"실제 신규+재활성 유저 수 — 사이트의 '조회연결 전환'과 다른 실측 유저 수");
+  add("신규+재활성 단가",e._gwNUcpa!=null?fmtWon(e._gwNUcpa):null,"광고비 ÷ 진짜 신규+재활성");
+  if(!cells.length)return "";
+  return `<section><div class="ish">정확 소스 <span class="n">광고그룹 주간 성과 · 글자 포함 · ${e._authGw}주 합산</span></div><div class="gi-grid">${cells.join("")}</div></section>`;}
 function scorePosHTML(ds,e){const S=ds.S;
   if(e.score==null||!S||!S.specs||!e._specPct)return"";
   const rows=S.specs.filter(s=>e._specPct[s.k]).map(s=>{const sp=e._specPct[s.k];
@@ -2943,7 +2982,7 @@ function fillIsland(ds,e,inner){const L=ds.L;
   if(ytIdOf(_pu))inner.classList.add("ar-h");
   else{const _res=e._m_res&&String(e._m_res).match(/(\d+)\s*[x×]\s*(\d+)/i);
     if(_res)applyIsleAr(inner,+_res[1],+_res[2]);else inner.classList.add("ar-s");}
-  const sideMedia=e._isGroup?(groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group))||""):preview; /* 그룹은 보고서 정보가 미디어 자리 */
+  const sideMedia=e._isGroup?((gwStatHTML(e)||"")+(groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group))||"")):preview; /* 그룹은 정확 소스+보고서 정보가 미디어 자리 */
   inner.innerHTML=`<div class="isle-row3${sideMedia?"":" nomedia"}">${sideMedia?`<div class="ir-media">${sideMedia}</div>`:""}<div class="ir-mid"></div><div class="ir-cmp">${cmpB}</div></div>`;
   renderIsleMid(ds,e,inner.querySelector(".ir-mid"));
   const _vv=inner.querySelector(".isle-frame video");
@@ -3117,6 +3156,24 @@ function tierBadge(e){if(e.dom==="good")return `<span class="dom-tag" title="독
   return "";}
 const PAGE_SIZE=60;
 let tPage=1;
+/* 정확 소스(gwstat) 표시값 교체 — 그룹의 광고비·노출·클릭·CPM·CPC·CTR를 '광고그룹 주간 성과' CSV 합계로 덮어쓴다
+   (현재 선택 기간 ds.range 안의 주차만 합산). 채점(점수)·구글 전환 단가(신규/홈 단가)·eCPI는 소재(영상·이미지) 합산 그대로 둔다 —
+   그래서 이 함수는 반드시 scoreGroupAgg 뒤에 돈다. 진짜 활성/신규유저 수(글자 애셋 포함)는 상세용 _gw* 필드로 따로 보관. */
+function gwApplyAuth(g,ds){
+  const id=g&&g._g_adGroupId;if(!id)return;
+  const wk=gWeekMap&&gWeekMap[String(id)];if(!wk||typeof wk!=="object")return;
+  const lo=ds&&ds.range&&ds.range.first,hi=ds&&ds.range&&ds.range.last;
+  let cost=0,imp=0,clk=0,attr=0,au=0,nu=0,nw=0;
+  for(const w in wk){if(lo&&w<lo)continue;if(hi&&w>hi)continue;const a=wk[w];if(!Array.isArray(a))continue;
+    cost+=+a[0]||0;imp+=+a[1]||0;clk+=+a[2]||0;attr+=+a[3]||0;au+=+a[4]||0;nu+=+a[5]||0;nw++;}
+  if(!nw||cost<=0)return;
+  g["비용"]=cost;g["노출 수"]=imp;g["클릭 수"]=clk;
+  g.CPM=imp>0?cost/imp*1000:null;
+  g.CPC=clk>0?cost/clk:null;
+  g.CTR=imp>0?clk/imp:null; /* 정확 소스는 과소집계가 없어 신뢰성 게이트 무관 — 실측 CTR 그대로 표시 */
+  g._authGw=nw; /* 정확 소스로 덮어쓴 주 수 */
+  g._gwAttr=attr;g._gwAU=au;g._gwNU=nu;
+  g._gwAUcpa=au>0?cost/au:null;g._gwNUcpa=nu>0?cost/nu:null;}
 /* Aggregate ds.agg by 광고그룹(_g_adGroupId) 또는 크리에이티브 그룹(_m_group) → pseudo-entities for group view */
 function buildAdGroupAgg(ds){
   const grp=new Map();
@@ -3161,6 +3218,7 @@ function buildAdGroupAgg(ds){
     if(fos.size===1)g.tags.fo=[...fos][0];
     else if(fos.size>1)g.tags.fo="혼합";});
   scoreGroupAgg(ds,rows);
+  rows.forEach(g=>gwApplyAuth(g,ds)); /* 채점 후 표시값만 정확 소스로 교체 */
   return rows;}
 function scoreGroupAgg(ds,rows){
   const specs=(ds.S&&ds.S.specs)?ds.S.specs.slice():[];if(!specs.length){rows.forEach(g=>{g.score=null;g.tier="na";g.dom=null;});return;}
@@ -3261,11 +3319,12 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
     return `<tr class="row" data-name="${escAttr(r.name)}">`+cols.map(c=>{
       if(c.k==="name"){const th=thumbHTML(r);const dn=displayNameOf(r);
         const gst=r._isGroup?giStatusChip(groupInfoOf(r._g_adGroupId||r._m_group)):"";
+        const gwc=(r._isGroup&&r._authGw)?authGwChip(r._authGw):"";
         const mb=markBtnsHTML(ds.media,r);
         const nmHtml=(renameMode&&!r._isGroup)
           ? `<span class="nm-text editing" contenteditable="true" spellcheck="false" data-nm="${escAttr(r.name)}">${escHtml(dn)}</span>`
           : `<span class="nm-text">${escHtml(trunc(dn,60))}</span>`;
-        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}><div class="nm-line">${liveBadge(ds,r)}${lrnBadge(r)}${nmHtml}${mb}${gst}</div><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
+        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}><div class="nm-line">${liveBadge(ds,r)}${lrnBadge(r)}${nmHtml}${mb}${gst}${gwc}</div><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
       if(c.k==="score")return `<td class="scb"><span class="sc-score">${score}</span><span class="sc-badge">${bdg||""}</span></td>`;
       const dir=COL_DIR[c.k]||0;
       const t=dir?cellTier(r[c.k],colSorted[c.k],dir):"m";
@@ -4177,7 +4236,7 @@ function dropZone(e){if(!e||e.clientY==null)return null;
   const x=e.clientX/W;
   return{mode:"channeled",channel:x<1/3?"Google":x<2/3?"Moloco":"Meta"};}
 function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(!pending)return;
-  const parsed=[],failed=[],mapDeltas=[],groupInfos=[];
+  const parsed=[],failed=[],mapDeltas=[],groupInfos=[],weekStats=[];
   function done(){
     const preNotes=[];
     /* ── 광고그룹 보고서: ID 기준 갱신. 기존과 달라지는 항목이 있을 때만 확인창, 신규뿐이면 바로 반영 ── */
@@ -4215,7 +4274,15 @@ function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(
         const kinds=[Object.keys(delta.adgroup).length&&"광고그룹",Object.keys(delta.campaign).length&&"캠페인",Object.keys(delta.asset).length&&"애셋"].filter(Boolean).join("·");
         preNotes.push(`📇 구글 이름 매핑 ${cnt.toLocaleString()}건 등록했어요${cloudPw&&isAdmin?" · ☁️ 저장했어요":" · 화면에만 반영돼요(저장은 관리자만)"} — ${kinds||"이름"}이 실제 이름으로 보여요`);
       }else preNotes.push("이름 매핑은 반영하지 않았어요");}
-    if(!parsed.length&&(groupInfos.length||mapDeltas.length)){
+    /* ── 광고그룹 주간 성과(정확 소스) → gwstat kv, 광고그룹 ID 기준 병합 ── */
+    if(weekStats.length){
+      const gw={};let cells=0,unm=0;
+      weekStats.forEach(w=>{cells+=w.count;unm+=w.unmatched||0;for(const id in w.map){gw[id]=Object.assign(gw[id]||{},w.map[id]);}});
+      Object.keys(gw).forEach(id=>{gWeekMap[id]=Object.assign(gWeekMap[id]||{},gw[id]);});
+      if(cloudPw&&isAdmin)sbRpc("cr_kv_merge",{pw:cloudPw,key:"gwstat",val:gw,uploader:uploaderId||"unknown"}).catch(()=>{});
+      const ng=Object.keys(gw).filter(k=>k.indexOf("name:")!==0).length;
+      preNotes.push(`📊 광고그룹 주간 성과(정확 소스) ${ng.toLocaleString()}개 그룹·${cells.toLocaleString()}주 반영했어요${unm?` · 미매핑 ${unm}주`:""}${cloudPw&&isAdmin?" · ☁️ 저장했어요":" · 화면에만 반영돼요(저장은 관리자만)"}`);}
+    if(!parsed.length&&(groupInfos.length||mapDeltas.length||weekStats.length)){
       if(active&&DATASETS[active])show(DATASETS[active]);
       toast(preNotes.join(" · "));
       return;}
@@ -4294,6 +4361,7 @@ function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(
         else failed.push(f.name);
       }else{const r=parseCSV(raw);
         if(isMolocoReport(r.headers)){const m=prepMoloco(r);parsed.push({headers:m.headers,data:m.data,fname:f.name,forceCh:"Moloco",kind:m.kind});}
+        else if(isGroupWeekly(r.headers)){const gw=parseGroupWeekly(r.data);if(gw)weekStats.push(gw);else failed.push(f.name);} /* 광고그룹 주간 성과(정확 소스) — detect()보다 먼저 태워 adset 저장경로로 새지 않게 */
         else{const k=detect(r.headers);
         if(k){attachPreviewCol(r.headers,r.data);attachVideoFunnelCols(r.headers,r.data);
           parsed.push({headers:r.headers,data:r.data,fname:f.name,kind:dateKindOf(r.data.map(x=>x.date)).kind});}
