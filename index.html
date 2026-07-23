@@ -3928,7 +3928,7 @@ function renderPeriodSeg(){const el=$("#pseg"),sec=$("#periodSec"),cw=$("#pcusto
       `<option value="custom"${custOn?" selected":""}>직접 설정${custOn?` (${custLab})`:""}</option></select>`;
   /* 현재 매체의 데이터 보유 범위(첫 주~마지막 주) — 기간 필터와 무관한 전체 보유분 표시 */
   const rng=chDataRange(ds,dsMode==="channeled"?ds.media:null);
-  if(rng)el.insertAdjacentHTML("beforeend",`<div class="prange-info" title="이 매체에 저장된 주간 데이터 전체 범위(주 시작일 기준) — 위 기간 필터와 무관">💾 보유 ${escHtml(fmtRangeShort(rng))} · ${rng.weeks}주</div>`);
+  if(rng)el.insertAdjacentHTML("beforeend",`<div class="prange-info" title="이 매체에 저장된 주간 데이터 전체 범위(주 시작일 기준) — 위 기간 필터와 무관">Data saved: ${escHtml(fmtRangeShort(rng))} · ${rng.weeks}W</div>`);
   /* 직접 설정 패널 — ① 최근 N 주/달(상대) ② 월별 보기(그 달의 승자+월내 추이 — 2026-07 회의) ③ 날짜 범위(절대·주 시작일 기준) */
   if(custOn&&cw){
     const allDates=[...new Set((ds.dataAll||[]).map(r=>r.date).filter(d=>/^\d{4}-\d{2}-\d{2}/.test(String(d))))].sort();
@@ -4011,9 +4011,9 @@ function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)r
   const chans=ds.channels.slice().sort((a,b)=>counts.get(b)-counts.get(a));
   const cur=ds.media,curRng=ranges.get(cur);
   el.innerHTML=`<div class="sf-dd" id="mediaDD">
-    <button class="sf-dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false"${curRng?` title="보유 데이터 ${escAttr(fmtRangeShort(curRng))} · ${curRng.weeks}주"`:""}><span class="sf-dd-cur">${escHtml(cur)}</span><svg viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+    <button class="sf-dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false"${curRng?` title="Data saved: ${escAttr(fmtRangeShort(curRng))} · ${curRng.weeks}W"`:""}><span class="sf-dd-cur">${escHtml(cur)}</span><svg viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
     <div class="sf-dd-menu" role="listbox" hidden>${chans.map(ch=>{const r=ranges.get(ch);
-      return `<button type="button" role="option" data-m="${escAttr(ch)}" class="${ch===cur?"on":""}"${r?` title="보유 데이터 ${escAttr(fmtRangeShort(r))} (${r.weeks}주)"`:""}>${escHtml(ch)} <em>${counts.get(ch).toLocaleString()}</em>${r?`<span class="sf-dd-rng">${escHtml(fmtRangeShort(r))} · ${r.weeks}주</span>`:""}</button>`;}).join("")}</div></div>`;
+      return `<button type="button" role="option" data-m="${escAttr(ch)}" class="${ch===cur?"on":""}"${r?` title="Data saved: ${escAttr(fmtRangeShort(r))} · ${r.weeks}W"`:""}>${escHtml(ch)} <em>${counts.get(ch).toLocaleString()}</em>${r?`<span class="sf-dd-rng">${escHtml(fmtRangeShort(r))} · ${r.weeks}W</span>`:""}</button>`;}).join("")}</div></div>`;
   const dd=el.querySelector(".sf-dd"),btn=dd.querySelector(".sf-dd-btn"),menu=dd.querySelector(".sf-dd-menu");
   btn.onclick=e=>{e.stopPropagation();const willOpen=menu.hidden;closeAllDD();if(willOpen){dd.classList.add("open");menu.hidden=false;btn.setAttribute("aria-expanded","true");}};
   menu.querySelectorAll("button").forEach(b=>b.onclick=()=>{const m=b.dataset.m;closeAllDD();if(ds.media===m)return;ds.media=m;tPage=1;tGroupByTouched=false;show(ds);});} /* 매체 전환 시 그룹뷰 기본값 재적용 */
