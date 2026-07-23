@@ -257,6 +257,7 @@
   /* table */
   /* 전체목록 툴바 — 스티키(스크롤해도 상단 고정) + 세그먼트 클러스터. 한 줄 유지(줄바꿈 금지), 좁으면 가로 스크롤 */
   .tbar{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;position:sticky;top:0;z-index:20;background:var(--surface);padding:14px 0 12px;border-bottom:1px solid var(--surface-2)}
+  .tbar.pop-open{overflow:visible} /* 드롭다운(서비스·제작자 등) 열림 중엔 클리핑 해제 — overflow 스크롤 컨테이너가 메뉴를 잘라 안 보이던 버그 수정 */
   .tbar>*{flex:0 0 auto}
   .tbar::-webkit-scrollbar{height:6px}
   .tbar input[type=search]{flex:0 0 auto;background:var(--surface-2);border-radius:9px;padding:8px 13px;font:inherit;font-size:12.5px;width:200px;max-width:44vw;border:1px solid transparent}
@@ -2391,7 +2392,10 @@ function applyTFilter(rows,ds){
   return rows;}
 function renderTFilter(ds){/* filter popup removed */}
 /* 복수선택 드롭다운 하나 구성 — 상호작용(체크·해제)은 제자리 갱신해 팝업이 닫히지 않는다 */
-function closeAllMsel(){document.querySelectorAll(".msel-pop").forEach(p=>{p.hidden=true;});}
+/* 툴바(.tbar)는 overflow 스크롤 컨테이너라 안에서 연 팝업이 잘린다 → 팝업 열림 동안만 pop-open으로 클리핑 해제 */
+function syncTbarPop(){const open=document.querySelector(".msel-pop:not([hidden])");
+  document.querySelectorAll(".tbar").forEach(t=>t.classList.toggle("pop-open",!!(open&&t.contains(open))));}
+function closeAllMsel(){document.querySelectorAll(".msel-pop").forEach(p=>{p.hidden=true;});syncTbarPop();}
 function buildMsel(host,allLabel,items,selected,onChange){
   if(!host)return;
   host.innerHTML=
@@ -2405,7 +2409,7 @@ function buildMsel(host,allLabel,items,selected,onChange){
     txt.textContent=n===0?allLabel:(n===1?[...selected][0]:`${(items.find(it=>selected.has(it.v))||{}).label||[...selected][0]} 외 ${n-1}`);
     btn.classList.toggle("on",n>0);clr.style.display=n>0?"":"none";};
   refresh();
-  btn.onclick=e=>{e.stopPropagation();const willOpen=pop.hidden;closeAllMsel();pop.hidden=!willOpen;};
+  btn.onclick=e=>{e.stopPropagation();const willOpen=pop.hidden;closeAllMsel();pop.hidden=!willOpen;syncTbarPop();};
   pop.onclick=e=>e.stopPropagation();
   host.querySelectorAll(".msel-opt input").forEach(cb=>cb.onchange=()=>{if(cb.checked)selected.add(cb.value);else selected.delete(cb.value);refresh();onChange();});
   clr.onclick=()=>{selected.clear();host.querySelectorAll(".msel-opt input").forEach(cb=>{cb.checked=false;});refresh();onChange();};}
@@ -2447,10 +2451,10 @@ function renderMineAs(ds){
       opts.map(o=>`<button type="button" class="mineas-opt${(o.v===(mineAs||""))?" sel":""}" data-v="${escAttr(o.v)}">${escHtml(o.label)}</button>`).join("")+
     `</div>`;
   const btn=host.querySelector(".msel-btn"),pop=host.querySelector(".msel-pop");
-  btn.onclick=e=>{e.stopPropagation();const willOpen=pop.hidden;closeAllMsel();pop.hidden=!willOpen;};
+  btn.onclick=e=>{e.stopPropagation();const willOpen=pop.hidden;closeAllMsel();pop.hidden=!willOpen;syncTbarPop();};
   pop.onclick=e=>e.stopPropagation();
   host.querySelectorAll(".mineas-opt").forEach(b=>b.onclick=()=>{
-    mineAs=b.dataset.v||null;pop.hidden=true;_mselSig.ma="";
+    mineAs=b.dataset.v||null;pop.hidden=true;syncTbarPop();_mselSig.ma="";
     if(curDS)renderTable(curDS);
     toast(mineAs?`이제 인장 별을 누르면 ${mineAs}의 내 소재로 등록돼요`:"내 소재 등록 대상을 '나'로 되돌렸어요");});}
 document.addEventListener("click",closeAllMsel); /* 바깥 클릭 시 드롭다운 닫기 */
