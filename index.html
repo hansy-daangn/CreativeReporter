@@ -1335,7 +1335,7 @@ function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n")
   let dcol=null;if(data.length){for(const c of["주","일"]){if(data[0][c]!==undefined&&data.some(r=>/^\d{4}-\d{2}-\d{2}/.test(String(r[c]||"")))){dcol=c;break;}}}
   const rows=data.map(r=>{const url=String(r["확장 소재"]||"").trim();
     const raw=dcol?String(r[dcol]).trim():start;
-    return{date:toWeekStart(raw)||raw,ad_name:url,
+    const o={date:toWeekStart(raw)||raw,ad_name:url,
       "비용":pn(r["비용"]),
       "노출 수":pn(r["노출수"]),
       "클릭 수":pn(r["클릭수"]),
@@ -1356,7 +1356,10 @@ function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n")
       "_g_adGroupId":(r["광고그룹 ID"]||"").trim(),
       "_g_campaignId":(r["캠페인 ID"]||"").trim(),
       "_g_allConv":pn(r["모든 전환(전환 시간별)"]),
-      "_g_convValue":pn(r["모든 전환 가치(전환 시간별)"])};})
+      "_g_convValue":pn(r["모든 전환 가치(전환 시간별)"])};
+    /* 2026-07 확장 양식(60컬럼): 신규 고객·재참여 고객 컬럼이 생겼는데 아직 전부 0 — 값이 채워지는 날을 대비해 캡처만 해둔다 */
+    if(r["신규 고객"]!==undefined){o._g_newCust=pn(r["신규 고객"]);o._g_reEng=pn(r["재참여 고객"]);}
+    return o;})
     /* 이미지·영상 소재만 집계·채점 — 광고제목/설명 등 텍스트 애셋은 조합(combination) 성과라 완전 제외 */
     .filter(r=>r.ad_name && /이미지|동영상|image|video/i.test(r._g_assetType||""));
   /* 저장 허용 여부용 기간 판별: 주/일 컬럼이 있으면 원본 날짜로, 기간 합산이면 헤더의 시작~끝 범위로 */
@@ -1554,7 +1557,8 @@ function giStatusChip(gi){if(!gi)return "";
   if(!limited)return "";
   return `<span class="gst lim" title="${escAttr(["정책 제한",gi.op||gi.st||"",gi.rsn&&gi.rsn!=="알 수 없음"?gi.rsn:""].filter(Boolean).join(" · "))}">경고</span>`;}
 /* 정확 소스 뱃지 — 이 그룹의 광고비·노출·클릭·CPM·CPC가 '광고그룹 주간 성과'(글자 애셋 포함) 실측으로 표시됨을 알림 */
-function authGwChip(n){return `<span class="gst auth" title="광고비·노출·클릭·CPM·CPC는 광고그룹 주간 성과 '정확 소스'(AEO+ACE·글자 애셋 포함) 합계로 표시${n?` · ${n}주 합산`:""}. 단가(신규/홈)·점수는 소재(영상·이미지) 기준 그대로예요 — 상세에서 진짜 유저 수를 확인하세요.">정확</span>`;}
+function authGwChip(e){const n=e._authGw,cov=e._gwCover!=null?Math.round(e._gwCover*100):null;
+  return `<span class="gst auth" title="광고비·노출·클릭·CPM·CPC는 광고그룹 주간 성과 '정확 소스'(AEO+ACE·글자 애셋 포함) 합계로 표시${n?` · ${n}주 합산`:""}${cov!=null?` · 소재(영상·이미지) 합산은 정확값의 ${cov}%(신뢰도 지표 — 나머지는 주로 글자 애셋 몫)`:""}. 단가(신규/홈)·점수는 소재 기준 그대로예요 — 상세에서 진짜 유저 수를 확인하세요.">정확</span>`;}
 /* 최신 집행 주에 광고비가 나간 소재/그룹 — 매체 공통 Live 뱃지 */
 function liveBadge(ds,e){if(!ds||standaloneMode||!ds.liveWeek)return "";
   const lv=e._isGroup?(e._members||[]).some(m=>m._live):e._live;
@@ -2541,6 +2545,7 @@ function gwStatHTML(e){if(!e||!e._authGw)return "";
   add("광고비",fmtWon(e["비용"]),"글자(텍스트) 애셋까지 포함한 실제 집행 광고비");
   add("노출",fmtInt(e["노출 수"]));
   add("클릭",fmtInt(e["클릭 수"]));
+  if(e._gwCover!=null)add("소재 커버리지",Math.round(e._gwCover*100)+"%","신뢰도 지표 — 소재(영상·이미지) 합산 광고비 ÷ 정확 광고비. 100%에 가까울수록 사이트 소재 데이터가 그룹 전체를 잘 대표. 나머지는 주로 글자(텍스트) 애셋 몫");
   add("진짜 활성 유저",e._gwAU!=null?fmtInt(e._gwAU):null,"실제 활성 유저 수 — 사이트 표의 '활성 유저 수'(=인앱 액션)와 다른 실측 유저 수");
   add("활성 유저 단가",e._gwAUcpa!=null?fmtWon(e._gwAUcpa):null,"광고비 ÷ 진짜 활성 유저");
   add("진짜 신규+재활성",e._gwNU!=null?fmtInt(e._gwNU):null,"실제 신규+재활성 유저 수 — 사이트의 '조회연결 전환'과 다른 실측 유저 수");
@@ -3127,6 +3132,7 @@ function gwApplyAuth(g,ds){
   for(const w in wk){if(lo&&w<lo)continue;if(hi&&w>hi)continue;const a=wk[w];if(!Array.isArray(a))continue;
     cost+=+a[0]||0;imp+=+a[1]||0;clk+=+a[2]||0;attr+=+a[3]||0;au+=+a[4]||0;nu+=+a[5]||0;nw++;}
   if(!nw||cost<=0)return;
+  g._gwCover=(+g["비용"]||0)/cost; /* 신뢰도(커버리지) 지표 — 소재(영상·이미지) 합산 광고비 ÷ 정확 광고비. 나머지는 주로 글자 애셋 몫 */
   g["비용"]=cost;g["노출 수"]=imp;g["클릭 수"]=clk;
   g.CPM=imp>0?cost/imp*1000:null;
   g.CPC=clk>0?cost/clk:null;
@@ -3277,7 +3283,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
     return `<tr class="row" data-name="${escAttr(r.name)}">`+cols.map(c=>{
       if(c.k==="name"){const th=thumbHTML(r);const dn=displayNameOf(r);
         const gst=r._isGroup?giStatusChip(groupInfoOf(r._g_adGroupId||r._m_group)):"";
-        const gwc=(r._isGroup&&r._authGw)?authGwChip(r._authGw):"";
+        const gwc=(r._isGroup&&r._authGw)?authGwChip(r):"";
         const mb=markBtnsHTML(ds.media,r);
         const nmHtml=(renameMode&&!r._isGroup)
           ? `<span class="nm-text editing" contenteditable="true" spellcheck="false" data-nm="${escAttr(r.name)}">${escHtml(dn)}</span>`
@@ -4199,7 +4205,7 @@ function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(
     /* 규격: (1) 매체 확정 — 몰로코/구글 리포트 자동 감지, 파일명 meta_/moloco_/google_, 드롭존
              (2) 주간 데이터  (3) 유효 행 존재. 규격 파일만 누적·저장, '기타' 매체는 없음 */
     const reasonOf=(p)=>!chOf(p)?"매체 미상 (파일명 규칙: meta_/moloco_/google_)"
-      :(p.kind!=="weekly"?`${KIND_LABEL[p.kind]||"기간 미상"} 형식 (주간 리포트만 누적)`
+      :(p.kind!=="weekly"?`${KIND_LABEL[p.kind]||"기간 미상"} 형식 (주간 리포트만 누적)${p.forceCh==="Google"&&(p.kind==="range"||p.kind==="monthly")?" — 보고서 편집기에서 '주' 열(세그먼트)을 추가해 내보내면 주간 누적돼요":""}`
       :"유효 데이터 없음 (전부 ₩1,500 미만)");
     const isConf=(p)=>!!chOf(p)&&p.kind==="weekly"&&p.data.length>0;
     const conf=parsed.filter(isConf),non=parsed.filter(p=>!isConf(p));
