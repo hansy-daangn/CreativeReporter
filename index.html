@@ -594,6 +594,10 @@
   .asset-src a{color:var(--muted)}
   .tempty{padding:26px 14px;text-align:center;color:var(--muted);font-size:12.5px}
   .asset-err{font-size:11px;color:var(--w2)}
+  .asset-verr{font-size:11px;color:var(--w2);text-align:center;padding:10px 4px}
+  .asset-verr a{margin-left:7px;font-size:10.5px;padding:2px 8px;border-radius:7px;border:1px solid #d8d7cf;background:var(--surface);color:var(--muted);text-decoration:none;white-space:nowrap}
+  .asset-verr a:hover{color:var(--ink);border-color:var(--faint)}
+  .sc-note{color:var(--w1);font-weight:800;margin-left:2px;cursor:help}
   .asset-err .mini{margin-left:6px;font-size:10.5px;padding:2px 8px;border-radius:7px;border:1px solid #d8d7cf;background:var(--surface);color:var(--muted);cursor:pointer}
   .asset-err .mini:hover{color:var(--ink);border-color:var(--faint)}
   .asset-src{font-size:10.5px;color:var(--faint);text-align:center;word-break:break-all}
@@ -1124,6 +1128,31 @@ const IMG_PROXY=u=>"https://wsrv.nl/?url="+encodeURIComponent(u);
 /* 학습은 기기 단위로 지속(localStorage) — 차단 환경으로 판명된 기기는 재방문 때도 처음부터 프록시로 렌더 */
 function imgSrc(u){try{if(localStorage.getItem("crImgProxy")||sessionStorage.getItem("crImgProxy"))return IMG_PROXY(u);}catch(e){}return u;}
 function imgOk(img){if(String(img.src).indexOf("wsrv.nl/")>-1&&(+img.dataset.rt||0)>0){try{localStorage.setItem("crImgProxy","1");}catch(e){try{sessionStorage.setItem("crImgProxy","1");}catch(_){}}}try{mdimEl(img);}catch(_){}}
+/* 영상 로딩 복구 — 같은 차단 환경(광고차단 DNS/확장이 adsmoloco를 하위요청만 거부, 새 탭 직접 열기는 허용)이
+   영상에도 있는데 이미지 프록시(wsrv.nl)는 영상을 못 다룬다. 자체 중계(Supabase Edge Function mediaproxy —
+   adsmoloco /creative/ 영상만 허용·Range 통과)로 우회하고, 성공한 기기는 crVidProxy 학습해 다음부터 중계로 렌더.
+   순서: 원본 → (실패 즉시) 중계 → (1.2s) 원본+캐시우회 → (1.2s) 중계+캐시우회 → 실패 UI(새 탭 재생 링크) */
+const VID_PROXY=u=>SB_URL+"/functions/v1/mediaproxy?u="+encodeURIComponent(u);
+function vidSrc(u){try{if(u&&(localStorage.getItem("crVidProxy")||sessionStorage.getItem("crVidProxy")))return VID_PROXY(u);}catch(e){}return u;}
+function vidOk(v){if(String(v.currentSrc||v.src).includes("/mediaproxy?")&&(+v.dataset.rt||0)>0){try{localStorage.setItem("crVidProxy","1");}catch(e){try{sessionStorage.setItem("crVidProxy","1");}catch(_){}}}try{mdimEl(v);}catch(_){}}
+function vidRetry(v){
+  const n=(+v.dataset.rt||0)+1;
+  if(n>3){
+    const t=v.closest(".tthumb");if(t){t.classList.add("err");return;}
+    const f=v.closest(".isle-frame");
+    if(f){const err=f.querySelector(".asset-verr");if(err){err.hidden=false;v.hidden=true;return;}}
+    v.style.display="none";return;}
+  v.dataset.rt=n;
+  if(!v.dataset.osrc)v.dataset.osrc=String(v.getAttribute("src")||"").split("#")[0];
+  const orig=v.dataset.osrc,frag=v.dataset.frag||"";
+  if(!orig)return;
+  const onProxy=String(v.src).includes("/mediaproxy?");
+  const set=u=>{v.src=u+frag;try{v.load();}catch(_){}};
+  if(n===1){set(onProxy?orig:VID_PROXY(orig));return;} /* 즉시 반대편으로 — 대기 0ms */
+  setTimeout(()=>{if(!v.isConnected)return;
+    if(n===2)set(orig+(orig.includes("?")?"&":"?")+"rt="+Date.now());
+    else set(VID_PROXY(orig)+"&rt="+Date.now());
+  },1200);}
 /* ── 미리보기 실측 해상도·재생시간 캐시(MDIM) — 이름·리포트에 크기 표기가 없는 매체도 미리보기에서 사이즈를 얻는다.
    이미지=이미 뜨는 썸네일 onload의 naturalWidth · 영상=상세 재생 metadata + 지연·스로틀 백그라운드 metadata.
    기기 localStorage에 저장(서버 무접촉). 추가 네트워크는 최소·백그라운드라 접속 렉 없음, 값은 디코드된 원본에서 읽어 정확. ── */
@@ -1177,7 +1206,7 @@ async function hydrateMediaDims(){
   const probe=u=>new Promise(res=>{const v=document.createElement("video");v.preload="metadata";v.muted=true;
     let done=false;const fin=()=>{if(done)return;done=true;try{v.removeAttribute("src");v.load();}catch(_){}res();};
     v.onloadedmetadata=()=>{mdimSet(u,v.videoWidth,v.videoHeight,v.duration);fin();};
-    v.onerror=fin;setTimeout(fin,8000);v.src=u;});
+    v.onerror=fin;setTimeout(fin,8000);v.src=vidSrc(u);});
   for(let i=0;i<list.length;i+=2)await Promise.all(list.slice(i,i+2).map(probe));}
 /* 툴팁 유튜브 썸네일 — 표에서 이미 캐시된 저해상도를 즉시 띄우고, 고해상도가 준비되면 바꿔치기 */
 function imgHi(img){const h=img.dataset.hi;if(!h)return;img.dataset.hi="";
@@ -1203,7 +1232,7 @@ function assetPreviewTipHTML(url,label){if(!url)return "";
   if(yt){/* 유튜브도 몰로코처럼 호버 즉시 재생 — 음소거 자동재생 임베드(컨트롤 없음·반복). 로딩 동안 썸네일을 배경으로 깔아 공백 방지 */
     const hi=`https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg`;
     return `<div class="tp-ytwrap" style="background-image:url('${escAttr(imgSrc(hi))}')"><iframe class="tp-yt" width="320" height="180" src="https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=1&controls=0&playsinline=1&loop=1&playlist=${yt[1]}&modestbranding=1" frameborder="0" allow="autoplay; encrypted-media"></iframe></div><div class="tp-cap">▶ ${escHtml(label||"영상")}</div>`;}
-  if(isVideoUrl(url))return `<video src="${escAttr(safeUrl(url))}" autoplay muted loop playsinline preload="metadata"></video><div class="tp-cap">▶ ${escHtml(label||"영상")}</div>`;
+  if(isVideoUrl(url)){const su=safeUrl(url);return `<video src="${escAttr(vidSrc(su))}" data-osrc="${escAttr(su)}" autoplay muted loop playsinline preload="metadata" onloadedmetadata="vidOk(this)" onerror="vidRetry(this)"></video><div class="tp-cap">▶ ${escHtml(label||"영상")}</div>`;}
   if(isImageUrl(url))return `<img src="${escAttr(imgSrc(url))}" data-osrc="${escAttr(url)}" alt="" referrerpolicy="no-referrer" onload="imgOk(this)" onerror="imgRetry(this)"><div class="tp-cap">${escHtml(label||"")}</div>`;
   return `<div class="tp-cap">${escHtml(label||"미리보기 없음")}</div>`;}
 function toast(m,ms){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),ms||2600);}
@@ -2494,7 +2523,8 @@ function assetPreview(url,ent){if(!url)return "";
   const srcLine=(note)=>`<div class="asset-src">${ocrM}${dimLine}${note?escHtml(note)+" · ":""}<a href="${escAttr(safeUrl(url))}" target="_blank" rel="noopener">${escHtml(trunc(url,60))}</a></div>`;
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
   if(yt)return `<div class="isle-frame"><iframe class="asset-yt" src="https://www.youtube.com/embed/${yt[1]}" frameborder="0" allow="encrypted-media" allowfullscreen></iframe></div>${srcLine()}`;
-  if(isVideoUrl(url))return `<div class="isle-frame"><video class="asset-vid" src="${escAttr(safeUrl(url))}" controls muted playsinline preload="metadata" onloadedmetadata="try{mdimEl(this)}catch(_){};isleAr(this)"></video></div>${srcLine()}`;
+  if(isVideoUrl(url)){const su=safeUrl(url);
+    return `<div class="isle-frame"><video class="asset-vid" src="${escAttr(vidSrc(su))}" data-osrc="${escAttr(su)}" controls muted playsinline preload="metadata" onloadedmetadata="vidOk(this);isleAr(this)" onerror="vidRetry(this)"></video><div class="asset-verr" hidden>영상을 불러오지 못했어요 — 광고차단(DNS·확장)이 영상 CDN을 막았을 수 있어요<a href="${escAttr(su)}" target="_blank" rel="noopener noreferrer">새 탭에서 재생 ↗</a></div></div>${srcLine()}`;}
   if(isImageUrl(url)){
     const note=(ent&&ent.tags&&ent.tags.fo==="영상")?"영상 소재의 썸네일":"";
     return `<div class="isle-frame"><img class="asset-img" src="${escAttr(imgSrc(url))}" data-osrc="${escAttr(url)}" alt="asset" referrerpolicy="no-referrer" loading="lazy" onload="imgOk(this);isleAr(this)" onerror="imgRetry(this)"><div class="asset-err" hidden>미리보기를 불러오지 못했습니다 <button class="mini" onclick="const w=this.closest('.isle-frame'),i=w.querySelector('img');this.parentNode.hidden=true;i.hidden=false;i.dataset.rt=0;const s=i.dataset.osrc||i.src;i.src=s+(s.includes('?')?'&':'?')+'rt='+Date.now()">다시 시도</button></div></div>${srcLine(note)}`;}
@@ -2508,7 +2538,7 @@ function thumbHTML(e){const url=previewUrlOf(e);if(!url)return "";
   if(yt){const tu=`https://img.youtube.com/vi/${yt[1]}/default.jpg`;return `<span class="tthumb" data-purl="${escAttr(url)}"><img src="${imgSrc(tu)}" data-osrc="${tu}" loading="lazy" referrerpolicy="no-referrer" onload="imgOk(this)" onerror="imgRetry(this)"><span class="vb">▶</span></span>`;}
   if(isImageUrl(url))return `<span class="tthumb" data-purl="${escAttr(url)}"><img src="${imgSrc(url)}" data-osrc="${escAttr(url)}" loading="lazy" referrerpolicy="no-referrer" onload="imgOk(this)" onerror="imgRetry(this)">${vidMark?'<span class="vb">▶</span>':""}</span>`;
   /* 직접 영상(mp4 등): 갤러리처럼 첫 프레임을 보여준다(#t=0.1로 포스터 프레임 강제 — 예전엔 검은 ▶ 플레이스홀더만) */
-  if(isVideoUrl(url))return `<span class="tthumb" data-purl="${escAttr(url)}" title="올려서 미리보기 · 행 클릭 → 재생"><video class="tvid" src="${escAttr(safeUrl(url))}#t=0.1" preload="metadata" muted playsinline></video><span class="vb">▶</span></span>`;
+  if(isVideoUrl(url)){const su=safeUrl(url);return `<span class="tthumb" data-purl="${escAttr(url)}" title="올려서 미리보기 · 행 클릭 → 재생"><video class="tvid" src="${escAttr(vidSrc(su))}#t=0.1" data-osrc="${escAttr(su)}" data-frag="#t=0.1" preload="metadata" muted playsinline onloadedmetadata="vidOk(this)" onerror="vidRetry(this)"></video><span class="vb">▶</span></span>`;}
   if(isAdManagerUrl(url))return `<span class="tthumb ph meta-th" title="Meta 광고관리자에서 보기 — 소재 상세에서 링크가 열립니다">Meta</span>`;
   return "";}
 function assetShortType(t){if(!t)return "";const s=String(t);
@@ -2572,14 +2602,25 @@ function weeklyAggOf(ds,e){
   if(e._isGroup){const gid=e._m_group||e._g_adGroupId;rows=ds.data.filter(r=>r._m_group===gid||r._g_adGroupId===gid);}
   else rows=ds.data.filter(r=>r[nameCol]===e.name);
   const wkMap=new Map();
+  const blank=()=>({c:0,imp:0,clk:0,attr:0,act:0,conv:0,cval:0,vn:0,vd:0,tv:0,fo:0,home:0,inter:0,nu:0,rB:0,rU:0,afI:0});
   for(const r of rows){const d=String(r.date||"").slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;
-    let o=wkMap.get(d);if(!o){o={c:0,imp:0,clk:0,attr:0,act:0,conv:0,cval:0,vn:0,vd:0,tv:0,fo:0,home:0,inter:0,nu:0,rB:0,rU:0,afI:0};wkMap.set(d,o);}
+    let o=wkMap.get(d);if(!o){o=blank();wkMap.set(d,o);}
     o.c+=num(r["비용"])||0;o.imp+=num(r["노출 수"])||0;o.clk+=num(r["클릭 수"])||0;
     o.attr+=num(r["어트리뷰션 수"])||0;o.act+=num(r["활성 유저 수"])||0;
     o.conv+=num(r["_g_conversions"])||0;o.cval+=num(r["_g_convValue"])||0;
     o.vn+=num(r["_vcrNum"])||0;o.vd+=num(r["_vcrDen"])||0;o.tv+=num(r["_g_trueViews"])||0;
     o.fo+=num(r["_g_firstOpen"])||0;o.home+=num(r["_g_home"])||0;o.inter+=num(r["_g_interactions"])||0;
     o.nu+=num(r["신규+재활성 유저 수"])||0;o.rB+=num(r["_q_retD1Base"])||0;o.rU+=num(r["_q_retD1Users"])||0;o.afI+=num(r["_q_afInstalls"])||0;}
+  /* 구글 그룹은 주차 광고비·노출·클릭을 정확 소스(gwstat)로 교체 — 표(gwApplyAuth)와 같은 규칙.
+     소재 데이터가 없는 주(예: 주간 보고서 미업로드 구간)도 정확 소스에 있으면 막대를 그려, 추이가 끊기지 않는다.
+     전환류(단가 선)는 소재 합산 그대로 — 분모>0 가드가 있어 정확-전용 주에선 선이 자연히 비고 막대만 남는다 */
+  if(e._isGroup&&e._g_adGroupId&&typeof gWeekMap==="object"){
+    const wk=gWeekMap[String(e._g_adGroupId)];
+    if(wk&&typeof wk==="object"){const lo=ds.range&&ds.range.first,hi=ds.range&&ds.range.last;
+      for(const w in wk){if(!/^\d{4}-\d{2}-\d{2}$/.test(w))continue;if(lo&&w<lo)continue;if(hi&&w>hi)continue;
+        const a=wk[w];if(!Array.isArray(a)||!(+a[0]>0))continue;
+        let o=wkMap.get(w);if(!o){o=blank();wkMap.set(w,o);}
+        o.c=+a[0]||0;o.imp=+a[1]||0;o.clk=+a[2]||0;o._auth=1;}}}
   const ws=[...wkMap.keys()].sort();
   return{ws,os:ws.map(w=>wkMap.get(w))};}
 /* 주차별 점수 — 그 주 데이터만으로 전체 파이프라인(집계→채점)을 돌린 '그 주의 상대 점수'.
@@ -3226,7 +3267,7 @@ function renderGallery(ds,host){
     const yt=ytIdOf(url);
     let media;
     if(yt)media=`<img class="gal-img" loading="lazy" src="${escAttr(imgSrc('https://img.youtube.com/vi/'+yt+'/hqdefault.jpg'))}" data-yt="${escAttr(yt)}" referrerpolicy="no-referrer" onerror="imgRetry(this)"><span class="gal-play">▶ 호버 재생</span>`;
-    else if(isVideoUrl(url))media=`<video class="gal-vid" src="${escAttr(safeUrl(url))}" preload="metadata" muted loop playsinline></video><span class="gal-play">▶ 호버 재생</span>`;
+    else if(isVideoUrl(url)){const su=safeUrl(url);media=`<video class="gal-vid" src="${escAttr(vidSrc(su))}" data-osrc="${escAttr(su)}" preload="metadata" muted loop playsinline onloadedmetadata="vidOk(this)" onerror="vidRetry(this)"></video><span class="gal-play">▶ 호버 재생</span>`;}
     else if(isImageUrl(url))media=`<img class="gal-img" loading="lazy" src="${escAttr(imgSrc(url))}" data-osrc="${escAttr(url)}" referrerpolicy="no-referrer" onerror="imgRetry(this)">`;
     else if(isAdManagerUrl(url))media=`<span class="gal-ph" title="Meta 광고관리자 링크만 있는 소재">Meta</span>`;
     else media=`<span class="gal-ph">${entTypeEmoji(r)||"🖼️"}</span>`;
@@ -3289,7 +3330,9 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
           ? `<span class="nm-text editing" contenteditable="true" spellcheck="false" data-nm="${escAttr(r.name)}">${escHtml(dn)}</span>`
           : `<span class="nm-text">${escHtml(trunc(dn,60))}</span>`;
         return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}><div class="nm-line">${liveBadge(ds,r)}${lrnBadge(r)}${nmHtml}${mb}${gst}${gwc}</div><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
-      if(c.k==="score")return `<td class="scb"><span class="sc-score">${score}</span><span class="sc-badge">${bdg||""}</span></td>`;
+      if(c.k==="score"){
+        const part=(r._isGroup&&r._gwCover!=null&&r._gwCover<0.7)?`<span class="sc-note" title="소재 커버리지 ${Math.round(r._gwCover*100)}% — 점수는 소재(영상·이미지) 데이터 기준인데 이 그룹은 절반 가까이가 글자 애셋 등 미수집 영역이라 참고용이에요">*</span>`:"";
+        return `<td class="scb"><span class="sc-score">${score}${part}</span><span class="sc-badge">${bdg||""}</span></td>`;}
       const dir=COL_DIR[c.k]||0;
       const t=dir?cellTier(r[c.k],colSorted[c.k],dir):"m";
       return `<td class="num c-${t}${c.sub?" csub":""}${c.grp?" cg-"+c.grp:""}">${fcell(r[c.k],c.f)}</td>`;}).join("")+"</tr>";}).join("");
