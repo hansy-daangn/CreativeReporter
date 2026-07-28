@@ -1153,6 +1153,12 @@ function vidRetry(v){
     if(n===2)set(orig+(orig.includes("?")?"&":"?")+"rt="+Date.now());
     else set(VID_PROXY(orig)+"&rt="+Date.now());
   },1200);}
+/* 추출·공유용 안정 링크 — 광고차단(DNS/확장)이 광고 CDN을 막는 환경에서도 열리는 주소.
+   영상(adsmoloco)=자체 중계(mediaproxy) · 이미지(adsmoloco·googlesyndication)=이미지 프록시(wsrv.nl) · 그 외(유튜브 등)=원본 */
+function stableMediaUrl(u){u=safeUrl(u);if(!u)return "";
+  if(isVideoUrl(u)&&/adsmoloco\.com/i.test(u))return VID_PROXY(u);
+  if(isImageUrl(u)&&/adsmoloco\.com|googlesyndication\.com/i.test(u))return IMG_PROXY(u);
+  return u;}
 /* ── 미리보기 실측 해상도·재생시간 캐시(MDIM) — 이름·리포트에 크기 표기가 없는 매체도 미리보기에서 사이즈를 얻는다.
    이미지=이미 뜨는 썸네일 onload의 naturalWidth · 영상=상세 재생 metadata + 지연·스로틀 백그라운드 metadata.
    기기 localStorage에 저장(서버 무접촉). 추가 네트워크는 최소·백그라운드라 접속 렉 없음, 값은 디코드된 원본에서 읽어 정확. ── */
@@ -1630,20 +1636,16 @@ function mergeNameMap(delta){
   gNameMap.campaign=Object.assign(gNameMap.campaign||{},delta.campaign||{});
   gNameMap.asset=Object.assign(gNameMap.asset||{},delta.asset||{});}
 async function loadNameMap(pw){
-  try{const gm=await sbRpc("cr_kv_get",{pw,key:"gmap"});
-    if(gm&&typeof gm==="object")gNameMap={adgroup:gm.adgroup||{},campaign:gm.campaign||{},asset:gm.asset||{}};}catch(e){}
-  try{const gi=await sbRpc("cr_kv_get",{pw,key:"ginfo"});
-    if(gi&&typeof gi==="object")gInfoMap=gi;}catch(e){}
-  try{const oc=await sbRpc("cr_kv_get",{pw,key:"ocr"});
-    if(oc&&typeof oc==="object")gOcrMap=oc;}catch(e){}
-  try{const yt=await sbRpc("cr_kv_get",{pw,key:"ytt"});
-    if(yt&&typeof yt==="object")for(const id in yt){if(typeof yt[id]==="string"&&yt[id]&&_ytTitles[id]===undefined)_ytTitles[id]=yt[id];}}catch(e){}
-  try{const no=await sbRpc("cr_kv_get",{pw,key:"nameovr"});
-    if(no&&typeof no==="object")NAME_OVR=no;}catch(e){}
-  try{const so=await sbRpc("cr_kv_get",{pw,key:"svcovr"});
-    if(so&&typeof so==="object")SVC_OVR=so;}catch(e){}
-  try{const gw=await sbRpc("cr_kv_get",{pw,key:"gwstat"});
-    if(gw&&typeof gw==="object")gWeekMap=gw;}catch(e){}}
+  /* 7개 키를 순차 왕복(≈7×RTT)하던 것이 로그인 체감 지연의 한 축 — 병렬로 한 번에. 실패는 키별 무시(종전과 동일) */
+  const get=k=>sbRpc("cr_kv_get",{pw,key:k}).catch(()=>null);
+  const [gm,gi,oc,yt,no,so,gw]=await Promise.all([get("gmap"),get("ginfo"),get("ocr"),get("ytt"),get("nameovr"),get("svcovr"),get("gwstat")]);
+  if(gm&&typeof gm==="object")gNameMap={adgroup:gm.adgroup||{},campaign:gm.campaign||{},asset:gm.asset||{}};
+  if(gi&&typeof gi==="object")gInfoMap=gi;
+  if(oc&&typeof oc==="object")gOcrMap=oc;
+  if(yt&&typeof yt==="object")for(const id in yt){if(typeof yt[id]==="string"&&yt[id]&&_ytTitles[id]===undefined)_ytTitles[id]=yt[id];}
+  if(no&&typeof no==="object")NAME_OVR=no;
+  if(so&&typeof so==="object")SVC_OVR=so;
+  if(gw&&typeof gw==="object")gWeekMap=gw;}
 /* 모든 유튜브 소재 제목을 로드 직후 백그라운드 일괄 조회(동시 4) — 클릭 없이 자동 표시, kv(ytt)로 기기 간 공유 */
 let _yttRan=false;
 async function hydrateAllYtTitles(){
@@ -3754,8 +3756,7 @@ function setStandalone(on,msg){standaloneMode=on;
 async function cloudRestore(){
   if(!cloudPw){const v=prompt("저장소 비밀번호");if(v&&v.trim())await attemptLogin(v.trim());updateLandingVisibility();return;}
   const _cl=$("#cloudLine");if(_cl)_cl.textContent="☁️ 불러오는 중…";
-  try{const rows=await sbRpc("cr_load",{pw:cloudPw});
-    await loadNameMap(cloudPw);
+  try{const [rows]=await Promise.all([sbRpc("cr_load",{pw:cloudPw}),loadNameMap(cloudPw)]);
     if(rows.length){loadCloudRows(rows);updateLandingVisibility();toast(`☁️ 소재 ${new Set(rows.map(r=>r.ad_name)).size.toLocaleString()}개 · 주간 기록 ${rows.length.toLocaleString()}건 불러왔어요`);}
     else toast("☁️ 아직 저장된 데이터가 없어요");
   }catch(e){toast("☁️ 못 불러왔어요 · "+e.message);}
@@ -3859,10 +3860,10 @@ function greetingFor(name){
   const s=GREETINGS.find(g=>t>=g.lo&&t<g.hi)||GREETINGS[0];
   return s.lines[Math.floor(Math.random()*s.lines.length)].replace(/\{n\}/g,name);}
 async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
-  try{const rows=await sbRpc("cr_load",{pw});
+  try{/* 무거운 본 데이터(cr_load)와 kv 묶음(loadNameMap)을 동시에 — 렌더는 둘 다 온 뒤(이름 매핑·gwstat이 렌더에 필요) */
+    const [rows]=await Promise.all([sbRpc("cr_load",{pw}),loadNameMap(pw)]);
     cloudPw=pw;sessionStorage.setItem("crpw",pw);
     /* 접속·로그인 시엔 저장소 로드 토스트("저장소를 열었어요 …")를 띄우지 않고 환영 인사만 보여준다(아래) */
-    await loadNameMap(pw);
     if(rows.length)loadCloudRows(rows);
     else if(!silent)toast("☁️ 연결됐어요 · 아직 데이터가 없어요. 주간 CSV를 올리면 여기 쌓여요");
     /* 탭 세션당 1회 환영 인사 — 권한별 문구. 자동 재접속 시엔 sessionStorage 값 사용 */
@@ -4768,7 +4769,10 @@ function expCols(L,list){
   return cols;}
 function expRow(e,cols,withCreator,nRank){
   const nm=String(displayNameOf(e)).replace(/\|/g,"/").replace(/\s+/g," ").trim();
-  const cells=[trunc(nm,44),svcOf(e)||"기타"];
+  /* 소재 이름에 미리보기 링크(안정 주소) — 노션·AI 등 어디에 붙여도 광고차단에 안 막히고 열린다 */
+  const pu=stableMediaUrl(previewUrlOf(e));
+  const nmCell=pu?`[${trunc(nm,44).replace(/([\[\]])/g,"\\$1")}](${pu})`:trunc(nm,44);
+  const cells=[nmCell,svcOf(e)||"기타"];
   if(withCreator)cells.push(rosterCreatorsOf(e).join(",")||"기타");
   for(const c of cols)cells.push(_fmtCell(e[c.k],c.f));
   cells.push(e.score!=null?String(Math.round(e.score)):"–");
@@ -4882,6 +4886,7 @@ function buildExportMd(creator,chans,period,custArg,opts){
   if(minS!=null)head+=`- 최소 점수 필터: ${minS}점 이상만 표에 표시(각 섹션 요약 통계는 전체 기준, 제외 수 명시)\n`;
   head+=`- 점수 = 같은 **매체·기간 비교군** 내 상대 위치(0~100, 높을수록 우수). 등급: 매우좋음>좋음>보통>나쁨>매우나쁨. 순위 #r/N = 그 매체·기간에서 채점된 N개 중 r등.\n`;
   head+=`- ⚠️ 각 행은 **개별 소재**의 값입니다. 행 간 수치를 합산·혼용하지 마세요. 매체가 다르면 점수를 직접 비교하지 마세요(비교군이 다름).\n`;
+  head+=`- 소재 이름에는 미리보기 링크가 걸려 있어요 — 광고차단(DNS·확장)에 안 막히는 안정 주소(영상=중계, 이미지=프록시)라 어디서 열어도 재생·표시됩니다.\n`;
   if(cmpMode!=="none")head+=`- B 섹션의 "중앙값/백분위" 행은 비교군 **집계 통계**이며 개별 소재가 아닙니다.\n`;
   return head+"\n"+(chSecs.length?chSecs.join("\n---\n\n"):"_선택한 매체·기간에 데이터가 없습니다._\n");}
 function downloadText(text,filename){
@@ -5113,6 +5118,9 @@ async function attemptLogin(pw){
   if(!info||!info.found){toast("비밀번호가 맞지 않아요");return "wrong";}
   if(info.status==="신청함"){toast("아직 관리자 승인 대기 중이에요");return "pending";}
   if(info.status==="거절됨"){toast("가입이 거절된 계정이에요 · 관리자에게 문의해 주세요");return "rejected";}
+  /* 비밀번호는 이 시점에 이미 확인됨 — 이후의 대기는 데이터 로드. 즉시 알려 체감 지연을 줄인다
+     (성공 시 환영 인사가, 실패 시 오류 토스트가 이 문구를 자연히 대체) */
+  toast("비밀번호 확인 ✓ — 로그인 성공, 최신 데이터를 불러오고 있어요…",20000);
   /* 승인됨 → 권한·이름 확정 (0715 뷰어는 이름 없음) */
   const viewer=!!info.viewer, name=viewer?"":(info.name||""), role=(info.role||"viewer");
   const editor=(role==="editor"||role==="admin"); /* 관리자는 에디터 권한 포함 */
