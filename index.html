@@ -4357,7 +4357,7 @@ function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(
     /* 규격: (1) 매체 확정 — 몰로코/구글 리포트 자동 감지, 파일명 meta_/moloco_/google_, 드롭존
              (2) 주간 데이터  (3) 유효 행 존재. 규격 파일만 누적·저장, '기타' 매체는 없음 */
     const reasonOf=(p)=>!chOf(p)?"매체 미상 (파일명 규칙: meta_/moloco_/google_)"
-      :(p.kind!=="weekly"?`${KIND_LABEL[p.kind]||"기간 미상"} 형식 (주간 리포트만 누적)${p.forceCh==="Google"&&(p.kind==="range"||p.kind==="monthly")?" — 보고서 편집기에서 '주' 열(세그먼트)을 추가해 내보내면 주간 누적돼요":""}`
+      :(p.kind!=="weekly"?`${KIND_LABEL[p.kind]||"기간 미상"} 형식 (주간 리포트만 누적)${p.forceCh==="Google"&&(p.kind==="range"||p.kind==="monthly")?" — 보고서 편집기에서 세그먼트 → '주 단위'를 추가해 내보내면 주간 누적돼요":""}`
       :"유효 데이터 없음 (전부 ₩1,500 미만)");
     const isConf=(p)=>!!chOf(p)&&p.kind==="weekly"&&p.data.length>0;
     const conf=parsed.filter(isConf),non=parsed.filter(p=>!isConf(p));
