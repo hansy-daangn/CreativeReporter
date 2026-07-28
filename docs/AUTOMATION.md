@@ -3,16 +3,24 @@
 수퍼셋/구글애즈에서 CSV를 손으로 받아 드롭하는 흐름을, 매주 월요일 자동으로 돌리기 위한 설계.
 Claude Code(CCR)의 예약 Routine이 데이터를 읽어 Supabase에 직접 쓰는 구조다 — 사이트 코드 변경 없음.
 
-## 왜 이 구조인가
+## 네트워크 사실관계 (2026-07-28 검증)
 
-- `superset.kr.wekarrot.net`은 사내망 전용이라 클라우드 세션·Routine에서 **직접 접근 불가**(검증: 프록시 502). Superset MCP도 공개 레지스트리에 없음.
-- 수퍼셋 차트의 원천은 BigQuery → **공식 "Google Cloud BigQuery" MCP 커넥터**(`execute_sql` 지원)로 같은 데이터를 직접 쿼리하는 것이 정답.
-- 저장은 이 저장소가 이미 쓰는 Supabase MCP로 서버 규칙과 동일하게 수행.
+- `superset.kr.wekarrot.net` · `bigquery-mcp.kr.wekarrot.net` · `superset-mcp.kr.wekarrot.net` 전부 **공개 DNS에 없음(NXDOMAIN) = 사내망 전용**. 사내 MCP 번들(karrotbigquery/karrotsuperset.mcpb)은 이 주소로 붙는 원격 프록시라, **클라우드 세션·Routine·claude.ai 커스텀 커넥터 어디서도 접근 불가**. 오직 사내망(사무실/VPN)의 데스크톱에서만 동작한다.
+- 저장 쪽(Supabase)은 공개라 어디서든 가능 — 병목은 데이터 읽기뿐.
 
-## 활성화 조건 (1회, 사람 작업)
+## 실행 경로 두 가지
 
-1. claude.ai → 설정 → 커넥터 → **Google Cloud BigQuery** 연결 (당근 구글 계정 — 수퍼셋 차트가 읽는 BQ 데이터셋 조회 권한 필요).
-2. 연결 후 Claude에게 알리면: 세 차트의 원천 테이블·컬럼을 확인(수퍼셋 각 차트 → View query로 SQL 확보가 가장 빠름)하고, 아래 파이프라인을 검증한 뒤 주간 Routine을 생성한다.
+**경로 A — 데스크톱 예약 작업 (지금 바로 가능)**
+1. 회사 노트북 Claude 데스크톱 앱 → 설정 → 확장(Extensions) → `karrotbigquery.mcpb`(필요시 `karrotsuperset.mcpb`) 열어 설치 → 첫 사용 때 Okta 로그인.
+2. Supabase 커넥터도 같은 계정에 연결돼 있으면, 데스크톱의 **예약 작업**(매주 월요일)에 아래 '주간 동기화 프롬프트'를 등록.
+3. 노트북이 사내망에 있는 월요일 아침에 실행됨 — 실패 시 다음 접속 때 수동 1회 실행으로 보충.
+
+**경로 B — 클라우드 Routine (완전 무인, 권한 협의 필요)**
+데이터가치화팀에 요청해 마케팅 데이터셋에 대한 **직접 BigQuery 접근**(개인 IAM 또는 서비스 계정)을 받으면, BQ API(googleapis.com)는 공개망이라 공식 "Google Cloud BigQuery" 커넥터 + 매주 월요일 CCR Routine으로 사람 개입 0의 파이프라인이 된다. 사내 MCP를 못 쓰는 환경(클라우드 자동화)이 사유.
+
+## 주간 동기화 프롬프트 (경로 A 예약 작업용)
+
+> CreativeReporter 주간 동기화. ① 직전 완결 주(지난 월요일~일요일)의 주 시작일을 계산해라. ② BigQuery MCP로 수퍼셋 대시보드 2075의 세 차트 원천을 그 주만 조회해라: 몰로코 크리에이티브별 성과+소재 미리보기, 메타 광고소재별 성과 V2, 구글 광고그룹별 성과 V2 (각 차트의 View query SQL 참고). ③ Supabase(newoydegfbnnqujgiips)에 기록: 몰로코/메타 행은 sr_weekly_creative_stats에 channel/week_start/ad_name/payload로 INSERT … ON CONFLICT (channel,week_start,ad_name) DO NOTHING, 비용 1500 미만 제외. 구글 광고그룹은 sr_kv 'gwstat'에 {광고그룹ID:{주:[비용,노출,클릭,어트리뷰션,활성,신규재활성]}}로 주 단위 병합(adset_name→ID는 sr_kv 'gmap'의 adgroup 역변환). ④ 삽입 전후 주간 합계(비용·노출)를 소스와 대조하고 결과(신규 N행·스킵 M행·gwstat K그룹 또는 실패 사유)를 보고해라. 진행 중인 주는 절대 넣지 마라.
 
 ## 파이프라인 (Routine이 매주 월요일 수행)
 
