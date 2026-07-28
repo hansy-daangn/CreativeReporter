@@ -22,7 +22,7 @@ Claude Code(CCR)의 예약 Routine이 데이터를 읽어 Supabase에 직접 쓰
 
 상세 절차·알림 포맷·드라이런 방법은 **[docs/WEEKLY_SYNC_TASK.md](WEEKLY_SYNC_TASK.md)** (예약 작업이 매주 읽는 런북). 예약 작업 프롬프트는 런북 raw URL을 읽고 수행하라는 한 줄이라, 절차 개선은 저장소 커밋만으로 반영된다.
 
-**감시 장치(클라우드, 설정 완료)**: 매주 월요일 20:00 KST에 CCR Routine이 Supabase를 검사해 직전 완결 주 데이터(몰로코·메타 행, gwstat 주)가 비어 있으면 Slack DM `[CR] 이번 주 최신화가 아직 안 됐어요 ⏰`를 보낸다. 정상일 땐 침묵. 데스크톱이 꺼져 작업이 아예 안 돈 경우까지 잡는 안전망.
+**감시 장치(클라우드, 설정 완료)**: 매주 월요일 20:00 KST에 CCR Routine이 Supabase를 검사해 직전 완결 주 데이터(몰로코·메타 행, gwstat 주)가 비어 있으면 `[CR] 이번 주 최신화가 아직 안 됐어요 ⏰` 푸시 알림을 보낸다(검사는 뷰어 게이트 RPC `cr_sync_status`를 curl로 — Routine 세션은 MCP 커넥터 미보유). 정상일 땐 침묵. 데스크톱이 꺼져 작업이 아예 안 돈 경우까지 잡는 안전망.
 
 ## 파이프라인 (Routine이 매주 월요일 수행)
 
