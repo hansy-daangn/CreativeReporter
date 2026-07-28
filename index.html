@@ -2645,11 +2645,13 @@ function weeklyAggOf(ds,e){
     o.nu+=num(r["신규+재활성 유저 수"])||0;o.rB+=num(r["_q_retD1Base"])||0;o.rU+=num(r["_q_retD1Users"])||0;o.afI+=num(r["_q_afInstalls"])||0;}
   /* 구글 그룹은 주차 광고비·노출·클릭을 정확 소스(gwstat)로 교체 — 표(gwApplyAuth)와 같은 규칙.
      소재 데이터가 없는 주(예: 주간 보고서 미업로드 구간)도 정확 소스에 있으면 막대를 그려, 추이가 끊기지 않는다.
+     기간 창의 끝(hi)은 소재 날짜에 묶여 있어 일부러 적용하지 않는다 — 소재 업로드가 뒤처져도(예: '주' 열 없는
+     내보내기만 이어진 구간) 그룹 추이는 정확 소스의 최신 주까지 이어 보여준다. 시작(lo)은 선택 기간 존중.
      전환류(단가 선)는 소재 합산 그대로 — 분모>0 가드가 있어 정확-전용 주에선 선이 자연히 비고 막대만 남는다 */
   if(e._isGroup&&e._g_adGroupId&&typeof gWeekMap==="object"){
     const wk=gWeekMap[String(e._g_adGroupId)];
-    if(wk&&typeof wk==="object"){const lo=ds.range&&ds.range.first,hi=ds.range&&ds.range.last;
-      for(const w in wk){if(!/^\d{4}-\d{2}-\d{2}$/.test(w))continue;if(lo&&w<lo)continue;if(hi&&w>hi)continue;
+    if(wk&&typeof wk==="object"){const lo=ds.range&&ds.range.first;
+      for(const w in wk){if(!/^\d{4}-\d{2}-\d{2}$/.test(w))continue;if(lo&&w<lo)continue;
         const a=wk[w];if(!Array.isArray(a)||!(+a[0]>0))continue;
         let o=wkMap.get(w);if(!o){o=blank();wkMap.set(w,o);}
         o.c=+a[0]||0;o.imp=+a[1]||0;o.clk=+a[2]||0;o._auth=1;}}}
