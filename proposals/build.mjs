@@ -13,10 +13,14 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repo = join(here, '..');
 
 const CONFIGS = [
-  { id:'a', out:'a-editorial.html', theme:'theme-editorial.css', cls:'theme-readable',
-    title:'소재분석 · 개선안 A 가독형(Readable)', label:'A · 가독형' },
-  { id:'b', out:'b-console.html', theme:'theme-console.css', cls:'theme-spacious',
-    title:'소재분석 · 개선안 B 여백형(Spacious)', label:'B · 여백형' },
+  { id:'karrot',    out:'t-karrot.html',    theme:null, attr:'karrot',
+    title:'소재분석 · 테마 당근(Karrot)',    label:'당근' },
+  { id:'precision', out:'t-precision.html', theme:null, attr:'precision',
+    title:'소재분석 · 테마 정밀(Precision)', label:'정밀' },
+  { id:'calm',      out:'t-calm.html',      theme:null, attr:'calm',
+    title:'소재분석 · 테마 차분(Calm)',      label:'차분' },
+  { id:'night',     out:'t-night.html',     theme:null, attr:'night',
+    title:'소재분석 · 테마 야간(Night)',     label:'야간' },
 ];
 
 const base = readFileSync(join(repo, 'index.html'), 'utf8');
@@ -66,8 +70,8 @@ const chromeCSS = `<style id="proposal-chrome">
 
 function barHTML(cur){
   const opt=(c)=>`<a href="${c.out}" class="pb-opt${c.id===cur.id?' on':''}"${c.id===cur.id?' aria-current="page"':''}>${c.label}</a>`;
-  return `<div id="proposalBar" role="navigation" aria-label="UI 개선 시안 전환">
-  <span class="pb-tag"><span class="pb-dot"></span><b>UI 시안</b> · 샘플 데이터</span>
+  return `<div id="proposalBar" role="navigation" aria-label="테마 전환">
+  <span class="pb-tag"><span class="pb-dot"></span><b>테마 미리보기</b> · 샘플 데이터</span>
   ${CONFIGS.map(opt).join('\n  ')}
   <span class="pb-sep"></span>
   <a href="../index.html" class="pb-home" title="비밀번호로 접속하는 실제 도구">실제 도구 →</a>
@@ -75,17 +79,18 @@ function barHTML(cur){
 }
 
 for (const cfg of CONFIGS) {
-  const theme = readFileSync(join(here, cfg.theme), 'utf8');
-  const themeTag = `<style id="proposal-theme">\n${theme}\n</style>`;
+  // 테마는 본체(index.html)의 단일 소스를 그대로 쓴다 — 시안 페이지는 data-theme만 지정
+  // 저장소 키를 건드리지 않는다 — 시안을 열었다고 실제 도구의 테마 설정이 바뀌면 안 된다
+  const themeTag = `<script>window.__CR_THEME_LOCK='${cfg.attr}'<\/script>`;
   let html = base;
-  // mark <html> with theme class for optional scoping
-  html = html.replace('<html lang="ko">', `<html lang="ko" class="${cfg.cls} proposal-demo">`);
+  html = html.replace('<html lang="ko">', `<html lang="ko" data-theme="${cfg.attr}" class="proposal-demo">`);
   // fix relative asset paths (page now lives one dir deeper)
   html = html.replace(/href="favicon\.svg"/g, 'href="../favicon.svg"');
   // title
   html = html.replace(/<title>[^<]*<\/title>/, `<title>${cfg.title}</title>`);
   // inject theme + chrome just before </head>
-  html = html.replace('</head>', `${themeTag}\n${chromeCSS}\n</head>`);
+  html = html.replace('<head>', `<head>\n${themeTag}`);
+  html = html.replace('</head>', `${chromeCSS}\n</head>`);
   // inject switcher + bootstrap just before </body>
   html = html.replace('</body>', `${barHTML(cfg)}\n${bootstrap}\n</body>`);
   writeFileSync(join(repo, 'proposals', cfg.out), html);

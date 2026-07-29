@@ -3,18 +3,21 @@
 퍼포먼스 소재 성과분석 대시보드입니다.<br/>
 https://hansy-daangn.github.io/CreativeReporter/
 
-## 🎨 UI 추가 개선안 (2가지)
+## 🎨 화면 테마 4종
 
-현재 본 사이트를 바탕으로 UI를 **한 걸음 더 개선한 2가지 방향**입니다. 검토 후 마음에 드는 요소만 본 사이트에 반영하기 위한 후보입니다. 색·사이드바·구조는 그대로, 과한 효과(카드·그림자·그라데이션)는 없습니다.
-각 링크는 **비밀번호 없이 합성 샘플 데이터로 바로 미리보기**되며, 화면 하단 바에서 **A ↔ B를 즉시 전환**해 비교할 수 있습니다.
+사이드바 하단에서 **테마를 고르면 화면이 바뀝니다**(기기 단위 설정 · 데이터·점수에는 영향 없음).
+아래 링크는 **비밀번호 없이 합성 샘플 데이터로** 각 테마를 바로 볼 수 있는 미리보기이고, 화면 하단 바에서 4종을 즉시 전환해 비교할 수 있습니다.
 
-| | 개선안 A · 가독형 (Readable) | 개선안 B · 프리미엄 (Refined) |
-|---|---|---|
-| | [![개선안 A](proposals/preview-a.png)](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/header-ui-restructure-y7wnwx/proposals/a-editorial.html) | [![개선안 B](proposals/preview-b.png)](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/header-ui-restructure-y7wnwx/proposals/b-console.html) |
-| 성격 | 넓은 표에서 **스캔·행 추적**이 쉽게 — 은은한 줄무늬, 이름/점수와 지표 블록 사이 구분선, 정렬 열 강조. | **완성도** 지향 — 여백 리듬을 조금 더, 브랜드 오렌지를 정렬·활성 지점에만 정제, 점수 칩·타일에 미세한 깊이. |
-| 지금 바로 열기 | **[▶ 개선안 A 열기](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/header-ui-restructure-y7wnwx/proposals/a-editorial.html)** | **[▶ 개선안 B 열기](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/header-ui-restructure-y7wnwx/proposals/b-console.html)** |
+| 테마 | 성격 | 언제 쓰나 | 미리보기 |
+|---|---|---|---|
+| **당근** (기본) | SEED 계열 중성 회색 + 브랜드 오렌지를 활성 지점에만 | 평소 · 당근 제품군과 같은 결 | [▶ 열기](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/design-themes/proposals/t-karrot.html) |
+| **정밀** | 저채도 중성 회색 · 행 높이를 줄여 한 화면에 더 많은 행 · 각진 칩 | 표를 오래 들여다보며 분석할 때 | [▶ 열기](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/design-themes/proposals/t-precision.html) |
+| **차분** | 따뜻한 종이 · 넉넉한 여백 · 알약 칩 · 큰 소재 이름 | 훑어보기 · 공유 · 발표 | [▶ 열기](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/design-themes/proposals/t-calm.html) |
+| **야간** | 어두운 지면에서 숫자가 떠오름 | 장시간 분석 · 어두운 환경 | [▶ 열기](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/design-themes/proposals/t-night.html) |
 
-> **위 '지금 바로 열기'** 는 [raw.githack.com](https://raw.githack.com)이 이 브랜치의 파일을 그대로 렌더링해 주므로 **병합 없이 클릭 즉시** 열립니다(저장소가 공개라 가능). 병합 후에는 GitHub Pages 정식 주소로도 열립니다 → [개선안 A](https://hansy-daangn.github.io/CreativeReporter/proposals/a-editorial.html) · [개선안 B](https://hansy-daangn.github.io/CreativeReporter/proposals/b-console.html).
+> 위 링크는 [raw.githack.com](https://raw.githack.com)이 브랜치 파일을 그대로 렌더링해 **병합 없이 클릭 즉시** 열립니다. 병합 후에는 GitHub Pages 주소로도 열립니다 → [당근](https://hansy-daangn.github.io/CreativeReporter/proposals/t-karrot.html) · [정밀](https://hansy-daangn.github.io/CreativeReporter/proposals/t-precision.html) · [차분](https://hansy-daangn.github.io/CreativeReporter/proposals/t-calm.html) · [야간](https://hansy-daangn.github.io/CreativeReporter/proposals/t-night.html)
+
+테마는 **색 역할값과 밀도·모서리만** 바꾸고 구조·정보 위계·성과 5단계의 의미는 공유합니다. 색·글자·간격의 규칙은 **[docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)** 에 정리돼 있습니다(현황 실측 근거 포함 — 하드코딩 색 112종·글자 크기 22종·여백 128종이 문제였습니다).
 
 **본 사이트(`index.html`)에 이미 반영된 개선**
 - 표 툴바 등급 범례 제거 · **제목행을 툴바 바로 아래에 고정**(뷰포트 sticky, 스크롤바 1개, 이음새 없음) · 클릭 정렬·`+` 세부지표.
@@ -23,7 +26,7 @@ https://hansy-daangn.github.io/CreativeReporter/
 - 재발 방지: `scroll-padding-top`으로 모든 이동이 고정 헤더 아래 안착 · 새로고침 시 최상단 시작 · 제목행 sticky를 메인 표에만 한정.
 - 접근성: 정렬 상태 강조, 키보드(Enter/Space)·`aria-sort`·`focus-visible`.
 
-*시안 페이지는 `proposals/`의 테마 CSS(`theme-*.css`) + 데모 부트스트랩을 `node proposals/build.mjs`로 본 앱에 주입해 생성합니다.*
+*미리보기 페이지는 `node proposals/build.mjs`로 생성합니다 — 본 앱(`index.html`)에 데모 부트스트랩만 주입하고 `data-theme`을 지정하므로, 테마의 단일 소스는 언제나 `index.html`입니다.*
 
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — 사이트 구조와 매커니즘 상세 설명
 - **[docs/REBUILD_PROMPT.md](docs/REBUILD_PROMPT.md)** — 무에서 동일 시스템을 재구축하는 완전제작 프롬프트
