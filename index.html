@@ -176,6 +176,27 @@
   .quad-tier-legend .qtl-dot{display:inline-block;width:11px;height:11px;border-radius:50%}
   .quad-tier-legend .qtl-lab{color:var(--ink);font-weight:650}
   .quad-tier-legend .qtl-sep{color:var(--faint);margin:0 2px}
+  /* 신규 소재 레이더 — 주차별 추세 우측 패널(좁으면 아래로 스택) */
+  .trend-row{display:flex;gap:20px;align-items:flex-start}
+  .trend-row>#trendWrap{flex:1 1 420px;min-width:0}
+  .nrad{flex:0 0 300px;max-width:300px;min-width:0}
+  @media(max-width:1040px){.trend-row{flex-direction:column}.nrad{flex:1 1 auto;max-width:none;width:100%}}
+  .nrad-h{font-size:12px;font-weight:700;color:var(--muted);margin:0 0 9px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+  .nrad-h .n{font-size:11px;color:var(--faint);font-weight:500}
+  .nrad-list{display:flex;flex-direction:column;gap:5px}
+  .nrad-it{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px;background:var(--surface-2);cursor:pointer;transition:background .12s}
+  .nrad-it:hover{background:var(--surface-3)}
+  .nrad-it:focus-visible{outline:2px solid var(--karrot);outline-offset:1px}
+  .nrad-sc{flex:0 0 auto;min-width:34px;text-align:center;font-size:13px;font-weight:800;padding:3px 6px;border-radius:7px;font-variant-numeric:tabular-nums}
+  .nrad-sc.t-g2{background:var(--g2-f);color:var(--g2)} .nrad-sc.t-g1{background:var(--g1-f);color:var(--g1)}
+  .nrad-sc.t-m{background:var(--mid-f);color:var(--mid)} .nrad-sc.t-w1{background:var(--w1-f);color:var(--w1)}
+  .nrad-sc.t-w2{background:var(--w2-f);color:var(--w2)} .nrad-sc.t-na{background:var(--surface-3);color:var(--faint);font-size:10.5px;font-weight:700;letter-spacing:-.02em}
+  .nrad-b{min-width:0;flex:1 1 auto}
+  .nrad-nm{font-size:11.5px;font-weight:650;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px}
+  .nrad-nm .lvb{width:6px;height:6px;margin-right:0}
+  .nrad-sub{font-size:10.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .nrad-empty{font-size:11.5px;color:var(--faint);background:var(--surface-2);border-radius:9px;padding:13px 11px;line-height:1.5}
+  .nrad-foot{font-size:10.5px;color:var(--faint);margin-top:8px;line-height:1.45}
   .qhint{font-size:11px;color:var(--faint);margin:0 0 6px}
   .auto-insight{display:flex;flex-wrap:wrap;align-items:center;gap:7px 14px;margin:0 0 16px;padding:10px 14px;background:var(--surface-2);border:1px solid var(--surface-3);border-radius:10px;font-size:12px;line-height:1.5}
   .auto-insight .ai-tag{font-size:10px;font-weight:800;letter-spacing:.4px;color:#fff;background:var(--karrot);padding:3px 8px;border-radius:6px;white-space:nowrap}
@@ -1055,7 +1076,10 @@
         </div>
         <div class="quad-tier-legend" id="qTierLeg"></div>
         <div style="margin-top:22px">
-          <div id="trendWrap"><div class="sub-h" style="margin-top:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">주차별 추세 <span class="dtog" id="tmetTog"></span></div><div style="position:relative"><svg class="chart" id="trend"></svg></div><div class="leg" id="trendLeg"></div></div>
+          <div class="trend-row">
+            <div id="trendWrap"><div class="sub-h" style="margin-top:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">주차별 추세 <span class="dtog" id="tmetTog"></span></div><div style="position:relative"><svg class="chart" id="trend"></svg></div><div class="leg" id="trendLeg"></div></div>
+            <aside class="nrad" id="newRadar" hidden></aside>
+          </div>
         </div>
       </section>
 
@@ -2350,7 +2374,149 @@ function renderTrend(ds){const svg=$("#trend"),L=ds.L,S=ds.S;
   if(showEff){let st=false,ep="";eff.forEach((v,i)=>{if(v==null)return;ep+=(st?" L":"M")+` ${xat(i)} ${yE(v)}`;st=true;});
     if(st){s+=`<path d="${ep}" fill="none" stroke="var(--c2)" stroke-width="2"/>`;eff.forEach((v,i)=>{if(v==null)return;s+=`<circle class="tp" data-i="${i}" cx="${xat(i)}" cy="${yE(v)}" r="${Math.max(2.4,pr-0.4)}" fill="#fff" stroke="var(--c2)" stroke-width="2"/>`;});}}
   svg.innerHTML=s;$("#trendLeg").innerHTML=`<span><i style="background:var(--karrot)"></i>${pm.lab}</span>${showEff?`<span><i style="background:var(--c2)"></i>${effLab} (낮을수록 좋음)</span>`:""}`;
-  svg.querySelectorAll(".tp").forEach(c=>{c.addEventListener("mousemove",e=>{const i=+c.dataset.i,w=wk[i];showTip(`<b>${String(w.week).slice(5).replace("-","/")} 주</b><br><span class="t-k">${pm.lab}</span> ${axV(w[pm.k]||0)}${showEff?`<br><span class="t-k">${effLab}</span> ${eff[i]!=null?fmtWon(eff[i]):"–"}`:""}`,e.clientX,e.clientY);});c.addEventListener("mouseleave",hideTip);});}
+  svg.querySelectorAll(".tp").forEach(c=>{c.addEventListener("mousemove",e=>{const i=+c.dataset.i,w=wk[i];showTip(`<b>${String(w.week).slice(5).replace("-","/")} 주</b><br><span class="t-k">${pm.lab}</span> ${axV(w[pm.k]||0)}${showEff?`<br><span class="t-k">${effLab}</span> ${eff[i]!=null?fmtWon(eff[i]):"–"}`:""}`,e.clientX,e.clientY);});c.addEventListener("mouseleave",hideTip);});
+  try{renderNewRadar(ds);}catch(err){logErr("newRadar",err);const _nr=$("#newRadar");if(_nr){_nr.hidden=true;}} /* 레이더 실패가 추세 차트를 막지 않게 */}
+
+/* ══ 신규 소재 레이더 — '같은 출발선(same-stage)' 출발 점수 ═══════════════════════════
+   왜 기존 점수로는 신규를 못 보나: ①광고비 하위 15% 적격 게이트에 걸려 대부분 '–' ②증거량 축소로
+   50점 근처에 뭉쳐 좋고 나쁨이 안 갈림 ③규모(누적 볼륨) 축이 신규를 구조적으로 깎음 ④1주짜리 신규를
+   52주 누적 성숙 소재와 비교. 넷 다 "신규는 아직 작다"는 당연한 사실에서 오는 편향이라,
+   **같은 나이끼리** 비교하면 사라진다.
+   출발 점수 = 이 소재의 '첫 K주' 성과를 다른 소재들의 '첫 K주' 분포에서 매긴 백분위(0~100).
+   · 규모 축 없음 — 신규가 작은 건 흠이 아니다(효율만 본다)
+   · 축소 완화(0.5+0.5·w) — 비교군도 같은 K주 표본이라 소표본 비대칭이 없다(기존은 성숙 소재와 겨뤄 강한 축소가 필수였음)
+   · 동적 가중(w에 비례) — 노출 기반 지표(CTR·CPM)는 신규 구간에도 표본이 충분해 먼저 말하고,
+     전환 단가류는 증거가 쌓이는 만큼만 반영. 지표별 표본 성숙 속도 차이를 점수에 반영하는 장치.
+     **새 지표를 끌어오지 않는다** — 매체별로 이미 검증된 스펙(specsFor)만 쓰고 가중만 조절한다.
+     하한 0.35 덕에 1순위 지표는 증거가 0이어도 주도권을 잃지 않는다(예: AEO 신규단가 .64×.35=.224 > CTR .12×1=.12).
+     이 코드베이스는 'CTR↔eCPA 비상관' 같은 걸 실측해 둔 곳이라, 조기 대리지표로 순위를 뒤집는 설계는 위험하다.
+   · 추세(궤적)는 점수에 넣지 않는다 — 3주 이하 구간의 초기 기울기는 이후 성과와 사실상 무상관이라
+     섞으면 정확도가 오히려 떨어진다(수준만 쓸 때 대비 하락). 추세는 상세의 주차별 추이가 담당.
+   기존 점수와 역할이 다르므로 라벨·툴팁에서 '출발 점수'로 분리 표기한다. */
+const NR_WIN=3;            /* 첫 집행이 최근 3주 이내면 '신규' */
+const NR_MIN_COST=30000;   /* 점수 산출 최소 광고비 — 미만은 '관찰중'(표기만) */
+const NR_MIN_POOL=8;       /* 같은 출발선 비교군 최소 표본 */
+const NR_MAX_SHOW=6;       /* 패널에 띄우는 최대 개수 */
+function nrAddDays(d,n){const p=String(d).split("-").map(Number);const t=new Date(Date.UTC(p[0],p[1]-1,p[2]+n));
+  const z=x=>String(x).padStart(2,"0");return `${t.getUTCFullYear()}-${z(t.getUTCMonth()+1)}-${z(t.getUTCDate())}`;}
+function nrRowsOf(ds){return (dsMode==="channeled"&&ds.media)?ds.dataAll.filter(r=>r._ch===ds.media):ds.dataAll;}
+function nrNameOf(r,nameCol){let nm=r[nameCol];return(nm==null||nm===""||nm==="nan")?"(미지정)":nm;}
+/* 소재별 집행 주 목록 — 반드시 '전체 이력(dataAll)' 기준.
+   기간 필터된 ds.data로 계산하면 '최근 1달' 스코프에서 오래된 소재까지 전부 신규로 오인된다 */
+function nrHistory(ds){
+  const key=(ds.media||"")+"|"+(ds.dataAll?ds.dataAll.length:0);
+  if(ds._nrHist&&ds._nrHistKey===key)return ds._nrHist;
+  const nameCol=ds.L.nameCol,m=new Map();
+  for(const r of nrRowsOf(ds)){const c=num(r["비용"]);if(!(c>0))continue;
+    const d=String(r.date||"").slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;
+    const nm=nrNameOf(r,nameCol);let s=m.get(nm);if(!s){s=new Set();m.set(nm,s);}s.add(d);}
+  const out=new Map();for(const[nm,s]of m)out.set(nm,[...s].sort());
+  ds._nrHist=out;ds._nrHistKey=key;ds._nrPool={}; /* 이력이 바뀌면 파생 풀도 함께 폐기(세션 누적 방지) */
+  return out;}
+/* 같은 출발선 비교군 — 모든 소재의 '첫 K주' 행만 모아 재집계.
+   aggregate()를 그대로 쓰므로 파생지표(단가·비율)가 분자·분모 합산 기준으로 정확히 재계산된다 */
+function nrPool(ds,K,hist){
+  const ck=(ds.media||"")+"|"+K+"|"+(ds.dataAll?ds.dataAll.length:0);
+  ds._nrPool=ds._nrPool||{};if(ds._nrPool[ck])return ds._nrPool[ck];
+  const keep=new Set();
+  for(const[nm,wks]of hist){if(wks.length<K)continue;for(let i=0;i<K;i++)keep.add(nm+"\u0000"+wks[i]);}
+  const nameCol=ds.L.nameCol;
+  const sub=nrRowsOf(ds).filter(r=>keep.has(nrNameOf(r,nameCol)+"\u0000"+String(r.date||"").slice(0,10)));
+  const agg=aggregate(sub,ds.L);ds._nrPool[ck]=agg;return agg;}
+/* 출발 점수 — 같은 K주 비교군 안에서의 가중 백분위 합성.
+   채점 대상도 비교군과 **같은 '첫 K주' 집계본(pe)** 을 쓴다 — 화면 기간 필터가 신규 소재의 생애를
+   잘라도(예: '최근 1주' 설정) 대상만 2주치, 비교군은 3주치로 어긋나는 비대칭이 생기지 않는다. */
+function nrScore(ds,e,K,hist,specs){
+  const pool=nrPool(ds,K,hist);
+  if(pool.length<NR_MIN_POOL)return{err:"pool"};
+  const pe=pool.find(x=>x.name===e.name)||e;
+  const gOf=(typeof groupOfFor==="function")?groupOfFor(ds):null; /* 구글=애드그룹 단위(D3) */
+  const myG=gOf?gOf(pe):null;
+  let comp=0,wsum=0,confNum=0,basis="매체 전체";const parts=[];
+  for(const s of specs){
+    if(pe[s.k]==null)continue;
+    if(s.entFo&&((pe.tags&&pe.tags.fo)||"")!==s.entFo)continue; /* 포맷 조건부(예: AEO CTR=영상만) — 본 채점과 동일 */
+    if(s.entCt&&String(pe._m_ctype||"")!==s.entCt)continue;     /* 지면 조건부(몰로코 CTR=외부 지면 이미지) */
+    const base=pool.filter(x=>x[s.k]!=null&&x.name!==pe.name);
+    let cand=base,how="매체 전체";
+    /* 구글은 본 채점(D3)과 같이 같은 애드그룹 안에서 비교 — 경매·인벤토리가 그룹마다 달라 그룹 간 레벨 비교는 무효.
+       단 신규 구간엔 그룹 내 같은 나이 표본이 8개 미만인 경우가 흔해, 그때만 매체 전체로 넓히고 그 사실을 툴팁에 밝힌다 */
+    if(myG!=null){const sg=base.filter(x=>gOf(x)===myG);if(sg.length>=NR_MIN_POOL){cand=sg;how="그룹 내";}}
+    else if(MEDIA_COHORT_KEYS.has(s.k)){ /* 인벤토리가 다른 영상/이미지는 같은 포맷끼리만(본 채점과 동일 규칙) */
+      const fo=specCohortOf(s,pe),same=base.filter(x=>specCohortOf(s,x)===fo);
+      if(same.length>=NR_MIN_POOL){cand=same;how="같은 포맷";}}
+    if(cand.length<NR_MIN_POOL)continue;
+    const d=buildWDist(cand.map(x=>[x[s.k],1])); /* 소재 1개=1표 — 본 채점의 D5 등수화와 동일 */
+    const p=wPctRank(d,pe[s.k]);
+    const w=evidenceW(pe,s.k);
+    const g=0.5+((s.dir<0?1-p:p)-0.5)*(0.5+0.5*w);
+    const wt=s.w*(0.35+0.65*w);
+    comp+=g*wt;wsum+=wt;confNum+=w*wt;basis=how;
+    parts.push({lab:s.lab,k:s.k,g,w,dir:s.dir,v:pe[s.k],n:cand.length,how});}
+  if(wsum<=0)return{err:"metric"};
+  const E=comp/wsum;
+  parts.sort((a,b)=>Math.abs(b.g-0.5)-Math.abs(a.g-0.5)); /* 점수를 가장 크게 움직인 지표 순 */
+  return{score:Math.round(Math.max(2,Math.min(99,E*100))),conf:confNum/wsum,parts,basis,
+    cmpN:Math.min.apply(null,parts.map(p=>p.n)),pe};}
+function nrTier(sc){return sc>=72?"g2":sc>=58?"g1":sc>=43?"m":sc>=30?"w1":"w2";}
+function nrVerdict(sc){return sc>=72?"좋은 출발":sc>=58?"순항":sc>=43?"보통":sc>=30?"주의":"부진";}
+/* 신규 소재 목록 — 전체 이력 기준 첫 집행이 최근 NR_WIN주 이내 */
+function newCreatives(ds){
+  if(!ds||!ds.agg||standaloneMode)return null;
+  const hist=nrHistory(ds);if(!hist.size)return null;
+  let latest="";for(const wks of hist.values()){const w=wks[wks.length-1];if(w>latest)latest=w;}
+  if(!latest)return null;
+  const cut=nrAddDays(latest,-(NR_WIN-1)*7);
+  const byName=new Map();for(const e of ds.agg)if(!e._isGroup)byName.set(e.name,e);
+  const out=[];
+  for(const[nm,wks]of hist){
+    if(wks[0]<cut)continue;                 /* 첫 집행이 창 밖 = 신규 아님 */
+    const e=byName.get(nm);if(!e||!(e.비용>0))continue; /* 현재 기간 필터에 안 잡히면 제외(화면 일관성) */
+    out.push({e,name:nm,K:wks.length,first:wks[0],live:wks[wks.length-1]===latest});}
+  return{latest,cut,items:out};}
+function renderNewRadar(ds){
+  const el=$("#newRadar");if(!el)return;
+  const info=newCreatives(ds);
+  if(!info){el.hidden=true;el.innerHTML="";return;}
+  el.hidden=false;
+  const specs=(typeof specsFor==="function"?specsFor(ds):[])||[];
+  const hist=nrHistory(ds);
+  const scored=info.items.map(it=>{
+    let r=null,why="cost";
+    if(!specs.length)why="metric";
+    else if(it.e.비용>=NR_MIN_COST){const t=nrScore(ds,it.e,it.K,hist,specs);if(t&&t.score!=null)r=t;else why=(t&&t.err)||"metric";}
+    return Object.assign({},it,{r,why});});
+  /* 정렬: 점수 있는 것 먼저(낮은 점수=먼저 봐야 할 문제 소재가 묻히지 않게 광고비 순), 관찰중은 뒤 */
+  scored.sort((a,b)=>(a.r?0:1)-(b.r?0:1)||(b.e.비용||0)-(a.e.비용||0));
+  const shown=scored.slice(0,NR_MAX_SHOW);
+  const head=`<div class="nrad-h">🌱 새로 시작한 소재 <span class="n">최근 ${NR_WIN}주 · ${info.items.length}개${info.items.length>shown.length?` (상위 ${shown.length})`:""}</span></div>`;
+  if(!info.items.length){
+    el.innerHTML=head+`<div class="nrad-empty">최근 ${NR_WIN}주 안에 새로 시작한 소재가 없어요.<br>새 소재가 집행되면 여기서 <b>출발 점수</b>로 초기 성과를 바로 확인할 수 있어요.</div>`;return;}
+  const rows=shown.map(x=>{
+    const dn=displayNameOf(x.e),sc=x.r?x.r.score:null;
+    const cls=sc==null?"t-na":"t-"+nrTier(sc);
+    const lab=sc==null?"관찰<br>중":String(sc);
+    const drv=x.r&&x.r.parts.length?x.r.parts[0]:null;
+    /* 지표명 옆 표기는 '우수/저조'(성과 방향) — 화살표는 이 앱에서 이미 '↓=낮을수록 좋음'(지표 성격)을
+       뜻하므로, 같은 자리에 성과 방향으로 쓰면 단가류(dir<0)에서 정반대로 읽힌다 */
+    const cost=x.r&&x.r.pe?(x.r.pe.비용||0):(x.e.비용||0); /* 점수와 같은 '첫 K주' 기준 금액 */
+    const sub=[`${x.K}주차`,fmtWon(cost),drv?`${drv.lab} ${drv.g>=0.5?"우수":"저조"}`:null].filter(Boolean).join(" · ");
+    const tip=x.r
+      ?`출발 점수 ${sc} — ${nrVerdict(sc)}\n같은 나이(첫 ${x.K}주) 소재 ${x.r.cmpN}개(${x.r.basis})와 비교한 상대 위치예요.\n${x.r.parts.map(p=>`· ${p.lab}: ${fmtSpecVal(p.k,p.v)} → ${Math.round(p.g*100)}점 (증거 ${Math.round(p.w*100)}% · 비교 ${p.n}개 ${p.how})`).join("\n")}\n신뢰도 ${Math.round(x.r.conf*100)}% · 규모는 점수에서 제외(신규는 작은 게 정상)\n※ 전체목록의 '점수'와는 다른 기준이에요 — 클릭하면 이 소재로 이동`
+      :(x.why==="cost"
+        ?`아직 광고비 ${fmtWon(x.e.비용)}로 표본이 적어 점수를 내지 않았어요(${fmtWon(NR_MIN_COST)} 이상부터).\n클릭하면 이 소재로 이동`
+        :x.why==="pool"
+        ?`같은 나이(첫 ${x.K}주) 비교군이 ${NR_MIN_POOL}개 미만이라 아직 상대 평가를 하지 않았어요.\n클릭하면 이 소재로 이동`
+        :`채점에 쓸 핵심 지표가 아직 안 잡혔어요(전환이 0건이면 단가가 정의되지 않아요).\n클릭하면 이 소재로 이동`);
+    return `<div class="nrad-it" role="button" tabindex="0" data-nm="${escAttr(x.name)}" title="${escAttr(tip)}">`
+      +`<span class="nrad-sc ${cls}">${lab}</span>`
+      +`<span class="nrad-b"><span class="nrad-nm">${x.live?'<span class="lvb"></span>':""}${escHtml(trunc(dn,26))}</span><span class="nrad-sub">${escHtml(sub)}</span></span></div>`;}).join("");
+  el.innerHTML=head+`<div class="nrad-list">${rows}</div>`
+    +`<div class="nrad-foot">출발 점수 = 같은 나이(첫 K주) 소재들과 비교한 초기 성과. 규모는 빼고 효율만 봐요 — 전체목록 점수와 기준이 달라요.</div>`;
+  el.querySelectorAll(".nrad-it").forEach(it=>{
+    const go=()=>{const nm=it.dataset.nm;if(nm)goToIslandFromQuad(nm);};
+    it.onclick=go;
+    it.onkeydown=ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();go();}};});}
 
 /* 유형별 집계 — 효율 지도 '보기' 세그먼트용 (구 유형별 비교 그래프를 지도에 흡수).
    비율 지표는 상하 10% 트림 후 합산 기반으로 계산해 이상치 소재가 유형 평균을 흔들지 못하게 한다 */
