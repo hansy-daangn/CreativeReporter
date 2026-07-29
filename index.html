@@ -2411,7 +2411,8 @@ function nrHistory(ds){
     const d=String(r.date||"").slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;
     const nm=nrNameOf(r,nameCol);let s=m.get(nm);if(!s){s=new Set();m.set(nm,s);}s.add(d);}
   const out=new Map();for(const[nm,s]of m)out.set(nm,[...s].sort());
-  ds._nrHist=out;ds._nrHistKey=key;return out;}
+  ds._nrHist=out;ds._nrHistKey=key;ds._nrPool={}; /* 이력이 바뀌면 파생 풀도 함께 폐기(세션 누적 방지) */
+  return out;}
 /* 같은 출발선 비교군 — 모든 소재의 '첫 K주' 행만 모아 재집계.
    aggregate()를 그대로 쓰므로 파생지표(단가·비율)가 분자·분모 합산 기준으로 정확히 재계산된다 */
 function nrPool(ds,K,hist){
@@ -2422,31 +2423,41 @@ function nrPool(ds,K,hist){
   const nameCol=ds.L.nameCol;
   const sub=nrRowsOf(ds).filter(r=>keep.has(nrNameOf(r,nameCol)+"\u0000"+String(r.date||"").slice(0,10)));
   const agg=aggregate(sub,ds.L);ds._nrPool[ck]=agg;return agg;}
-/* 출발 점수 — 같은 K주 비교군 안에서의 가중 백분위 합성 */
+/* 출발 점수 — 같은 K주 비교군 안에서의 가중 백분위 합성.
+   채점 대상도 비교군과 **같은 '첫 K주' 집계본(pe)** 을 쓴다 — 화면 기간 필터가 신규 소재의 생애를
+   잘라도(예: '최근 1주' 설정) 대상만 2주치, 비교군은 3주치로 어긋나는 비대칭이 생기지 않는다. */
 function nrScore(ds,e,K,hist,specs){
   const pool=nrPool(ds,K,hist);
-  if(pool.length<NR_MIN_POOL)return null;
-  let comp=0,wsum=0,confNum=0;const parts=[];
+  if(pool.length<NR_MIN_POOL)return{err:"pool"};
+  const pe=pool.find(x=>x.name===e.name)||e;
+  const gOf=(typeof groupOfFor==="function")?groupOfFor(ds):null; /* 구글=애드그룹 단위(D3) */
+  const myG=gOf?gOf(pe):null;
+  let comp=0,wsum=0,confNum=0,basis="매체 전체";const parts=[];
   for(const s of specs){
-    if(e[s.k]==null)continue;
-    if(s.entFo&&((e.tags&&e.tags.fo)||"")!==s.entFo)continue; /* 포맷 조건부(예: AEO CTR=영상만) — 본 채점과 동일 */
-    if(s.entCt&&String(e._m_ctype||"")!==s.entCt)continue;    /* 지면 조건부(몰로코 CTR=외부 지면 이미지) */
-    let cand=pool.filter(x=>x[s.k]!=null&&x.name!==e.name);
-    if(MEDIA_COHORT_KEYS.has(s.k)){ /* 인벤토리가 다른 영상/이미지는 같은 포맷끼리만(본 채점과 동일 규칙) */
-      const fo=specCohortOf(s,e),same=cand.filter(x=>specCohortOf(s,x)===fo);
-      if(same.length>=NR_MIN_POOL)cand=same;}
+    if(pe[s.k]==null)continue;
+    if(s.entFo&&((pe.tags&&pe.tags.fo)||"")!==s.entFo)continue; /* 포맷 조건부(예: AEO CTR=영상만) — 본 채점과 동일 */
+    if(s.entCt&&String(pe._m_ctype||"")!==s.entCt)continue;     /* 지면 조건부(몰로코 CTR=외부 지면 이미지) */
+    const base=pool.filter(x=>x[s.k]!=null&&x.name!==pe.name);
+    let cand=base,how="매체 전체";
+    /* 구글은 본 채점(D3)과 같이 같은 애드그룹 안에서 비교 — 경매·인벤토리가 그룹마다 달라 그룹 간 레벨 비교는 무효.
+       단 신규 구간엔 그룹 내 같은 나이 표본이 8개 미만인 경우가 흔해, 그때만 매체 전체로 넓히고 그 사실을 툴팁에 밝힌다 */
+    if(myG!=null){const sg=base.filter(x=>gOf(x)===myG);if(sg.length>=NR_MIN_POOL){cand=sg;how="그룹 내";}}
+    else if(MEDIA_COHORT_KEYS.has(s.k)){ /* 인벤토리가 다른 영상/이미지는 같은 포맷끼리만(본 채점과 동일 규칙) */
+      const fo=specCohortOf(s,pe),same=base.filter(x=>specCohortOf(s,x)===fo);
+      if(same.length>=NR_MIN_POOL){cand=same;how="같은 포맷";}}
     if(cand.length<NR_MIN_POOL)continue;
     const d=buildWDist(cand.map(x=>[x[s.k],1])); /* 소재 1개=1표 — 본 채점의 D5 등수화와 동일 */
-    const p=wPctRank(d,e[s.k]);
-    const w=evidenceW(e,s.k);
+    const p=wPctRank(d,pe[s.k]);
+    const w=evidenceW(pe,s.k);
     const g=0.5+((s.dir<0?1-p:p)-0.5)*(0.5+0.5*w);
     const wt=s.w*(0.35+0.65*w);
-    comp+=g*wt;wsum+=wt;confNum+=w*wt;
-    parts.push({lab:s.lab,k:s.k,g,w,dir:s.dir,v:e[s.k],n:cand.length});}
-  if(wsum<=0)return null;
+    comp+=g*wt;wsum+=wt;confNum+=w*wt;basis=how;
+    parts.push({lab:s.lab,k:s.k,g,w,dir:s.dir,v:pe[s.k],n:cand.length,how});}
+  if(wsum<=0)return{err:"metric"};
   const E=comp/wsum;
   parts.sort((a,b)=>Math.abs(b.g-0.5)-Math.abs(a.g-0.5)); /* 점수를 가장 크게 움직인 지표 순 */
-  return{score:Math.round(Math.max(2,Math.min(99,E*100))),conf:confNum/wsum,parts,poolN:pool.length};}
+  return{score:Math.round(Math.max(2,Math.min(99,E*100))),conf:confNum/wsum,parts,basis,
+    cmpN:Math.min.apply(null,parts.map(p=>p.n)),pe};}
 function nrTier(sc){return sc>=72?"g2":sc>=58?"g1":sc>=43?"m":sc>=30?"w1":"w2";}
 function nrVerdict(sc){return sc>=72?"좋은 출발":sc>=58?"순항":sc>=43?"보통":sc>=30?"주의":"부진";}
 /* 신규 소재 목록 — 전체 이력 기준 첫 집행이 최근 NR_WIN주 이내 */
@@ -2471,8 +2482,10 @@ function renderNewRadar(ds){
   const specs=(typeof specsFor==="function"?specsFor(ds):[])||[];
   const hist=nrHistory(ds);
   const scored=info.items.map(it=>{
-    const r=(it.e.비용>=NR_MIN_COST&&specs.length)?nrScore(ds,it.e,it.K,hist,specs):null;
-    return Object.assign({},it,{r});});
+    let r=null,why="cost";
+    if(!specs.length)why="metric";
+    else if(it.e.비용>=NR_MIN_COST){const t=nrScore(ds,it.e,it.K,hist,specs);if(t&&t.score!=null)r=t;else why=(t&&t.err)||"metric";}
+    return Object.assign({},it,{r,why});});
   /* 정렬: 점수 있는 것 먼저(낮은 점수=먼저 봐야 할 문제 소재가 묻히지 않게 광고비 순), 관찰중은 뒤 */
   scored.sort((a,b)=>(a.r?0:1)-(b.r?0:1)||(b.e.비용||0)-(a.e.비용||0));
   const shown=scored.slice(0,NR_MAX_SHOW);
@@ -2484,10 +2497,17 @@ function renderNewRadar(ds){
     const cls=sc==null?"t-na":"t-"+nrTier(sc);
     const lab=sc==null?"관찰<br>중":String(sc);
     const drv=x.r&&x.r.parts.length?x.r.parts[0]:null;
-    const sub=[`${x.K}주차`,fmtWon(x.e.비용),drv?`${drv.lab} ${drv.g>=0.5?"↑":"↓"}`:null].filter(Boolean).join(" · ");
+    /* 지표명 옆 표기는 '우수/저조'(성과 방향) — 화살표는 이 앱에서 이미 '↓=낮을수록 좋음'(지표 성격)을
+       뜻하므로, 같은 자리에 성과 방향으로 쓰면 단가류(dir<0)에서 정반대로 읽힌다 */
+    const cost=x.r&&x.r.pe?(x.r.pe.비용||0):(x.e.비용||0); /* 점수와 같은 '첫 K주' 기준 금액 */
+    const sub=[`${x.K}주차`,fmtWon(cost),drv?`${drv.lab} ${drv.g>=0.5?"우수":"저조"}`:null].filter(Boolean).join(" · ");
     const tip=x.r
-      ?`출발 점수 ${sc} — ${nrVerdict(sc)}\n같은 나이(첫 ${x.K}주) 소재 ${x.r.poolN}개와 비교한 상대 위치예요.\n${x.r.parts.map(p=>`· ${p.lab}: ${fmtSpecVal(p.k,p.v)} → ${Math.round(p.g*100)}점 (증거 ${Math.round(p.w*100)}%)`).join("\n")}\n신뢰도 ${Math.round(x.r.conf*100)}% · 규모는 점수에서 제외(신규는 작은 게 정상)\n※ 전체목록의 '점수'와는 다른 기준이에요 — 클릭하면 이 소재로 이동`
-      :`아직 광고비 ${fmtWon(x.e.비용)}로 표본이 적어 점수를 내지 않았어요(${fmtWon(NR_MIN_COST)} 이상부터).\n클릭하면 이 소재로 이동`;
+      ?`출발 점수 ${sc} — ${nrVerdict(sc)}\n같은 나이(첫 ${x.K}주) 소재 ${x.r.cmpN}개(${x.r.basis})와 비교한 상대 위치예요.\n${x.r.parts.map(p=>`· ${p.lab}: ${fmtSpecVal(p.k,p.v)} → ${Math.round(p.g*100)}점 (증거 ${Math.round(p.w*100)}% · 비교 ${p.n}개 ${p.how})`).join("\n")}\n신뢰도 ${Math.round(x.r.conf*100)}% · 규모는 점수에서 제외(신규는 작은 게 정상)\n※ 전체목록의 '점수'와는 다른 기준이에요 — 클릭하면 이 소재로 이동`
+      :(x.why==="cost"
+        ?`아직 광고비 ${fmtWon(x.e.비용)}로 표본이 적어 점수를 내지 않았어요(${fmtWon(NR_MIN_COST)} 이상부터).\n클릭하면 이 소재로 이동`
+        :x.why==="pool"
+        ?`같은 나이(첫 ${x.K}주) 비교군이 ${NR_MIN_POOL}개 미만이라 아직 상대 평가를 하지 않았어요.\n클릭하면 이 소재로 이동`
+        :`채점에 쓸 핵심 지표가 아직 안 잡혔어요(전환이 0건이면 단가가 정의되지 않아요).\n클릭하면 이 소재로 이동`);
     return `<div class="nrad-it" role="button" tabindex="0" data-nm="${escAttr(x.name)}" title="${escAttr(tip)}">`
       +`<span class="nrad-sc ${cls}">${lab}</span>`
       +`<span class="nrad-b"><span class="nrad-nm">${x.live?'<span class="lvb"></span>':""}${escHtml(trunc(dn,26))}</span><span class="nrad-sub">${escHtml(sub)}</span></span></div>`;}).join("");
