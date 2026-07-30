@@ -179,11 +179,11 @@
   /* 신규 소재 레이더 — 주차별 추세 우측 패널(좁으면 아래로 스택) */
   .trend-row{display:flex;gap:20px;align-items:flex-start}
   .trend-row>#trendWrap{flex:1 1 420px;min-width:0}
-  .nrad{flex:0 0 300px;max-width:300px;min-width:0}
+  .nrad{flex:0 0 300px;max-width:300px;min-width:0;display:flex;flex-direction:column;min-height:0}
   @media(max-width:1040px){.trend-row{flex-direction:column}.nrad{flex:1 1 auto;max-width:none;width:100%}}
   .nrad-h{font-size:12px;font-weight:700;color:var(--muted);margin:0 0 9px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
   .nrad-h .n{font-size:11px;color:var(--faint);font-weight:500}
-  .nrad-list{display:flex;flex-direction:column;gap:5px}
+  .nrad-list{display:flex;flex-direction:column;gap:5px;max-height:294px;overflow-y:auto;padding-right:2px;margin-right:-2px}
   .nrad-it{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px;background:var(--surface-2);cursor:pointer;transition:background .12s}
   .nrad-it:hover{background:var(--surface-3)}
   .nrad-it:focus-visible{outline:2px solid var(--karrot);outline-offset:1px}
@@ -2396,7 +2396,6 @@ function renderTrend(ds){const svg=$("#trend"),L=ds.L,S=ds.S;
 const NR_WIN=3;            /* 첫 집행이 최근 3주 이내면 '신규' */
 const NR_MIN_COST=30000;   /* 점수 산출 최소 광고비 — 미만은 '관찰중'(표기만) */
 const NR_MIN_POOL=8;       /* 같은 출발선 비교군 최소 표본 */
-const NR_MAX_SHOW=6;       /* 패널에 띄우는 최대 개수 */
 function nrAddDays(d,n){const p=String(d).split("-").map(Number);const t=new Date(Date.UTC(p[0],p[1]-1,p[2]+n));
   const z=x=>String(x).padStart(2,"0");return `${t.getUTCFullYear()}-${z(t.getUTCMonth()+1)}-${z(t.getUTCDate())}`;}
 function nrRowsOf(ds){return (dsMode==="channeled"&&ds.media)?ds.dataAll.filter(r=>r._ch===ds.media):ds.dataAll;}
@@ -2491,10 +2490,10 @@ function renderNewRadar(ds){
     if(!specs.length)why="metric";
     else if(it.e.비용>=NR_MIN_COST){const t=nrScore(ds,it.e,it.K,hist,specs);if(t&&t.score!=null)r=t;else why=(t&&t.err)||"metric";}
     return Object.assign({},it,{r,why});});
-  /* 정렬: 점수 있는 것 먼저(낮은 점수=먼저 봐야 할 문제 소재가 묻히지 않게 광고비 순), 관찰중은 뒤 */
-  scored.sort((a,b)=>(a.r?0:1)-(b.r?0:1)||(b.e.비용||0)-(a.e.비용||0));
-  const shown=scored.slice(0,NR_MAX_SHOW);
-  const head=`<div class="nrad-h">🌱 새로 시작한 소재 <span class="n">최근 ${NR_WIN}주 · ${info.items.length}개${info.items.length>shown.length?` (상위 ${shown.length})`:""}</span></div>`;
+  /* 점수 높은 순 — 점수 있는 것 먼저(내림차순), 관찰중(점수 없음)은 광고비 순으로 뒤에 */
+  scored.sort((a,b)=>(a.r?0:1)-(b.r?0:1)||(b.r&&a.r?b.r.score-a.r.score:0)||(b.e.비용||0)-(a.e.비용||0));
+  const shown=scored;
+  const head=`<div class="nrad-h">🌱 새로 시작한 소재 <span class="n">최근 ${NR_WIN}주 · ${info.items.length}개</span></div>`;
   if(!info.items.length){
     const why=info.truncated>0
       ?`저장된 첫 주(${String(info.dataFirst).slice(5).replace("-","/")})부터 돌던 소재 ${info.truncated}개는 데뷔 시점을 알 수 없어 판정에서 빼요.<br>주간 데이터가 더 쌓이면 이 자리에 새 소재가 보여요.`
