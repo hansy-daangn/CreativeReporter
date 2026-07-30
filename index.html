@@ -1405,6 +1405,8 @@ function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n")
       "_g_assetType":(r["애셋 유형"]||"").trim(),
       "_g_status":(r["상태"]||"").trim(),
       "_g_level":(r["수준"]||"").trim(),
+      /* 상태 이유: '--'는 사유 없음, '비승인; --'는 '비승인'으로 정규화 */
+      "_g_statusReason":(r["상태 이유"]||"").replace(/--/g,"").replace(/;/g,"").trim(),
       "_g_url":url,
       "_g_interactions":pn(r["상호작용 수"]),
       "_g_trueViews":pn(r["TrueView 조회수"]),
@@ -1618,6 +1620,19 @@ function giStatusChip(gi){if(!gi)return "";
 /* 정확 소스 뱃지 — 이 그룹의 광고비·노출·클릭·CPM·CPC가 '광고그룹 주간 성과'(글자 애셋 포함) 실측으로 표시됨을 알림 */
 function authGwChip(e){const n=e._authGw,cov=e._gwCover!=null?Math.round(e._gwCover*100):null;
   return `<span class="gst auth" title="광고비·노출·클릭·CPM·CPC는 광고그룹 주간 성과 '정확 소스'(AEO+ACE·글자 애셋 포함) 합계로 표시${n?` · ${n}주 합산`:""}${cov!=null?` · 소재(영상·이미지) 합산은 정확값의 ${cov}%(신뢰도 지표 — 나머지는 주로 글자 애셋 몫)`:""}. 단가(신규/홈)·점수는 소재 기준 그대로예요 — 상세에서 진짜 유저 수를 확인하세요.">정확</span>`;}
+/* 소재 운영 상태 뱃지 — 비승인/사용 불가/삭제됨. 정상(사용 가능)은 뱃지 없음 */
+function assetStatusChip(e){
+  if(!e||e._isGroup)return "";
+  const rsn=(e._g_statusReason||"").trim(), st=(e._g_status||"").trim();
+  if(/비승인/.test(rsn))
+    return `<span class="gst lim" title="비승인 — 구글 정책 심사에서 거부된 소재입니다. 노출되지 않으므로 점수 해석에 주의하세요.">비승인</span>`;
+  if(/삭제/.test(st)||/삭제/.test(e._g_assetStatus||""))
+    return `<span class="gst" title="삭제됨 — 현재 광고그룹에서 제거된 소재입니다.">삭제됨</span>`;
+  if(/사용 불가/.test(st))
+    return `<span class="gst" title="사용 불가 — 현재 노출되지 않는 상태입니다(교체·중지 등).">미노출</span>`;
+  return "";
+}
+
 /* 최신 집행 주에 광고비가 나간 소재/그룹 — 매체 공통 Live 뱃지 */
 function liveBadge(ds,e){if(!ds||standaloneMode||!ds.liveWeek)return "";
   const lv=e._isGroup?(e._members||[]).some(m=>m._live):e._live;
@@ -1714,7 +1729,7 @@ function aggregate(data,L){const map=new Map();
     if(!map.has(nm))map.set(nm,{name:nm,비용:0,"노출 수":0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0});
     const e=map.get(nm);for(const c of["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e[c]+=v;}
     const _cv=num(r["비용"]);if(_cv!=null&&_cv>0){if(!e._wkSet)e._wkSet=new Set();e._wkSet.add(r.date);}
-    for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_adGroupId","_g_campaignId","_m_url","_m_ctype","_m_res","_m_group","_q_campaign"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
+    for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_statusReason","_g_url","_g_assetId","_g_adGroupId","_g_campaignId","_m_url","_m_ctype","_m_res","_m_group","_q_campaign"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
     for(const k of["_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue","_m_installs","신규+재활성 유저 수","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100","_q_retD1Base","_q_retD1Users","_q_retD7Base","_q_retD7Users","_q_revD0","_q_revD7","_q_afInstalls","_q_reAtt","_q_reEng"]){const v=num(r[k]);if(v!=null)e[k]=(e[k]||0)+v;}
   }
   const arr=[...map.values()].map(e=>{e.CPC=e["클릭 수"]>0?e.비용/e["클릭 수"]:null;e.CTR=e["노출 수"]>0?e["클릭 수"]/e["노출 수"]:null;e.CPM=e["노출 수"]>0?e.비용/e["노출 수"]*1000:null;e.eCPI=e["어트리뷰션 수"]>0?e.비용/e["어트리뷰션 수"]:null;e["활성 유저 eCPA"]=e["활성 유저 수"]>0?e.비용/e["활성 유저 수"]:null;
@@ -3490,7 +3505,7 @@ function renderGallery(ds,host){
     else if(isImageUrl(url))media=`<img class="gal-img" loading="lazy" src="${escAttr(imgSrc(url))}" data-osrc="${escAttr(url)}" referrerpolicy="no-referrer" onerror="imgRetry(this)">`;
     else if(isAdManagerUrl(url))media=`<span class="gal-ph" title="Meta 광고관리자 링크만 있는 소재">Meta</span>`;
     else media=`<span class="gal-ph">${entTypeEmoji(r)||"🖼️"}</span>`;
-    return `<div class="gal-card" data-name="${escAttr(r.name)}" title="클릭 = 상세 보기"><div class="gal-media">${media}</div><div class="gal-name">${liveBadge(ds,r)}${dn}</div><div class="gal-chips">${chipsHTML(r.tags,r)}</div></div>`;
+    return `<div class="gal-card" data-name="${escAttr(r.name)}" title="클릭 = 상세 보기"><div class="gal-media">${media}</div><div class="gal-name">${liveBadge(ds,r)}${assetStatusChip(r)}${dn}</div><div class="gal-chips">${chipsHTML(r.tags,r)}</div></div>`;
   }).join("")+(rows.length>_galShown?`<button class="gal-more" id="galMore" type="button">+ ${Math.min(100,rows.length-_galShown)}개 더 보기 (${_galShown}/${rows.length})</button>`:"")||`<div class="tempty" style="grid-column:1/-1">조건에 맞는 소재가 없습니다</div>`;
   host.querySelectorAll(".gal-vid").forEach(v=>{
     v.addEventListener("mouseenter",()=>{try{v.play();}catch(_){}});
@@ -3548,7 +3563,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
         const nmHtml=(renameMode&&!r._isGroup)
           ? `<span class="nm-text editing" contenteditable="true" spellcheck="false" data-nm="${escAttr(r.name)}">${escHtml(dn)}</span>`
           : `<span class="nm-text">${escHtml(trunc(dn,60))}</span>`;
-        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}><div class="nm-line">${liveBadge(ds,r)}${lrnBadge(r)}${nmHtml}${mb}${gst}${gwc}</div><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
+        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}><div class="nm-line">${liveBadge(ds,r)}${lrnBadge(r)}${nmHtml}${mb}${gst}${assetStatusChip(r)}${gwc}</div><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
       if(c.k==="score"){
         const part=(r._isGroup&&r._gwCover!=null&&r._gwCover<0.7)?`<span class="sc-note" title="소재 커버리지 ${Math.round(r._gwCover*100)}% — 점수는 소재(영상·이미지) 데이터 기준인데 이 그룹은 절반 가까이가 글자 애셋 등 미수집 영역이라 참고용이에요">*</span>`:"";
         return `<td class="scb"><span class="sc-score">${score}${part}</span><span class="sc-badge">${bdg||""}</span></td>`;}
