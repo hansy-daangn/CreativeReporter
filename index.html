@@ -1735,9 +1735,11 @@ function aggregate(data,L){const map=new Map();
     const e=map.get(nm);for(const c of["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e[c]+=v;}
     const _cv=num(r["비용"]);if(_cv!=null&&_cv>0){if(!e._wkSet)e._wkSet=new Set();e._wkSet.add(r.date);}
     for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_statusReason","_g_url","_g_assetId","_g_adGroupId","_g_campaignId","_m_url","_m_ctype","_m_res","_m_group","_q_campaign"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
-    /* 실적(_g_perfLabel)은 매주 바뀌는 스냅샷 — 첫 값이 아니라 '가장 최근 주' 값을 유지. 키가 있었는데 값이 빈 경우('-')도 _plSeen으로 구분(표시 안 함 ↔ 추정 대상) */
-    if(r._g_perfLabel!==undefined){e._plSeen=1;const _pl=String(r._g_perfLabel).trim();
-      if(_pl&&_pl!=="--"&&String(r.date||"")>=(e._plDate||"")){e._g_perfLabel=_pl;e._plDate=String(r.date||"");}}
+    /* 실적(_g_perfLabel)은 매주 바뀌는 스냅샷 — 첫 값이 아니라 '가장 최근 주' 값을 유지. 키가 있었는데 값이 빈 경우('-')도 _plSeen으로 구분(표시 안 함 ↔ 추정 대상).
+       더 새로운 주는 빈 값('-')이라도 채택해 옛 라벨을 지운다(강등·라벨 회수 반영) · 같은 주에선 비어있지 않은 값이 우선(다중 애드그룹 행) */
+    if(r._g_perfLabel!==undefined){e._plSeen=1;const _pl=String(r._g_perfLabel).trim().replace(/^--$/,"");
+      const _pd=String(r.date||"");
+      if(e._plDate==null||_pd>e._plDate||(_pd===e._plDate&&_pl)){e._g_perfLabel=_pl;e._plDate=_pd;}}
     for(const k of["_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue","_m_installs","신규+재활성 유저 수","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100","_q_retD1Base","_q_retD1Users","_q_retD7Base","_q_retD7Users","_q_revD0","_q_revD7","_q_afInstalls","_q_reAtt","_q_reEng"]){const v=num(r[k]);if(v!=null)e[k]=(e[k]||0)+v;}
   }
   const arr=[...map.values()].map(e=>{e.CPC=e["클릭 수"]>0?e.비용/e["클릭 수"]:null;e.CTR=e["노출 수"]>0?e["클릭 수"]/e["노출 수"]:null;e.CPM=e["노출 수"]>0?e.비용/e["노출 수"]*1000:null;e.eCPI=e["어트리뷰션 수"]>0?e.비용/e["어트리뷰션 수"]:null;e["활성 유저 eCPA"]=e["활성 유저 수"]>0?e.비용/e["활성 유저 수"]:null;
@@ -3632,7 +3634,8 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
           : `<span class="nm-text">${escHtml(trunc(dn,60))}</span>`;
         return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}><div class="nm-line">${liveBadge(ds,r)}${lrnBadge(r)}${nmHtml}${mb}${gst}${assetStatusChip(r)}${gwc}</div><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
       if(c.k==="score"){
-        const part=(r._isGroup&&r._gwCover!=null&&r._gwCover<0.7)?`<span class="sc-note" title="소재 커버리지 ${Math.round(r._gwCover*100)}% — 점수는 소재(영상·이미지) 데이터 기준인데 이 그룹은 절반 가까이가 글자 애셋 등 미수집 영역이라 참고용이에요">*</span>`:"";
+        /* 커버리지 노트(*)는 실적 블록이 있을 때만 — 빈 칸에 고아 별표가 뜨지 않게 */
+        const part=(score&&r._isGroup&&r._gwCover!=null&&r._gwCover<0.7)?`<span class="sc-note" title="소재 커버리지 ${Math.round(r._gwCover*100)}% — 실적·점수는 소재(영상·이미지) 데이터 기준인데 이 그룹은 절반 가까이가 글자 애셋 등 미수집 영역이라 참고용이에요">*</span>`:"";
         return `<td class="scb"><span class="sc-score">${score}${part}</span><span class="sc-badge">${bdg||""}</span></td>`;}
       const dir=COL_DIR[c.k]||0;
       const t=dir?cellTier(r[c.k],colSorted[c.k],dir):"m";
@@ -3988,7 +3991,11 @@ function buildSaveRows(data,channel){const map=new Map();
     if(!e){e={channel,week_start:wk,ad_name:nm,payload:{}};map.set(key,e);}
     const p=e.payload;
     for(const k of SAVE_NUM_KEYS){const v=num(r[k]);if(v!=null)p[k]=(p[k]||0)+v;}
-    for(const k of SAVE_STR_KEYS){if(r[k]!==undefined&&r[k]!==""&&p[k]==null)p[k]=r[k];}}
+    for(const k of SAVE_STR_KEYS){
+      /* 실적은 빈 값('-')도 키째 보존해야 로드 후 '표시 안 함'과 '추정 대상'을 구분할 수 있다(_plSeen 재구성).
+         같은 (주,소재)에 여러 행이면 비어있지 않은 마지막 값 우선 — 집계 표시 규칙과 동일 */
+      if(k==="_g_perfLabel"){if(r[k]!==undefined&&(p[k]==null||r[k]!==""))p[k]=r[k];continue;}
+      if(r[k]!==undefined&&r[k]!==""&&p[k]==null)p[k]=r[k];}}
   return[...map.values()].filter(e=>(e.payload["비용"]||0)>=MIN_ROW_COST);}
 async function cloudSaveAll(jobs,skips,opts){
   const notes=[...(skips||[])];
