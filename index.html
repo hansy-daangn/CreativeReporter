@@ -2079,10 +2079,18 @@ function runScoring(pop,elig,specs,reachKey,reachW,groupOf){
      코호트 = 같은 비교군(구글=애드그룹)×포맷 — 3개 미만이면 상위 코호트로 확장.
    효율(CPA) 등수는 실측상 라벨과 비상관(CV 25~45%)이라 제외 — 구글 실적은 '물량 등수'(전환·비용·CTR) 신호가 지배적. */
 const PERF_EST={W_RV:0.30,W_CTR:0.20,W_FV:0.30,W_FC:0.20,LO:0.265,HI:0.673};
-/* 구글 CSV 내보내기 어휘 → UI 어휘 정규화 — Best 등급이 UI에선 '매우 좋음', CSV 내보내기(루틴 저장 원문)에선 '인기순'으로 나온다.
-   저장은 원문 유지(루틴이 매주 같은 어휘로 쓰므로), 표시 단계에서만 바꾼다. 실측: 인기순 = 각 그룹 물량 최상위·최희소(Best) 확인 */
-const PERF_LABEL_ALIAS={"인기순":"매우 좋음","최상":"매우 좋음","우수":"매우 좋음"};
-const PERF_TIER={"매우 좋음":"g2","좋음":"g1","보통":"m","낮음":"w1","나쁨":"w1","매우 나쁨":"w2"};
+/* 구글 CSV 내보내기 어휘 → UI 어휘 정규화 — 실측 검증된 것만 치환한다: Best 등급이 UI에선 '매우 좋음', CSV 내보내기(루틴 저장 원문)에선 '인기순'
+   (실측: 인기순 = 각 그룹 물량 최상위·최희소). 저장은 원문 유지(루틴이 매주 같은 어휘로 쓰므로), 표시 단계에서만 바꾼다.
+   그 외 낯선 어휘는 다른 지표일 수 있으니 추측 치환하지 않고 원문 그대로(중립색) 표시 + 새 어휘 등장 시 토스트로 알린다(warnNewPerfVocab) */
+const PERF_LABEL_ALIAS={"인기순":"매우 좋음"};
+const PERF_TIER={"매우 좋음":"g2","좋음":"g1","낮음":"w1"};
+const PERF_KNOWN=new Set(["인기순","매우 좋음","좋음","낮음","학습","학습 중","대기중","대기 중"]); /* 지금까지 관측·인지된 실적 어휘 */
+const _plNewSeen=new Set();
+function warnNewPerfVocab(rows){
+  const fresh=[];
+  for(const e of rows){const v=String(e._g_perfLabel||"").trim();
+    if(v&&v!=="-"&&v!=="--"&&!PERF_KNOWN.has(v)&&!_plNewSeen.has(v)){_plNewSeen.add(v);fresh.push(v);}}
+  if(fresh.length){try{toast(`구글 실적에 처음 보는 어휘가 나왔어요: ${fresh.join(", ")} — 일단 원문 그대로 표시하고 있어요. 매핑이 필요하면 알려주세요`);}catch(_){}}}
 function perfConvKeyOf(rows){
   /* 코호트 등수에 쓸 '전환 물량' 지표 — 매체별 가용한 것 하나로 통일(코호트 안 혼용 금지) */
   for(const k of["_g_conversions","신규+재활성 유저 수","활성 유저 수","어트리뷰션 수"]){
@@ -2147,6 +2155,7 @@ function computeScores(ds){const L=ds.L,a=ds.agg;
   if(elig.length<3)return{best:[],worst:[],med:null,goodCol:specs[0]?.k||"score",goodDir:specs[0]?.dir||1,goodLabel:specs[0]?.lab||"점수",goodFmt:specs[0]?.k==="_g_ROAS"?"num":"int",goodHelp:"복합 지표",volCol:"비용",eligCount:0,specs};
   ds._scoreCtx=runScoring(a,elig,specs,reachKeyFor(ds),reachWFor(ds),groupOfFor(ds)); /* 구글은 그룹 내 상대평가(D3) */
   estimatePerfLabels(a,groupOfFor(ds)); /* 실적 라벨 없는 채점 소재는 추정(cc) 부여 */
+  warnNewPerfVocab(a); /* 처음 보는 실적 어휘는 원문 표시 + 토스트 알림 */
   const best=elig.slice().sort((x,y)=>y.score-x.score);
   best.forEach((e,i)=>{e.rank=i+1;});
   const primary=specs[0],pkey=primary.k,pdir=primary.dir;
