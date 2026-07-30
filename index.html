@@ -25,86 +25,7 @@
     --r:16px; --r-sm:10px;
     --sh:0 1px 2px rgba(20,20,15,.05), 0 8px 24px -16px rgba(20,20,15,.22);
     --sans:"Pretendard Variable",Pretendard,system-ui,-apple-system,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
-
-    /* ── 디자인 시스템 토큰 (docs/DESIGN_SYSTEM.md) ─────────────────────────────
-       색 역할 4군: 지면(canvas→surface→surface-2→surface-3) · 글자(ink→muted→faint) ·
-       브랜드(karrot, 네비/활성 전용) · 성과(g2·g1·mid·w1·w2, 데이터 전용).
-       아래 스케일은 신규·수정 코드가 따라야 할 표준값이다(기존 값은 점진 수렴). */
-    --fs-display:26px; --fs-title:17px; --fs-body:13px; --fs-data:13px; --fs-label:11.5px; --fs-micro:10.5px;
-    --w-reg:500; --w-med:650; --w-bold:780;         /* 웨이트는 3단계만 — 그 사이 값은 눈으로 구분되지 않는다 */
-    --sp-1:2px; --sp-2:4px; --sp-3:6px; --sp-4:8px; --sp-5:12px; --sp-6:16px; --sp-7:20px; --sp-8:24px;
-    --rad-chip:3px; --rad-ctl:7px; --rad-card:11px; --rad-pill:999px;
-    --line:var(--surface-3);                         /* 구분선은 1종 */
-    --dens:1;                                        /* 밀도 배율 — 테마가 조절 */
   }
-  /* ══ 테마 ══ 색 역할만 바꾸고 구조는 공유한다. 데이터 의미(성과 5단계)는 어느 테마에서도 같은 위계를 유지 */
-  /* A. 정밀 — 중성 회색·저채도·고밀도. 표를 오래 들여다보는 분석용 */
-  :root[data-theme="precision"]{
-    --canvas:#E9EAEC; --surface:#FFFFFF; --surface-2:#F4F5F6; --surface-3:#E5E7EA;
-    --ink:#16181B; --muted:#666A70; --faint:#989DA5;
-    --side:#1A1C1F; --side-2:#24272B; --side-ink:#E9EBEE; --side-muted:#93979E; --side-faint:#666A70;
-    --g2:#2273C4; --g2-f:#DCEAF7; --g1:#1B7D66; --g1-f:#DDEDE7; --mid:#7C8087; --mid-f:#E9EAEC;
-    --w1:#A9781B; --w1-f:#F3E9D2; --w2:#B93E51; --w2-f:#F4DDE1;
-    --r:10px; --r-sm:6px; --dens:.92;
-    --sh:0 1px 2px rgba(15,18,22,.06);
-  }
-  /* B. 차분 — 따뜻한 종이·넉넉한 여백·부드러운 대비. 스캔과 공유용 */
-  :root[data-theme="calm"]{
-    --canvas:#F2EFE9; --surface:#FFFFFF; --surface-2:#FAF8F4; --surface-3:#ECE7DE;
-    --ink:#23211C; --muted:#7A756B; --faint:#ABA69B;
-    --side:#242219; --side-2:#312E24; --side-ink:#F1EEE5; --side-muted:#A5A196; --side-faint:#76736A;
-    --g2:#2E7FBF; --g2-f:#DFEDF8; --g1:#248068; --g1-f:#E2F0EA; --mid:#8E8B81; --mid-f:#EDEBE4;
-    --w1:#B98420; --w1-f:#F8EED6; --w2:#C04D5E; --w2-f:#F8E1E5;
-    --r:18px; --r-sm:12px; --dens:1.12;
-    --sh:0 1px 2px rgba(30,25,15,.04), 0 10px 30px -18px rgba(30,25,15,.26);
-  }
-  /* C. 야간 — 어두운 지면에서 숫자가 떠오르게. 장시간 분석용 */
-  :root[data-theme="night"]{
-    --canvas:#0F1114; --surface:#171A1F; --surface-2:#1E2228; --surface-3:#282D35;
-    --ink:#EDEFF2; --muted:#98A0AC; --faint:#69707B;
-    --side:#0B0D10; --side-2:#161A1F; --side-ink:#E8EAEE; --side-muted:#8C939E; --side-faint:#5E656F;
-    --karrot:#FF8A3D; --karrot-2:#FFA168; --karrot-f:#3A2113;
-    --g2:#63B0F5; --g2-f:#16304A; --g1:#4ECFA8; --g1-f:#123529; --mid:#9AA1AC; --mid-f:#272C33;
-    --w1:#E3AE4C; --w1-f:#3A2D12; --w2:#F0788C; --w2-f:#3E1B22;
-    --gold:#E0B54A; --gold-f:#3A2E12; --silver:#AEB3BB; --silver-f:#2A2E34; --bronze:#C79358; --bronze-f:#38281A;
-    --c2:#7FA6D6;
-    --r:12px; --r-sm:8px; --dens:1;
-    --sh:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -16px rgba(0,0,0,.7);
-  }
-  /* D. 당근 — SEED 계열 중성 회색 + 브랜드 존재감. 당근 제품군의 일부처럼 */
-  :root[data-theme="karrot"]{
-    --canvas:#F4F5F6; --surface:#FFFFFF; --surface-2:#F7F8F9; --surface-3:#E8EAED;
-    --ink:#0F1114; --muted:#63666B; --faint:#ADB1BA;
-    --side:#16181B; --side-2:#212429; --side-ink:#F0F1F3; --side-muted:#9DA1A8; --side-faint:#6C7077;
-    --karrot:#FF6F0F; --karrot-2:#FF8A3D; --karrot-f:#FFF0E4;
-    --g2:#1F7DE0; --g2-f:#E3F0FD; --g1:#12A47C; --g1-f:#E0F5EE; --mid:#868A91; --mid-f:#EDEEF0;
-    --w1:#D08700; --w1-f:#FDF0D9; --w2:#E5455F; --w2-f:#FDE4E8;
-    --r:14px; --r-sm:9px; --dens:1.04;
-    --sh:0 1px 2px rgba(15,17,20,.05), 0 8px 24px -16px rgba(15,17,20,.2);
-  }
-  /* ── 테마의 '구조' 차이 — 색만 바꾸면 시안이 아니라 색상표다. 밀도·라운드·선 굵기로 성격을 만든다.
-     건드리는 대상은 화면 인상을 지배하는 4곳뿐: 표 행 높이 · 칩 · 점수 배지 · 카드 라운드. */
-  :root[data-theme="precision"] #table th,:root[data-theme="precision"] #table td{padding:6px 5px}
-  :root[data-theme="precision"] .chip{border-radius:var(--rad-chip);padding:1px 6px;font-size:9.5px}
-  :root[data-theme="precision"] .sp{border-radius:var(--rad-chip);padding:2px 7px}
-  :root[data-theme="precision"] #table tbody tr.row+tr.row>td{border-top:1px solid var(--surface-3)}
-  :root[data-theme="precision"] .sbtn,:root[data-theme="precision"] .thm-b{border-radius:var(--rad-ctl)}
-  :root[data-theme="calm"] #table th,:root[data-theme="calm"] #table td{padding:13px 7px}
-  :root[data-theme="calm"] .chip{border-radius:var(--rad-pill);padding:3px 10px}
-  :root[data-theme="calm"] .sp{border-radius:var(--rad-pill);padding:3px 11px}
-  :root[data-theme="calm"] .nrad-it,:root[data-theme="calm"] .quad-tier-legend{border-radius:var(--r-sm)}
-  :root[data-theme="calm"] .nm-text{font-size:13.5px}
-  :root[data-theme="karrot"] .chip{border-radius:var(--rad-ctl)}
-  :root[data-theme="karrot"] #table>thead th.sorted{color:var(--karrot)}
-  /* 야간 전용 보정 — 변수로 덮이지 않는 밝은 지면·점수 10단계 색을 다크에 맞게 */
-  :root[data-theme="night"] .main{background:var(--surface)}
-  :root[data-theme="night"] .sd9{background:#16304A;color:#8CC2FA} :root[data-theme="night"] .sd8{background:#173247;color:#79B8F2}
-  :root[data-theme="night"] .sd7{background:#123437;color:#5CC6CB} :root[data-theme="night"] .sd6{background:#123529;color:#54CDA6}
-  :root[data-theme="night"] .sd5{background:#1E3320;color:#96C46A} :root[data-theme="night"] .sd4{background:#272C33;color:#A6ADB8}
-  :root[data-theme="night"] .sd3{background:#352C14;color:#D6B455}
-  :root[data-theme="night"] .sd2{background:#3A2D12;color:#E0AE4E} :root[data-theme="night"] .sd1{background:#3B2417;color:#EC9163}
-  :root[data-theme="night"] .sd0{background:#3E1B22;color:#F0788C}
-  :root[data-theme="night"] img,:root[data-theme="night"] video{filter:brightness(.94)}
   *{box-sizing:border-box}
   html,body{margin:0}
   /* 재발 방지: 페이지의 '모든' scrollIntoView가 고정 헤더(툴바+제목행) 아래에 대상을 놓도록 스크롤 여백을 준다.
@@ -175,15 +96,6 @@
   .side-foot{margin-top:auto; padding-top:20px; display:flex; flex-direction:column; gap:11px}
   .src{font-size:10.5px; color:var(--side-faint); padding:0 2px}
   .src b{color:var(--side-muted); font-weight:600}
-  /* 테마 선택 — 사이드바 하단. 스와치 점 + 이름, 현재 테마만 밝게 */
-  .thm-row{display:flex;gap:4px;margin:0 2px 8px}
-  .thm-b{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:5px;
-    padding:7px 4px;border:0;border-radius:8px;cursor:pointer;background:rgba(255,255,255,.06);
-    color:var(--side-muted);font-size:10.5px;font-weight:650;letter-spacing:-.01em;white-space:nowrap;transition:.13s}
-  .thm-b:hover{background:rgba(255,255,255,.12);color:var(--side-ink)}
-  .thm-b.on{background:rgba(255,255,255,.16);color:var(--side-ink)}
-  .thm-b:focus-visible{outline:2px solid var(--karrot-2);outline-offset:1px}
-  .thm-sw{width:9px;height:9px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 0 1px rgba(255,255,255,.22) inset}
   .side-actions{display:flex; flex-wrap:wrap; gap:7px}
   .sbtn{flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:10px 6px; border-radius:9px; background:rgba(255,255,255,.07); color:var(--side-ink); font-size:12px; font-weight:650; white-space:nowrap; transition:.13s; border:0; cursor:pointer}
   .sbtn:hover{background:rgba(255,255,255,.13)}
@@ -267,11 +179,11 @@
   /* 신규 소재 레이더 — 주차별 추세 우측 패널(좁으면 아래로 스택) */
   .trend-row{display:flex;gap:20px;align-items:flex-start}
   .trend-row>#trendWrap{flex:1 1 420px;min-width:0}
-  .nrad{flex:0 0 300px;max-width:300px;min-width:0}
+  .nrad{flex:0 0 300px;max-width:300px;min-width:0;display:flex;flex-direction:column;min-height:0}
   @media(max-width:1040px){.trend-row{flex-direction:column}.nrad{flex:1 1 auto;max-width:none;width:100%}}
   .nrad-h{font-size:12px;font-weight:700;color:var(--muted);margin:0 0 9px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
   .nrad-h .n{font-size:11px;color:var(--faint);font-weight:500}
-  .nrad-list{display:flex;flex-direction:column;gap:5px}
+  .nrad-list{display:flex;flex-direction:column;gap:5px;max-height:294px;overflow-y:auto;padding-right:2px;margin-right:-2px}
   .nrad-it{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px;background:var(--surface-2);cursor:pointer;transition:background .12s}
   .nrad-it:hover{background:var(--surface-3)}
   .nrad-it:focus-visible{outline:2px solid var(--karrot);outline-offset:1px}
@@ -1127,7 +1039,6 @@
     <div class="pcustom-wrap" id="pcustomWrap"></div>
     <div class="side-foot">
       <div class="prange-info" id="dataRangeLine" hidden></div>
-      <div class="thm-row" id="thmRow" role="group" aria-label="화면 테마"></div>
       <div class="side-actions">
         <button class="sbtn act-cfg" id="scoreCfgBtn" title="매체별 채점 지표와 비중을 직접 골라 조절해요 — 저장하면 점수에 바로 반영">
           <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 13a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.36.53.75 1.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>채점 설정</button>
@@ -2485,7 +2396,6 @@ function renderTrend(ds){const svg=$("#trend"),L=ds.L,S=ds.S;
 const NR_WIN=3;            /* 첫 집행이 최근 3주 이내면 '신규' */
 const NR_MIN_COST=30000;   /* 점수 산출 최소 광고비 — 미만은 '관찰중'(표기만) */
 const NR_MIN_POOL=8;       /* 같은 출발선 비교군 최소 표본 */
-const NR_MAX_SHOW=6;       /* 패널에 띄우는 최대 개수 */
 function nrAddDays(d,n){const p=String(d).split("-").map(Number);const t=new Date(Date.UTC(p[0],p[1]-1,p[2]+n));
   const z=x=>String(x).padStart(2,"0");return `${t.getUTCFullYear()}-${z(t.getUTCMonth()+1)}-${z(t.getUTCDate())}`;}
 function nrRowsOf(ds){return (dsMode==="channeled"&&ds.media)?ds.dataAll.filter(r=>r._ch===ds.media):ds.dataAll;}
@@ -2580,10 +2490,10 @@ function renderNewRadar(ds){
     if(!specs.length)why="metric";
     else if(it.e.비용>=NR_MIN_COST){const t=nrScore(ds,it.e,it.K,hist,specs);if(t&&t.score!=null)r=t;else why=(t&&t.err)||"metric";}
     return Object.assign({},it,{r,why});});
-  /* 정렬: 점수 있는 것 먼저(낮은 점수=먼저 봐야 할 문제 소재가 묻히지 않게 광고비 순), 관찰중은 뒤 */
-  scored.sort((a,b)=>(a.r?0:1)-(b.r?0:1)||(b.e.비용||0)-(a.e.비용||0));
-  const shown=scored.slice(0,NR_MAX_SHOW);
-  const head=`<div class="nrad-h">🌱 새로 시작한 소재 <span class="n">최근 ${NR_WIN}주 · ${info.items.length}개${info.items.length>shown.length?` (상위 ${shown.length})`:""}</span></div>`;
+  /* 점수 높은 순 — 점수 있는 것 먼저(내림차순), 관찰중(점수 없음)은 광고비 순으로 뒤에 */
+  scored.sort((a,b)=>(a.r?0:1)-(b.r?0:1)||(b.r&&a.r?b.r.score-a.r.score:0)||(b.e.비용||0)-(a.e.비용||0));
+  const shown=scored;
+  const head=`<div class="nrad-h">🌱 새로 시작한 소재 <span class="n">최근 ${NR_WIN}주 · ${info.items.length}개</span></div>`;
   if(!info.items.length){
     const why=info.truncated>0
       ?`저장된 첫 주(${String(info.dataFirst).slice(5).replace("-","/")})부터 돌던 소재 ${info.truncated}개는 데뷔 시점을 알 수 없어 판정에서 빼요.<br>주간 데이터가 더 쌓이면 이 자리에 새 소재가 보여요.`
@@ -4798,36 +4708,6 @@ window.addEventListener("error",e=>{if(e&&e.message&&/ResizeObserver loop|Script
 window.addEventListener("unhandledrejection",e=>logErr("promise",e&&e.reason));
 document.addEventListener("click",()=>closeAllDD()); /* 커스텀 드롭다운 바깥 클릭 시 닫기 */
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeAllDD();});
-/* ══ 화면 테마 ══ 색 역할(지면·글자·브랜드·성과)만 갈아끼우고 구조·밀도 규칙은 공유한다.
-   기기 단위 설정(localStorage)이라 계정·저장소와 무관하며, 데이터·점수에는 영향이 없다. */
-const THEMES=[
-  {k:"karrot",   lab:"당근", sw:"#FF6F0F", tip:"당근 — SEED 계열 중성 회색에 브랜드 오렌지. 당근 제품군과 같은 결"},
-  {k:"precision",lab:"정밀", sw:"#6B7280", tip:"정밀 — 저채도·고밀도. 표를 오래 들여다보는 분석에 맞춘 화면"},
-  {k:"calm",     lab:"차분", sw:"#C9A227", tip:"차분 — 따뜻한 종이·넉넉한 여백. 훑어보기와 공유에 편한 화면"},
-  {k:"night",    lab:"야간", sw:"#1E2228", tip:"야간 — 어두운 지면에서 숫자가 떠오르는 화면. 장시간 분석용"},
-];
-const THEME_DEF="karrot";
-/* 미리보기 페이지는 __CR_THEME_LOCK으로 테마를 고정한다 — 같은 도메인이라 저장소 키를 공유하므로,
-   시안을 구경했다고 실제 도구의 내 테마 설정이 바뀌면 안 된다(읽기·쓰기 모두 우회) */
-function themeLock(){try{return (window.__CR_THEME_LOCK&&THEMES.some(t=>t.k===window.__CR_THEME_LOCK))?window.__CR_THEME_LOCK:null;}catch(_){return null;}}
-function themeGet(){const l=themeLock();if(l)return l;
-  try{const v=localStorage.getItem("cr_theme");if(v&&THEMES.some(t=>t.k===v))return v;}catch(_){}return THEME_DEF;}
-function themeApply(k){
-  document.documentElement.setAttribute("data-theme",k);
-  const row=$("#thmRow");if(row)row.querySelectorAll(".thm-b").forEach(b=>{
-    const on=b.dataset.t===k;b.classList.toggle("on",on);b.setAttribute("aria-pressed",on?"true":"false");});}
-function themeSet(k){
-  if(!themeLock()){try{localStorage.setItem("cr_theme",k);}catch(_){}} /* 미리보기에선 저장하지 않고 화면만 전환 */
-  themeApply(k);
-  /* 캔버스·SVG는 CSS 변수를 인라인으로 굳혀 그린 곳이 있어 현재 화면만 다시 그린다(데이터 재계산 없음) */
-  try{if(active&&DATASETS[active]){if(mainTab==="analysis"){renderQuad(DATASETS[active]);renderTrend(DATASETS[active]);}else if(mainTab==="table")renderTable(DATASETS[active]);}}catch(_){}
-  const t=THEMES.find(x=>x.k===k);if(t)toast(`${t.lab} 테마로 바꿨어요`);}
-function renderThemeRow(){
-  const row=$("#thmRow");if(!row)return;
-  const cur=themeGet();
-  row.innerHTML=THEMES.map(t=>`<button type="button" class="thm-b${t.k===cur?" on":""}" data-t="${t.k}" title="${escAttr(t.tip)}" aria-pressed="${t.k===cur?"true":"false"}"><span class="thm-sw" style="background:${t.sw}"></span>${escHtml(t.lab)}</button>`).join("");
-  row.querySelectorAll(".thm-b").forEach(b=>b.onclick=()=>themeSet(b.dataset.t));}
-themeApply(themeGet());renderThemeRow();
 renderGlossary();renderFooter();refreshAll();updateLandingVisibility();
 /* 클라우드 저장소 UI 배선 */
 /* 비밀번호 규칙 — 4자 이상이면 OK (서버 _cr_pwok과 동일). 중복은 pw_taken로 별도 차단 */
