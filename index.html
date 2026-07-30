@@ -1091,6 +1091,7 @@
           <input type="search" id="search" placeholder="이름으로 검색">
           <div class="tbar-cl">
             <div class="msel" id="svcMsel" title="서비스별로 모아 보기 (복수 선택)"></div>
+            <div class="msel" id="perfMsel" title="실적별로 보기 (복수 선택)"></div>
             <div class="msel" id="creatorMsel" title="내 소재 제작자별로 보기 (복수 선택)" hidden></div>
             <div class="msel mineas" id="mineAsMsel" title="내 소재를 누구 이름으로 등록·열람할지 (관리자 전용)" hidden></div>
           </div>
@@ -1103,6 +1104,7 @@
           <div class="seg-cl">
             <button class="tbtn" id="qfoGrp" type="button" title="광고그룹 단위로 집계해서 보기" aria-label="그룹별 보기">그룹뷰</button>
             <button class="tbtn" id="galleryBtn" type="button" title="점수·지표 없이 소재 미디어만 카드로 훑어보기 — 카드 클릭 = 상세">갤러리뷰</button>
+            <button class="tbtn" id="hideEstBtn" type="button" title="추정(cc) 실적 라벨 숨기기 — 실제 실적 값만 표시">추정 숨기기</button>
             <button class="tbtn" id="showAllBtn" type="button" title="광고비 0(비활성)·점수 없는 소재도 함께 보기">비활성 포함</button>
           </div>
         </div>
@@ -2132,6 +2134,7 @@ function perfLabelOf(e){
   return null;}
 function perfPillHTML(e){
   const p=perfLabelOf(e);if(!p)return "";
+  if(tHideEst&&p.est)return ""; /* '추정 숨기기' — 실제 실적 값만 표시 */
   const t=PERF_TIER[p.lab]||"m";
   const cls="sp "+(t==="g2"?"sp-g2":t==="g1"?"sp-g1":t==="w1"?"sp-w1":t==="w2"?"sp-w2":"sp-mid")+(p.est?" pf-est":"");
   const stateDesc=/^대기/.test(p.lab)?" · 대기중 = 아직 게재·노출이 없어 구글이 평가를 시작하지 않은 소재":(/^학습/.test(p.lab)?" · 학습 = 게재를 시작해 데이터를 모으는 중(평가 확정 전)":"");
@@ -2665,6 +2668,12 @@ let tLiveOnly=true; /* 기본 ON — 스코프 최신 집행 주에 광고비>0�
 let tChip=null; /* 칩 클릭 필터 {k:"ve|fo|nat|size|grp", v, lab} — 한 번에 하나, 다시 클릭·✕로 해제 */
 let tMarkView="all"; /* 전체 / 내 소재(mine) / 즐겨찾기(fav) — 좌측 nav 세그먼트 */
 let tServices=new Set(); /* 서비스 복수선택 필터 — 비면 전체, 아니면 선택 서비스만("기타"=미분류) */
+let tPerfSel=new Set(); /* 실적 복수선택 필터 — 비면 전체, "없음"=실적 블록 없는 소재 */
+let tHideEst=false; /* 추정(cc) 실적 숨기기 — 실제 실적 값만 표시 */
+/* 화면 기준 실적 라벨 — 추정 숨김이 켜져 있으면 추정 라벨은 없는 것으로 취급(표시·필터·정렬이 같은 기준을 공유) */
+function perfDispLabOf(e){const p=perfLabelOf(e);if(!p||(tHideEst&&p.est))return null;return p.lab;}
+const PERF_ORD={"매우 좋음":6,"좋음":5,"보통":4,"낮음":3,"학습":2,"학습 중":2,"대기중":1,"대기 중":1}; /* 정렬용 서열 — 낯선 어휘는 보통과 동급(4) */
+function perfSortKey(e){const l=perfDispLabOf(e);if(l==null)return -1;const r=PERF_ORD[l];return r!==undefined?r:4;}
 let tCreators=new Set(); /* 제작자(내 소재 등록자) 복수선택 필터 — 비면 전체 · "기타"=로스터 제작자 없음 */
 let mineAs=null; /* 관리자 전용 — '내 소재'를 대신 등록·열람할 대상(로스터 이름). null=본인. 남이면 cr_admin_mark_set 경유 */
 /* 제작자 로스터 — 제작자 칩·필터는 항상 이 목록에서만 고른다(직접 입력 금지) */
@@ -2717,6 +2726,7 @@ function applyTFilter(rows,ds){
     if(tChip.k==="gxt")return !!(e.tags&&Array.isArray(e.tags.xt)&&e.tags.xt.includes(tChip.v));
     return !!(e.tags&&e.tags[tChip.k]===tChip.v);});
   if(tServices.size)rows=rows.filter(e=>tServices.has(svcOf(e)||"기타"));
+  if(tPerfSel.size)rows=rows.filter(e=>tPerfSel.has(perfDispLabOf(e)||"없음"));
   if(tCreators.size)rows=rows.filter(e=>{const cs=rosterCreatorsOf(e);
     if(cs.some(n=>tCreators.has(n)))return true;
     if(tCreators.has("기타")&&cs.length===0)return true;
@@ -2746,22 +2756,31 @@ function buildMsel(host,allLabel,items,selected,onChange){
   host.querySelectorAll(".msel-opt input").forEach(cb=>cb.onchange=()=>{if(cb.checked)selected.add(cb.value);else selected.delete(cb.value);refresh();onChange();});
   clr.onclick=()=>{selected.clear();host.querySelectorAll(".msel-opt input").forEach(cb=>{cb.checked=false;});refresh();onChange();};}
 /* 서비스·제작자 드롭다운 — 옵션 목록이 바뀔 때만 재구성(선택 토글 중엔 팝업 유지) */
-let _mselSig={svc:"",cr:"",ma:""};
+let _mselSig={svc:"",cr:"",ma:"",pf:""};
 function renderFilters(ds){
   const base=getRowsForTable(ds);
   const svcCnt={};let other=0;
   const crCnt={};let crOther=0;
+  const pfCnt={};let pfNone=0;
   for(const e of base){const s=svcOf(e);if(s)svcCnt[s]=(svcCnt[s]||0)+1;else other++;
     const rc=rosterCreatorsOf(e);
-    if(rc.length){for(const nm of rc)crCnt[nm]=(crCnt[nm]||0)+1;}else crOther++;}
+    if(rc.length){for(const nm of rc)crCnt[nm]=(crCnt[nm]||0)+1;}else crOther++;
+    const pl=perfDispLabOf(e);if(pl)pfCnt[pl]=(pfCnt[pl]||0)+1;else pfNone++;}
   const svcItems=[];for(const[k]of SVC_DEFS)if(svcCnt[k])svcItems.push({v:k,label:k,n:svcCnt[k]});
   if(other)svcItems.push({v:"기타",label:"기타",n:other});
+  /* 실적 필터 — 서열 순으로 나열, 낯선 어휘는 뒤에, '없음'=실적 블록 없는 소재 */
+  const pfItems=[];
+  for(const l of["매우 좋음","좋음","보통","낮음","학습","학습 중","대기중","대기 중"])if(pfCnt[l]){pfItems.push({v:l,label:l,n:pfCnt[l]});delete pfCnt[l];}
+  for(const l of Object.keys(pfCnt).sort())pfItems.push({v:l,label:l,n:pfCnt[l]});
+  if(pfNone)pfItems.push({v:"없음",label:"없음",n:pfNone});
   /* 제작자 필터는 항상 로스터 전체 + 기타 노출 */
   const crItems=CREATORS.map(nm=>({v:nm,label:nm,n:crCnt[nm]||0}));
   crItems.push({v:"기타",label:"기타",n:crOther});
   for(const v of [...tServices])if(!svcItems.some(it=>it.v===v))tServices.delete(v);
-  const svcSig=JSON.stringify(svcItems),crSig=JSON.stringify(crItems);
+  for(const v of [...tPerfSel])if(!pfItems.some(it=>it.v===v))tPerfSel.delete(v);
+  const svcSig=JSON.stringify(svcItems),crSig=JSON.stringify(crItems),pfSig=JSON.stringify(pfItems);
   if(svcSig!==_mselSig.svc){_mselSig.svc=svcSig;buildMsel($("#svcMsel"),"전체 서비스",svcItems,tServices,()=>{tPage=1;renderTable(ds);});}
+  if(pfSig!==_mselSig.pf){_mselSig.pf=pfSig;buildMsel($("#perfMsel"),"전체 실적",pfItems,tPerfSel,()=>{tPage=1;renderTable(ds);});}
   const crHost=$("#creatorMsel");if(crHost)crHost.hidden=false;
   if(crSig!==_mselSig.cr){_mselSig.cr=crSig;buildMsel(crHost,"전체 제작자",crItems,tCreators,()=>{tPage=1;renderTable(ds);});}
   renderMineAs(ds);}
@@ -3714,6 +3733,10 @@ function orderedRowsForTable(ds){
   rows.sort((a,b)=>{
     if(tState.sort==="name")return tState.dir*a.name.localeCompare(b.name);
     const k=tState.sort;
+    /* 실적 열 정렬 = 라벨 서열(매우 좋음>좋음>보통>낮음>학습>대기중>없음) 우선, 같은 라벨 안에선 내부 점수 — 라벨과 점수가 섞여 뒤죽박죽되는 것 방지 */
+    if(k==="score"){
+      const px=perfSortKey(a),py=perfSortKey(b);
+      if(px!==py)return tState.dir*(px>py?1:-1);}
     let x=a[k],y=b[k];
     if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1;
     return tState.dir*((x>y?1:x<y?-1:0));});
@@ -3753,6 +3776,7 @@ function renderQuickFo(){const ds=curDS;
     if(hasLive)lv.title=`최신 집행 주(${String(ds.liveWeek).slice(5).replace("-","/")})에 광고비가 나간 소재 ${ds.agg.filter(e=>e._live).length.toLocaleString()}개만 보기`;}
   if(gal)gal.classList.toggle("on",tGallery);
   if(sa)sa.classList.toggle("on",tableShowAll);
+  {const he=$("#hideEstBtn");if(he)he.classList.toggle("on",tHideEst);}
   if(wrap)wrap.hidden=!(hasFo||hasLive); /* 라이브/비디오/이미지 그룹 — 해당 데이터 없으면 숨김 */
   syncTbarH();}
 /* 현재 뷰(그룹/개별)에 맞지 않는 칩 필터 자동 해제 — 그룹 전용: gpre/gdt/gxt · 소재 전용: fo/nat/size.
@@ -4741,6 +4765,7 @@ document.addEventListener("keydown",ev=>{
     if(tr)toggleIsland(curDS,ISLE.name,tr);
     else{const ir=document.querySelector(".isle-row");if(ir)ir.remove();ISLE.name=null;}}});
 {const _sab=$("#showAllBtn");if(_sab)_sab.onclick=()=>{tableShowAll=!tableShowAll;tPage=1;renderQuickFo();if(active)renderTable(DATASETS[active]);};}
+{const _heb=$("#hideEstBtn");if(_heb)_heb.onclick=()=>{tHideEst=!tHideEst;tPage=1;renderQuickFo();if(active)renderTable(DATASETS[active]);};}
 {const _glb=$("#galleryBtn");if(_glb)_glb.onclick=()=>{tGallery=!tGallery;_galShown=100;renderQuickFo();if(active)renderTable(DATASETS[active]);};}
 $("#table tbody").addEventListener("input",_renameInput);
 $("#table tbody").addEventListener("click",e=>{
