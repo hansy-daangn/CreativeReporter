@@ -391,9 +391,9 @@
   .b-g2{color:var(--g2)} .b-g1{color:var(--g1)} .b-mid{color:var(--faint)} .b-w1{color:var(--w1)} .b-w2{color:var(--w2)} .b-gold{color:var(--gold)}
   .sp{display:inline-block;min-width:32px;padding:2px 8px;border-radius:7px;font-weight:740;font-size:12px}
   .sp-g2{background:var(--g2-f);color:var(--g2)} .sp-g1{background:var(--g1-f);color:var(--g1)} .sp-mid{background:var(--mid-f);color:var(--mid)} .sp-w1{background:var(--w1-f);color:var(--w1)} .sp-w2{background:var(--w2-f);color:var(--w2)} .sp-na{color:var(--faint)}
-  /* 실적 라벨 — 실제 라벨은 진하게, 추정치는 (cc) 마크 + 살짝 연하게 */
+  /* 실적 라벨 — 실제 라벨은 채운 필, 추정치(cc)는 점선 테두리 + 연한 색으로 한눈에 구분 */
   .sp .cc{font-style:normal;font-weight:640;font-size:9px;opacity:.62;margin-left:3px}
-  .pf-est{opacity:.9}
+  .pf-est{background:transparent;border:1px dashed currentColor;padding:1px 7px;opacity:.58;font-weight:660}
   /* 전체 목록 점수 전용 10단계 — 십의 자리가 다르면 색도 다르다 (파랑→청록→초록→올리브→무채→황토→주황→빨강) */
   .sd9{background:#D2E2F9;color:#1256C4} .sd8{background:#D6ECFB;color:#1E88E5} .sd7{background:#D7F0F1;color:#12969B}
   .sd6{background:#E0F1EA;color:#1C8A6E} .sd5{background:#E9F1DC;color:#67923D} .sd4{background:#EBEBE4;color:#8A887E}
@@ -2083,7 +2083,7 @@ const PERF_EST={W_RV:0.30,W_CTR:0.20,W_FV:0.30,W_FC:0.20,LO:0.265,HI:0.673};
    (실측: 인기순 = 각 그룹 물량 최상위·최희소). 저장은 원문 유지(루틴이 매주 같은 어휘로 쓰므로), 표시 단계에서만 바꾼다.
    그 외 낯선 어휘는 다른 지표일 수 있으니 추측 치환하지 않고 원문 그대로(중립색) 표시 + 새 어휘 등장 시 토스트로 알린다(warnNewPerfVocab) */
 const PERF_LABEL_ALIAS={"인기순":"매우 좋음"};
-const PERF_TIER={"매우 좋음":"g2","좋음":"g1","낮음":"w1"};
+const PERF_TIER={"매우 좋음":"g2","좋음":"g1","낮음":"w1","보통":"m"};
 const PERF_KNOWN=new Set(["인기순","매우 좋음","좋음","낮음","학습","학습 중","대기중","대기 중"]); /* 지금까지 관측·인지된 실적 어휘 */
 const _plNewSeen=new Set();
 function warnNewPerfVocab(rows){
@@ -2127,7 +2127,7 @@ function perfLabelOf(e){
   const act0=String(e._g_perfLabel||"").trim();
   const act=PERF_LABEL_ALIAS[act0]||act0;
   if(act&&act!=="--"&&act!=="-")return{lab:act,est:false};
-  if(e._plSeen)return null; /* 실적 '-' → 블록 없음 */
+  if(e._plSeen)return{lab:"보통",est:false,na:true}; /* 실적 '-' → '보통'으로 표시(빈 칸이면 값이 없는 줄 알고 추정 등이 붙을 수 있어 실측값으로 취급) */
   if(e._perfEst)return{lab:e._perfEst,est:true};
   return null;}
 function perfPillHTML(e){
@@ -2135,7 +2135,9 @@ function perfPillHTML(e){
   const t=PERF_TIER[p.lab]||"m";
   const cls="sp "+(t==="g2"?"sp-g2":t==="g1"?"sp-g1":t==="w1"?"sp-w1":t==="w2"?"sp-w2":"sp-mid")+(p.est?" pf-est":"");
   const stateDesc=/^대기/.test(p.lab)?" · 대기중 = 아직 게재·노출이 없어 구글이 평가를 시작하지 않은 소재":(/^학습/.test(p.lab)?" · 학습 = 게재를 시작해 데이터를 모으는 중(평가 확정 전)":"");
-  const tip=(p.est
+  const tip=(p.na
+    ?"구글 리포트 실적이 '-'(등급 없음)인 소재예요 — 값이 비었다고 오해하지 않게 '보통'으로 표시해요"
+    :p.est
     ?"추정 실적 (cc) — 실제 실적이 없는 소재라 지표 관계(전환·CTR 등수, 전환·광고비 물량 비율)로 추정한 값이에요"
     :"구글 리포트의 실적 값이에요 (매주 자동 동기화)")+stateDesc+(e.score!=null?` · 내부 점수 ${fmtScore(e.score)}`:"");
   return `<span class="${cls}" title="${escAttr(tip)}">${escHtml(p.lab)}${p.est?`<i class="cc">(cc)</i>`:""}</span>`;}
@@ -3361,7 +3363,7 @@ function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-r
    대표(lead)만 기본 표시, +를 누르면 그 카테고리의 하위(sub)가 펼쳐진다.
    매체와 연관 없는 지표(예: 구글의 eCPI/활성유저, 몰로코의 구글 전환류)는 아예 만들지 않는다. */
 /* 뱃지 전용 열 폐지 — 등급 뱃지(왕관·엄지·독보적)는 점수 칸에 흡수(같은 정보의 중복 열 제거) */
-function tableCols(L,ds){const meta=[{k:"name",t:L.name},{k:"score",t:"실적",help:"구글 리포트의 '실적'(매우 좋음·좋음·낮음·학습·대기중)을 표시 — 매주 자동 동기화, 실적이 '-'면 표시하지 않아요. 내보내기 어휘 '인기순'(=Best)은 UI 표기 '매우 좋음'으로 바꿔 보여줘요. 실적이 없는 소재(몰로코·메타·과거 구글)는 지표 관계(전환·CTR 등수, 물량 비율)로 추정하고 (cc)를 붙여요. 정렬은 내부 점수(효율 50:규모 50 등수화) 기준 · 옆 뱃지 = 등급(왕관 TOP·엄지·독보적)"}];
+function tableCols(L,ds){const meta=[{k:"name",t:L.name},{k:"score",t:"실적",help:"구글 리포트의 '실적'(매우 좋음·좋음·낮음·학습·대기중)을 표시 — 매주 자동 동기화, 실적이 '-'면 '보통'으로 표시해요. 내보내기 어휘 '인기순'(=Best)은 UI 표기 '매우 좋음'으로 바꿔 보여줘요. 실적이 없는 소재(몰로코·메타·과거 구글)는 지표 관계(전환·CTR 등수, 물량 비율)로 추정해 점선 연한 필에 (cc)를 붙여요. 정렬은 내부 점수(효율 50:규모 50 등수화) 기준 · 옆 뱃지 = 등급(왕관 TOP·엄지·독보적)"}];
   const isM=ds&&ds.agg&&ds.agg.some(e=>e._m_ctype),isG=ds&&ds.agg&&ds.agg.some(e=>e._g_assetType);
   const isQ=ds&&ds.agg&&ds.agg.some(e=>e._q_retD1!=null||e._q_afInstalls!=null||e._q_reEng!=null);
   const isAce=isG&&ds&&ds.media==="Google ACE"; /* ACE는 CPM이 '채점 1순위' 대표 열로 승격 — 공통 CPM 서브와 중복 방지 */
