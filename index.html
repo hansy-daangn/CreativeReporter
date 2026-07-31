@@ -1812,14 +1812,20 @@ async function hydrateAllYtTitles(){
    시작 시 캐시를 미리 올려 표·순위의 유튜브 URL 이름도 아는 제목으로 바로 표시 */
 const _ytTitles={};
 try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf("ytt_")===0)_ytTitles[k.slice(4)]=localStorage.getItem(k);}}catch(e){}
-/* 유튜브 화면비 실측 — 스트리밍이라 픽셀 해상도는 못 읽고, oEmbed width/height는 세로·정방형도 전부
-   480×270(16:9)으로 돌려줘 폐기(전부 '가로'로 오판하던 원인). 대신 **썸네일 레터박스 실측**:
-   hqdefault.jpg는 항상 4:3 캔버스에 원본을 비율 유지로 넣고 남는 부분을 검은 띠로 채우므로,
-   띠(상하/좌우) 두께를 재면 원본 화면비가 복원된다 — 16:9=상하 띠 · 9:16=좌우 큰 띠 · 1:1=좌우 중간 띠.
-   키를 cr_ytar2로 올려 구버전(oEmbed 오판) 캐시는 무시한다. */
-const YTAR=(()=>{try{return JSON.parse(localStorage.getItem("cr_ytar2")||"{}");}catch(_){return{};}})();
+/* 유튜브 화면비 — 1순위는 구글 공식 '방향'(_g_orientation, DB 백필+주간 루틴)이며 이 실측은 그게 없는
+   소재의 마지막 폴백. oEmbed width/height는 세로·정방형도 전부 480×270(16:9)으로 돌려줘 폐기.
+   **썸네일 레터박스 실측**: hqdefault.jpg는 4:3 캔버스에 원본을 비율 유지로 넣고 검은 띠로 채우므로
+   띠 두께로 화면비가 복원된다. 단 커스텀 썸네일은 띠가 없거나(풀블리드) 어중간해 오판 위험 →
+   측정값이 16:9·9:16·1:1 셋 중 하나에 8% 이내로 들어맞을 때만 채택, 아니면 null(모름)로 둔다.
+   키를 cr_ytar3로 올려 구버전(스냅 없는 오판) 캐시는 무시한다. */
+const YTAR=(()=>{try{return JSON.parse(localStorage.getItem("cr_ytar3")||"{}");}catch(_){return{};}})();
 let _ytarT=null;
-function _ytarSave(){clearTimeout(_ytarT);_ytarT=setTimeout(()=>{try{localStorage.setItem("cr_ytar2",JSON.stringify(YTAR));}catch(_){}},800);}
+function _ytarSave(){clearTimeout(_ytarT);_ytarT=setTimeout(()=>{try{localStorage.setItem("cr_ytar3",JSON.stringify(YTAR));}catch(_){}},800);}
+const _YT_CANON=[[16,9],[9,16],[1,1]];
+function _ytSnap(cw,ch){
+  const r=cw/ch;
+  for(const[w,h]of _YT_CANON)if(Math.abs(r-w/h)/(w/h)<=0.08)return[w,h];
+  return null;}
 function _ytAspectFromCanvas(g,W,H){
   const d=g.getImageData(0,0,W,H).data;
   const lum=(x,y)=>{const i=(y*W+x)*4;return 0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];};
@@ -1831,20 +1837,20 @@ function _ytAspectFromCanvas(g,W,H){
   let rig=0;while(rig<W*0.45&&colDark(W-1-rig))rig++;
   const cw=W-lef-rig,ch=H-top-bot;
   if(cw<W*0.2||ch<H*0.2)return null;
-  return [cw,ch];}
+  return _ytSnap(cw,ch);}
 function probeYtAspect(id){
-  if(YTAR[id])return Promise.resolve(YTAR[id]);
+  if(YTAR[id]!==undefined)return Promise.resolve(YTAR[id]||null);
   const tu=`https://img.youtube.com/vi/${id}/hqdefault.jpg`;
   const px=`https://wsrv.nl/?url=${encodeURIComponent(tu)}&w=96&h=72&fit=fill&output=jpg`; /* CORS 허용 프록시 — 광고 CDN dHash와 동일 경로 */
   return new Promise(res=>{
     const im=new Image();im.crossOrigin="anonymous";
-    const done=v=>{if(v){YTAR[id]=v;_ytarSave();}res(v||null);};
-    const to=setTimeout(()=>done(null),12000);
+    const done=(v,save)=>{if(save){YTAR[id]=v||0;_ytarSave();}res(v||null);}; /* 측정 성공 시에만 캐시(모름=0) — 로드 실패는 다음에 재시도 */
+    const to=setTimeout(()=>done(null,false),12000);
     im.onload=()=>{clearTimeout(to);
       try{const c=document.createElement("canvas");c.width=96;c.height=72;
         const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(im,0,0,96,72);
-        done(_ytAspectFromCanvas(g,96,72));}catch(_){done(null);}};
-    im.onerror=()=>{clearTimeout(to);done(null);};
+        done(_ytAspectFromCanvas(g,96,72),true);}catch(_){done(null,false);}};
+    im.onerror=()=>{clearTimeout(to);done(null,false);};
     im.src=px;});}
 /* 모든 유튜브 소재의 화면비를 백그라운드 실측(동시 3·상한 300) — 완료 시 열린 상세·타매체 블록 제자리 갱신 */
 let _ytarRan=false;
@@ -1852,7 +1858,7 @@ async function hydrateYtAspects(){
   if(_ytarRan)return;_ytarRan=true;
   const ids=new Set();
   for(const k in DATASETS){for(const r of (DATASETS[k].dataAll||[])){
-    const id=ytIdOf(r._g_url||r[DATASETS[k].L.nameCol]);if(id&&!YTAR[id])ids.add(id);}}
+    const id=ytIdOf(r._g_url||r[DATASETS[k].L.nameCol]);if(id&&YTAR[id]===undefined)ids.add(id);}}
   const list=[...ids].slice(0,300);
   for(let i=0;i<list.length;i+=3){
     await Promise.all(list.slice(i,i+3).map(probeYtAspect));
@@ -3500,7 +3506,7 @@ function nameTokensOf(e){
   return e._nmTok=t;}
 function nameSim(a,b){if(!a.size||!b.size)return 0;let n=0;for(const x of a)if(b.has(x))n++;return n/(a.size+b.size-n);}
 /* 화면비 정보 — 픽셀 해상도(tags.size·_m_res·MDIM 실측)가 있으면 정확값(exact),
-   유튜브는 oEmbed 치수(YTAR)로 화면비 클래스(가로/세로/정사각)만 판정(exact=false) */
+   유튜브는 구글 공식 '방향'(_g_orientation) 우선, 없으면 레터박스 실측(YTAR, 표준비 스냅·불확실=모름) */
 const _RATIOS=[["16:9",16/9],["9:16",9/16],["1:1",1],["4:3",4/3],["3:4",3/4],["4:5",4/5],["2:3",2/3]];
 function ratioLabel(r){let best=null,bd=1e9;for(const[lab,v]of _RATIOS){const d=Math.abs(r-v)/v;if(d<bd){bd=d;best=lab;}}return bd<=0.06?best:null;}
 function arInfoOf(e){
@@ -3986,7 +3992,7 @@ function fillIsland(ds,e,inner){const L=ds.L;
       if(ISLE.gSort&&ISLE.gSort.k===k)ISLE.gSort.dir*=-1;
       else ISLE.gSort={k,dir:-1};
       fillIsland(ds,e,inner);});});
-  /* 그룹 목록 해상도 '–' — 유튜브는 oEmbed 화면비(YTAR)로, 직접 영상·이미지는 로드된 실측 치수로 제자리 채움.
+  /* 그룹 목록 해상도 '–' — 유튜브는 레터박스 실측(YTAR)으로, 직접 영상·이미지는 로드된 실측 치수로 제자리 채움.
      ⚠️ 유튜브 썸네일 img(120×90)의 natural 크기를 영상 해상도로 읽으면 안 된다(전부 120×90으로 뜨던 버그) */
   inner.querySelectorAll(".fam-g tr[data-nm]").forEach(tr=>{
     const cell=tr.children[1];if(!cell||cell.textContent.trim()!=="–")return;
