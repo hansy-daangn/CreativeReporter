@@ -587,46 +587,52 @@
   .cmp-bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:900;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;padding:8px 10px 8px 14px;border-radius:999px;background:rgba(28,26,20,.94);color:#F3F0E8;box-shadow:0 12px 40px -10px rgba(0,0,0,.5);font-size:12px;max-width:calc(100vw - 24px)}
   .cmpb-t{font-weight:800;color:#FF8A3D;white-space:nowrap}
   .cmpb-slot{display:inline-flex;align-items:center;gap:5px;padding:3px 6px 3px 10px;border-radius:999px;background:rgba(255,255,255,.08);white-space:nowrap;max-width:280px;overflow:hidden}
-  .cmpb-slot.sA{box-shadow:inset 0 0 0 1px #FF8A3D}
-  .cmpb-slot.sB{box-shadow:inset 0 0 0 1px #64B5F6}
-  .cmpb-slot.empty{opacity:.5}
   .cmpb-x{border:0;background:transparent;color:#CFCABB;cursor:pointer;font-size:11px;padding:2px 4px}
   .cmpb-x:hover{color:#fff}
-  .cmpb-vs{color:#8B877B;font-weight:740}
   .cmpb-open{border:0;border-radius:999px;padding:6px 14px;background:#FF6F0F;color:#fff;font-weight:800;cursor:pointer;font-size:12px}
   .cmpb-open:disabled{background:rgba(255,255,255,.14);color:#999285;cursor:default}
+  .cmpb-clear{border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:5px 12px;background:transparent;color:#CFCABB;font-weight:700;cursor:pointer;font-size:11.5px}
+  .cmpb-clear:hover{color:#fff;border-color:rgba(255,255,255,.45)}
   .cmp-modal{position:fixed;inset:0;z-index:1000;background:rgba(15,14,10,.55);display:grid;place-items:center;padding:20px}
   .cmpm{background:#FFFDF7;border-radius:16px;max-width:880px;width:100%;max-height:calc(100vh - 40px);overflow:auto;padding:20px 22px 16px;box-shadow:0 30px 80px -20px rgba(0,0,0,.45)}
   /* A/B 소재 미리보기 — 프레임 안에 contain으로 수납(잘림 금지), 세로 소재도 온전히 보이게 충분한 높이 */
-  .cmpm-media{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:2px 0 4px}
-  .cmpm-med{min-width:0}
-  .cmpm-med .isle-frame{height:320px;border-radius:12px}
-  .cmpm-med.a .isle-frame{box-shadow:inset 0 0 0 2px #FF8A3D}
-  .cmpm-med.b .isle-frame{box-shadow:inset 0 0 0 2px #64B5F6}
+  .cmpm-media{display:flex;gap:12px;margin:2px 0 4px;overflow-x:auto;padding-bottom:4px}
+  .cmpm-med{flex:1 1 0;min-width:180px;max-width:360px}
+  .cmpm-med .isle-frame{height:220px;border-radius:12px;box-shadow:inset 0 0 0 2px var(--cc,#E2DFD3)}
+  .cmpm-media.n2 .cmpm-med .isle-frame{height:300px}
+  .cmpm-media.n3 .cmpm-med .isle-frame{height:250px}
   .cmpm-med .asset-src{font-size:10.5px}
-  @media(max-width:700px){.cmpm-media{grid-template-columns:1fr}.cmpm-med .isle-frame{height:260px}}
+  .cmpm-medh{display:flex;align-items:center;gap:6px;font-size:11.5px;margin:0 0 5px;min-width:0}
+  .cmpm-medh .rank{flex:0 0 auto;font-weight:800;font-size:10.5px;padding:1px 7px;border-radius:999px;background:var(--surface-3);color:var(--muted)}
+  .cmpm-medh b{flex:0 0 auto;font-size:12px}
+  .cmpm-medh .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:650;color:var(--ink)}
+  .cmpm-medh .dp{flex:0 0 auto;margin-left:auto;font-size:10.5px;color:var(--faint);font-weight:650}
+  @media(max-width:700px){.cmpm-media{flex-wrap:nowrap}.cmpm-med{min-width:200px}.cmpb-slot{max-width:170px}}
   .cmpm-h{display:flex;align-items:center;gap:10px;margin-bottom:10px;min-width:0}
   .cmpm-name{font-weight:800;font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .cmpm-name.a{color:#E5640D}.cmpm-name.b{color:#1E88E5}
+  .cmpm-name .n{font-weight:600;font-size:11px;color:var(--faint);margin-left:6px}
   .cmpm-close{margin-left:auto;border:0;background:transparent;font-size:16px;cursor:pointer;color:var(--muted);padding:2px 6px}
   .cmpm-close:hover{color:var(--ink)}
   .cmpm-secT{font-weight:800;font-size:12px;margin:14px 0 7px;color:var(--ink)}
   .cmpm-secT .n,.cmpm-leg .n{font-weight:600;font-size:11px;color:var(--faint);margin-left:6px}
-  .cmpm-row{display:grid;grid-template-columns:128px minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:center;margin:6px 0}
-  .cmpm-k{font-size:11.5px;color:var(--muted);font-weight:700}
-  .cmpm-cell{display:flex;align-items:center;gap:7px;min-width:0}
-  .cmpm-bar{height:9px;border-radius:5px;flex:0 1 auto;min-width:2px}
-  .cmpm-cell.a .cmpm-bar{background:#FFC59B}.cmpm-cell.b .cmpm-bar{background:#B5D9F8}
-  .cmpm-cell.win.a .cmpm-bar{background:#FF8A3D}.cmpm-cell.win.b .cmpm-bar{background:#64B5F6}
-  .cmpm-v{font-size:11.5px;font-weight:650;color:var(--muted);white-space:nowrap}
-  .cmpm-cell.win .cmpm-v{font-weight:850;color:var(--ink)}
+  .cmpm-axcap{font-size:11px;color:var(--faint);margin:4px 0 2px;line-height:1.55}
+  .cmpg-wrap{overflow-x:auto;margin-top:10px;border-radius:10px}
+  .cmpg{width:100%;border-collapse:collapse;font-size:11.5px}
+  .cmpg th,.cmpg td{padding:6px 10px;text-align:right;border-bottom:1px solid #F0EFE9;white-space:nowrap}
+  .cmpg th{background:var(--surface-2);font-weight:700;font-size:11px}
+  .cmpg th.l,.cmpg td.l{text-align:left;color:var(--muted);font-weight:700}
+  .cmpg td.num{font-weight:600;color:var(--muted)}
+  .cmpg td.num.win{font-weight:850;color:var(--ink);background:var(--surface-2)}
   .cmp-seg{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 8px}
   .cmp-seg button{border:1px solid #E2DFD3;background:transparent;border-radius:999px;padding:4px 11px;font-size:11.5px;cursor:pointer;color:var(--muted);font-weight:650}
   .cmp-seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .cmpm-leg{display:flex;gap:14px;align-items:center;font-size:11.5px;color:var(--muted);margin:2px 0 4px}
+  .cmpm-tabs{margin:0 4px 0 auto;flex:0 0 auto}
+  .cmp-trgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px 16px}
+  .cmp-trc h5{font-size:11.5px;font-weight:800;margin:0 0 3px;color:var(--ink)}
+  .cmp-trc h5 em{font-style:normal;font-weight:600;font-size:10px;color:var(--faint);margin-left:4px}
+  .cmpm-leg{display:flex;gap:14px;align-items:center;font-size:11.5px;color:var(--muted);margin:2px 0 4px;flex-wrap:wrap}
+  .cmpm-leg .lgd{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:-0.5px}
   .cmpm-chartwrap{overflow-x:auto}
-  .cmpm-foot{margin-top:10px;font-size:11px;color:var(--faint);display:flex;gap:10px}
-  @media(max-width:700px){.cmpm-row{grid-template-columns:92px minmax(0,1fr) minmax(0,1fr)}.cmpb-slot{max-width:170px}}
   .meta-pv-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;width:100%;height:100%;padding:20px;box-sizing:border-box;text-decoration:none;text-align:center;background:linear-gradient(160deg,#EEF3FF,#E4ECFA);color:var(--ink);transition:background .12s}
   .meta-pv-card:hover{background:linear-gradient(160deg,#E4ECFF,#D8E4F8)}
   .meta-pv-emo{font-size:34px;line-height:1}
@@ -3003,12 +3009,14 @@ function scorePosHTML(ds,e){const S=ds.S;
 /* 소재(또는 그룹)의 주차별 광고비·핵심지표 미니 차트 — 상세 뷰 미리보기 아래 표시.
    막대=광고비(투입). 선은 매체 데이터에 맞춰 자동 선택, 각 선은 자체 최대값으로 정규화(모양=추세, 절대값은 범례 최신값·호버).
    선 = 그 매체의 점수 반영 지표(가중치 상위 3) — 점수 미반영 지표는 그리지 않는다. 데이터 없는 지표 자동 제외 */
-function weeklyAggOf(ds,e){
-  /* 소재(또는 그룹)의 주차별 원시 합계 — 추이 차트와 진단 라인이 공유 */
+function weeklyAggOf(ds,e,full){
+  /* 소재(또는 그룹)의 주차별 원시 합계 — 추이 차트와 진단 라인이 공유.
+     full=true면 기간 필터를 무시하고 이 소재가 가진 전 주차를 쓴다(소재 비교 — 전반적 추이용) */
   const nameCol=ds.L.nameCol;
+  const src=full?nrRowsOf(ds):ds.data;
   let rows;
-  if(e._isGroup){const gid=e._m_group||e._g_adGroupId;rows=ds.data.filter(r=>r._m_group===gid||r._g_adGroupId===gid);}
-  else rows=ds.data.filter(r=>r[nameCol]===e.name);
+  if(e._isGroup){const gid=e._m_group||e._g_adGroupId;rows=src.filter(r=>r._m_group===gid||r._g_adGroupId===gid);}
+  else rows=src.filter(r=>r[nameCol]===e.name);
   const wkMap=new Map();
   const blank=()=>({c:0,imp:0,clk:0,attr:0,act:0,conv:0,cval:0,vn:0,vd:0,tv:0,fo:0,home:0,inter:0,nu:0,rB:0,rU:0,afI:0});
   for(const r of rows){const d=String(r.date||"").slice(0,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;
@@ -3026,7 +3034,7 @@ function weeklyAggOf(ds,e){
      전환류(단가 선)는 소재 합산 그대로 — 분모>0 가드가 있어 정확-전용 주에선 선이 자연히 비고 막대만 남는다 */
   if(e._isGroup&&e._g_adGroupId&&typeof gWeekMap==="object"){
     const wk=gWeekMap[String(e._g_adGroupId)];
-    if(wk&&typeof wk==="object"){const lo=ds.range&&ds.range.first;
+    if(wk&&typeof wk==="object"){const lo=full?null:(ds.range&&ds.range.first);
       for(const w in wk){if(!/^\d{4}-\d{2}-\d{2}$/.test(w))continue;if(lo&&w<lo)continue;
         const a=wk[w];if(!Array.isArray(a)||!(+a[0]>0))continue;
         let o=wkMap.get(w);if(!o){o=blank();wkMap.set(w,o);}
@@ -3458,19 +3466,33 @@ function refreshCrossBlock(){ /* 지문이 새로 계산되면 열린 상세의 
 function crossGo(ch,nm){const ds=curDS;if(!ds||!ds.aggByChannel||!ds.aggByChannel.has(ch))return;
   ds.media=ch;tPage=1;tGroupByTouched=false;show(ds); /* 매체 드롭다운과 같은 전환 경로 */
   setTimeout(()=>{try{goToIslandFromQuad(nm);}catch(_){}},250);}
-/* ═════ 소재 비교(A/B) — 상세 미디어 프레임 좌상단 '비교' 버튼으로 두 소재를 한 그래프에 겹쳐 보기 ═════
-   흐름: 소재1에서 '비교' 클릭 → 비교 A 담김(열린 자물쇠) → 소재2에서 '비교' 클릭 → 비교 B 담김 + 겹침 그래프 자동 오픈.
-   담긴 소재에서 '비교'를 한 번 더 누르면 그 슬롯을 고정(잠긴 자물쇠) — 이후 다른 소재를 담아도 고정 슬롯은 유지되고
-   비어 있거나 고정 안 된 슬롯이 교체된다. 버튼 오른쪽 ✕ = 비교 취소. 하단 비교 바에서 언제든 다시 열기·취소 가능. */
-let CMP={A:null,B:null}; /* {media,name,locked} — 지표 축이 같아야 해서 같은 매체끼리만 */
+/* ═════ 소재 비교(멀티) — 상세 미디어 프레임 좌상단 '비교' 버튼으로 소재를 무제한 담아 한 화면에서 겹쳐 보기 ═════
+   흐름: 소재마다 '비교' 클릭 → 목록에 추가 → 2개째에 겹침 모달 자동 오픈, 이후에도 계속 추가 가능(개수 무제한).
+   담긴 소재에서 '비교'를 한 번 더 누르면 잠금(잠긴 자물쇠) — 잠긴 소재는 ✕·전체 지우기에서 보호된다.
+   ★ 정체성 = 우세 순위: 소재는 항상 '잘된 순서'(우세도 — 방향 있는 지표별 최고 대비 비율 평균)로 왼쪽부터
+   정렬되고, 색도 그 순위에 고정된다(1위=주황, 2위=파랑…) — 미리보기·차트·표·하단 바가 전부 같은 순서·색이라
+   비교 중 헷갈릴 여지를 없앤다. 모달 상단 세그먼트 [개요|추이]:
+   · 개요 — 지표축 비례 겹침 차트: 지표를 세로 한 줄로 쌓고 각 지표를 0→비교군 최고의 '선형' 가로축으로,
+     소재마다 점을 찍고 세로로 이어 색 면(부피)을 만든다. 2배 차이는 정확히 2배 거리, 면적 큰 색이 전반 우세.
+     단가류(↓)는 효율(역수)로 환산해 '오른쪽=우세'와 비례를 동시에 지킨다(역수는 비율 보존 — 단가 절반=거리 2배).
+     레이더 차트는 축 각도·순서에 따라 면적이 왜곡돼 배제. 아래에 지표별 값 표(우세 진하게).
+   · 추이 — 지표별 주차 겹침 선점 그래프를 바둑판(2~3열)로 한 번에 — 버튼으로 넘기지 않고 전 지표를 한눈에.
+   기간은 필터와 무관하게 소재가 보유한 전 주차 사용(전반적 추이 목적). */
+let CMP={list:[]}; /* [{key,media,name,locked}] — 지표 축이 같아야 해서 같은 매체끼리만 */
+const CMP_COLORS=["#FF8A3D","#1E88E5","#2E9E6B","#AB47BC","#F4B400","#26B8CE","#E5537A","#8D6E63","#7986CB","#9CCC65"];
+const CMP_GRAY="#8B877B"; /* 순위를 매길 수 없는(현재 매체가 아닌) 소재 */
+let cmpTab="ov"; /* 모달 세그먼트: ov=개요 · tr=추이 */
 const LOCK_OPEN='<svg class="lk" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M4 5.1V3.6a2.1 2.1 0 0 1 4.1-.65" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><rect x="2.6" y="5.1" width="6.8" height="5.1" rx="1.1" fill="currentColor"/></svg>';
 const LOCK_CLOSED='<svg class="lk" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M3.9 5.1V3.6a2.1 2.1 0 0 1 4.2 0v1.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><rect x="2.6" y="5.1" width="6.8" height="5.1" rx="1.1" fill="currentColor"/></svg>';
 function dsKeyOf(ds){for(const k in DATASETS)if(DATASETS[k]===ds)return k;return null;} /* DATASETS는 media가 아닌 자체 키로 인덱싱 */
-function cmpSlotOf(media,name){for(const s of["A","B"])if(CMP[s]&&CMP[s].media===media&&CMP[s].name===name)return s;return null;}
+function cmpIdxOf(media,name){return CMP.list.findIndex(c=>c.media===media&&c.name===name);}
 function cmpOvlHTML(ds,e){
-  const s=cmpSlotOf(ds.media,e.name),locked=s&&CMP[s].locked;
-  const tt=s?(locked?`비교 ${s}로 고정됨 — 클릭하면 고정 해제`:`비교 ${s}에 담김 — 클릭하면 이 자리로 고정(다른 소재를 담아도 유지)`):"이 소재를 비교 슬롯에 담기 — 두 개 담으면 한 그래프에서 주요 지표를 겹쳐 비교해요";
-  return `<div class="cmp-ovl"><button type="button" class="cmp-btn${s?" on":""}" data-cmpact="toggle" title="${escAttr(tt)}">비교${s?" "+s:""} ${locked?LOCK_CLOSED:LOCK_OPEN}</button>${s?`<button type="button" class="cmp-xbtn" data-cmpact="cancel" title="비교 취소">✕</button>`:""}</div>`;}
+  const i=cmpIdxOf(ds.media,e.name),c=i>=0?CMP.list[i]:null,locked=c&&c.locked;
+  let col="",rkTxt="";
+  if(c){const R=cmpRank();const rk=R.rankByList.get(i);
+    col=R.colorByList.get(i)||CMP_GRAY;if(rk!=null&&R.ents.length>=2)rkTxt=` ${rk+1}위`;}
+  const tt=c?(locked?"비교에 고정됨 — 클릭하면 고정 해제":"비교에 담김 — 클릭하면 고정(✕·전체 지우기에서 보호)"):"이 소재를 비교 목록에 담기 — 2개 이상 담으면 한 화면에서 주요 지표를 겹쳐 비교해요 (개수 제한 없음)";
+  return `<div class="cmp-ovl"><button type="button" class="cmp-btn${c?" on":""}"${c?` style="background:${col}"`:""} data-cmpact="toggle" title="${escAttr(tt)}">비교${c?"중"+rkTxt:""} ${locked?LOCK_CLOSED:LOCK_OPEN}</button>${c?`<button type="button" class="cmp-xbtn" data-cmpact="cancel" title="비교에서 빼기">✕</button>`:""}</div>`;}
 function mountCmpOvl(frame,ds,e){
   const old=frame.querySelector(".cmp-ovl");if(old)old.remove();
   frame.insertAdjacentHTML("afterbegin",cmpOvlHTML(ds,e));
@@ -3478,44 +3500,77 @@ function mountCmpOvl(frame,ds,e){
     if(b.dataset.cmpact==="toggle")cmpToggle(ds,e);else cmpCancel(ds,e);
     mountCmpOvl(frame,ds,e);});}
 function cmpToggle(ds,e){
-  const s=cmpSlotOf(ds.media,e.name);
-  if(s){CMP[s].locked=!CMP[s].locked;toast(CMP[s].locked?`비교 ${s}로 고정했어요 🔒`:`비교 ${s} 고정을 풀었어요`);}
+  const i=cmpIdxOf(ds.media,e.name);
+  if(i>=0){const c=CMP.list[i];c.locked=!c.locked;toast(c.locked?"비교에 고정했어요 🔒 — ✕·전체 지우기에서 보호돼요":"고정을 풀었어요");}
   else{
-    const occ=CMP.A||CMP.B;
-    if(occ&&occ.media!==ds.media){toast("비교는 같은 매체 소재끼리만 가능해요 — 기존 비교를 먼저 취소해 주세요");return;}
-    const ent={key:dsKeyOf(ds),media:ds.media,name:e.name,locked:false};
-    if(!CMP.A)CMP.A=ent;
-    else if(!CMP.B)CMP.B=ent;
-    else if(!CMP.B.locked)CMP.B=ent;
-    else if(!CMP.A.locked)CMP.A=ent;
-    else{toast("비교 A·B가 모두 고정돼 있어요 — 자물쇠를 풀거나 취소한 뒤 담아 주세요");return;}
-    if(CMP.A&&CMP.B)openCmpModal();
-    else toast("비교 A에 담았어요 — 다른 소재에서도 '비교'를 누르면 한 그래프에서 겹쳐 봐요");}
+    if(CMP.list.length&&CMP.list[0].media!==ds.media){toast("비교는 같은 매체 소재끼리만 가능해요 — 기존 비교를 먼저 지워 주세요");renderCmpBar();return;}
+    CMP.list.push({key:dsKeyOf(ds),media:ds.media,name:e.name,locked:false});
+    const n=CMP.list.length;
+    if(n===1)toast("비교에 담았어요 — 다른 소재에서도 '비교'를 누르면 한 화면에서 겹쳐 봐요 (개수 제한 없음)");
+    else if(n===2)openCmpModal();
+    else{const mm=$("#cmpModal");if(mm&&!mm.hidden)renderCmpModal();else toast(`비교 목록 ${n}개 — 하단 바 '겹쳐 보기'로 확인해요`);}}
   renderCmpBar();}
-function cmpCancel(ds,e){
-  const s=cmpSlotOf(ds.media,e.name);if(!s)return;
-  CMP[s]=null;
-  if(s==="A"&&CMP.B){CMP.A=CMP.B;CMP.B=null;} /* 항상 A부터 차게 승격 */
-  toast(`비교 ${s}를 취소했어요`);closeCmpModal();renderCmpBar();}
-function cmpEntOf(slot){const c=CMP[slot];if(!c)return null;
+function cmpRemove(i){
+  const c=CMP.list[i];if(!c)return;
+  if(c.locked){toast("고정된 소재예요 — 자물쇠를 먼저 풀어 주세요");return;}
+  CMP.list.splice(i,1);
+  const mm=$("#cmpModal");
+  if(CMP.list.length<2)closeCmpModal();else if(mm&&!mm.hidden)renderCmpModal();
+  renderCmpBar();refreshIsleCmpOvl();}
+function cmpCancel(ds,e){const i=cmpIdxOf(ds.media,e.name);if(i>=0)cmpRemove(i);}
+function cmpClear(){
+  const kept=CMP.list.filter(c=>c.locked);
+  const n=CMP.list.length-kept.length;
+  CMP.list=kept;
+  toast(kept.length?`고정 안 된 ${n}개를 지웠어요 — 고정 ${kept.length}개는 남아 있어요`:"비교 목록을 모두 지웠어요");
+  if(CMP.list.length<2)closeCmpModal();else renderCmpModal();
+  renderCmpBar();refreshIsleCmpOvl();}
+function cmpEntOf(i){const c=CMP.list[i];if(!c)return null;
   const ds=(c.key&&DATASETS[c.key])||curDS;if(!ds||!ds.agg||ds.media!==c.media)return null; /* 채널을 바꾸면 비교는 잠시 비활성(바에는 유지) */
-  const e=findRow(ds,c.name);return e?{ds,e,c}:null;}
+  let e=findRow(ds,c.name);
+  if(!e&&ds.aggByChannel&&ds.aggByChannel.has(c.media)){const ix=ds.aggByChannel.get(c.media);e=ix.byName&&ix.byName.get(c.name);} /* 기간 창 밖 소재도 전체 기간 인덱스에서 찾는다 */
+  return e?{ds,e,c,i}:null;}
+function cmpEnts(){const out=[];for(let i=0;i<CMP.list.length;i++){const g=cmpEntOf(i);if(g)out.push(g);}return out;}
+/* 우세 순위 — 방향 있는 지표마다 '최고 대비 비율'(단가류는 역수 비율)을 평균한 우세도로 정렬.
+   색은 목록이 아니라 '순위'에 고정(1위=주황, 2위=파랑…) — 미리보기·차트·표·바가 같은 순서·색을 공유 */
+function cmpRank(){
+  const ents=cmpEnts();
+  const R={ents,tots:[],defs:[],domPct:[],order:[],colorByList:new Map(),rankByList:new Map(),ds:ents.length?ents[0].ds:null};
+  if(!ents.length)return R;
+  R.defs=cmpMetricDefs(R.ds);
+  R.tots=ents.map(g=>cmpTotals(g.ds,g.e));
+  const dom=ents.map(()=>({s:0,n:0}));
+  for(const d of R.defs){
+    if(!d.dir)continue;
+    const vs=R.tots.map(t=>d.of(t));
+    const val=vs.filter(v=>v!=null&&v>0);
+    if(val.length<2)continue;
+    const best=d.dir>0?Math.max(...val):Math.min(...val);
+    vs.forEach((v,j)=>{if(v==null||v<=0)return;dom[j].s+=d.dir>0?v/best:best/v;dom[j].n++;});}
+  R.domPct=dom.map(o=>o.n?o.s/o.n:null);
+  R.order=[...ents.keys()].sort((a,b)=>((R.domPct[b]!=null?R.domPct[b]:-1)-(R.domPct[a]!=null?R.domPct[a]:-1)));
+  R.order.forEach((j,rank)=>{R.colorByList.set(ents[j].i,CMP_COLORS[rank%CMP_COLORS.length]);R.rankByList.set(ents[j].i,rank);});
+  return R;}
 function refreshIsleCmpOvl(){ /* 열린 상세의 비교 버튼 상태 동기화 */
   const fr=document.querySelector(".isle-row .ir-media .isle-frame");
   if(fr&&curDS&&ISLE.name){const e=findRow(curDS,ISLE.name);if(e&&!e._isGroup)mountCmpOvl(fr,curDS,e);}}
 function renderCmpBar(){
   const bar=$("#cmpBar");if(!bar)return;
-  if(!CMP.A&&!CMP.B){bar.hidden=true;bar.innerHTML="";return;}
+  if(!CMP.list.length){bar.hidden=true;bar.innerHTML="";return;}
   bar.hidden=false;
-  const chip=s=>{const c=CMP[s];if(!c)return `<span class="cmpb-slot empty">${s} 비어 있음</span>`;
-    const got=cmpEntOf(s);
+  const R=cmpRank();
+  /* 칩도 우세 순서(잘된 것부터) — 순위 없는(다른 매체) 소재는 회색으로 뒤에 */
+  const seq=R.order.map(j=>R.ents[j].i);
+  for(let i=0;i<CMP.list.length;i++)if(!seq.includes(i))seq.push(i);
+  const chips=seq.map(i=>{const c=CMP.list[i];const got=R.ents.find(g=>g.i===i);
     const nm=got?displayNameOf(got.e):c.name;
-    return `<span class="cmpb-slot s${s}" title="${escAttr(nm)}">${s}${c.locked?" "+LOCK_CLOSED:""} ${escHtml(trunc(nm,24))}<button type="button" class="cmpb-x" data-slot="${s}" title="비교 취소">✕</button></span>`;};
-  bar.innerHTML=`<span class="cmpb-t">소재 비교</span>${chip("A")}<span class="cmpb-vs">vs</span>${chip("B")}<button type="button" class="cmpb-open" id="cmpOpenBtn"${CMP.A&&CMP.B?"":" disabled"}>겹쳐 보기</button>`;
-  bar.querySelectorAll(".cmpb-x").forEach(x=>x.onclick=()=>{const s=x.dataset.slot;
-    CMP[s]=null;if(s==="A"&&CMP.B){CMP.A=CMP.B;CMP.B=null;}
-    closeCmpModal();renderCmpBar();refreshIsleCmpOvl();});
-  const ob=$("#cmpOpenBtn");if(ob)ob.onclick=openCmpModal;}
+    const col=R.colorByList.get(i)||CMP_GRAY;
+    const rk=R.rankByList.get(i);
+    return `<span class="cmpb-slot" style="box-shadow:inset 0 0 0 1px ${col}" title="${escAttr(nm)}">${rk!=null&&R.ents.length>=2?`<b style="color:${col}">${rk+1}위</b> `:""}${c.locked?LOCK_CLOSED+" ":""}${escHtml(trunc(nm,20))}<button type="button" class="cmpb-x" data-i="${i}" title="비교에서 빼기">✕</button></span>`;}).join("");
+  bar.innerHTML=`<span class="cmpb-t">소재 비교 ${CMP.list.length}</span>${chips}<button type="button" class="cmpb-open" id="cmpOpenBtn"${CMP.list.length>=2?"":" disabled"}>겹쳐 보기</button><button type="button" class="cmpb-clear" id="cmpClearBtn" title="고정(🔒)된 소재는 남아요">전체 지우기</button>`;
+  bar.querySelectorAll(".cmpb-x").forEach(x=>x.onclick=()=>cmpRemove(+x.dataset.i));
+  const ob=$("#cmpOpenBtn");if(ob)ob.onclick=openCmpModal;
+  const cb=$("#cmpClearBtn");if(cb)cb.onclick=cmpClear;}
 function cmpMetricDefs(ds){
   const defs=[],seen=new Set();
   const add=(k,lab,dir,fmt,of)=>{if(seen.has(k))return;seen.add(k);defs.push({k,lab,dir,fmt,of});};
@@ -3528,77 +3583,156 @@ function cmpMetricDefs(ds){
   if(!seen.has("영상 완주율"))add("영상 완주율","완주율",1,fmtPct,o=>o.vd>0?o.vn/o.vd:null);
   return defs;}
 function cmpTotals(ds,e){
-  const {os}=weeklyAggOf(ds,e);
+  const {os}=weeklyAggOf(ds,e,true); /* 기간 필터와 무관 — 소재가 보유한 전 주차 합산 */
   const t={c:0,imp:0,clk:0,attr:0,act:0,conv:0,cval:0,vn:0,vd:0,tv:0,fo:0,home:0,inter:0,nu:0,rB:0,rU:0,afI:0};
   for(const o of os)for(const k in t)t[k]+=o[k]||0;
   return t;}
-let cmpMetricSel=null;
 function closeCmpModal(){const m=$("#cmpModal");if(m){m.hidden=true;m.innerHTML="";}}
 function openCmpModal(){
   const m=$("#cmpModal");if(!m)return;
-  if(!(cmpEntOf("A")&&cmpEntOf("B"))){toast("비교할 두 소재가 현재 기간 데이터에 없어요");return;}
+  if(cmpEnts().length<2){toast("현재 매체에서 비교할 수 있는 소재가 2개 미만이에요");return;}
   m.hidden=false;renderCmpModal();}
-function cmpChartSVG(defs){
-  const A=cmpEntOf("A"),B=cmpEntOf("B");if(!A||!B)return "";
-  const sel=(cmpMetricSel&&defs.some(d=>d.k===cmpMetricSel))?cmpMetricSel:(defs[0]&&defs[0].k);
-  const def=defs.find(d=>d.k===sel);if(!def)return "";
-  const wa=weeklyAggOf(A.ds,A.e),wb=weeklyAggOf(B.ds,B.e);
-  const weeks=[...new Set([...wa.ws,...wb.ws])].sort();
+/* [개요] 지표축 비례 겹침 차트 — 모듈 주석의 시각화 본체. 색·순서는 cmpRank의 순위 기준 */
+function cmpAxesSVG(R){
+  const{ents,tots,defs}=R;
+  const rows=defs.map(d=>{
+    const raw=tots.map(t=>d.of(t));
+    const eff=raw.map(v=>v==null?null:(d.dir<0?(v>0?1/v:null):v)); /* 단가류 → 효율(역수): 오른쪽=우세·비율 보존 */
+    const mx=Math.max(...eff.filter(v=>v!=null).concat([0]));
+    return {d,raw,eff,mx};}).filter(r=>r.mx>0&&r.eff.filter(v=>v!=null).length>=2);
+  if(!rows.length)return `<div class="fam-note">겹쳐 볼 지표 값이 부족해요</div>`;
+  const LW=128,PR=46,RH=40,PT=12,PB=8,W=700,H=PT+rows.length*RH+PB,x0=LW,x1=W-PR,iw=x1-x0;
+  const yAt=r=>PT+r*RH+RH/2;
+  let g="";
+  [0.25,0.5,0.75,1].forEach(f=>{const x=x0+f*iw;
+    g+=`<line x1="${x.toFixed(1)}" y1="${PT}" x2="${x.toFixed(1)}" y2="${H-PB}" stroke="#ECE9DE" stroke-width="${f===1?1:0.7}"${f===1?"":' stroke-dasharray="2 4"'}/>`;});
+  g+=`<text x="${x1}" y="${PT-3}" font-size="8.5" fill="var(--faint)" text-anchor="middle">최고=100%</text>`;
+  rows.forEach((r,ri)=>{const y=yAt(ri);
+    g+=`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="#F0EEE6" stroke-width="1"/>`;
+    g+=`<text x="${x0-8}" y="${y+3.5}" font-size="10.5" font-weight="700" fill="var(--muted)" text-anchor="end">${escHtml(r.d.lab)}${r.d.dir<0?" ↓":r.d.dir>0?" ↑":""}</text>`;});
+  const pts=ents.map((en,j)=>rows.map((r,ri)=>{const v=r.eff[j];return v==null?null:{x:x0+v/r.mx*iw,y:yAt(ri)};}));
+  let fills="",lines="",dots="";
+  /* 그리기 순서 = 우세 역순(1위가 맨 위에 얹힘) */
+  [...R.order].reverse().forEach(j=>{
+    const en=ents[j],col=R.colorByList.get(en.i)||CMP_GRAY;
+    const rk=R.rankByList.get(en.i),nm=displayNameOf(en.e);
+    const ps=pts[j].filter(Boolean);
+    if(!ps.length)return;
+    let pth="";ps.forEach((p,k)=>{pth+=(k?" L":"M")+` ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;});
+    if(ps.length>=2)fills+=`<path d="M ${x0} ${ps[0].y.toFixed(1)} ${pth.replace(/^M/,"L")} L ${x0} ${ps[ps.length-1].y.toFixed(1)} Z" fill="${col}" fill-opacity="0.08"/>`;
+    lines+=`<path d="${pth}" fill="none" stroke="${col}" stroke-width="2" stroke-opacity="0.85" stroke-linejoin="round"/>`;
+    pts[j].forEach((p,ri)=>{if(!p)return;const r=rows[ri];
+      dots+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.2" fill="${col}"><title>${rk!=null?rk+1+"위 ":""}${escHtml(trunc(nm,24))} · ${escHtml(r.d.lab)} ${escHtml(r.d.fmt(r.raw[j]))}</title></circle>`;});});
+  return `<div class="cmpm-chartwrap"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:560px;height:auto">${g}${fills}${lines}${dots}</svg></div>
+  <div class="cmpm-axcap">각 지표는 0에서 시작하는 선형축(오른쪽 끝 = 비교 소재 중 최고) — 거리 비율이 값 비율 그대로예요(2배 차이=2배 거리). 단가류(↓)는 효율(역수)로 환산해 오른쪽=우세를 유지(단가 절반=거리 2배). 색 면적이 넓을수록 전반 우세 · 점에 마우스를 올리면 원래 값.</div>`;}
+function cmpGridHTML(R){
+  const{ents,tots,defs,order}=R;
+  const head=order.map((j,rank)=>{const en=ents[j];const nm=displayNameOf(en.e);
+    return `<th style="color:${R.colorByList.get(en.i)}" title="${escAttr(nm)}">${rank+1}위 · ${escHtml(trunc(nm,14))}</th>`;}).join("");
+  const rows=defs.map(d=>{
+    const vs=tots.map(t=>d.of(t));
+    if(vs.every(v=>v==null))return "";
+    const val=vs.filter(v=>v!=null);
+    const best=d.dir?(d.dir>0?Math.max(...val):Math.min(...val)):null;
+    const cells=order.map(j=>{const v=vs[j];const win=d.dir&&v!=null&&val.length>=2&&v===best;
+      return `<td class="num${win?" win":""}">${v!=null?d.fmt(v):"–"}</td>`;}).join("");
+    return `<tr><td class="l">${escHtml(d.lab)}${d.dir<0?" ↓":d.dir>0?" ↑":""}</td>${cells}</tr>`;}).join("");
+  return `<div class="cmpg-wrap"><table class="cmpg"><thead><tr><th class="l">지표</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;}
+/* [추이] ① 동시 보기 — 광고비(실선)+단가(점선)+CTR(잔점선)를 한 그래프에 겹침. 색은 소재 순위에 고정돼
+   있으므로 지표는 '선 모양'으로 구분한다. 지표마다 자체 최대값 기준 비율로 그리되 같은 지표는 모든 소재가
+   같은 축을 쓰므로 소재 간 비례는 그대로 유지된다. ② 지표별 바둑판 — 전 지표를 한눈에 (버튼 넘김 없음) */
+let cmpCostSel=null; /* 동시 보기의 단가 슬롯 선택(단가류가 여럿일 때) */
+function cmpTrendSectionHTML(R){
+  const{ents,defs}=R;
+  const was=ents.map(en=>weeklyAggOf(en.ds,en.e,true)); /* 소재 보유 전체 기간 */
+  const weeks=[...new Set(was.flatMap(w=>w.ws))].sort();
   if(weeks.length<2)return `<div class="fam-note">겹쳐 볼 주간 데이터가 부족해요 (2주 이상 필요)</div>`;
-  const mA=new Map(wa.ws.map((w,i)=>[w,wa.os[i]])),mB=new Map(wb.ws.map((w,i)=>[w,wb.os[i]]));
-  const va=weeks.map(w=>{const o=mA.get(w);return o?def.of(o):null;});
-  const vb=weeks.map(w=>{const o=mB.get(w);return o?def.of(o):null;});
-  const all=[...va,...vb].filter(v=>v!=null);
-  if(!all.length)return `<div class="fam-note">'${escHtml(def.lab)}'은(는) 두 소재 모두 주간 값이 없어요 — 다른 지표를 골라 주세요</div>`;
-  const mx=Math.max(...all)*1.1||1;
-  const W=Math.max(430,50+weeks.length*36),H=200,pl=10,pr=10,pt=14,pb=22,iw=W-pl-pr,ih=H-pt-pb;
-  const xat=i=>pl+(weeks.length===1?iw/2:(i/(weeks.length-1))*iw);
-  const line=(vals,col)=>{let p="",st=false,dots="";
-    vals.forEach((v,i)=>{if(v==null)return;
-      const x=xat(i),y=pt+(1-v/mx)*ih;
-      p+=st?` L ${x.toFixed(1)} ${y.toFixed(1)}`:`M ${x.toFixed(1)} ${y.toFixed(1)}`;st=true;
-      dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" fill="${col}"><title>${escHtml(weeksTip(i))} ${escHtml(def.fmt(v))}</title></circle>`;});
-    return `<path d="${p}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round"/>`+dots;};
+  const maps=was.map(w=>new Map(w.ws.map((x,i)=>[x,w.os[i]])));
   const weeksTip=i=>weeks[i].slice(5,7)+"/"+weeks[i].slice(8,10)+"주";
-  const gl=[0.25,0.5,0.75].map(f=>`<line x1="${pl}" y1="${(pt+f*ih).toFixed(1)}" x2="${W-pr}" y2="${(pt+f*ih).toFixed(1)}" stroke="#E5E2D8" stroke-dasharray="2 3" stroke-width="0.6"/>`).join("");
-  let lab="";weeks.forEach((w,i)=>{if(weeks.length>12&&i%2)return;
-    lab+=`<text x="${xat(i).toFixed(1)}" y="${H-6}" font-size="8.5" fill="var(--faint)" text-anchor="middle">${w.slice(5,7)}/${w.slice(8,10)}</text>`;});
-  const lastOf=vals=>{for(let i=vals.length-1;i>=0;i--)if(vals[i]!=null)return vals[i];return null;};
-  return `<div class="cmpm-leg"><span><i class="lgd" style="background:#FF8A3D"></i>A 최신 <b>${lastOf(va)!=null?def.fmt(lastOf(va)):"–"}</b></span><span><i class="lgd" style="background:#64B5F6"></i>B 최신 <b>${lastOf(vb)!=null?def.fmt(lastOf(vb)):"–"}</b></span><span class="n">${def.dir<0?"낮을수록 좋아요":def.dir>0?"높을수록 좋아요":""}</span></div><div class="cmpm-chartwrap"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${Math.min(W,720)}px;height:auto">${gl}${line(va,"#FF8A3D")}${line(vb,"#64B5F6")}${lab}</svg></div>`;}
+  const seriesOf=d=>maps.map(mp=>weeks.map(w=>{const o=mp.get(w);return o?d.of(o):null;}));
+  const xlab=(xat,W,H,fs)=>{const lstep=Math.max(1,Math.ceil(weeks.length/(W>420?9:5)));
+    let lab="";weeks.forEach((w,i)=>{const last=i===weeks.length-1;
+      if(!last&&i%lstep)return;
+      if(!last&&weeks.length>1&&(weeks.length-1-i)<Math.ceil(lstep/2))return;
+      lab+=`<text x="${xat(i).toFixed(1)}" y="${H-5}" font-size="${fs}" fill="var(--faint)" text-anchor="middle">${w.slice(5,7)}/${w.slice(8,10)}</text>`;});
+    return lab;};
+  /* ── ① 동시 보기 ── */
+  const spendD=defs.find(d=>d.k==="_cost")||defs[0];
+  const costDs=defs.filter(d=>d.dir<0);
+  const costD=(cmpCostSel&&costDs.find(d=>d.k===cmpCostSel))||costDs[0]||null;
+  const ctrD=defs.find(d=>d.k==="CTR")||null;
+  const fams=[{d:spendD,w:2.2,da:"",dot:2.5},costD?{d:costD,w:1.7,da:"6 4",dot:2}:null,ctrD&&ctrD!==spendD?{d:ctrD,w:1.1,da:"1.5 3.5",dot:1.7}:null].filter(Boolean);
+  const W=Math.max(460,50+weeks.length*36),H=230,pl=26,pr=26,pt=12,pb=20,iw=W-pl-pr,ih=H-pt-pb;
+  const xat=i=>pl+(weeks.length===1?iw/2:(i/(weeks.length-1))*iw);
+  let combo=[0.25,0.5,0.75].map(f=>`<line x1="${pl}" y1="${(pt+f*ih).toFixed(1)}" x2="${W-pr}" y2="${(pt+f*ih).toFixed(1)}" stroke="#E5E2D8" stroke-dasharray="2 3" stroke-width="0.6"/>`).join("");
+  let comboAny=false;
+  for(const f of fams){
+    const ss=seriesOf(f.d);
+    const mxF=Math.max(...ss.flat().filter(v=>v!=null).concat([0]))*1.08;
+    if(!(mxF>0))continue;
+    [...R.order].reverse().forEach(j=>{
+      const en=ents[j],col=R.colorByList.get(en.i)||CMP_GRAY;
+      const rk=R.rankByList.get(en.i),nm=displayNameOf(en.e);
+      let p="",st=false,dots="";
+      ss[j].forEach((v,i)=>{if(v==null)return;
+        const x=xat(i),y=pt+(1-v/mxF)*ih;
+        p+=st?` L ${x.toFixed(1)} ${y.toFixed(1)}`:`M ${x.toFixed(1)} ${y.toFixed(1)}`;st=true;
+        dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${f.dot}" fill="${col}"><title>${rk!=null?rk+1+"위 ":""}${escHtml(trunc(nm,24))} · ${escHtml(f.d.lab)} · ${escHtml(weeksTip(i))} ${escHtml(f.d.fmt(v))}</title></circle>`;});
+      if(!st)return;comboAny=true;
+      combo+=`<path d="${p}" fill="none" stroke="${col}" stroke-width="${f.w}"${f.da?` stroke-dasharray="${f.da}"`:""} stroke-linejoin="round"/>`+dots;});}
+  const lgs=(da,wd)=>`<svg width="26" height="8" style="vertical-align:middle"><line x1="1" y1="4" x2="25" y2="4" stroke="#6B675C" stroke-width="${wd}"${da?` stroke-dasharray="${da}"`:""}/></svg>`;
+  const costChips=costDs.length>1?`<div class="cmp-seg cmp-costseg">${costDs.map(d=>`<button type="button" data-mk="${escAttr(d.k)}" class="${d===costD?"on":""}">${escHtml(d.lab)}</button>`).join("")}</div>`:"";
+  const comboHTML=comboAny?`<div class="cmpm-leg"><span>${lgs("",2.2)} ${escHtml(spendD.lab)}</span>${costD?`<span>${lgs("6 4",1.7)} ${escHtml(costD.lab)}</span>`:""}${ctrD&&ctrD!==spendD?`<span>${lgs("1.5 3.5",1.1)} ${escHtml(ctrD.lab)}</span>`:""}<span class="n">색 = 소재(순위 고정) · 선 모양 = 지표</span></div>
+    ${costChips}
+    <div class="cmpm-chartwrap"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${Math.min(W,720)}px;height:auto">${combo}${xlab(xat,W,H,8.5)}</svg></div>
+    <div class="cmpm-axcap">지표마다 자체 최대값 기준 비율로 그려 한 화면에 겹쳤어요 — 같은 지표 안에서는 모든 소재가 같은 축이라 소재 간 비례가 그대로예요. 원래 값은 점 호버.</div>`:"";
+  /* ── ② 지표별 바둑판 ── */
+  const cells=defs.map(d=>{
+    const series=seriesOf(d);
+    const all=series.flat().filter(v=>v!=null);
+    if(!all.length)return "";
+    const mx=Math.max(...all)*1.1||1;
+    const W2=330,H2=140,pl2=20,pr2=20,pt2=10,pb2=18,iw2=W2-pl2-pr2,ih2=H2-pt2-pb2;
+    const xat2=i=>pl2+(weeks.length===1?iw2/2:(i/(weeks.length-1))*iw2);
+    let svg=`<line x1="${pl2}" y1="${(pt2+0.5*ih2).toFixed(1)}" x2="${W2-pr2}" y2="${(pt2+0.5*ih2).toFixed(1)}" stroke="#E5E2D8" stroke-dasharray="2 3" stroke-width="0.6"/>`;
+    [...R.order].reverse().forEach(j=>{
+      const en=ents[j],col=R.colorByList.get(en.i)||CMP_GRAY;
+      const rk=R.rankByList.get(en.i),nm=displayNameOf(en.e);
+      let p="",st=false,dots="";
+      series[j].forEach((v,i)=>{if(v==null)return;
+        const x=xat2(i),y=pt2+(1-v/mx)*ih2;
+        p+=st?` L ${x.toFixed(1)} ${y.toFixed(1)}`:`M ${x.toFixed(1)} ${y.toFixed(1)}`;st=true;
+        dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.4" fill="${col}"><title>${rk!=null?rk+1+"위 ":""}${escHtml(trunc(nm,24))} · ${escHtml(weeksTip(i))} ${escHtml(d.fmt(v))}</title></circle>`;});
+      if(!st)return;
+      svg+=`<path d="${p}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round"/>`+dots;});
+    return `<div class="cmp-trc"><h5>${escHtml(d.lab)}${d.dir<0?" <em>↓ 낮을수록 좋음</em>":d.dir>0?" <em>↑ 높을수록 좋음</em>":""}</h5><svg viewBox="0 0 ${W2} ${H2}" style="width:100%;height:auto">${svg}${xlab(xat2,W2,H2,8)}</svg></div>`;}).filter(Boolean);
+  const gridHTML=cells.length?`<div class="cmpm-secT">지표별 따로 보기 <span class="n">전 지표 바둑판 — 각 그래프 0 기준 자체 축(비례 유지)</span></div><div class="cmp-trgrid">${cells.join("")}</div>`:"";
+  if(!comboHTML&&!gridHTML)return `<div class="fam-note">주간 값이 있는 지표가 없어요</div>`;
+  return comboHTML+gridHTML;}
 function renderCmpModal(){
   const m=$("#cmpModal");if(!m||m.hidden)return;
-  const A=cmpEntOf("A"),B=cmpEntOf("B");
-  if(!A||!B){closeCmpModal();return;}
-  const defs=cmpMetricDefs(A.ds);
-  const tA=cmpTotals(A.ds,A.e),tB=cmpTotals(B.ds,B.e);
-  const rows=defs.map(d=>{
-    const va=d.of(tA),vb=d.of(tB);
-    if(va==null&&vb==null)return "";
-    const mx=Math.max(va||0,vb||0)||1;
-    const winA=d.dir!==0&&va!=null&&vb!=null&&va!==vb&&(d.dir>0?va>vb:va<vb);
-    const winB=d.dir!==0&&va!=null&&vb!=null&&va!==vb&&(d.dir>0?vb>va:vb<va);
-    const cell=(v,cls,win)=>`<div class="cmpm-cell ${cls}${win?" win":""}"><i class="cmpm-bar" style="width:${v!=null?Math.max(3,v/mx*100).toFixed(1):0}%"></i><span class="cmpm-v">${v!=null?d.fmt(v):"–"}</span></div>`;
-    return `<div class="cmpm-row"><span class="cmpm-k">${escHtml(d.lab)}${d.dir<0?" ↓":d.dir>0?" ↑":""}</span>${cell(va,"a",winA)}${cell(vb,"b",winB)}</div>`;}).join("");
-  const nmA=displayNameOf(A.e),nmB=displayNameOf(B.e);
-  const selK=(cmpMetricSel&&defs.some(d=>d.k===cmpMetricSel))?cmpMetricSel:(defs[0]&&defs[0].k);
-  const seg=defs.map(d=>`<button type="button" data-mk="${escAttr(d.k)}" class="${selK===d.k?"on":""}">${escHtml(d.lab)}</button>`).join("");
-  const medOf=(ent,cls)=>{const url=previewUrlOf(ent.e);const pv=url?assetPreview(url,ent.e):"";
-    return `<div class="cmpm-med ${cls}">${pv||'<div class="fam-note">미리보기가 없는 소재예요</div>'}</div>`;};
+  const R=cmpRank();
+  if(R.ents.length<2){closeCmpModal();return;}
+  const{ents,domPct,order,ds}=R;
+  const meds=order.map((j,rank)=>{const en=ents[j];const url=previewUrlOf(en.e);const pv=url?assetPreview(url,en.e):"";
+    const nm=displayNameOf(en.e),col=R.colorByList.get(en.i);
+    return `<div class="cmpm-med" style="--cc:${col}">
+      <div class="cmpm-medh"><span class="rank" style="background:${col};color:#fff">${rank+1}위</span>${en.c.locked?" 🔒":""}<span class="nm" title="${escAttr(nm)}">${escHtml(trunc(nm,26))}</span><span class="dp">${domPct[j]!=null?"우세도 "+Math.round(domPct[j]*100)+"%":""}</span></div>
+      ${pv||'<div class="fam-note">미리보기가 없는 소재예요</div>'}</div>`;}).join("");
+  const body=cmpTab==="tr"
+    ?`<div class="cmpm-secT">주차별 추이 — 동시 보기 <span class="n">실선=광고비 · 점선=단가 · 잔점선=CTR · 같은 순서·같은 색</span></div>${cmpTrendSectionHTML(R)}`
+    :`<div class="cmpm-secT">주요 지표 한눈 비교 <span class="n">오른쪽=우세 · 거리 비례 · 색 면적=전반 우세</span></div>${cmpAxesSVG(R)}${cmpGridHTML(R)}`;
   m.innerHTML=`<div class="cmpm" role="dialog" aria-modal="true" aria-label="소재 비교">
-    <div class="cmpm-h"><span class="cmpm-name a" title="${escAttr(nmA)}">A${CMP.A.locked?" 🔒":""} · ${escHtml(trunc(nmA,32))}</span><span class="cmpb-vs">vs</span><span class="cmpm-name b" title="${escAttr(nmB)}">B${CMP.B.locked?" 🔒":""} · ${escHtml(trunc(nmB,32))}</span><button type="button" class="cmpm-close" title="닫기 (Esc)">✕</button></div>
-    <div class="cmpm-media">${medOf(A,"a")}${medOf(B,"b")}</div>
-    <div class="cmpm-secT">주요 지표 비교 <span class="n">선택 기간 합산 · 진한 값 = 우세 (↓ 단가류는 낮을수록 좋음)</span></div>
-    <div class="cmpm-rows">${rows||'<div class="fam-note">비교할 지표가 없어요</div>'}</div>
-    <div class="cmpm-secT">주차별 추이 겹쳐 보기</div>
-    <div class="cmp-seg">${seg}</div>
-    <div id="cmpChart">${cmpChartSVG(defs)}</div>
-    <div class="cmpm-foot"><span><i class="lgd" style="background:#FF8A3D"></i>A</span> <span><i class="lgd" style="background:#64B5F6"></i>B</span> — 같은 매체 소재끼리, 현재 선택 기간 기준</div>
+    <div class="cmpm-h"><span class="cmpm-name">소재 비교 <b>${ents.length}</b>개 <span class="n">같은 매체(${escHtml(String(ds.media||""))}) · 소재 보유 전체 기간 — 기간 필터와 무관 · 잘된 순서(우세도)로 왼쪽부터, 색은 순위에 고정</span></span>
+      <div class="cmp-seg cmpm-tabs"><button type="button" data-ct="ov" class="${cmpTab==="ov"?"on":""}">개요</button><button type="button" data-ct="tr" class="${cmpTab==="tr"?"on":""}">추이</button></div>
+      <button type="button" class="cmpm-close" title="닫기 (Esc)">✕</button></div>
+    <div class="cmpm-media n${Math.min(ents.length,4)}">${meds}</div>
+    ${body}
   </div>`;
   m.onclick=ev=>{if(ev.target===m)closeCmpModal();};
   m.querySelector(".cmpm-close").onclick=closeCmpModal;
-  m.querySelectorAll(".cmp-seg button").forEach(b=>b.onclick=()=>{cmpMetricSel=b.dataset.mk;
-    m.querySelectorAll(".cmp-seg button").forEach(x=>x.classList.toggle("on",x===b));
-    const c=m.querySelector("#cmpChart");if(c)c.innerHTML=cmpChartSVG(defs);});}
+  m.querySelectorAll(".cmpm-tabs button").forEach(b=>b.onclick=()=>{cmpTab=b.dataset.ct;renderCmpModal();});
+  m.querySelectorAll(".cmp-costseg button").forEach(b=>b.onclick=()=>{cmpCostSel=b.dataset.mk;renderCmpModal();});}
 document.addEventListener("keydown",ev=>{if(ev.key==="Escape"){const m=$("#cmpModal");if(m&&!m.hidden){closeCmpModal();ev.stopPropagation();}}},true);
 function renderIsleMid(ds,e,mid){if(!mid)return;
   const tabs=[{k:"trend",lab:"주차별 추이",html:creativeTrendHTML(ds,e)||`<div class="fam-note">주차 데이터가 2주 이상 쌓이면 추이가 표시됩니다.</div>`}];
