@@ -574,6 +574,49 @@
   .isle-frame video{background:#141410;border-radius:12px}
   .isle-frame .asset-yt{position:absolute;inset:0;width:100%;height:100%;border:0}
   .isle-frame .asset-err{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:11px;color:var(--muted)}
+  /* ── 소재 비교(A/B) ── */
+  .cmp-ovl{position:absolute;top:8px;left:8px;z-index:6;display:flex;gap:5px;align-items:center}
+  .cmp-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:0;border-radius:999px;background:rgba(20,19,15,.78);color:#F3F0E8;font-size:11.5px;font-weight:740;cursor:pointer;line-height:1.4}
+  .cmp-btn:hover{background:rgba(20,19,15,.94)}
+  .cmp-btn.on{background:#FF6F0F;color:#fff}
+  .cmp-btn .lk{flex:0 0 auto;opacity:.9}
+  .cmp-xbtn{width:22px;height:22px;border:0;border-radius:50%;background:rgba(20,19,15,.78);color:#F3F0E8;font-size:11px;cursor:pointer;line-height:1}
+  .cmp-xbtn:hover{background:rgba(190,63,83,.95)}
+  .cmp-bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:900;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;padding:8px 10px 8px 14px;border-radius:999px;background:rgba(28,26,20,.94);color:#F3F0E8;box-shadow:0 12px 40px -10px rgba(0,0,0,.5);font-size:12px;max-width:calc(100vw - 24px)}
+  .cmpb-t{font-weight:800;color:#FF8A3D;white-space:nowrap}
+  .cmpb-slot{display:inline-flex;align-items:center;gap:5px;padding:3px 6px 3px 10px;border-radius:999px;background:rgba(255,255,255,.08);white-space:nowrap;max-width:280px;overflow:hidden}
+  .cmpb-slot.sA{box-shadow:inset 0 0 0 1px #FF8A3D}
+  .cmpb-slot.sB{box-shadow:inset 0 0 0 1px #64B5F6}
+  .cmpb-slot.empty{opacity:.5}
+  .cmpb-x{border:0;background:transparent;color:#CFCABB;cursor:pointer;font-size:11px;padding:2px 4px}
+  .cmpb-x:hover{color:#fff}
+  .cmpb-vs{color:#8B877B;font-weight:740}
+  .cmpb-open{border:0;border-radius:999px;padding:6px 14px;background:#FF6F0F;color:#fff;font-weight:800;cursor:pointer;font-size:12px}
+  .cmpb-open:disabled{background:rgba(255,255,255,.14);color:#999285;cursor:default}
+  .cmp-modal{position:fixed;inset:0;z-index:1000;background:rgba(15,14,10,.55);display:grid;place-items:center;padding:20px}
+  .cmpm{background:#FFFDF7;border-radius:16px;max-width:880px;width:100%;max-height:calc(100vh - 40px);overflow:auto;padding:20px 22px 16px;box-shadow:0 30px 80px -20px rgba(0,0,0,.45)}
+  .cmpm-h{display:flex;align-items:center;gap:10px;margin-bottom:10px;min-width:0}
+  .cmpm-name{font-weight:800;font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cmpm-name.a{color:#E5640D}.cmpm-name.b{color:#1E88E5}
+  .cmpm-close{margin-left:auto;border:0;background:transparent;font-size:16px;cursor:pointer;color:var(--muted);padding:2px 6px}
+  .cmpm-close:hover{color:var(--ink)}
+  .cmpm-secT{font-weight:800;font-size:12px;margin:14px 0 7px;color:var(--ink)}
+  .cmpm-secT .n,.cmpm-leg .n{font-weight:600;font-size:11px;color:var(--faint);margin-left:6px}
+  .cmpm-row{display:grid;grid-template-columns:128px minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:center;margin:6px 0}
+  .cmpm-k{font-size:11.5px;color:var(--muted);font-weight:700}
+  .cmpm-cell{display:flex;align-items:center;gap:7px;min-width:0}
+  .cmpm-bar{height:9px;border-radius:5px;flex:0 1 auto;min-width:2px}
+  .cmpm-cell.a .cmpm-bar{background:#FFC59B}.cmpm-cell.b .cmpm-bar{background:#B5D9F8}
+  .cmpm-cell.win.a .cmpm-bar{background:#FF8A3D}.cmpm-cell.win.b .cmpm-bar{background:#64B5F6}
+  .cmpm-v{font-size:11.5px;font-weight:650;color:var(--muted);white-space:nowrap}
+  .cmpm-cell.win .cmpm-v{font-weight:850;color:var(--ink)}
+  .cmp-seg{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 8px}
+  .cmp-seg button{border:1px solid #E2DFD3;background:transparent;border-radius:999px;padding:4px 11px;font-size:11.5px;cursor:pointer;color:var(--muted);font-weight:650}
+  .cmp-seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .cmpm-leg{display:flex;gap:14px;align-items:center;font-size:11.5px;color:var(--muted);margin:2px 0 4px}
+  .cmpm-chartwrap{overflow-x:auto}
+  .cmpm-foot{margin-top:10px;font-size:11px;color:var(--faint);display:flex;gap:10px}
+  @media(max-width:700px){.cmpm-row{grid-template-columns:92px minmax(0,1fr) minmax(0,1fr)}.cmpb-slot{max-width:170px}}
   .meta-pv-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;width:100%;height:100%;padding:20px;box-sizing:border-box;text-decoration:none;text-align:center;background:linear-gradient(160deg,#EEF3FF,#E4ECFA);color:var(--ink);transition:background .12s}
   .meta-pv-card:hover{background:linear-gradient(160deg,#E4ECFF,#D8E4F8)}
   .meta-pv-emo{font-size:34px;line-height:1}
@@ -1119,6 +1162,8 @@
     </div>
     <footer class="ft" id="ft"></footer>
   </div>
+  <div id="cmpBar" class="cmp-bar" hidden></div>
+  <div id="cmpModal" class="cmp-modal" hidden></div>
 </div>
 
 <div class="ov" id="gloss"><div class="ov-card"><h2>지표 풀이</h2><p class="ov-sub">짧게 — 화살표는 좋은 방향입니다.</p><div class="gloss-grid" id="glossGrid"></div><div class="ov-close"><button id="glossClose">닫기</button></div></div></div>
@@ -2142,7 +2187,7 @@ function perfPillHTML(e){
     ?"구글 리포트 실적이 '-'(등급 없음)인 소재예요 — 값이 비었다고 오해하지 않게 '보통'으로 표시해요"
     :p.est
     ?"추정 실적 (cc) — 실제 실적이 없는 소재라 지표 관계(전환·CTR 등수, 전환·광고비 물량 비율)로 추정한 값이에요"
-    :"구글 리포트의 실적 값이에요 (매주 자동 동기화)")+stateDesc+(e.score!=null?` · 내부 점수 ${fmtScore(e.score)}`:"");
+    :"구글 리포트의 실적 값이에요 (매주 자동 동기화)")+stateDesc;
   return `<span class="${cls}" title="${escAttr(tip)}">${escHtml(p.lab)}${p.est?`<i class="cc">(cc)</i>`:""}</span>`;}
 function computeScores(ds){const L=ds.L,a=ds.agg;
   ds.fieldAvail=computeFieldAvail(a);
@@ -3004,16 +3049,7 @@ function weeklyScoresOf(ds,e){
     ds[key]=m;}
   const id=isG?String(e._g_adGroupId||e._m_group):e.name;
   return w=>{const wm=ds[key].get(w);return (wm&&wm.get(id))||null;};}
-function creativeTrendHTML(ds,e){
-  const all=weeklyAggOf(ds,e);
-  /* 선택 기간 안의 모든 주를 표시(13주 자름 폐지) — 주가 많으면 가로 스크롤(최신이 먼저 보이게 오른쪽 정렬) */
-  const ws=all.ws;
-  if(ws.length<2)return "";
-  const os=all.os;
-  /* 선(라인) = 이 매체의 '점수 반영 지표'만, 가중치 큰 순으로 최대 3개.
-     점수에 안 들어가는 지표(예: 구글 ROAS — 전환가치가 모델링 값)는 그리지 않는다:
-     점수와 무관한 선이 점수 변동의 원인처럼 읽히는 오독 방지 */
-  const WK_METRIC={ /* 채점 키 → 주차 값 계산 (weeklyAggOf 합계 기반) */
+const WK_METRIC={ /* 채점 키 → 주차 값 계산 (weeklyAggOf 합계 기반) — 상세 추이·소재 비교(A/B)가 공유 */
     "_g_cpFirstOpen":{fmt:fmtWon,of:o=>o.fo>0?o.c/o.fo:null},
     "_g_costPerConv":{fmt:fmtWon,of:o=>o.conv>0?o.c/o.conv:null},
     "_g_cpHome":{fmt:fmtWon,of:o=>o.home>0?o.c/o.home:null},
@@ -3030,6 +3066,15 @@ function creativeTrendHTML(ds,e){
     "영상 완주율":{fmt:fmtPct,of:o=>o.vd>0?o.vn/o.vd:null},
     "_q_retD1":{fmt:fmtPct,of:o=>o.rB>0?o.rU/o.rB:null},
   };
+function creativeTrendHTML(ds,e){
+  const all=weeklyAggOf(ds,e);
+  /* 선택 기간 안의 모든 주를 표시(13주 자름 폐지) — 주가 많으면 가로 스크롤(최신이 먼저 보이게 오른쪽 정렬) */
+  const ws=all.ws;
+  if(ws.length<2)return "";
+  const os=all.os;
+  /* 선(라인) = 이 매체의 '점수 반영 지표'만, 가중치 큰 순으로 최대 3개.
+     점수에 안 들어가는 지표(예: 구글 ROAS — 전환가치가 모델링 값)는 그리지 않는다:
+     점수와 무관한 선이 점수 변동의 원인처럼 읽히는 오독 방지 */
   /* 이 소재에 실제 점수 반영되는 지표만 선·툴팁으로 — 포맷/지면 조건 불일치(예: 이미지 소재의 CTR 선)나
      신뢰성 게이트로 무효화된 지표(노출 과소집계·클릭 재생 혼입)가 점수 변동의 원인처럼 읽히는 오독 방지 */
   const _impRateSet=new Set(IMP_RATE_KEYS);
@@ -3051,24 +3096,19 @@ function creativeTrendHTML(ds,e){
     const mx=Math.max(...vals.filter(v=>v!=null))*1.12||1;
     let last=null;for(let i=vals.length-1;i>=0;i--)if(vals[i]!=null){last=vals[i];break;}
     lines.push({lab:sp.lab,w:sp.w,col:LINE_COLS[lines.length],fmt:wm.fmt,vals,mx,last});}
-  const H=lines.length>=3?104:92,pl=4,pr=4,pt=8,pb=24;
+  const H=lines.length>=3?104:92,pl=4,pr=4,pt=8,pb=15; /* 주차 점수 표기 제거로 하단 여백 축소(날짜 한 줄) */
   const W=Math.max(300,pl+pr+ws.length*23),iw=W-pl-pr,ih=H-pt-pb; /* 주당 폭 고정(≈23) — 주가 많으면 차트가 길어지고 스크롤 */
   const cmax=Math.max(...os.map(o=>o.c))||1;
   const bw=5; /* 고정 얇은 막대 */
   const slot=iw/ws.length,xat=i=>pl+(i+0.5)*slot;
-  const scoreOf=weeklyScoresOf(ds,e);
-  const tierCol={g2:"var(--g2)",g1:"var(--g1)",m:"var(--mid)",w1:"var(--w1)",w2:"var(--w2)"};
   let s="";
   ws.forEach((w,i)=>{const o=os[i],x=xat(i);
     const h=Math.max(2,(o.c/cmax)*ih);
-    const sc=scoreOf(w);
+    /* 주차 점수 표기·티어색 제거 — 점수는 내부 계산 전용, 화면엔 지표 원값만 */
     let tipTxt=`<b>${w.slice(5).replace("-","/")} 주</b><br>광고비 ${fmtWon(o.c)}`;
-    if(sc&&sc.s!=null)tipTxt+=`<br>점수 ${fmtScore(sc.s)} <span class="t-k">— 그 주 비교군 내 상대평가</span>`;
-    for(const ts of tipSpecs)if(ts.vals[i]!=null)tipTxt+=`<br><span class="t-k">${ts.lab}(${wPct(ts.w)}%)</span> ${ts.fmt(ts.vals[i])}`;
+    for(const ts of tipSpecs)if(ts.vals[i]!=null)tipTxt+=`<br><span class="t-k">${ts.lab}</span> ${ts.fmt(ts.vals[i])}`;
     s+=`<rect class="ispk-b" data-tip="${escAttr(tipTxt)}" x="${(x-bw/2).toFixed(1)}" y="${(H-pb-h).toFixed(1)}" width="${bw}" height="${h.toFixed(1)}" rx="2" fill="var(--karrot)" fill-opacity="0.5"/>`;
-    /* 모든 막대 아래 두 줄 라벨: 주 시작일 MM/DD + 그 주 점수(티어 색, 부적격 주는 –) */
-    s+=`<text x="${x.toFixed(1)}" y="${H-13}" font-size="6.8" fill="var(--faint)" text-anchor="middle">${w.slice(5,7)}/${w.slice(8,10)}</text>`;
-    s+=`<text x="${x.toFixed(1)}" y="${H-3.5}" font-size="7.2" font-weight="700" fill="${sc&&sc.s!=null?(tierCol[sc.t]||"var(--mid)"):"var(--faint)"}" text-anchor="middle">${sc&&sc.s!=null?fmtScore(sc.s):"–"}</text>`;});
+    s+=`<text x="${x.toFixed(1)}" y="${H-4}" font-size="6.8" fill="var(--faint)" text-anchor="middle">${w.slice(5,7)}/${w.slice(8,10)}</text>`;});
   for(const ln of lines){let p="",st=false,dots="";
     ws.forEach((w,i)=>{const v=ln.vals[i];if(v==null)return;
       const x=xat(i),y=pt+(1-v/ln.mx)*ih;
@@ -3262,6 +3302,145 @@ function qualityHTML(ds,e){
   if(base1>0&&base1<30)parts.push(`<b style="color:var(--w1)">표본 적음</b> — D1 코호트 ${fmtInt(base1)}명뿐이라 잔존율 변동이 큽니다 (참고용)`);
   if(parts.length)s+=`<div class="vret-cap" style="margin-top:6px">${parts.join("<br>")}</div>`;
   return s+`</section>`;}
+/* ═════ 소재 비교(A/B) — 상세 미디어 프레임 좌상단 '비교' 버튼으로 두 소재를 한 그래프에 겹쳐 보기 ═════
+   흐름: 소재1에서 '비교' 클릭 → 비교 A 담김(열린 자물쇠) → 소재2에서 '비교' 클릭 → 비교 B 담김 + 겹침 그래프 자동 오픈.
+   담긴 소재에서 '비교'를 한 번 더 누르면 그 슬롯을 고정(잠긴 자물쇠) — 이후 다른 소재를 담아도 고정 슬롯은 유지되고
+   비어 있거나 고정 안 된 슬롯이 교체된다. 버튼 오른쪽 ✕ = 비교 취소. 하단 비교 바에서 언제든 다시 열기·취소 가능. */
+let CMP={A:null,B:null}; /* {media,name,locked} — 지표 축이 같아야 해서 같은 매체끼리만 */
+const LOCK_OPEN='<svg class="lk" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M4 5.1V3.6a2.1 2.1 0 0 1 4.1-.65" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><rect x="2.6" y="5.1" width="6.8" height="5.1" rx="1.1" fill="currentColor"/></svg>';
+const LOCK_CLOSED='<svg class="lk" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M3.9 5.1V3.6a2.1 2.1 0 0 1 4.2 0v1.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><rect x="2.6" y="5.1" width="6.8" height="5.1" rx="1.1" fill="currentColor"/></svg>';
+function dsKeyOf(ds){for(const k in DATASETS)if(DATASETS[k]===ds)return k;return null;} /* DATASETS는 media가 아닌 자체 키로 인덱싱 */
+function cmpSlotOf(media,name){for(const s of["A","B"])if(CMP[s]&&CMP[s].media===media&&CMP[s].name===name)return s;return null;}
+function cmpOvlHTML(ds,e){
+  const s=cmpSlotOf(ds.media,e.name),locked=s&&CMP[s].locked;
+  const tt=s?(locked?`비교 ${s}로 고정됨 — 클릭하면 고정 해제`:`비교 ${s}에 담김 — 클릭하면 이 자리로 고정(다른 소재를 담아도 유지)`):"이 소재를 비교 슬롯에 담기 — 두 개 담으면 한 그래프에서 주요 지표를 겹쳐 비교해요";
+  return `<div class="cmp-ovl"><button type="button" class="cmp-btn${s?" on":""}" data-cmpact="toggle" title="${escAttr(tt)}">비교${s?" "+s:""} ${locked?LOCK_CLOSED:LOCK_OPEN}</button>${s?`<button type="button" class="cmp-xbtn" data-cmpact="cancel" title="비교 취소">✕</button>`:""}</div>`;}
+function mountCmpOvl(frame,ds,e){
+  const old=frame.querySelector(".cmp-ovl");if(old)old.remove();
+  frame.insertAdjacentHTML("afterbegin",cmpOvlHTML(ds,e));
+  frame.querySelectorAll("[data-cmpact]").forEach(b=>b.onclick=ev=>{ev.stopPropagation();
+    if(b.dataset.cmpact==="toggle")cmpToggle(ds,e);else cmpCancel(ds,e);
+    mountCmpOvl(frame,ds,e);});}
+function cmpToggle(ds,e){
+  const s=cmpSlotOf(ds.media,e.name);
+  if(s){CMP[s].locked=!CMP[s].locked;toast(CMP[s].locked?`비교 ${s}로 고정했어요 🔒`:`비교 ${s} 고정을 풀었어요`);}
+  else{
+    const occ=CMP.A||CMP.B;
+    if(occ&&occ.media!==ds.media){toast("비교는 같은 매체 소재끼리만 가능해요 — 기존 비교를 먼저 취소해 주세요");return;}
+    const ent={key:dsKeyOf(ds),media:ds.media,name:e.name,locked:false};
+    if(!CMP.A)CMP.A=ent;
+    else if(!CMP.B)CMP.B=ent;
+    else if(!CMP.B.locked)CMP.B=ent;
+    else if(!CMP.A.locked)CMP.A=ent;
+    else{toast("비교 A·B가 모두 고정돼 있어요 — 자물쇠를 풀거나 취소한 뒤 담아 주세요");return;}
+    if(CMP.A&&CMP.B)openCmpModal();
+    else toast("비교 A에 담았어요 — 다른 소재에서도 '비교'를 누르면 한 그래프에서 겹쳐 봐요");}
+  renderCmpBar();}
+function cmpCancel(ds,e){
+  const s=cmpSlotOf(ds.media,e.name);if(!s)return;
+  CMP[s]=null;
+  if(s==="A"&&CMP.B){CMP.A=CMP.B;CMP.B=null;} /* 항상 A부터 차게 승격 */
+  toast(`비교 ${s}를 취소했어요`);closeCmpModal();renderCmpBar();}
+function cmpEntOf(slot){const c=CMP[slot];if(!c)return null;
+  const ds=(c.key&&DATASETS[c.key])||curDS;if(!ds||!ds.agg||ds.media!==c.media)return null; /* 채널을 바꾸면 비교는 잠시 비활성(바에는 유지) */
+  const e=findRow(ds,c.name);return e?{ds,e,c}:null;}
+function refreshIsleCmpOvl(){ /* 열린 상세의 비교 버튼 상태 동기화 */
+  const fr=document.querySelector(".isle-row .ir-media .isle-frame");
+  if(fr&&curDS&&ISLE.name){const e=findRow(curDS,ISLE.name);if(e&&!e._isGroup)mountCmpOvl(fr,curDS,e);}}
+function renderCmpBar(){
+  const bar=$("#cmpBar");if(!bar)return;
+  if(!CMP.A&&!CMP.B){bar.hidden=true;bar.innerHTML="";return;}
+  bar.hidden=false;
+  const chip=s=>{const c=CMP[s];if(!c)return `<span class="cmpb-slot empty">${s} 비어 있음</span>`;
+    const got=cmpEntOf(s);
+    const nm=got?displayNameOf(got.e):c.name;
+    return `<span class="cmpb-slot s${s}" title="${escAttr(nm)}">${s}${c.locked?" "+LOCK_CLOSED:""} ${escHtml(trunc(nm,24))}<button type="button" class="cmpb-x" data-slot="${s}" title="비교 취소">✕</button></span>`;};
+  bar.innerHTML=`<span class="cmpb-t">소재 비교</span>${chip("A")}<span class="cmpb-vs">vs</span>${chip("B")}<button type="button" class="cmpb-open" id="cmpOpenBtn"${CMP.A&&CMP.B?"":" disabled"}>겹쳐 보기</button>`;
+  bar.querySelectorAll(".cmpb-x").forEach(x=>x.onclick=()=>{const s=x.dataset.slot;
+    CMP[s]=null;if(s==="A"&&CMP.B){CMP.A=CMP.B;CMP.B=null;}
+    closeCmpModal();renderCmpBar();refreshIsleCmpOvl();});
+  const ob=$("#cmpOpenBtn");if(ob)ob.onclick=openCmpModal;}
+function cmpMetricDefs(ds){
+  const defs=[],seen=new Set();
+  const add=(k,lab,dir,fmt,of)=>{if(seen.has(k))return;seen.add(k);defs.push({k,lab,dir,fmt,of});};
+  add("_cost","광고비",0,fmtWon,o=>o.c>0?o.c:null);
+  if(reachKeyFor(ds)==="신규+재활성 유저 수")add("_reach","데려온 유저",1,fmtInt,o=>o.nu>0?o.nu:null);
+  else add("_reach","노출수",1,fmtInt,o=>o.imp>0?o.imp:null);
+  for(const sp of ((typeof specsFor==="function"?specsFor(ds):[])||[])){
+    const wm=WK_METRIC[sp.k];if(wm)add(sp.k,sp.lab,sp.dir,wm.fmt,wm.of);}
+  if(!seen.has("CTR"))add("CTR","CTR",1,fmtPct,o=>o.imp>0?o.clk/o.imp:null);
+  if(!seen.has("영상 완주율"))add("영상 완주율","완주율",1,fmtPct,o=>o.vd>0?o.vn/o.vd:null);
+  return defs;}
+function cmpTotals(ds,e){
+  const {os}=weeklyAggOf(ds,e);
+  const t={c:0,imp:0,clk:0,attr:0,act:0,conv:0,cval:0,vn:0,vd:0,tv:0,fo:0,home:0,inter:0,nu:0,rB:0,rU:0,afI:0};
+  for(const o of os)for(const k in t)t[k]+=o[k]||0;
+  return t;}
+let cmpMetricSel=null;
+function closeCmpModal(){const m=$("#cmpModal");if(m){m.hidden=true;m.innerHTML="";}}
+function openCmpModal(){
+  const m=$("#cmpModal");if(!m)return;
+  if(!(cmpEntOf("A")&&cmpEntOf("B"))){toast("비교할 두 소재가 현재 기간 데이터에 없어요");return;}
+  m.hidden=false;renderCmpModal();}
+function cmpChartSVG(defs){
+  const A=cmpEntOf("A"),B=cmpEntOf("B");if(!A||!B)return "";
+  const sel=(cmpMetricSel&&defs.some(d=>d.k===cmpMetricSel))?cmpMetricSel:(defs[0]&&defs[0].k);
+  const def=defs.find(d=>d.k===sel);if(!def)return "";
+  const wa=weeklyAggOf(A.ds,A.e),wb=weeklyAggOf(B.ds,B.e);
+  const weeks=[...new Set([...wa.ws,...wb.ws])].sort();
+  if(weeks.length<2)return `<div class="fam-note">겹쳐 볼 주간 데이터가 부족해요 (2주 이상 필요)</div>`;
+  const mA=new Map(wa.ws.map((w,i)=>[w,wa.os[i]])),mB=new Map(wb.ws.map((w,i)=>[w,wb.os[i]]));
+  const va=weeks.map(w=>{const o=mA.get(w);return o?def.of(o):null;});
+  const vb=weeks.map(w=>{const o=mB.get(w);return o?def.of(o):null;});
+  const all=[...va,...vb].filter(v=>v!=null);
+  if(!all.length)return `<div class="fam-note">'${escHtml(def.lab)}'은(는) 두 소재 모두 주간 값이 없어요 — 다른 지표를 골라 주세요</div>`;
+  const mx=Math.max(...all)*1.1||1;
+  const W=Math.max(430,50+weeks.length*36),H=200,pl=10,pr=10,pt=14,pb=22,iw=W-pl-pr,ih=H-pt-pb;
+  const xat=i=>pl+(weeks.length===1?iw/2:(i/(weeks.length-1))*iw);
+  const line=(vals,col)=>{let p="",st=false,dots="";
+    vals.forEach((v,i)=>{if(v==null)return;
+      const x=xat(i),y=pt+(1-v/mx)*ih;
+      p+=st?` L ${x.toFixed(1)} ${y.toFixed(1)}`:`M ${x.toFixed(1)} ${y.toFixed(1)}`;st=true;
+      dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" fill="${col}"><title>${escHtml(weeksTip(i))} ${escHtml(def.fmt(v))}</title></circle>`;});
+    return `<path d="${p}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round"/>`+dots;};
+  const weeksTip=i=>weeks[i].slice(5,7)+"/"+weeks[i].slice(8,10)+"주";
+  const gl=[0.25,0.5,0.75].map(f=>`<line x1="${pl}" y1="${(pt+f*ih).toFixed(1)}" x2="${W-pr}" y2="${(pt+f*ih).toFixed(1)}" stroke="#E5E2D8" stroke-dasharray="2 3" stroke-width="0.6"/>`).join("");
+  let lab="";weeks.forEach((w,i)=>{if(weeks.length>12&&i%2)return;
+    lab+=`<text x="${xat(i).toFixed(1)}" y="${H-6}" font-size="8.5" fill="var(--faint)" text-anchor="middle">${w.slice(5,7)}/${w.slice(8,10)}</text>`;});
+  const lastOf=vals=>{for(let i=vals.length-1;i>=0;i--)if(vals[i]!=null)return vals[i];return null;};
+  return `<div class="cmpm-leg"><span><i class="lgd" style="background:#FF8A3D"></i>A 최신 <b>${lastOf(va)!=null?def.fmt(lastOf(va)):"–"}</b></span><span><i class="lgd" style="background:#64B5F6"></i>B 최신 <b>${lastOf(vb)!=null?def.fmt(lastOf(vb)):"–"}</b></span><span class="n">${def.dir<0?"낮을수록 좋아요":def.dir>0?"높을수록 좋아요":""}</span></div><div class="cmpm-chartwrap"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${Math.min(W,720)}px;height:auto">${gl}${line(va,"#FF8A3D")}${line(vb,"#64B5F6")}${lab}</svg></div>`;}
+function renderCmpModal(){
+  const m=$("#cmpModal");if(!m||m.hidden)return;
+  const A=cmpEntOf("A"),B=cmpEntOf("B");
+  if(!A||!B){closeCmpModal();return;}
+  const defs=cmpMetricDefs(A.ds);
+  const tA=cmpTotals(A.ds,A.e),tB=cmpTotals(B.ds,B.e);
+  const rows=defs.map(d=>{
+    const va=d.of(tA),vb=d.of(tB);
+    if(va==null&&vb==null)return "";
+    const mx=Math.max(va||0,vb||0)||1;
+    const winA=d.dir!==0&&va!=null&&vb!=null&&va!==vb&&(d.dir>0?va>vb:va<vb);
+    const winB=d.dir!==0&&va!=null&&vb!=null&&va!==vb&&(d.dir>0?vb>va:vb<va);
+    const cell=(v,cls,win)=>`<div class="cmpm-cell ${cls}${win?" win":""}"><i class="cmpm-bar" style="width:${v!=null?Math.max(3,v/mx*100).toFixed(1):0}%"></i><span class="cmpm-v">${v!=null?d.fmt(v):"–"}</span></div>`;
+    return `<div class="cmpm-row"><span class="cmpm-k">${escHtml(d.lab)}${d.dir<0?" ↓":d.dir>0?" ↑":""}</span>${cell(va,"a",winA)}${cell(vb,"b",winB)}</div>`;}).join("");
+  const nmA=displayNameOf(A.e),nmB=displayNameOf(B.e);
+  const selK=(cmpMetricSel&&defs.some(d=>d.k===cmpMetricSel))?cmpMetricSel:(defs[0]&&defs[0].k);
+  const seg=defs.map(d=>`<button type="button" data-mk="${escAttr(d.k)}" class="${selK===d.k?"on":""}">${escHtml(d.lab)}</button>`).join("");
+  m.innerHTML=`<div class="cmpm" role="dialog" aria-modal="true" aria-label="소재 비교">
+    <div class="cmpm-h"><span class="cmpm-name a" title="${escAttr(nmA)}">A${CMP.A.locked?" 🔒":""} · ${escHtml(trunc(nmA,32))}</span><span class="cmpb-vs">vs</span><span class="cmpm-name b" title="${escAttr(nmB)}">B${CMP.B.locked?" 🔒":""} · ${escHtml(trunc(nmB,32))}</span><button type="button" class="cmpm-close" title="닫기 (Esc)">✕</button></div>
+    <div class="cmpm-secT">주요 지표 비교 <span class="n">선택 기간 합산 · 진한 값 = 우세 (↓ 단가류는 낮을수록 좋음)</span></div>
+    <div class="cmpm-rows">${rows||'<div class="fam-note">비교할 지표가 없어요</div>'}</div>
+    <div class="cmpm-secT">주차별 추이 겹쳐 보기</div>
+    <div class="cmp-seg">${seg}</div>
+    <div id="cmpChart">${cmpChartSVG(defs)}</div>
+    <div class="cmpm-foot"><span><i class="lgd" style="background:#FF8A3D"></i>A</span> <span><i class="lgd" style="background:#64B5F6"></i>B</span> — 같은 매체 소재끼리, 현재 선택 기간 기준</div>
+  </div>`;
+  m.onclick=ev=>{if(ev.target===m)closeCmpModal();};
+  m.querySelector(".cmpm-close").onclick=closeCmpModal;
+  m.querySelectorAll(".cmp-seg button").forEach(b=>b.onclick=()=>{cmpMetricSel=b.dataset.mk;
+    m.querySelectorAll(".cmp-seg button").forEach(x=>x.classList.toggle("on",x===b));
+    const c=m.querySelector("#cmpChart");if(c)c.innerHTML=cmpChartSVG(defs);});}
+document.addEventListener("keydown",ev=>{if(ev.key==="Escape"){const m=$("#cmpModal");if(m&&!m.hidden){closeCmpModal();ev.stopPropagation();}}},true);
 function renderIsleMid(ds,e,mid){if(!mid)return;
   const tabs=[{k:"trend",lab:"주차별 추이",html:creativeTrendHTML(ds,e)||`<div class="fam-note">주차 데이터가 2주 이상 쌓이면 추이가 표시됩니다.</div>`}];
   const qh=qualityHTML(ds,e);if(qh)tabs.push({k:"qual",lab:"유저 질",html:qh});
@@ -3288,7 +3467,7 @@ function fillIsland(ds,e,inner){const L=ds.L;
   let listHTML,listTitle,listMetaN;
   const grpId=e._g_adGroupId||e._m_group;
   if(grpId&&ds.byAdGr&&(ds.byAdGr.get(grpId)||[]).length){
-    const grp=(ds.byAdGr.get(grpId)||[e]).slice().sort((a,b)=>(b.score??-1)-(a.score??-1));
+    const grp=(ds.byAdGr.get(grpId)||[e]).slice().sort((a,b)=>(b.비용||0)-(a.비용||0));
     listTitle=e._m_group?"같은 크리에이티브 그룹 내 비교":"같은 광고 그룹 내 비교";
     const _lgi=e._m_group?null:groupInfoOf(grpId);
     const _lraw=e._m_group?grpId:adGroupLabel(grpId);
@@ -3307,13 +3486,13 @@ function fillIsland(ds,e,inner){const L=ds.L;
         <td>${perfPillHTML(x)}</td></tr>`;}).join("")+
       `</tbody></table></div></div>`;
   }else{
-    const fam=(ds.byFk.get(e._fk||familyKey(e.name))||[e]).slice().sort((a,b)=>(b.score??-1)-(a.score??-1));
+    const fam=(ds.byFk.get(e._fk||familyKey(e.name))||[e]).slice().sort((a,b)=>(b.비용||0)-(a.비용||0));
     listTitle="유사 이름 시리즈";listMetaN=`${fam.length}개`;
     listHTML=fam.length<=1?`<div class="fam-note">유사 이름 시리즈가 없습니다.</div>`:
       `<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">이름</th><th>광고비</th><th>${effLab}</th><th>실적</th></tr></thead><tbody>`+
       (()=>{const _ftrim=prefixTrimmer(fam.map(x=>displayNameOf(x)));
       return fam.map(x=>{const dn=displayNameOf(x);
-        return `<tr class="${x.name===e.name?"me":""}" data-nm="${escAttr(x.name)}" title="${escAttr(dn)}"><td class="l"><span class="mb b-${x.dom==="good"?"gold":x.tier}">${tierBadge(x)}</span> ${escHtml(_ftrim(dn))}</td><td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td><td>${perfPillHTML(x)}</td></tr>`;}).join("");})()+
+        return `<tr class="${x.name===e.name?"me":""}" data-nm="${escAttr(x.name)}" title="${escAttr(dn)}"><td class="l">${escHtml(_ftrim(dn))}</td><td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td><td>${perfPillHTML(x)}</td></tr>`;}).join("");})()+
       `</tbody></table></div></div>`;}
   const preview=assetPreview(previewUrlOf(e),e);
   const cmpB=`<div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}`;
@@ -3326,6 +3505,9 @@ function fillIsland(ds,e,inner){const L=ds.L;
   const sideMedia=e._isGroup?((gwStatHTML(e)||"")+(groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group))||"")):preview; /* 그룹은 정확 소스+보고서 정보가 미디어 자리 */
   inner.innerHTML=`<div class="isle-row3${sideMedia?"":" nomedia"}">${sideMedia?`<div class="ir-media">${sideMedia}</div>`:""}<div class="ir-mid"></div><div class="ir-cmp">${cmpB}</div></div>`;
   renderIsleMid(ds,e,inner.querySelector(".ir-mid"));
+  /* 비교(A/B) 버튼 — 미디어 프레임 좌상단 오버레이 (그룹 상세는 미디어 프레임이 없어 제외) */
+  const _cfr=inner.querySelector(".ir-media .isle-frame");
+  if(_cfr&&!e._isGroup)mountCmpOvl(_cfr,ds,e);
   const _vv=inner.querySelector(".isle-frame video");
   if(_vv)_vv.addEventListener("loadedmetadata",()=>isleAr(_vv));
   /* 유튜브 소재면 제목을 조회해 화면 곳곳의 URL 이름을 실제 제목으로 교체 (미디어 위 중복 배너 없음) */
@@ -3382,7 +3564,7 @@ function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-r
    대표(lead)만 기본 표시, +를 누르면 그 카테고리의 하위(sub)가 펼쳐진다.
    매체와 연관 없는 지표(예: 구글의 eCPI/활성유저, 몰로코의 구글 전환류)는 아예 만들지 않는다. */
 /* 뱃지 전용 열 폐지 — 등급 뱃지(왕관·엄지·독보적)는 점수 칸에 흡수(같은 정보의 중복 열 제거) */
-function tableCols(L,ds){const meta=[{k:"name",t:L.name},{k:"score",t:"실적",help:"구글 리포트의 '실적'(매우 좋음·좋음·낮음·학습·대기중)을 표시 — 매주 자동 동기화, 실적이 '-'면 '보통'으로 표시해요. 내보내기 어휘 '인기순'(=Best)은 UI 표기 '매우 좋음'으로 바꿔 보여줘요. 실적이 없는 소재(몰로코·메타·과거 구글)는 지표 관계(전환·CTR 등수, 물량 비율)로 추정해 점선 연한 필에 (cc)를 붙여요. 정렬은 내부 점수(효율 50:규모 50 등수화) 기준 · 옆 뱃지 = 등급(왕관 TOP·엄지·독보적)"}];
+function tableCols(L,ds){const meta=[{k:"name",t:L.name},{k:"score",t:"실적",help:"구글 리포트의 '실적'(매우 좋음·좋음·낮음·학습·대기중)을 표시 — 매주 자동 동기화, 실적이 '-'면 '보통'으로 표시해요. 내보내기 어휘 '인기순'(=Best)은 UI 표기 '매우 좋음'으로 바꿔 보여줘요. 실적이 없는 소재(몰로코·메타·과거 구글)는 지표 관계(전환·CTR 등수, 물량 비율)로 추정해 점선 연한 필에 (cc)를 붙여요. 정렬은 실적 서열(매우 좋음>좋음>보통>낮음>학습>대기중, 같은 실적은 광고비순)"}];
   const isM=ds&&ds.agg&&ds.agg.some(e=>e._m_ctype),isG=ds&&ds.agg&&ds.agg.some(e=>e._g_assetType);
   const isQ=ds&&ds.agg&&ds.agg.some(e=>e._q_retD1!=null||e._q_afInstalls!=null||e._q_reEng!=null);
   const isAce=isG&&ds&&ds.media==="Google ACE"; /* ACE는 CPM이 '채점 1순위' 대표 열로 승격 — 공통 CPM 서브와 중복 방지 */
@@ -3657,8 +3839,8 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
   const visible=rows.slice(startIdx,endIdx);
   const liveOn=tLiveOnly&&!standaloneMode&&ds.liveWeek;
   const html=visible.map(r=>{
-    const score=perfPillHTML(r); /* 점수 숫자 대신 실적(원문 그대로, 추정은 (cc)) — 라벨 없음·실적 '-'는 블록 없음 */
-    const bdg=tierBadge(r);
+    const score=perfPillHTML(r); /* 점수 숫자 대신 실적(원문 그대로, 추정은 (cc)) — 라벨 없으면 블록 없음 */
+    const bdg=""; /* 점수 기반 티어 뱃지(왕관·엄지·독보적)는 화면에서 제거 — 점수는 내부 계산 전용 */
     return `<tr class="row" data-name="${escAttr(r.name)}">`+cols.map(c=>{
       if(c.k==="name"){const th=thumbHTML(r);const dn=displayNameOf(r);
         const gst=r._isGroup?giStatusChip(groupInfoOf(r._g_adGroupId||r._m_group)):"";
@@ -3723,9 +3905,10 @@ async function hydrateYtNames(){
 /* 표의 현재 필터·검색·정렬이 적용된 전체 행 순서 — 표 렌더·페이지 계산·상세 이전/다음 내비가 공유 */
 function orderedRowsForTable(ds){
   let rows=getRowsForTable(ds);
-  /* 기본 화면은 비활성(광고비 0)과 무점수(–) 소재 숨김 — 단, 채점 자체가 없는 소규모 데이터셋은 그대로 */
-  if(!tableShowAll){const hasSc=rows.some(r=>r.score!=null);
-    rows=rows.filter(r=>!isInactive(r)&&(!hasSc||r.score!=null));}
+  /* 기본 화면은 비활성(광고비 0)과 실적 블록 없는 소재 숨김 — 단, 실적 자체가 없는 소규모 데이터셋은 그대로.
+     기준은 화면에 보이는 실적 라벨(perfLabelOf) — 점수는 내부 계산 전용이라 표시·숨김에 쓰지 않는다 */
+  if(!tableShowAll){const hasLab=rows.some(r=>perfLabelOf(r));
+    rows=rows.filter(r=>!isInactive(r)&&(!hasLab||perfLabelOf(r)));}
   rows=applyTFilter(rows,ds);
   if(tState.q){const q=tState.q.toLowerCase();rows=rows.filter(r=>r.name.toLowerCase().includes(q)||displayNameOf(r).toLowerCase().includes(q));}
   /* 매체 전환 후 현재 매체에 없는 컬럼(예: ACE 홈 단가)으로 정렬 상태가 남으면 조용히 무정렬되므로 점수순 폴백 */
@@ -3733,10 +3916,13 @@ function orderedRowsForTable(ds){
   rows.sort((a,b)=>{
     if(tState.sort==="name")return tState.dir*a.name.localeCompare(b.name);
     const k=tState.sort;
-    /* 실적 열 정렬 = 라벨 서열(매우 좋음>좋음>보통>낮음>학습>대기중>없음) 우선, 같은 라벨 안에선 내부 점수 — 라벨과 점수가 섞여 뒤죽박죽되는 것 방지 */
+    /* 실적 열 정렬 = 라벨 서열(매우 좋음>좋음>보통>낮음>학습>대기중>없음) 우선, 같은 라벨 안에선 광고비 —
+       점수는 내부 계산 전용이라 정렬에도 쓰지 않는다(잔재 금지) */
     if(k==="score"){
       const px=perfSortKey(a),py=perfSortKey(b);
-      if(px!==py)return tState.dir*(px>py?1:-1);}
+      if(px!==py)return tState.dir*(px>py?1:-1);
+      const cx=a.비용||0,cy=b.비용||0;
+      return cx===cy?0:tState.dir*(cx>cy?1:-1);}
     let x=a[k],y=b[k];
     if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1;
     return tState.dir*((x>y?1:x<y?-1:0));});
@@ -3887,7 +4073,7 @@ function renderAB(ds){const el=$("#abBody"),meta=$("#abMeta"),cnt=$("#abCnt");
       return r;});
     f.cost=f.rows.reduce((s,r)=>s+r.cost,0);
     f.rows.sort((a,b)=>{
-      if(a.pv==null&&b.pv==null)return(b.score??-1)-(a.score??-1);
+      if(a.pv==null&&b.pv==null)return(b.cost||0)-(a.cost||0); /* 점수는 화면 정렬에 쓰지 않는다 — 광고비 폴백 */
       if(a.pv==null)return 1;if(b.pv==null)return -1;
       return primary.dir<0?a.pv-b.pv:b.pv-a.pv;});});
   fams.sort((a,b)=>b.cost-a.cost);
@@ -4475,14 +4661,15 @@ function scoreWeightsHTML(){
   }).join("")+`<div class="ftw-common">모든 지표 공통 — 점수는 개별 지표의 <b>'전체 중 몇 등'(등수화 · 1소재 1표)</b> · 표본·지출 적으면 <b>50으로 축소</b> · <b>구글은 같은 애드그룹 안에서만</b> 등수(그룹 간 혼합 금지 · 영상/이미지도 그룹 안에서 함께) &nbsp;·&nbsp; <button type="button" class="ftw-edit" id="ftwEdit">지표·비중 직접 편집 →</button>${anyCustom?` <span class="ftw-custom">커스텀 적용됨</span>`:""}</div></div>`;}
 function renderFooter(){$("#ft").innerHTML=`
 <details open>
-  <summary>점수 읽는 법 (한눈에)</summary>
+  <summary>실적·내부 채점 읽는 법 (한눈에)</summary>
   <ul class="ft-key">
-    <li><b>점수 = 같은 매체 안에서의 상대 순위</b>(2026-07 개편: <b>구글은 같은 애드그룹 안</b>) — 평균 50 · 1등 90점대. 매체가 다르면 점수끼리 비교하지 않아요(eCPA가 매체 간 40~80배 차이)</li>
+    <li><b>표의 '실적' = 구글 공식 실적(매주 자동 동기화) 또는 추정(cc·점선 필)</b> — 점수 숫자는 화면에 표시하지 않아요. 정렬·기본 숨김도 실적 라벨 기준(같은 실적 안에선 광고비순)이고, 아래 내부 채점은 <b>추정(cc)·분석 계산에만</b> 쓰여요</li>
+    <li><b>내부 채점 = 같은 매체 안에서의 상대 순위</b>(2026-07 개편: <b>구글은 같은 애드그룹 안</b>) — 평균 50 · 1등 90점대. 매체가 다르면 점수끼리 비교하지 않아요(eCPA가 매체 간 40~80배 차이)</li>
     <li><b>계산은 4단계</b> — ① 매체별 핵심 지표(효율·규모)를 잰다 → ② 지표마다 <b>'전체 중 몇 등'(등수·0~100)</b>으로 바꾼다(나누기 파생식 아님) → ③ 표본·지출이 적으면 50 쪽으로 당긴다(소액 소재 운빨 차단) → ④ <b>효율 50 : 규모 50</b>으로 합친다</li>
     <li>막대 끝 <b>검은 조각 = 규모 50%</b>("얼마나 많이 데려왔나" — 몰로코·메타는 데려온 유저 <b>AUU</b>(신규+재활성 획득 순유저), 구글은 노출량) · 앞의 색 조각 = <b>효율 50%</b>("얼마나 싸게 데려왔나")</li>
     <li>등수는 절대량이 아닌 <b>상대 위치</b>라 노출 절대량이 적은 이미지 소재가 구조적으로 불이익받지 않고, 비디오·이미지는 분리하지 않고 (그룹 안에서) 함께 순위를 매겨요</li>
     <li>지표 옆 <b>↓ = 낮을수록 좋음</b>(단가류) · <b>↑ = 높을수록 좋음</b>(비율류) · 유저 수치는 전부 광고 어트리뷰션 기준(오가닉 제외)</li>
-    <li>내 소재가 실제로 어떻게 계산됐는지는 행 클릭 → <b>점수 구성</b> 패널</li>
+    <li>내 소재의 지표별 상대 위치는 행 클릭 → <b>지표별 계정 내 위치</b> 패널</li>
   </ul>
   ${scoreWeightsHTML()}
   <h4>꼭 알아야 할 함정 (2026-07 회의 확정 원칙 포함)</h4>
