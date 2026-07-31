@@ -632,6 +632,12 @@
   .cmp-trgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px 16px}
   .cmp-trc h5{font-size:11.5px;font-weight:800;margin:0 0 3px;color:var(--ink)}
   .cmpm-chartwrap{overflow-x:auto}
+  .cmp-dot{transform-box:fill-box;transform-origin:center;transition:transform .15s ease;cursor:pointer}
+  .cmp-dot.hov{transform:scale(1.45)}
+  .cmp-dottip{position:fixed;z-index:1300;transform:translate(-50%,-100%);padding:4px 11px;border-radius:999px;
+    background:rgba(255,255,255,.97);box-shadow:0 4px 14px -4px rgba(0,0,0,.28),0 0 0 1px rgba(0,0,0,.05);
+    font-size:11.5px;font-weight:800;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s ease;letter-spacing:-.01em}
+  .cmp-dottip.on{opacity:1}
   .meta-pv-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;width:100%;height:100%;padding:20px;box-sizing:border-box;text-decoration:none;text-align:center;background:linear-gradient(160deg,#EEF3FF,#E4ECFA);color:var(--ink);transition:background .12s}
   .meta-pv-card:hover{background:linear-gradient(160deg,#E4ECFF,#D8E4F8)}
   .meta-pv-emo{font-size:34px;line-height:1}
@@ -3593,7 +3599,26 @@ function cmpTotals(ds,e){
   const t={c:0,imp:0,clk:0,attr:0,act:0,conv:0,cval:0,vn:0,vd:0,tv:0,fo:0,home:0,inter:0,nu:0,rB:0,rU:0,afI:0};
   for(const o of os)for(const k in t)t[k]+=o[k]||0;
   return t;}
-function closeCmpModal(){const m=$("#cmpModal");if(m){m.hidden=true;m.innerHTML="";}}
+/* 비교 점 호버 — 시스템 title 대신 커스텀: 점이 살짝 커지고 위에 둥근 흰 박스(점 색 글자)로 수치 표시 */
+let _cmpTipEl=null;
+function _cmpDotTip(){if(_cmpTipEl)return _cmpTipEl;
+  const d=document.createElement("div");d.className="cmp-dottip";d.setAttribute("aria-hidden","true");
+  document.body.appendChild(d);return _cmpTipEl=d;}
+function hideCmpDotTip(){if(_cmpTipEl)_cmpTipEl.classList.remove("on");}
+function wireCmpDots(scope){
+  scope.querySelectorAll("circle.cmp-dot").forEach(c=>{
+    c.addEventListener("mouseenter",()=>{
+      const t=_cmpDotTip();
+      t.textContent=c.dataset.cv||"";
+      t.style.color=c.dataset.cc||"var(--ink)";
+      const r=c.getBoundingClientRect();
+      t.style.left=(r.left+r.width/2)+"px";
+      t.style.top=(r.top-7)+"px";
+      t.classList.add("on");
+      c.classList.add("hov");});
+    c.addEventListener("mouseleave",()=>{hideCmpDotTip();c.classList.remove("hov");});});
+  scope.addEventListener("scroll",hideCmpDotTip,true);}
+function closeCmpModal(){const m=$("#cmpModal");if(m){m.hidden=true;m.innerHTML="";}hideCmpDotTip();}
 function openCmpModal(){
   const m=$("#cmpModal");if(!m)return;
   if(cmpEnts().length<2){toast("현재 매체에서 비교할 수 있는 소재가 2개 미만이에요");return;}
@@ -3628,7 +3653,7 @@ function cmpAxesSVG(R){
     let pth="";ps.forEach((p,k)=>{pth+=(k?" L":"M")+` ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;});
     lines2+=`<path d="${pth}" fill="none" stroke="${col}" stroke-width="2" stroke-opacity="0.9" stroke-linejoin="round"/>`;
     pts[j].forEach((p,ci)=>{if(!p)return;const c=cols[ci];
-      dots+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.2" fill="${col}"><title>${escHtml(c.d.lab)} ${escHtml(c.d.fmt(c.raw[j]))}</title></circle>`;});});
+      dots+=`<circle class="cmp-dot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.2" fill="${col}" data-cv="${escAttr(c.d.lab+" "+c.d.fmt(c.raw[j]))}" data-cc="${col}"/>`;});});
   /* 지표(열)마다 최고점 위·최저점 아래에만 수치 표기 */
   cols.forEach((c,ci)=>{
     const here=pts.map(ent=>ent[ci]).filter(Boolean);
@@ -3689,7 +3714,7 @@ function cmpTrendSectionHTML(R){
       series[j].forEach((v,i)=>{if(v==null)return;
         const x=xat2(i),y=pt2+(1-v/mx)*ih2;
         p+=st?` L ${x.toFixed(1)} ${y.toFixed(1)}`:`M ${x.toFixed(1)} ${y.toFixed(1)}`;st=true;
-        dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.4" fill="${col}"><title>${escHtml(weeksTip(i))} ${escHtml(d.fmt(v))}</title></circle>`;});
+        dots+=`<circle class="cmp-dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.4" fill="${col}" data-cv="${escAttr(weeksTip(i)+" · "+d.fmt(v))}" data-cc="${col}"/>`;});
       if(!st)return;
       svg+=`<path d="${p}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round"/>`+dots;});
     return `<div class="cmp-trc"><h5>${escHtml(d.lab)}${d.dir<0?" ↓":d.dir>0?" ↑":""}</h5><svg viewBox="0 0 ${W2} ${H2}" style="width:100%;height:auto">${svg}${xlab(xat2,W2,H2,8)}</svg></div>`;}).filter(Boolean);
@@ -3718,7 +3743,8 @@ function renderCmpModal(){
   m.onclick=ev=>{if(ev.target===m)closeCmpModal();};
   m.querySelector(".cmpm-close").onclick=closeCmpModal;
   m.querySelectorAll(".cmpm-tabs button").forEach(b=>b.onclick=()=>{cmpTab=b.dataset.ct;renderCmpModal();});
-  const tf=m.querySelector(".cmp-trfull");if(tf)tf.onclick=()=>{cmpTrendFull=!cmpTrendFull;renderCmpModal();};}
+  const tf=m.querySelector(".cmp-trfull");if(tf)tf.onclick=()=>{cmpTrendFull=!cmpTrendFull;renderCmpModal();};
+  hideCmpDotTip();wireCmpDots(m);}
 document.addEventListener("keydown",ev=>{if(ev.key==="Escape"){const m=$("#cmpModal");if(m&&!m.hidden){closeCmpModal();ev.stopPropagation();}}},true);
 function renderIsleMid(ds,e,mid){if(!mid)return;
   const tabs=[{k:"trend",lab:"주차별 추이",html:creativeTrendHTML(ds,e)||`<div class="fam-note">주차 데이터가 2주 이상 쌓이면 추이가 표시됩니다.</div>`}];
