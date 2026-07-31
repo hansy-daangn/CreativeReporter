@@ -504,7 +504,7 @@
   .abxc-go{margin-top:auto;background:var(--surface-2);border-radius:8px;padding:8px;font-size:11.5px;font-weight:700;color:var(--muted);transition:.12s}
   .abxc-go:hover{background:var(--surface-3);color:var(--ink)}
   /* 학습중 뱃지 */
-  .lrn{display:inline-block;font-size:9px;font-weight:800;color:#3D6BB3;background:#E1EBF8;padding:1.5px 6px;border-radius:5px;vertical-align:1.5px;letter-spacing:.02em;cursor:help;margin-right:6px}
+  .lrn{display:inline-block;font-size:9px;font-weight:800;color:#3D6BB3;background:#E1EBF8;padding:1.5px 6px;border-radius:5px;vertical-align:1.5px;letter-spacing:.02em;cursor:help;margin-right:6px;white-space:nowrap;flex:0 0 auto}
   /* 기간 직접 설정 (사이드바) */
   .pcustom{display:flex;align-items:center;gap:5px;padding:7px 2px 0;flex-wrap:wrap;color:var(--side-muted);font-size:11px}
   .pcustom input[type=number]{background:var(--side-2);border:1px solid rgba(255,255,255,.14);color:var(--side-ink);border-radius:7px;padding:5px 6px;font-size:11px;font-family:inherit;width:52px;color-scheme:dark}
@@ -631,7 +631,13 @@
   .cmp-seg{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 8px}
   .cmp-seg button{border:1px solid #E2DFD3;background:transparent;border-radius:999px;padding:4px 11px;font-size:11.5px;cursor:pointer;color:var(--muted);font-weight:650}
   .cmp-seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .cmpm-tabs{margin:0 4px 0 auto;flex:0 0 auto}
+  .cmpm-sectabs{display:flex;align-items:center;gap:14px;margin:16px 0 8px}
+  .cmpm-sectabs button[data-ct]{border:0;background:transparent;font-weight:800;font-size:12.5px;color:var(--faint);cursor:pointer;padding:0}
+  .cmpm-sectabs button[data-ct].on{color:var(--ink)}
+  .cmpm-sectabs .n{font-weight:600;font-size:11px;color:var(--faint)}
+  .cmpm-med{position:relative}
+  .cmpm-medx{position:absolute;top:26px;right:6px;z-index:5;width:22px;height:22px;border:0;border-radius:50%;background:rgba(20,19,15,.5);color:#fff;font-size:11px;cursor:pointer;display:grid;place-items:center;line-height:1}
+  .cmpm-medx:hover{background:rgba(20,19,15,.82)}
   .cmp-trfull{border:1px solid #E2DFD3;background:transparent;border-radius:999px;padding:3px 10px;font-size:11px;cursor:pointer;color:var(--muted);font-weight:650;margin-left:8px;vertical-align:middle}
   .cmp-trfull.on{background:var(--ink);color:#fff;border-color:var(--ink)}
   .cmp-trgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px 16px}
@@ -682,13 +688,13 @@
   .fam tr.me .g-name{color:var(--ink);font-weight:650}
   .fam-note{font-size:11px;color:var(--faint);margin-top:8px}
   .fam.fam-g th,.fam.fam-g td{padding:4px 8px}
-  .fam.fam-g th:nth-child(2),.fam.fam-g td:nth-child(2){width:78px}
-  .fam.fam-g th:nth-child(3),.fam.fam-g td:nth-child(3){width:74px}
-  .fam.fam-g th:nth-child(4),.fam.fam-g td:nth-child(4){width:90px}
-  .fam.fam-g th:nth-child(5),.fam.fam-g td:nth-child(5){width:86px}
+  .fam.fam-g th:nth-child(1),.fam.fam-g td:nth-child(1){width:62px}
+  .fam.fam-g th:nth-child(2),.fam.fam-g td:nth-child(2){width:98px}
+  .fam.fam-g th:nth-child(3),.fam.fam-g td:nth-child(3){width:104px}
+  .fam.fam-g th:nth-child(4),.fam.fam-g td:nth-child(4){width:92px}
+  .fam.fam-g th:nth-child(5),.fam.fam-g td:nth-child(5){width:auto}
   .fam.fam-g td.l{white-space:nowrap}
   .fam.fam-g .tthumb{width:46px;height:28px;border-radius:5px;vertical-align:middle}
-  .fam.fam-g .cmp-mark{vertical-align:middle;margin-left:6px}
   .xmedia-wrap{margin-top:16px}
   .xmedia-wrap .fam th:nth-child(2),.xmedia-wrap .fam td:nth-child(2){width:56px}
   .xmedia-wrap .fam th:nth-child(3),.xmedia-wrap .fam td:nth-child(3){width:94px}
@@ -3508,7 +3514,7 @@ function refreshCrossBlock(){ /* 지문이 새로 계산되면 열린 상세의 
   const e=findRow(curDS,ISLE.name);if(!e||e._isGroup)return;
   wrap.innerHTML=crossBlockHTML(curDS,e);wireCrossBlock(wrap,curDS);}
 function crossGo(ch,nm){const ds=curDS;if(!ds||!ds.aggByChannel||!ds.aggByChannel.has(ch))return;
-  ds.media=ch;tPage=1;tGroupByTouched=false;show(ds); /* 매체 드롭다운과 같은 전환 경로 */
+  ds.media=ch;cmpResetForMedia(ch);tPage=1;tGroupByTouched=false;show(ds); /* 매체 드롭다운과 같은 전환 경로 */
   setTimeout(()=>{try{goToIslandFromQuad(nm);}catch(_){}},250);}
 /* ═════ 소재 비교(멀티) — 상세 미디어 프레임 좌상단 '비교' 버튼으로 소재를 무제한 담아 한 화면에서 겹쳐 보기 ═════
    흐름: 소재마다 '비교' 클릭 → 목록에 추가 → 2개째에 겹침 모달 자동 오픈, 이후에도 계속 추가 가능(개수 무제한).
@@ -3624,18 +3630,26 @@ function renderCmpBar(){
     const col=R.colorByList.get(i)||CMP_GRAY;
     const rk=R.rankByList.get(i);
     return `<span class="cmpb-slot" style="box-shadow:inset 0 0 0 1px ${col}" title="${escAttr(nm)}">${rk!=null&&R.ents.length>=2?`<b style="color:${col}">${rk+1}위</b> `:""}${c.locked?LOCK_CLOSED+" ":""}${escHtml(trunc(nm,20))}<button type="button" class="cmpb-x" data-i="${i}" title="비교에서 빼기">✕</button></span>`;}).join("");
-  bar.innerHTML=`<span class="cmpb-t">소재 비교 ${CMP.list.length}</span>${chips}<button type="button" class="cmpb-open" id="cmpOpenBtn"${CMP.list.length>=2?"":" disabled"}>비교하기</button><button type="button" class="cmpb-clear" id="cmpClearBtn" title="고정(🔒)된 소재는 남아요">전체 지우기</button>`;
+  /* 버튼 2개가 맨 앞 고정 — '소재 비교 N' 라벨 대신 버튼에 개수 표기 */
+  bar.innerHTML=`<button type="button" class="cmpb-open" id="cmpOpenBtn"${CMP.list.length>=2?"":" disabled"}>비교하기 ${CMP.list.length}</button><button type="button" class="cmpb-clear" id="cmpClearBtn" title="고정(🔒)된 소재는 남아요">전체 지우기</button>${chips}`;
   bar.querySelectorAll(".cmpb-x").forEach(x=>x.onclick=()=>cmpRemove(+x.dataset.i));
   const ob=$("#cmpOpenBtn");if(ob)ob.onclick=openCmpModal;
   const cb=$("#cmpClearBtn");if(cb)cb.onclick=cmpClear;}
+/* 매체 전환 시 비교 목록 자동 전체 비우기 — 다른 매체와는 지표 축이 달라 비교 불가(잠금 포함) */
+function cmpResetForMedia(media){
+  if(!CMP.list.length||CMP.list[0].media===media)return;
+  CMP.list=[];
+  closeCmpModal();renderCmpBar();refreshCmpChecks();
+  toast("매체를 바꿔 비교 목록을 비웠어요");}
 function cmpMetricDefs(ds){
   const defs=[],seen=new Set();
   const add=(k,lab,dir,fmt,of)=>{if(seen.has(k))return;seen.add(k);defs.push({k,lab,dir,fmt,of});};
   add("_cost","광고비",0,fmtWon,o=>o.c>0?o.c:null);
   if(reachKeyFor(ds)==="신규+재활성 유저 수")add("_reach","데려온 유저",1,fmtInt,o=>o.nu>0?o.nu:null);
   else add("_reach","노출수",1,fmtInt,o=>o.imp>0?o.imp:null);
-  /* 구글은 노출뿐 아니라 성과 절대량도 — AEO=신규 유저(first_open) · ACE=홈 방문 (없는 값은 자동 제외) */
+  /* 구글은 노출뿐 아니라 성과 절대량도 — ACE 제외는 총 데려온 유저(전환수)+신규 유저, ACE는 홈 방문 (없는 값 자동 제외) */
   if(String(ds.media||"").startsWith("Google")){
+    if(ds.media!=="Google ACE")add("_conv","데려온 유저",1,fmtInt,o=>o.conv>0?o.conv:null);
     add("_fo","신규 유저",1,fmtInt,o=>o.fo>0?o.fo:null);
     add("_home","홈 방문",1,fmtInt,o=>o.home>0?o.home:null);}
   for(const sp of ((typeof specsFor==="function"?specsFor(ds):[])||[])){
@@ -3683,7 +3697,7 @@ function cmpAxesSVG(R){
     const mx=Math.max(...eff.filter(v=>v!=null).concat([0]));
     return {d,raw,eff,mx};}).filter(c=>c.mx>0&&c.eff.filter(v=>v!=null).length>=2);
   if(!cols.length)return `<div class="fam-note">겹쳐 볼 지표 값이 부족해요</div>`;
-  const CW=94,PL=16,PR=16,PT=20,PB=48,H=228,W=PL+cols.length*CW+PR,ih=H-PT-PB;
+  const PL=18,PR=18,PT=22,PB=48,H=232,W=820,CW=(W-PL-PR)/cols.length,ih=H-PT-PB; /* 좌우 풀폭 — 컨테이너 너비를 꽉 채운다 */
   const xAt=c=>PL+c*CW+CW/2;
   let g=`<line x1="${PL}" y1="${H-PB}" x2="${W-PR}" y2="${H-PB}" stroke="#ECE9DE" stroke-width="1"/>`;
   cols.forEach((c,ci)=>{const x=xAt(ci);
@@ -3711,9 +3725,9 @@ function cmpAxesSVG(R){
     for(const p of here){if(p.y<hi.y)hi=p;if(p.y>lo.y)lo=p;}
     if(hi===lo)return;
     const colOf=p=>R.colorByList.get(ents[p.j].i)||CMP_GRAY;
-    vals+=`<text x="${hi.x.toFixed(1)}" y="${(hi.y-7).toFixed(1)}" font-size="8" font-weight="600" fill="${colOf(hi)}" text-anchor="middle">${escHtml(c.d.fmt(c.raw[hi.j]))}</text>`;
-    vals+=`<text x="${lo.x.toFixed(1)}" y="${(lo.y+13).toFixed(1)}" font-size="8" font-weight="600" fill="${colOf(lo)}" text-anchor="middle">${escHtml(c.d.fmt(c.raw[lo.j]))}</text>`;});
-  return `<div class="cmpm-chartwrap"><svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${Math.min(W+80,640)}px;min-width:${Math.min(W,520)}px;height:auto">${g}${lines2}${dots}${vals}</svg></div>`;}
+    vals+=`<text x="${hi.x.toFixed(1)}" y="${(hi.y-8).toFixed(1)}" font-size="9" font-weight="700" fill="${colOf(hi)}" text-anchor="middle">${escHtml(c.d.fmt(c.raw[hi.j]))}</text>`;
+    vals+=`<text x="${lo.x.toFixed(1)}" y="${(lo.y+14).toFixed(1)}" font-size="9" font-weight="700" fill="${colOf(lo)}" text-anchor="middle">${escHtml(c.d.fmt(c.raw[lo.j]))}</text>`;});
+  return `<div class="cmpm-chartwrap"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:560px;height:auto">${g}${lines2}${dots}${vals}</svg></div>`;}
 function cmpGridHTML(R){
   const{ents,tots,defs,order}=R;
   const head=order.map((j,rank)=>{const en=ents[j];const nm=displayNameOf(en.e);
@@ -3778,20 +3792,21 @@ function renderCmpModal(){
     const nm=displayNameOf(en.e),col=R.colorByList.get(en.i);
     return `<div class="cmpm-med" style="--cc:${col}">
       <div class="cmpm-medh"><span class="rank" style="background:${col};color:#fff">${rank+1}위</span>${en.c.locked?" 🔒":""}<span class="nm" title="${escAttr(nm)}">${escHtml(trunc(nm,26))}</span><span class="dp">${domPct[j]!=null?"우세도 "+Math.round(domPct[j]*100)+"%":""}</span></div>
+      <button type="button" class="cmpm-medx" data-i="${en.i}" title="비교에서 빼기">✕</button>
       ${pv||'<div class="fam-note">미리보기가 없는 소재예요</div>'}</div>`;}).join("");
-  const body=cmpTab==="tr"
-    ?`<div class="cmpm-secT">주차별 추이 <button type="button" class="cmp-trfull${cmpTrendFull?" on":""}">전체 기간</button></div>${cmpTrendSectionHTML(R)}`
-    :`<div class="cmpm-secT">주요 지표 <span class="n">높을수록 좋아요 · 수치에 비례하게 보여줘요</span></div>${cmpAxesSVG(R)}${cmpGridHTML(R)}`;
+  /* 탭이 곧 섹션 제목 — '개요/추이' 세그먼트를 따로 두지 않고 제목 자리에서 전환 */
+  const secTabs=`<div class="cmpm-sectabs"><button type="button" data-ct="ov" class="${cmpTab==="ov"?"on":""}">주요 지표</button><button type="button" data-ct="tr" class="${cmpTab==="tr"?"on":""}">주차별 추이</button>${cmpTab==="ov"?`<span class="n">높을수록 좋아요 · 수치에 비례하게 보여줘요</span>`:`<button type="button" class="cmp-trfull${cmpTrendFull?" on":""}">전체 기간</button>`}</div>`;
+  const body=secTabs+(cmpTab==="tr"?cmpTrendSectionHTML(R):cmpAxesSVG(R)+cmpGridHTML(R));
   m.innerHTML=`<div class="cmpm" role="dialog" aria-modal="true" aria-label="소재 비교">
     <div class="cmpm-h"><span class="cmpm-name">소재 비교 <b>${ents.length}</b>개 <span class="n">전체 기간 · 우세순</span></span>
-      <div class="cmp-seg cmpm-tabs"><button type="button" data-ct="ov" class="${cmpTab==="ov"?"on":""}">개요</button><button type="button" data-ct="tr" class="${cmpTab==="tr"?"on":""}">추이</button></div>
       <button type="button" class="cmpm-close" title="닫기 (Esc)">✕</button></div>
     <div class="cmpm-media n${Math.min(ents.length,4)}">${meds}</div>
     ${body}
   </div>`;
   m.onclick=ev=>{if(ev.target===m)closeCmpModal();};
   m.querySelector(".cmpm-close").onclick=closeCmpModal;
-  m.querySelectorAll(".cmpm-tabs button").forEach(b=>b.onclick=()=>{cmpTab=b.dataset.ct;renderCmpModal();});
+  m.querySelectorAll(".cmpm-sectabs button[data-ct]").forEach(b=>b.onclick=()=>{cmpTab=b.dataset.ct;renderCmpModal();});
+  m.querySelectorAll(".cmpm-medx").forEach(b=>b.onclick=()=>cmpRemove(+b.dataset.i));
   const tf=m.querySelector(".cmp-trfull");if(tf)tf.onclick=()=>{cmpTrendFull=!cmpTrendFull;renderCmpModal();};
   hideCmpDotTip();wireCmpDots(m);}
 document.addEventListener("keydown",ev=>{if(ev.key==="Escape"){const m=$("#cmpModal");if(m&&!m.hidden){closeCmpModal();ev.stopPropagation();}}},true);
@@ -3835,9 +3850,10 @@ function fillIsland(ds,e,inner){const L=ds.L;
         const typeShort=entTypeShort(x);
         const emoji=entTypeEmoji(x);
         const dn=displayNameOf(x);
-        const sz=String((x.tags&&x.tags.size)||x._m_res||"").replace(/x/i,"×");
+        const _md=(typeof MDIM!=="undefined")&&url&&MDIM[url];
+        const sz=String((x.tags&&x.tags.size)||x._m_res||(_md&&_md.w?_md.w+"×"+_md.h:"")).replace(/x/i,"×");
         return `<tr class="${x.name===e.name?"me":""} hoverable" data-nm="${escAttr(x.name)}" data-preview="${escAttr(url)}" data-label="${escAttr(typeShort+' · '+trunc(dn,40))}" title="${escAttr(dn)}">
-        <td class="l">${thumbHTML(x)||`<span class="g-type-emoji">${emoji}</span>`}<span class="cmp-mark">${markBtnsHTML(ds.media,x)}</span></td>
+        <td class="l">${thumbHTML(x)||`<span class="g-type-emoji">${emoji}</span>`}</td>
         <td class="num">${sz?escHtml(sz):"–"}</td>
         <td>${perfPillHTML(x)}</td>
         <td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td></tr>`;}).join("")+
@@ -3885,7 +3901,16 @@ function fillIsland(ds,e,inner){const L=ds.L;
     if(!url)return;
     tr.addEventListener("mouseenter",ev=>{const h=assetPreviewTipHTML(url,lab);if(h)showTip(h,ev.clientX,ev.clientY,true);});
     tr.addEventListener("mousemove",ev=>{if(tip.style.opacity!=="0")placeTip(ev.clientX,ev.clientY);});
-    tr.addEventListener("mouseleave",hideTip);});}
+    tr.addEventListener("mouseleave",hideTip);});
+  /* 그룹 목록 해상도 '–' — 썸네일이 로드되면 실측 치수로 제자리 채움(영상 metadata·이미지 natural 크기, MDIM에도 적재) */
+  inner.querySelectorAll(".fam-g tr[data-nm]").forEach(tr=>{
+    const cell=tr.children[1];if(!cell||cell.textContent.trim()!=="–")return;
+    const med=tr.querySelector(".tthumb video, .tthumb img");if(!med)return;
+    const upd=()=>{const u=tr.dataset.preview,d=u&&(typeof MDIM!=="undefined")&&MDIM[u];
+      const w=(d&&d.w)||med.videoWidth||med.naturalWidth||0,h2=(d&&d.h)||med.videoHeight||med.naturalHeight||0;
+      if(w>1&&h2>1)cell.textContent=w+"×"+h2;};
+    if(med.tagName==="VIDEO"){if(med.readyState>=1)upd();else med.addEventListener("loadedmetadata",upd);}
+    else{if(med.complete&&med.naturalWidth)upd();else med.addEventListener("load",upd);}});}
 /* 상세 이전/다음 — 표의 현재 필터·정렬 순서를 그대로 따라 이동 (페이지 경계 자동 처리) */
 /* 이동 목표를 동기적으로 추적 — ←/→ 연타 시 ISLE.name이 rAF 안에서만 갱신돼
    두 번째 호출이 같은 목표를 다시 토글(=닫힘)하던 문제 방지 */
@@ -5068,7 +5093,7 @@ function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)r
     <div class="sf-dd-menu" role="listbox" hidden>${chans.map(ch=>`<button type="button" role="option" data-m="${escAttr(ch)}" class="${ch===cur?"on":""}">${escHtml(ch)} <em>${counts.get(ch).toLocaleString()}</em></button>`).join("")}</div></div>`;
   const dd=el.querySelector(".sf-dd"),btn=dd.querySelector(".sf-dd-btn"),menu=dd.querySelector(".sf-dd-menu");
   btn.onclick=e=>{e.stopPropagation();const willOpen=menu.hidden;closeAllDD();if(willOpen){dd.classList.add("open");menu.hidden=false;btn.setAttribute("aria-expanded","true");}};
-  menu.querySelectorAll("button").forEach(b=>b.onclick=()=>{const m=b.dataset.m;closeAllDD();if(ds.media===m)return;ds.media=m;tPage=1;tGroupByTouched=false;show(ds);});} /* 매체 전환 시 그룹뷰 기본값 재적용 */
+  menu.querySelectorAll("button").forEach(b=>b.onclick=()=>{const m=b.dataset.m;closeAllDD();if(ds.media===m)return;ds.media=m;cmpResetForMedia(m);tPage=1;tGroupByTouched=false;show(ds);});} /* 매체 전환 시 그룹뷰 기본값 재적용 + 비교 목록 초기화 */
 function show(ds){scope(ds);
   /* 구글 = 그룹뷰 기본(2026-07 회의: "구글만 그룹뷰로 보면 돼요") — 사용자가 직접 토글했으면 그 선택 존중 */
   if(!tGroupByTouched&&tMarkView==="all"){
@@ -5109,10 +5134,9 @@ function renderFooter(){$("#ft").innerHTML=`
 <details open>
   <summary>실적 분석 — 실제 실적과 추정(cc)</summary>
   <ul class="ft-key">
-    <li><b>표의 '실적' = 구글 공식 실적 등급 그대로</b>(매주 자동 동기화 · 내보내기 어휘 '인기순'=Best는 UI 표기 '매우 좋음'으로 · 실적 '-'는 '보통'으로 표시). 구글 공식 문서 기준, 이 등급은 <b>지난 14일 데이터</b>로 <b>같은 유형의 유사 애셋 대비 평균 일일 비용 백분위</b>에 기반해 매겨져요('대기중'=아직 처리 중이라 평가 전 · '학습'=순위를 매기기엔 데이터 수집 중 — 출처: support.google.com/google-ads/answer/6310436)</li>
-    <li><b>추정(cc) 최종 공식</b> — 실제 실적이 없는 소재(몰로코·메타 전부, 동기화 이전 구글)는 공식 문서의 골격(최근 14일 창 · 같은 비교군(구글=애드그룹)×포맷 코호트 · 물량 백분위)에 맞춰 <b>S = 0.30×전환수 등수 + 0.20×CTR 등수 + 0.30×(전환수÷코호트 최대) + 0.20×(광고비÷코호트 최대)</b> 를 계산하고, <b>S ≥ 0.673 → 매우 좋음 · S &lt; 0.265 → 낮음 · 그 외 → 좋음</b>. 코호트가 3개 미만이면 상위 코호트로 확장하고, 최근 14일 무집행 소재는 추정하지 않아요(구글도 이 경우 등급을 유보)</li>
-    <li><b>신뢰도(무검증 아님 — 실측 교차검증)</b> — 실제 구글 라벨 110개(애드그룹 7개)로 leave-one-file-out 교차검증 <b>정확도 80%</b>, '매우 좋음' 재현율 16/17. 가중치·임계값은 답을 정해두지 않고 <b>후보 18종을 같은 검증으로 비교해 선별</b>했어요 — 문서 그대로의 '비용 백분위' 단독 65% · 최다 라벨만 찍는 기준선 45% · CPA 효율 기반 후보 25~45%(라벨과 비상관이라 탈락 — 구글 실적은 '물량 백분위' 신호가 지배적이라는 문서 내용과 일치)</li>
-    <li><b>실효성·전망</b> — 추정은 임시 참고용이에요: 실제 라벨이 동기화되면 그 소재는 <b>자동으로 실제 값으로 교체</b>돼요. 매주 라벨이 쌓이면(주당 100개 안팎) 임계값·가중치 재보정과 주간 이력 반영으로 <b>85~90% 수준</b>까지 기대되고, 나머지는 구글이 공개하지 않는 내부 예측 성분 몫이라 100%는 불가능해요. 몰로코·메타 추정은 정답 라벨이 없어 정확도 검증이 불가한 <b>구글에서 학습한 관계의 이식</b>이라는 점을 감안하고 봐 주세요</li>
+    <li><b>실적 = 구글 공식 등급 그대로</b> — 지난 14일, 같은 유형 애셋 대비 비용 백분위 기반 · 매주 자동 동기화</li>
+    <li><b>추정(cc) 공식</b> — 라벨 없는 소재에 같은 골격(14일 창 · 애드그룹×포맷 코호트)으로 <b>S = 0.30×전환수 등수 + 0.20×CTR 등수 + 0.30×(전환수÷코호트 최대) + 0.20×(광고비÷코호트 최대)</b> → S≥0.673 매우 좋음 · S&lt;0.265 낮음 · 그 외 좋음</li>
+    <li><b>신뢰도</b> — 실제 구글 라벨 110개 교차검증 정확도 80%(후보 18종 비교로 선별) · 실제 라벨이 오면 자동 교체</li>
   </ul>
 </details>
 
