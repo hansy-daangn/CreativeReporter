@@ -622,7 +622,8 @@
   .cmpg th{background:var(--surface-2);font-weight:700;font-size:11px}
   .cmpg th.l,.cmpg td.l{text-align:left;color:var(--muted);font-weight:700}
   .cmpg td.num{font-weight:600;color:var(--muted)}
-  .cmpg td.num.win{font-weight:850;color:var(--ink);background:var(--surface-2)}
+  .cmpg td.num.win{font-weight:850;color:var(--ink)}
+  .cmpg td.num.gold{background:#FBF3D7;box-shadow:inset 0 0 0 1px #F0E3B4}
   .cmp-seg{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 8px}
   .cmp-seg button{border:1px solid #E2DFD3;background:transparent;border-radius:999px;padding:4px 11px;font-size:11.5px;cursor:pointer;color:var(--muted);font-weight:650}
   .cmp-seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -3514,9 +3515,8 @@ function cmpToggle(ds,e){
     if(CMP.list.length&&CMP.list[0].media!==ds.media){toast("비교는 같은 매체 소재끼리만 가능해요 — 기존 비교를 먼저 지워 주세요");renderCmpBar();return;}
     CMP.list.push({key:dsKeyOf(ds),media:ds.media,name:e.name,locked:false});
     const n=CMP.list.length;
-    if(n===1)toast("비교에 담았어요 — 다른 소재에서도 '비교'를 누르면 한 화면에서 겹쳐 봐요 (개수 제한 없음)");
-    else if(n===2)openCmpModal();
-    else{const mm=$("#cmpModal");if(mm&&!mm.hidden)renderCmpModal();else toast(`비교 목록 ${n}개 — 하단 바 '겹쳐 보기'로 확인해요`);}}
+    if(n===1)toast("비교에 담았어요 — 다른 소재도 담은 뒤 하단 바 '비교하기'를 누르면 한 화면에서 겹쳐 봐요 (개수 제한 없음)");
+    else{const mm=$("#cmpModal");if(mm&&!mm.hidden)renderCmpModal();else toast(`비교 목록 ${n}개 — 하단 바 '비교하기'를 누르면 겹쳐 봐요`);}}
   renderCmpBar();}
 function cmpRemove(i){
   const c=CMP.list[i];if(!c)return;
@@ -3575,7 +3575,7 @@ function renderCmpBar(){
     const col=R.colorByList.get(i)||CMP_GRAY;
     const rk=R.rankByList.get(i);
     return `<span class="cmpb-slot" style="box-shadow:inset 0 0 0 1px ${col}" title="${escAttr(nm)}">${rk!=null&&R.ents.length>=2?`<b style="color:${col}">${rk+1}위</b> `:""}${c.locked?LOCK_CLOSED+" ":""}${escHtml(trunc(nm,20))}<button type="button" class="cmpb-x" data-i="${i}" title="비교에서 빼기">✕</button></span>`;}).join("");
-  bar.innerHTML=`<span class="cmpb-t">소재 비교 ${CMP.list.length}</span>${chips}<button type="button" class="cmpb-open" id="cmpOpenBtn"${CMP.list.length>=2?"":" disabled"}>겹쳐 보기</button><button type="button" class="cmpb-clear" id="cmpClearBtn" title="고정(🔒)된 소재는 남아요">전체 지우기</button>`;
+  bar.innerHTML=`<span class="cmpb-t">소재 비교 ${CMP.list.length}</span>${chips}<button type="button" class="cmpb-open" id="cmpOpenBtn"${CMP.list.length>=2?"":" disabled"}>비교하기</button><button type="button" class="cmpb-clear" id="cmpClearBtn" title="고정(🔒)된 소재는 남아요">전체 지우기</button>`;
   bar.querySelectorAll(".cmpb-x").forEach(x=>x.onclick=()=>cmpRemove(+x.dataset.i));
   const ob=$("#cmpOpenBtn");if(ob)ob.onclick=openCmpModal;
   const cb=$("#cmpClearBtn");if(cb)cb.onclick=cmpClear;}
@@ -3600,39 +3600,42 @@ function openCmpModal(){
   const m=$("#cmpModal");if(!m)return;
   if(cmpEnts().length<2){toast("현재 매체에서 비교할 수 있는 소재가 2개 미만이에요");return;}
   m.hidden=false;renderCmpModal();}
-/* [개요] 지표축 비례 겹침 차트 — 모듈 주석의 시각화 본체. 색·순서는 cmpRank의 순위 기준 */
+/* [개요] 지표축 비례 겹침 차트 — 지표를 가로로 나열하고 각 지표를 0(아래)→최고(위) '세로' 선형축으로.
+   소재마다 지표 열에 점을 찍고 좌→우로 이어 꺾은선으로 겹친다(채움 없음). 색·순서는 cmpRank의 순위 기준 */
 function cmpAxesSVG(R){
   const{ents,tots,defs}=R;
-  const rows=defs.map(d=>{
+  const cols=defs.map(d=>{
     const raw=tots.map(t=>d.of(t));
-    const eff=raw.map(v=>v==null?null:(d.dir<0?(v>0?1/v:null):v)); /* 단가류 → 효율(역수): 오른쪽=우세·비율 보존 */
+    const eff=raw.map(v=>v==null?null:(d.dir<0?(v>0?1/v:null):v)); /* 단가류 → 효율(역수): 위=우세·비율 보존 */
     const mx=Math.max(...eff.filter(v=>v!=null).concat([0]));
-    return {d,raw,eff,mx};}).filter(r=>r.mx>0&&r.eff.filter(v=>v!=null).length>=2);
-  if(!rows.length)return `<div class="fam-note">겹쳐 볼 지표 값이 부족해요</div>`;
-  const LW=128,PR=46,RH=40,PT=12,PB=8,W=700,H=PT+rows.length*RH+PB,x0=LW,x1=W-PR,iw=x1-x0;
-  const yAt=r=>PT+r*RH+RH/2;
+    return {d,raw,eff,mx};}).filter(c=>c.mx>0&&c.eff.filter(v=>v!=null).length>=2);
+  if(!cols.length)return `<div class="fam-note">겹쳐 볼 지표 값이 부족해요</div>`;
+  const CW=108,PL=40,PR=16,PT=14,PB=44,H=300,W=PL+cols.length*CW+PR,ih=H-PT-PB;
+  const xAt=c=>PL+c*CW+CW/2;
   let g="";
-  [0.25,0.5,0.75,1].forEach(f=>{const x=x0+f*iw;
-    g+=`<line x1="${x.toFixed(1)}" y1="${PT}" x2="${x.toFixed(1)}" y2="${H-PB}" stroke="#ECE9DE" stroke-width="${f===1?1:0.7}"${f===1?"":' stroke-dasharray="2 4"'}/>`;});
-  g+=`<text x="${x1}" y="${PT-3}" font-size="8.5" fill="var(--faint)" text-anchor="middle">최고=100%</text>`;
-  rows.forEach((r,ri)=>{const y=yAt(ri);
-    g+=`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="#F0EEE6" stroke-width="1"/>`;
-    g+=`<text x="${x0-8}" y="${y+3.5}" font-size="10.5" font-weight="700" fill="var(--muted)" text-anchor="end">${escHtml(r.d.lab)}${r.d.dir<0?" ↓":r.d.dir>0?" ↑":""}</text>`;});
-  const pts=ents.map((en,j)=>rows.map((r,ri)=>{const v=r.eff[j];return v==null?null:{x:x0+v/r.mx*iw,y:yAt(ri)};}));
-  let fills="",lines="",dots="";
-  /* 그리기 순서 = 우세 역순(1위가 맨 위에 얹힘) */
+  [0,0.25,0.5,0.75,1].forEach(f=>{const y=PT+(1-f)*ih;
+    g+=`<line x1="${PL}" y1="${y.toFixed(1)}" x2="${W-PR}" y2="${y.toFixed(1)}" stroke="#ECE9DE" stroke-width="${f===0||f===1?1:0.7}"${f===0||f===1?"":' stroke-dasharray="2 4"'}/>`;
+    g+=`<text x="${PL-6}" y="${(y+3).toFixed(1)}" font-size="8.5" fill="var(--faint)" text-anchor="end">${Math.round(f*100)}%</text>`;});
+  cols.forEach((c,ci)=>{const x=xAt(ci);
+    g+=`<line x1="${x.toFixed(1)}" y1="${PT}" x2="${x.toFixed(1)}" y2="${H-PB}" stroke="#F0EEE6" stroke-width="1"/>`;
+    const lab=c.d.lab+(c.d.dir<0?" ↓":c.d.dir>0?" ↑":"");
+    const words=lab.split(" ");
+    const lines=(lab.length>10&&words.length>1)?[words.slice(0,-2).join(" ")||words[0],words.slice(words.length>2?-2:-1).join(" ")]:[lab];
+    lines.forEach((t,li)=>{g+=`<text x="${x.toFixed(1)}" y="${H-PB+15+li*11}" font-size="9.5" font-weight="700" fill="var(--muted)" text-anchor="middle">${escHtml(t)}</text>`;});});
+  const pts=ents.map((en,j)=>cols.map((c,ci)=>{const v=c.eff[j];return v==null?null:{x:xAt(ci),y:PT+(1-v/c.mx)*ih};}));
+  let lines2="",dots="";
+  /* 그리기 순서 = 우세 역순(1위가 맨 위에 얹힘) · 채움 없음 */
   [...R.order].reverse().forEach(j=>{
     const en=ents[j],col=R.colorByList.get(en.i)||CMP_GRAY;
     const rk=R.rankByList.get(en.i),nm=displayNameOf(en.e);
     const ps=pts[j].filter(Boolean);
     if(!ps.length)return;
     let pth="";ps.forEach((p,k)=>{pth+=(k?" L":"M")+` ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;});
-    if(ps.length>=2)fills+=`<path d="M ${x0} ${ps[0].y.toFixed(1)} ${pth.replace(/^M/,"L")} L ${x0} ${ps[ps.length-1].y.toFixed(1)} Z" fill="${col}" fill-opacity="0.08"/>`;
-    lines+=`<path d="${pth}" fill="none" stroke="${col}" stroke-width="2" stroke-opacity="0.85" stroke-linejoin="round"/>`;
-    pts[j].forEach((p,ri)=>{if(!p)return;const r=rows[ri];
-      dots+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.2" fill="${col}"><title>${rk!=null?rk+1+"위 ":""}${escHtml(trunc(nm,24))} · ${escHtml(r.d.lab)} ${escHtml(r.d.fmt(r.raw[j]))}</title></circle>`;});});
-  return `<div class="cmpm-chartwrap"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:560px;height:auto">${g}${fills}${lines}${dots}</svg></div>
-  <div class="cmpm-axcap">각 지표는 0에서 시작하는 선형축(오른쪽 끝 = 비교 소재 중 최고) — 거리 비율이 값 비율 그대로예요(2배 차이=2배 거리). 단가류(↓)는 효율(역수)로 환산해 오른쪽=우세를 유지(단가 절반=거리 2배). 색 면적이 넓을수록 전반 우세 · 점에 마우스를 올리면 원래 값.</div>`;}
+    lines2+=`<path d="${pth}" fill="none" stroke="${col}" stroke-width="2" stroke-opacity="0.9" stroke-linejoin="round"/>`;
+    pts[j].forEach((p,ci)=>{if(!p)return;const c=cols[ci];
+      dots+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.2" fill="${col}"><title>${rk!=null?rk+1+"위 ":""}${escHtml(trunc(nm,24))} · ${escHtml(c.d.lab)} ${escHtml(c.d.fmt(c.raw[j]))}</title></circle>`;});});
+  return `<div class="cmpm-chartwrap"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${Math.min(W,720)}px;height:auto">${g}${lines2}${dots}</svg></div>
+  <div class="cmpm-axcap">지표마다 0에서 시작해 위로 올라가는 선형 세로축(맨 위 = 비교 소재 중 최고) — 높이 비율이 값 비율 그대로예요(2배 차이=2배 높이). 단가류(↓)는 효율(역수)로 환산해 위=우세(단가 절반=높이 2배). 점에 마우스를 올리면 원래 값.</div>`;}
 function cmpGridHTML(R){
   const{ents,tots,defs,order}=R;
   const head=order.map((j,rank)=>{const en=ents[j];const nm=displayNameOf(en.e);
@@ -3642,8 +3645,12 @@ function cmpGridHTML(R){
     if(vs.every(v=>v==null))return "";
     const val=vs.filter(v=>v!=null);
     const best=d.dir?(d.dir>0?Math.max(...val):Math.min(...val)):null;
+    /* 압도적 우세 = 2등보다 1.5배 이상 좋음(단가류는 역수 비율) → 연한 금색 + 볼드 */
+    const sorted=val.slice().sort((a,b)=>d.dir>0?b-a:a-b);
+    const second=sorted.length>=2?sorted[1]:null;
+    const domi=best!=null&&second!=null&&second>0&&best>0&&(d.dir>0?best/second:second/best)>=1.5;
     const cells=order.map(j=>{const v=vs[j];const win=d.dir&&v!=null&&val.length>=2&&v===best;
-      return `<td class="num${win?" win":""}">${v!=null?d.fmt(v):"–"}</td>`;}).join("");
+      return `<td class="num${win?" win":""}${win&&domi?" gold":""}">${v!=null?d.fmt(v):"–"}</td>`;}).join("");
     return `<tr><td class="l">${escHtml(d.lab)}${d.dir<0?" ↓":d.dir>0?" ↑":""}</td>${cells}</tr>`;}).join("");
   return `<div class="cmpg-wrap"><table class="cmpg"><thead><tr><th class="l">지표</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;}
 /* [추이] ① 동시 보기 — 광고비(실선)+단가(점선)+CTR(잔점선)를 한 그래프에 겹침. 색은 소재 순위에 고정돼
@@ -3729,7 +3736,7 @@ function renderCmpModal(){
       ${pv||'<div class="fam-note">미리보기가 없는 소재예요</div>'}</div>`;}).join("");
   const body=cmpTab==="tr"
     ?`<div class="cmpm-secT">주차별 추이 — 동시 보기 <span class="n">실선=광고비 · 점선=단가 · 잔점선=CTR · 같은 순서·같은 색</span></div>${cmpTrendSectionHTML(R)}`
-    :`<div class="cmpm-secT">주요 지표 한눈 비교 <span class="n">오른쪽=우세 · 거리 비례 · 색 면적=전반 우세</span></div>${cmpAxesSVG(R)}${cmpGridHTML(R)}`;
+    :`<div class="cmpm-secT">주요 지표 한눈 비교 <span class="n">위=우세 · 높이 비례 · 금색=압도적 우세</span></div>${cmpAxesSVG(R)}${cmpGridHTML(R)}`;
   m.innerHTML=`<div class="cmpm" role="dialog" aria-modal="true" aria-label="소재 비교">
     <div class="cmpm-h"><span class="cmpm-name">소재 비교 <b>${ents.length}</b>개 <span class="n">같은 매체(${escHtml(String(ds.media||""))}) · 소재 보유 전체 기간 — 기간 필터와 무관 · 잘된 순서(우세도)로 왼쪽부터, 색은 순위에 고정</span></span>
       <div class="cmp-seg cmpm-tabs"><button type="button" data-ct="ov" class="${cmpTab==="ov"?"on":""}">개요</button><button type="button" data-ct="tr" class="${cmpTab==="tr"?"on":""}">추이</button></div>
@@ -4685,40 +4692,57 @@ function greetingFor(name){
   return s.lines[Math.floor(Math.random()*s.lines.length)].replace(/\{n\}/g,name);}
 async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
   try{
-    /* ① 가벼운 cr_status 한 번 — 비밀번호 검증 + 서버 시그니처(총 행수·최근 업로드) 확보 */
-    let st=null;
-    try{st=await sbRpc("cr_status",{pw},{timeout:12000});}
-    catch(e){
-      /* 네트워크 지연·오프라인(408/0)이고 캐시가 있으면 캐시로라도 연다 — '가끔 로그인 실패' 방지.
-         비밀번호 오류(4xx)는 그대로 실패 처리 */
-      if((e.status===408||e.status===0)){
-        const cached=await IDB.get("boot");
-        if(cached&&cached.rows&&cached.rows.length){
-          cloudPw=pw;sessionStorage.setItem("crpw",pw);
-          applyNameMapBundle(cached.kv);loadCloudRows(cached.rows);
-          toast("📴 서버 응답이 늦어 저장해 둔 데이터로 열었어요 — 연결되면 자동 갱신돼요");
-          refreshCloudLine();return true;}}
-      throw e;}
-    cloudPw=pw;sessionStorage.setItem("crpw",pw);
-    const sig=bootSigOf(st);
-    /* ② 캐시가 있으면 즉시 렌더(접속 체감 = IndexedDB 읽기 한 번), 서버가 달라졌거나 24시간 묵었으면 백그라운드 최신화 */
     const cached=await IDB.get("boot");
     const canCache=cached&&cached.rows&&cached.rows.length&&cached.kv;
     if(canCache){
+      /* ① 캐시 즉시 렌더 — 네트워크 왕복 0, 체감 = IndexedDB 읽기 한 번(수백 ms).
+         수동 로그인은 attemptLogin(cr_login)이 비번을 이미 확인했고, 자동 재접속의 저장 비번도
+         직전 세션에 유효했던 값 — 재검증·최신화는 아래 백그라운드가 담당한다 */
+      cloudPw=pw;sessionStorage.setItem("crpw",pw);
       applyNameMapBundle(cached.kv);
       loadCloudRows(cached.rows);
-      const fresh=bootSigSame(cached.sig,sig);
-      const aged=(Date.now()-(cached.at||0))>24*3600*1000;
-      if(!fresh||aged){
-        (async()=>{try{
-          await cloudFullLoad(cloudPw,sig);
-          updateLandingVisibility();
-          if(!fresh)toast("☁️ 새 데이터가 있어 최신으로 갱신했어요");
-        }catch(e){toast("☁️ 최신화에 실패해 저장해 둔 데이터로 보고 있어요 · "+e.message);}})();}
+      (async()=>{
+        let st=null;
+        try{st=await sbRpc("cr_status",{pw:cloudPw},{timeout:15000});}
+        catch(e){
+          if(/password/i.test(e.message||"")){ /* 저장된 비번이 회수됨 — 화면 회수 후 로그인 화면 */
+            cloudPw=null;sessionStorage.removeItem("crpw");resetAll();updateLandingVisibility();
+            toast("비밀번호가 맞지 않아요 — 다시 로그인해 주세요");}
+          else toast("📴 서버 연결이 늦어요 — 저장해 둔 데이터로 보고 있어요 (연결되면 자동 갱신)");
+          return;}
+        const sig=bootSigOf(st);
+        const fresh=bootSigSame(cached.sig,sig);
+        const aged=(Date.now()-(cached.at||0))>24*3600*1000;
+        if(!fresh||aged){
+          try{await cloudFullLoad(cloudPw,sig);updateLandingVisibility();
+            if(!fresh)toast("☁️ 새 데이터가 있어 최신으로 갱신했어요");
+          }catch(e){toast("☁️ 최신화에 실패해 저장해 둔 데이터로 보고 있어요 · "+e.message);}}})();
     }else{
-      /* 캐시 없음(첫 접속·캐시 유실) — 전체 로드 후 캐시 적재 */
-      const rows=await cloudFullLoad(pw,sig);
-      if(!rows.length&&!silent)toast("☁️ 연결됐어요 · 아직 데이터가 없어요. 주간 CSV를 올리면 여기 쌓여요");}
+      /* ② 이 브라우저 첫 접속(캐시 없음) — 가벼운 cr_status로 검증·시그니처 확보 후,
+         최근 16주만 먼저 받아(전체의 약 1/3) 첫 화면을 앞당기고 과거분은 백그라운드로 합류.
+         기본 기간(3달=13주)은 최근분만으로 완결이라 화면 정확성 손실 없음 */
+      const st=await sbRpc("cr_status",{pw},{timeout:12000});
+      cloudPw=pw;sessionStorage.setItem("crpw",pw);
+      const sig=bootSigOf(st);
+      let staged=false;
+      const lastW=st&&st.last_week?String(st.last_week).slice(0,10):null;
+      if(lastW&&/^\d{4}-\d{2}-\d{2}$/.test(lastW)&&(+st.weeks||0)>18){
+        const cut=new Date(Date.parse(lastW)-15*7*864e5).toISOString().slice(0,10);
+        try{
+          const [recent,kvb]=await Promise.all([sbRpc("cr_load_part",{pw,p_since:cut},{timeout:60000}),fetchNameMapBundle(pw)]);
+          if(recent.length){
+            applyNameMapBundle(kvb);loadCloudRows(recent);staged=true;
+            (async()=>{try{
+              const older=await sbRpc("cr_load_part",{pw:cloudPw,p_before:cut},{timeout:120000});
+              const all=older.concat(recent);
+              if(older.length){loadCloudRows(all);updateLandingVisibility();}
+              bootCacheSave(all,kvb,sig); /* 전체가 모였을 때만 시그니처와 함께 저장 */
+            }catch(e){bootCacheSave(recent,kvb,null);}})(); /* 과거분 실패 — 시그니처 없이 저장해 다음 접속에 자동 보완 */
+          }
+        }catch(_){/* cr_load_part 미배포·오류 — 아래 전체 로드로 폴백 */}}
+      if(!staged){
+        const rows=await cloudFullLoad(pw,sig);
+        if(!rows.length&&!silent)toast("☁️ 연결됐어요 · 아직 데이터가 없어요. 주간 CSV를 올리면 여기 쌓여요");}}
     /* 탭 세션당 1회 환영 인사 — 권한별 문구. 자동 재접속 시엔 sessionStorage 값 사용 */
     /* 자동 재접속(restore) 경로면 서버에서 최신 이름·권한을 다시 받아 반영 —
        관리자가 admin에서 daangn name/권한을 바꿔도 본 페이지 닉네임·서명·권한이 새로고침만으로 갱신 */
