@@ -595,6 +595,14 @@
   .cmpb-open:disabled{background:rgba(255,255,255,.14);color:#999285;cursor:default}
   .cmp-modal{position:fixed;inset:0;z-index:1000;background:rgba(15,14,10,.55);display:grid;place-items:center;padding:20px}
   .cmpm{background:#FFFDF7;border-radius:16px;max-width:880px;width:100%;max-height:calc(100vh - 40px);overflow:auto;padding:20px 22px 16px;box-shadow:0 30px 80px -20px rgba(0,0,0,.45)}
+  /* A/B 소재 미리보기 — 프레임 안에 contain으로 수납(잘림 금지), 세로 소재도 온전히 보이게 충분한 높이 */
+  .cmpm-media{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:2px 0 4px}
+  .cmpm-med{min-width:0}
+  .cmpm-med .isle-frame{height:320px;border-radius:12px}
+  .cmpm-med.a .isle-frame{box-shadow:inset 0 0 0 2px #FF8A3D}
+  .cmpm-med.b .isle-frame{box-shadow:inset 0 0 0 2px #64B5F6}
+  .cmpm-med .asset-src{font-size:10.5px}
+  @media(max-width:700px){.cmpm-media{grid-template-columns:1fr}.cmpm-med .isle-frame{height:260px}}
   .cmpm-h{display:flex;align-items:center;gap:10px;margin-bottom:10px;min-width:0}
   .cmpm-name{font-weight:800;font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .cmpm-name.a{color:#E5640D}.cmpm-name.b{color:#1E88E5}
@@ -2124,7 +2132,10 @@ function runScoring(pop,elig,specs,reachKey,reachW,groupOf){
      S = 0.30·전환수 등수 + 0.20·CTR 등수 + 0.30·(전환수/코호트 최대) + 0.20·(광고비/코호트 최대)
      S ≥ 0.673 → 매우 좋음(내보내기 어휘 '인기순'=Best) · S < 0.265 → 낮음 · 그 외 → 좋음
      코호트 = 같은 비교군(구글=애드그룹)×포맷 — 3개 미만이면 상위 코호트로 확장.
-   효율(CPA) 등수는 실측상 라벨과 비상관(CV 25~45%)이라 제외 — 구글 실적은 '물량 등수'(전환·비용·CTR) 신호가 지배적. */
+   근거(구글 공식 문서 support.google.com/google-ads/answer/6310436): 실적 등급은 '지난 14일' 데이터 기준,
+     '유사(같은 유형) 애셋 대비 평균 일일 비용 백분위' 기반 → 추정 피처도 최근 14일 창(perfRecentStats)으로 계산.
+   효율(CPA) 등수는 실측상 라벨과 비상관(CV 25~45%)이라 제외 — 구글 실적은 '물량 백분위' 신호가 지배적(문서와 일치).
+     문서 그대로의 비용 백분위 단독은 CV 65% — 전환·CTR 등수를 더한 합성이 80%로 최고라 채택. */
 const PERF_EST={W_RV:0.30,W_CTR:0.20,W_FV:0.30,W_FC:0.20,LO:0.265,HI:0.673};
 /* 구글 CSV 내보내기 어휘 → UI 어휘 정규화 — 실측 검증된 것만 치환한다: Best 등급이 UI에선 '매우 좋음', CSV 내보내기(루틴 저장 원문)에선 '인기순'
    (실측: 인기순 = 각 그룹 물량 최상위·최희소). 저장은 원문 유지(루틴이 매주 같은 어휘로 쓰므로), 표시 단계에서만 바꾼다.
@@ -2143,11 +2154,34 @@ function perfConvKeyOf(rows){
   for(const k of["_g_conversions","신규+재활성 유저 수","활성 유저 수","어트리뷰션 수"]){
     if(rows.filter(e=>(num(e[k])||0)>0).length>=Math.max(3,rows.length*0.5))return k;}
   return "비용";}
-function estimatePerfLabels(rows,groupOf){
+/* 최근 14일(스코프 최신 주 + 직전 주) 창의 소재/그룹별 원시 합계 — 구글 공식 문서가 실적 등급을
+   '지난 14일' 데이터 기준이라 명시(support.google.com/google-ads/answer/6310436)해 추정도 같은 창을 쓴다.
+   학습 데이터(주간 스냅샷)와도 분포가 일치 — 긴 기간을 합산하면 학습 분포와 어긋나 정확도가 떨어진다 */
+function perfRecentStats(ds,ck){
+  let hi=null;
+  for(const r of ds.data){const d=String(r.date||"").slice(0,10);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(d)&&(hi==null||d>hi))hi=d;}
+  if(!hi)return null;
+  const t=new Date(hi+"T00:00:00Z");t.setUTCDate(t.getUTCDate()-7);
+  const lo=t.toISOString().slice(0,10);
+  const nameCol=ds.L.nameCol,byName=new Map(),byGid=new Map();
+  const acc=(m,k,r)=>{let o=m.get(k);if(!o){o={c:0,v:0,clk:0,imp:0};m.set(k,o);}
+    o.c+=num(r["비용"])||0;o.v+=num(r[ck])||0;o.clk+=num(r["클릭 수"])||0;o.imp+=num(r["노출 수"])||0;};
+  for(const r of ds.data){const d=String(r.date||"").slice(0,10);if(!(d>=lo&&d<=hi))continue;
+    const nm=r[nameCol];if(nm!=null&&nm!=="")acc(byName,nm,r);
+    const gid=r._g_adGroupId||r._m_group;if(gid)acc(byGid,String(gid),r);}
+  return {byName,byGid,lo,hi};}
+function estimatePerfLabels(ds,rows,groupOf){
   rows.forEach(e=>{e._perfEst=null;});
-  const pool=rows.filter(e=>e.score!=null); /* 실적 등수는 채점 적격(광고비 컷 통과) 소재끼리만 — 라벨 보유 소재도 등수 기준엔 포함 */
+  const pool0=rows.filter(e=>e.score!=null); /* 채점 적격(광고비 컷 통과) 소재끼리만 — 라벨 보유 소재도 등수 기준엔 포함 */
+  if(pool0.length<3)return;
+  const ck=perfConvKeyOf(pool0);
+  const rec=perfRecentStats(ds,ck==="비용"?"비용":ck);
+  if(!rec)return;
+  const statOfEnt=e=>{const o=e._isGroup?rec.byGid.get(String(e._g_adGroupId||e._m_group||"")):rec.byName.get(e.name);
+    return (o&&o.c>0)?o:null;};
+  const pool=pool0.filter(e=>statOfEnt(e)); /* 최근 14일 무집행 소재는 추정 대상·등수 기준 모두 제외(구글도 등급 유보) */
   if(pool.length<3)return;
-  const ck=perfConvKeyOf(pool);
   const keys=[ /* 좁은 코호트 → 넓은 코호트 (3개 미만이면 확장) */
     e=>(groupOf?(groupOf(e)||"?"):"*")+"|"+((e.tags&&e.tags.fo)||"?"),
     e=>(groupOf?(groupOf(e)||"?"):"*"),
@@ -2157,18 +2191,20 @@ function estimatePerfLabels(rows,groupOf){
   const pr=(vals,v)=>{let lo=0,hi=0;for(const x of vals){if(x<v)lo++;if(x<=v)hi++;}return(lo+hi)/(2*vals.length);}; /* 동률 안전 중위 등수(0~1) */
   const stat=new Map();
   const statOf=g=>{let s=stat.get(g);if(s)return s;
-    const convs=g.map(e=>num(e[ck])||0),costs=g.map(e=>e.비용||0);
-    const ctrs=g.map(e=>e.CTR).filter(v=>v!=null);
+    const os=g.map(statOfEnt);
+    const convs=os.map(o=>o.v),costs=os.map(o=>o.c);
+    const ctrs=[];for(let i=0;i<g.length;i++){const e=g[i],o=os[i];
+      if(!(e._clkMix||e._impBad)&&o.imp>0)ctrs.push(o.clk/o.imp);}
     s={convs,costs,ctrs,mxV:Math.max(0,...convs)||1,mxC:Math.max(0,...costs)||1};
     stat.set(g,s);return s;};
   for(const e of pool){
     if(e._g_perfLabel||e._plSeen)continue; /* 실제 라벨(또는 '-') 보유 — 추정 안 함 */
     let g=pool;
     for(let i=0;i<maps.length;i++){const cand=maps[i].get(keys[i](e));if(cand&&cand.length>=3){g=cand;break;}}
-    const s=statOf(g);
-    const v=num(e[ck])||0,c=e.비용||0;
-    const rctr=(e.CTR!=null&&s.ctrs.length>=3)?pr(s.ctrs,e.CTR):0.5; /* CTR 무효(_clkMix 등)면 중립 */
-    const S=PERF_EST.W_RV*pr(s.convs,v)+PERF_EST.W_CTR*rctr+PERF_EST.W_FV*(v/s.mxV)+PERF_EST.W_FC*(c/s.mxC);
+    const s=statOf(g),o=statOfEnt(e);
+    const ctr=(!(e._clkMix||e._impBad)&&o.imp>0)?o.clk/o.imp:null; /* CTR 무효(_clkMix·_impBad)면 중립 */
+    const rctr=(ctr!=null&&s.ctrs.length>=3)?pr(s.ctrs,ctr):0.5;
+    const S=PERF_EST.W_RV*pr(s.convs,o.v)+PERF_EST.W_CTR*rctr+PERF_EST.W_FV*(o.v/s.mxV)+PERF_EST.W_FC*(o.c/s.mxC);
     e._perfEst=S>=PERF_EST.HI?"매우 좋음":S<PERF_EST.LO?"낮음":"좋음";}}
 function perfLabelOf(e){
   const act0=String(e._g_perfLabel||"").trim();
@@ -2204,7 +2240,7 @@ function computeScores(ds){const L=ds.L,a=ds.agg;
   const elig=a.filter(e=>(e.비용||0)>=minSpend&&coreSpecs.every(s=>e[s.k]!=null));
   if(elig.length<3)return{best:[],worst:[],med:null,goodCol:specs[0]?.k||"score",goodDir:specs[0]?.dir||1,goodLabel:specs[0]?.lab||"점수",goodFmt:specs[0]?.k==="_g_ROAS"?"num":"int",goodHelp:"복합 지표",volCol:"비용",eligCount:0,specs};
   ds._scoreCtx=runScoring(a,elig,specs,reachKeyFor(ds),reachWFor(ds),groupOfFor(ds)); /* 구글은 그룹 내 상대평가(D3) */
-  estimatePerfLabels(a,groupOfFor(ds)); /* 실적 라벨 없는 채점 소재는 추정(cc) 부여 */
+  estimatePerfLabels(ds,a,groupOfFor(ds)); /* 실적 라벨 없는 채점 소재는 추정(cc) 부여 — 최근 14일 창 */
   warnNewPerfVocab(a); /* 처음 보는 실적 어휘는 원문 표시 + 토스트 알림 */
   const best=elig.slice().sort((x,y)=>y.score-x.score);
   best.forEach((e,i)=>{e.rank=i+1;});
@@ -3426,8 +3462,11 @@ function renderCmpModal(){
   const nmA=displayNameOf(A.e),nmB=displayNameOf(B.e);
   const selK=(cmpMetricSel&&defs.some(d=>d.k===cmpMetricSel))?cmpMetricSel:(defs[0]&&defs[0].k);
   const seg=defs.map(d=>`<button type="button" data-mk="${escAttr(d.k)}" class="${selK===d.k?"on":""}">${escHtml(d.lab)}</button>`).join("");
+  const medOf=(ent,cls)=>{const url=previewUrlOf(ent.e);const pv=url?assetPreview(url,ent.e):"";
+    return `<div class="cmpm-med ${cls}">${pv||'<div class="fam-note">미리보기가 없는 소재예요</div>'}</div>`;};
   m.innerHTML=`<div class="cmpm" role="dialog" aria-modal="true" aria-label="소재 비교">
     <div class="cmpm-h"><span class="cmpm-name a" title="${escAttr(nmA)}">A${CMP.A.locked?" 🔒":""} · ${escHtml(trunc(nmA,32))}</span><span class="cmpb-vs">vs</span><span class="cmpm-name b" title="${escAttr(nmB)}">B${CMP.B.locked?" 🔒":""} · ${escHtml(trunc(nmB,32))}</span><button type="button" class="cmpm-close" title="닫기 (Esc)">✕</button></div>
+    <div class="cmpm-media">${medOf(A,"a")}${medOf(B,"b")}</div>
     <div class="cmpm-secT">주요 지표 비교 <span class="n">선택 기간 합산 · 진한 값 = 우세 (↓ 단가류는 낮을수록 좋음)</span></div>
     <div class="cmpm-rows">${rows||'<div class="fam-note">비교할 지표가 없어요</div>'}</div>
     <div class="cmpm-secT">주차별 추이 겹쳐 보기</div>
@@ -3755,7 +3794,7 @@ function scoreGroupAgg(ds,rows){
   /* 그룹 행은 그룹끼리 전역 상대평가(groupOf 없음) — "애드그룹 단위에서 그룹의 승자를 본다"(회의 · D3).
      소재 점수(그룹 내 등수)와 역할이 다름: 그룹 점수 = 그룹 간 비교, 소재 점수 = 그 그룹 안 순위 */
   runScoring(rows,elig,specs,reachKeyFor(ds),reachWFor(ds));
-  estimatePerfLabels(rows,null); /* 그룹 실적은 공식 라벨이 없어(애셋 단위 등급) 전부 추정(cc) — 그룹끼리 비교 */
+  estimatePerfLabels(ds,rows,null); /* 그룹 실적은 공식 라벨이 없어(애셋 단위 등급) 전부 추정(cc) — 그룹끼리 비교 */
   const best=elig.slice().sort((x,y)=>y.score-x.score);best.forEach((e,i)=>{e.rank=i+1;});
 }
 function getRowsForTable(ds){
@@ -4661,9 +4700,18 @@ function scoreWeightsHTML(){
   }).join("")+`<div class="ftw-common">모든 지표 공통 — 점수는 개별 지표의 <b>'전체 중 몇 등'(등수화 · 1소재 1표)</b> · 표본·지출 적으면 <b>50으로 축소</b> · <b>구글은 같은 애드그룹 안에서만</b> 등수(그룹 간 혼합 금지 · 영상/이미지도 그룹 안에서 함께) &nbsp;·&nbsp; <button type="button" class="ftw-edit" id="ftwEdit">지표·비중 직접 편집 →</button>${anyCustom?` <span class="ftw-custom">커스텀 적용됨</span>`:""}</div></div>`;}
 function renderFooter(){$("#ft").innerHTML=`
 <details open>
-  <summary>실적·내부 채점 읽는 법 (한눈에)</summary>
+  <summary>실적 분석 — 실제 실적과 추정(cc)</summary>
   <ul class="ft-key">
-    <li><b>표의 '실적' = 구글 공식 실적(매주 자동 동기화) 또는 추정(cc·점선 필)</b> — 점수 숫자는 화면에 표시하지 않아요. 정렬·기본 숨김도 실적 라벨 기준(같은 실적 안에선 광고비순)이고, 아래 내부 채점은 <b>추정(cc)·분석 계산에만</b> 쓰여요</li>
+    <li><b>표의 '실적' = 구글 공식 실적 등급 그대로</b>(매주 자동 동기화 · 내보내기 어휘 '인기순'=Best는 UI 표기 '매우 좋음'으로 · 실적 '-'는 '보통'으로 표시). 구글 공식 문서 기준, 이 등급은 <b>지난 14일 데이터</b>로 <b>같은 유형의 유사 애셋 대비 평균 일일 비용 백분위</b>에 기반해 매겨져요('대기중'=아직 처리 중이라 평가 전 · '학습'=순위를 매기기엔 데이터 수집 중 — 출처: support.google.com/google-ads/answer/6310436)</li>
+    <li><b>추정(cc) 최종 공식</b> — 실제 실적이 없는 소재(몰로코·메타 전부, 동기화 이전 구글)는 공식 문서의 골격(최근 14일 창 · 같은 비교군(구글=애드그룹)×포맷 코호트 · 물량 백분위)에 맞춰 <b>S = 0.30×전환수 등수 + 0.20×CTR 등수 + 0.30×(전환수÷코호트 최대) + 0.20×(광고비÷코호트 최대)</b> 를 계산하고, <b>S ≥ 0.673 → 매우 좋음 · S &lt; 0.265 → 낮음 · 그 외 → 좋음</b>. 코호트가 3개 미만이면 상위 코호트로 확장하고, 최근 14일 무집행 소재는 추정하지 않아요(구글도 이 경우 등급을 유보)</li>
+    <li><b>신뢰도(무검증 아님 — 실측 교차검증)</b> — 실제 구글 라벨 110개(애드그룹 7개)로 leave-one-file-out 교차검증 <b>정확도 80%</b>, '매우 좋음' 재현율 16/17. 가중치·임계값은 답을 정해두지 않고 <b>후보 18종을 같은 검증으로 비교해 선별</b>했어요 — 문서 그대로의 '비용 백분위' 단독 65% · 최다 라벨만 찍는 기준선 45% · CPA 효율 기반 후보 25~45%(라벨과 비상관이라 탈락 — 구글 실적은 '물량 백분위' 신호가 지배적이라는 문서 내용과 일치)</li>
+    <li><b>실효성·전망</b> — 추정은 임시 참고용이에요: 실제 라벨이 동기화되면 그 소재는 <b>자동으로 실제 값으로 교체</b>돼요. 매주 라벨이 쌓이면(주당 100개 안팎) 임계값·가중치 재보정과 주간 이력 반영으로 <b>85~90% 수준</b>까지 기대되고, 나머지는 구글이 공개하지 않는 내부 예측 성분 몫이라 100%는 불가능해요. 몰로코·메타 추정은 정답 라벨이 없어 정확도 검증이 불가한 <b>구글에서 학습한 관계의 이식</b>이라는 점을 감안하고 봐 주세요</li>
+  </ul>
+</details>
+
+<details>
+  <summary>내부 채점(점수) 상세 — 화면엔 표시하지 않고 추정(cc)·분석 계산에만 쓰여요</summary>
+  <ul class="ft-key">
     <li><b>내부 채점 = 같은 매체 안에서의 상대 순위</b>(2026-07 개편: <b>구글은 같은 애드그룹 안</b>) — 평균 50 · 1등 90점대. 매체가 다르면 점수끼리 비교하지 않아요(eCPA가 매체 간 40~80배 차이)</li>
     <li><b>계산은 4단계</b> — ① 매체별 핵심 지표(효율·규모)를 잰다 → ② 지표마다 <b>'전체 중 몇 등'(등수·0~100)</b>으로 바꾼다(나누기 파생식 아님) → ③ 표본·지출이 적으면 50 쪽으로 당긴다(소액 소재 운빨 차단) → ④ <b>효율 50 : 규모 50</b>으로 합친다</li>
     <li>막대 끝 <b>검은 조각 = 규모 50%</b>("얼마나 많이 데려왔나" — 몰로코·메타는 데려온 유저 <b>AUU</b>(신규+재활성 획득 순유저), 구글은 노출량) · 앞의 색 조각 = <b>효율 50%</b>("얼마나 싸게 데려왔나")</li>
