@@ -1493,7 +1493,8 @@ function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n")
       "비용":pn(r["비용"]),
       "노출 수":pn(r["노출수"]),
       "클릭 수":pn(r["클릭수"]),
-      "어트리뷰션 수":pn(r["설치"]),
+      /* 신양식(30~34열)은 '설치' 열이 없을 수 있다 — 전환수 = 설치 + 인앱 액션 관계(13만행 전수 검증)로 역산 */
+      "어트리뷰션 수":(r["설치"]!==undefined?pn(r["설치"]):Math.max(0,pn(r["전환수"])-pn(r["인앱 액션"]))),
       "활성 유저 수":pn(r["인앱 액션"]),
       "신규+재활성 유저 수":pn(r["조회연결 전환"]),/* '신규 고객'·'재참여 고객' 컬럼은 이 리포트에서 비어 있어 조회연결 전환으로 유지 */
       "_g_assetStatus":(r["애셋 상태"]||"").trim(),
@@ -1510,9 +1511,10 @@ function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n")
       "_g_conversions":pn(r["전환수"]),
       "_g_firstOpen":pn(r["first_open"]),/* 앱 최초 실행 = 신규 유저 획득 지표 */
       "_g_home":pn(r["home"]),/* 홈 도달 = 주요 인앱 액션(참여) 지표 */
-      "_g_assetId":(r["항목 ID"]||"").trim(),
+      "_g_assetId":(r["항목 ID"]||r["애셋 ID"]||"").trim(), /* 신양식은 '항목 ID' 대신 '애셋 ID' */
       /* 애셋 이름(있는 양식만) — 주간 루틴 [3]도 같은 키로 저장. 이미지 소재의 자동 이름 소스(OCR 배치 대체) */
       "_g_assetName":r["애셋 이름"]===undefined?undefined:String(r["애셋 이름"]).trim().replace(/^--$/,""),
+      "_g_orientation":(r["방향"]||"").trim()||undefined,
       "_g_adGroupId":(r["광고그룹 ID"]||"").trim(),
       "_g_campaignId":(r["캠페인 ID"]||"").trim(),
       "_g_allConv":pn(r["모든 전환(전환 시간별)"]),
@@ -1847,7 +1849,7 @@ function aggregate(data,L){const map=new Map();
     if(!map.has(nm))map.set(nm,{name:nm,비용:0,"노출 수":0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0});
     const e=map.get(nm);for(const c of["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e[c]+=v;}
     const _cv=num(r["비용"]);if(_cv!=null&&_cv>0){if(!e._wkSet)e._wkSet=new Set();e._wkSet.add(r.date);}
-    for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_statusReason","_g_url","_g_assetId","_g_assetName","_g_adGroupId","_g_campaignId","_m_url","_m_ctype","_m_res","_m_group","_q_campaign"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
+    for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_statusReason","_g_url","_g_assetId","_g_assetName","_g_orientation","_g_adGroupId","_g_campaignId","_m_url","_m_ctype","_m_res","_m_group","_q_campaign"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
     /* 실적(_g_perfLabel)은 매주 바뀌는 스냅샷 — 첫 값이 아니라 '가장 최근 주' 값을 유지. 키가 있었는데 값이 빈 경우('-')도 _plSeen으로 구분(표시 안 함 ↔ 추정 대상).
        더 새로운 주는 빈 값('-')이라도 채택해 옛 라벨을 지운다(강등·라벨 회수 반영) · 같은 주에선 비어있지 않은 값이 우선(다중 애드그룹 행) */
     if(r._g_perfLabel!==undefined){e._plSeen=1;const _pl=String(r._g_perfLabel).trim().replace(/^--$/,"");
@@ -3588,10 +3590,9 @@ function cmpToggle(ds,e){
   if(i>=0){const c=CMP.list[i];c.locked=!c.locked;toast(c.locked?"비교에 고정했어요 🔒 — ✕·전체 지우기에서 보호돼요":"고정을 풀었어요");}
   else{
     if(CMP.list.length&&CMP.list[0].media!==ds.media){toast("비교는 같은 매체 소재끼리만 가능해요 — 기존 비교를 먼저 지워 주세요");renderCmpBar();return;}
+    /* 담기 토스트 없음 — 하단 바와 겹쳐 보이고 개수는 '비교하기 N' 버튼이 이미 말해준다 */
     CMP.list.push({key:dsKeyOf(ds),media:ds.media,name:e.name,locked:false});
-    const n=CMP.list.length;
-    if(n===1)toast("비교에 담았어요 — 다른 소재도 담은 뒤 하단 바 '비교하기'를 누르면 한 화면에서 겹쳐 봐요 (개수 제한 없음)");
-    else{const mm=$("#cmpModal");if(mm&&!mm.hidden)renderCmpModal();else toast(`비교 목록 ${n}개 — 하단 바 '비교하기'를 누르면 겹쳐 봐요`);}}
+    const mm=$("#cmpModal");if(mm&&!mm.hidden)renderCmpModal();}
   renderCmpBar();refreshCmpChecks();}
 function cmpRemove(i){
   const c=CMP.list[i];if(!c)return;
@@ -3606,8 +3607,7 @@ function cmpCheckToggle(ds,e){
   const i=cmpIdxOf(ds.media,e.name);
   if(i>=0){cmpRemove(i);return;}
   if(CMP.list.length&&CMP.list[0].media!==ds.media){toast("비교는 같은 매체 소재끼리만 가능해요 — 기존 비교를 먼저 지워 주세요");return;}
-  CMP.list.push({key:dsKeyOf(ds),media:ds.media,name:e.name,locked:false});
-  if(CMP.list.length===1)toast("비교에 담았어요 — 2개 이상 담으면 하단 바 '비교하기'로 겹쳐 봐요");
+  CMP.list.push({key:dsKeyOf(ds),media:ds.media,name:e.name,locked:false}); /* 담기 토스트 없음 — '비교하기 N'이 개수를 말해준다 */
   const mm=$("#cmpModal");if(mm&&!mm.hidden)renderCmpModal();
   renderCmpBar();refreshIsleCmpOvl();refreshCmpChecks();}
 function refreshCmpChecks(){ /* 표 재렌더 없이 체크 상태만 제자리 갱신 */
@@ -4654,7 +4654,7 @@ async function sbRpc(fn,body,opt){
   return res.json();}
 /* 저장 페이로드: (매체, 주 시작일, 소재) 그레인으로 원본 수치 합산 — 파생 지표는 로드시 재계산 */
 const SAVE_NUM_KEYS=["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수","_m_installs","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100","_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue","_q_retD1Base","_q_retD1Users","_q_retD7Base","_q_retD7Users","_q_revD0","_q_revD7","_q_afInstalls","_q_reAtt","_q_reEng"];
-const SAVE_STR_KEYS=["_m_url","_m_ctype","_m_res","_m_group","_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_assetName","_g_adGroupId","_g_campaignId","_g_perfLabel","_q_campaign"];
+const SAVE_STR_KEYS=["_m_url","_m_ctype","_m_res","_m_group","_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_assetName","_g_orientation","_g_adGroupId","_g_campaignId","_g_perfLabel","_q_campaign"];
 const ACE_MARK="​"; /* 같은 확장소재 URL이 AEO·ACE 캠페인에 함께 쓰이면 DB UNIQUE(채널,주,이름)가 한 행으로 붕괴돼
    지표가 섞이고 한쪽 서브채널로만 귀속된다. 마이그레이션과 동일하게 ACE 행 ad_name 끝에 zero-width space를
    붙여 두 유형을 별개 행으로 저장(로드 시 _g_campaignId로 AEO/ACE 분리, _g_url은 깨끗해 미리보기 영향 없음). */
