@@ -1489,6 +1489,8 @@ function parseGoogleReport(text){const lines=String(text).replace(/\r\n?/g,"\n")
       "_g_firstOpen":pn(r["first_open"]),/* 앱 최초 실행 = 신규 유저 획득 지표 */
       "_g_home":pn(r["home"]),/* 홈 도달 = 주요 인앱 액션(참여) 지표 */
       "_g_assetId":(r["항목 ID"]||"").trim(),
+      /* 애셋 이름(있는 양식만) — 주간 루틴 [3]도 같은 키로 저장. 이미지 소재의 자동 이름 소스(OCR 배치 대체) */
+      "_g_assetName":r["애셋 이름"]===undefined?undefined:String(r["애셋 이름"]).trim().replace(/^--$/,""),
       "_g_adGroupId":(r["광고그룹 ID"]||"").trim(),
       "_g_campaignId":(r["캠페인 ID"]||"").trim(),
       "_g_allConv":pn(r["모든 전환(전환 시간별)"]),
@@ -1721,9 +1723,10 @@ function displayNameOf(e){if(!e)return "";
     if(Object.prototype.hasOwnProperty.call(NAME_PENDING,_ok)){if(NAME_PENDING[_ok]!=="")return NAME_PENDING[_ok];}
     else if(NAME_OVR[_ok]&&NAME_OVR[_ok]!=="")return NAME_OVR[_ok];}
   if(e._g_assetId){
-    const nm=gNameMap.asset&&gNameMap.asset[String(e._g_assetId)];if(nm)return nm; /* 1순위: 공식 애셋 이름 */
-    const oc=gOcrMap[String(e._g_assetId)];if(oc)return oc;                        /* 2순위: 이미지 OCR 텍스트 */
+    const nm=gNameMap.asset&&gNameMap.asset[String(e._g_assetId)];if(nm)return nm; /* 1순위: 공식 애셋 이름(수동 매핑·배치) */
+    const oc=gOcrMap[String(e._g_assetId)];if(oc)return oc;                        /* 2순위: 이미지 OCR 텍스트(과거 배치분) */
   }
+  {const an=(e._g_assetName||"").trim();if(an&&!/^https?:\/\//.test(an))return an;} /* 3순위: 리포트/루틴의 애셋 이름 — 신규 소재는 자동으로 이름이 생긴다 */
   const u=e._g_url||e.name;
   if(/youtube\.com|youtu\.be/.test(String(u||""))){const id=ytIdOf(u);if(id&&_ytTitles[id])return _ytTitles[id];}
   return e.name;}
@@ -1749,10 +1752,14 @@ function mergeNameMap(delta){
   gNameMap.adgroup=Object.assign(gNameMap.adgroup||{},delta.adgroup||{});
   gNameMap.campaign=Object.assign(gNameMap.campaign||{},delta.campaign||{});
   gNameMap.asset=Object.assign(gNameMap.asset||{},delta.asset||{});}
-async function loadNameMap(pw){
+async function fetchNameMapBundle(pw){
   /* 7개 키를 순차 왕복(≈7×RTT)하던 것이 로그인 체감 지연의 한 축 — 병렬로 한 번에. 실패는 키별 무시(종전과 동일) */
   const get=k=>sbRpc("cr_kv_get",{pw,key:k}).catch(()=>null);
   const [gm,gi,oc,yt,no,so,gw]=await Promise.all([get("gmap"),get("ginfo"),get("ocr"),get("ytt"),get("nameovr"),get("svcovr"),get("gwstat")]);
+  return {gm,gi,oc,yt,no,so,gw};}
+function applyNameMapBundle(b){
+  if(!b)return;
+  const{gm,gi,oc,yt,no,so,gw}=b;
   if(gm&&typeof gm==="object")gNameMap={adgroup:gm.adgroup||{},campaign:gm.campaign||{},asset:gm.asset||{}};
   if(gi&&typeof gi==="object")gInfoMap=gi;
   if(oc&&typeof oc==="object")gOcrMap=oc;
@@ -1760,6 +1767,7 @@ async function loadNameMap(pw){
   if(no&&typeof no==="object")NAME_OVR=no;
   if(so&&typeof so==="object")SVC_OVR=so;
   if(gw&&typeof gw==="object")gWeekMap=gw;}
+async function loadNameMap(pw){applyNameMapBundle(await fetchNameMapBundle(pw));}
 /* 모든 유튜브 소재 제목을 로드 직후 백그라운드 일괄 조회(동시 4) — 클릭 없이 자동 표시, kv(ytt)로 기기 간 공유 */
 let _yttRan=false;
 async function hydrateAllYtTitles(){
@@ -1804,7 +1812,7 @@ function aggregate(data,L){const map=new Map();
     if(!map.has(nm))map.set(nm,{name:nm,비용:0,"노출 수":0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0});
     const e=map.get(nm);for(const c of["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e[c]+=v;}
     const _cv=num(r["비용"]);if(_cv!=null&&_cv>0){if(!e._wkSet)e._wkSet=new Set();e._wkSet.add(r.date);}
-    for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_statusReason","_g_url","_g_assetId","_g_adGroupId","_g_campaignId","_m_url","_m_ctype","_m_res","_m_group","_q_campaign"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
+    for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_statusReason","_g_url","_g_assetId","_g_assetName","_g_adGroupId","_g_campaignId","_m_url","_m_ctype","_m_res","_m_group","_q_campaign"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
     /* 실적(_g_perfLabel)은 매주 바뀌는 스냅샷 — 첫 값이 아니라 '가장 최근 주' 값을 유지. 키가 있었는데 값이 빈 경우('-')도 _plSeen으로 구분(표시 안 함 ↔ 추정 대상).
        더 새로운 주는 빈 값('-')이라도 채택해 옛 라벨을 지운다(강등·라벨 회수 반영) · 같은 주에선 비어있지 않은 값이 우선(다중 애드그룹 행) */
     if(r._g_perfLabel!==undefined){e._plSeen=1;const _pl=String(r._g_perfLabel).trim().replace(/^--$/,"");
@@ -4500,7 +4508,7 @@ async function sbRpc(fn,body,opt){
   return res.json();}
 /* 저장 페이로드: (매체, 주 시작일, 소재) 그레인으로 원본 수치 합산 — 파생 지표는 로드시 재계산 */
 const SAVE_NUM_KEYS=["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수","_m_installs","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100","_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue","_q_retD1Base","_q_retD1Users","_q_retD7Base","_q_retD7Users","_q_revD0","_q_revD7","_q_afInstalls","_q_reAtt","_q_reEng"];
-const SAVE_STR_KEYS=["_m_url","_m_ctype","_m_res","_m_group","_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_adGroupId","_g_campaignId","_g_perfLabel","_q_campaign"];
+const SAVE_STR_KEYS=["_m_url","_m_ctype","_m_res","_m_group","_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_assetName","_g_adGroupId","_g_campaignId","_g_perfLabel","_q_campaign"];
 const ACE_MARK="​"; /* 같은 확장소재 URL이 AEO·ACE 캠페인에 함께 쓰이면 DB UNIQUE(채널,주,이름)가 한 행으로 붕괴돼
    지표가 섞이고 한쪽 서브채널로만 귀속된다. 마이그레이션과 동일하게 ACE 행 ad_name 끝에 zero-width space를
    붙여 두 유형을 별개 행으로 저장(로드 시 _g_campaignId로 AEO/ACE 분리, _g_url은 깨끗해 미리보기 영향 없음). */
@@ -4539,11 +4547,40 @@ let standaloneMode=false;
 function setStandalone(on,msg){standaloneMode=on;
   const bar=$("#fmtBar");if(!bar)return;bar.hidden=!on;
   const m=$("#fmtBarMsg");if(on&&m)m.innerHTML=msg||"";}
+/* ── 부팅 캐시(IndexedDB) — 매 접속마다 11MB급 cr_load를 다시 받던 것을 없앤다 ──
+   접속 시 가벼운 cr_status(비밀번호 검증 겸 시그니처)만 받고, 캐시가 있으면 즉시 렌더.
+   시그니처(총 행수·최근 업로드 시각)가 캐시와 다르거나 캐시가 24시간 넘게 묵으면 백그라운드로
+   전체를 다시 받아 화면·캐시를 갱신 — 자동화(월 11시)가 돌았든, 데이터가 늦게 왔든, 언제 오든
+   '서버가 달라진 순간'을 시그니처가 잡아낸다(요일 가정 없음). localStorage는 5MB 한계라 IndexedDB 사용 */
+const IDB={_db:null,
+  open(){if(this._db)return Promise.resolve(this._db);
+    return new Promise((res,rej)=>{if(!window.indexedDB)return rej(new Error("no idb"));
+      const q=indexedDB.open("cr_cache",1);
+      q.onupgradeneeded=()=>{q.result.createObjectStore("kv");};
+      q.onsuccess=()=>{this._db=q.result;res(this._db);};
+      q.onerror=()=>rej(q.error);});},
+  async get(k){try{const db=await this.open();
+    return await new Promise((res,rej)=>{const t=db.transaction("kv").objectStore("kv").get(k);
+      t.onsuccess=()=>res(t.result||null);t.onerror=()=>rej(t.error);});}catch(_){return null;}},
+  async set(k,v){try{const db=await this.open();
+    return await new Promise((res,rej)=>{const t=db.transaction("kv","readwrite").objectStore("kv").put(v,k);
+      t.onsuccess=()=>res(true);t.onerror=()=>rej(t.error);});}catch(_){return false;}}};
+function bootSigOf(st){return {rows:+((st&&st.rows)||0),last:String((st&&st.last_upload)||"")};}
+function bootSigSame(a,b){return !!(a&&b&&a.rows===b.rows&&a.last===b.last);}
+async function bootCacheSave(rows,kvb,sig){try{await IDB.set("boot",{rows,kv:kvb,sig,at:Date.now()});}catch(_){}}
+/* 전체 로드(무거운 경로) — 성공 시 캐시 갱신. sig는 호출측이 아는 최신 시그니처(없으면 cr_status 재조회) */
+async function cloudFullLoad(pw,sig){
+  const [rows,kvb]=await Promise.all([sbRpc("cr_load",{pw},{timeout:120000}),fetchNameMapBundle(pw)]);
+  applyNameMapBundle(kvb);
+  if(rows.length)loadCloudRows(rows);
+  if(!sig){try{sig=bootSigOf(await sbRpc("cr_status",{pw}));}catch(_){sig=null;}}
+  if(sig)bootCacheSave(rows,kvb,sig);
+  return rows;}
 async function cloudRestore(){
   if(!cloudPw){const v=prompt("저장소 비밀번호");if(v&&v.trim())await attemptLogin(v.trim());updateLandingVisibility();return;}
   const _cl=$("#cloudLine");if(_cl)_cl.textContent="☁️ 불러오는 중…";
-  try{const [rows]=await Promise.all([sbRpc("cr_load",{pw:cloudPw}),loadNameMap(cloudPw)]);
-    if(rows.length){loadCloudRows(rows);updateLandingVisibility();toast(`☁️ 소재 ${new Set(rows.map(r=>r.ad_name)).size.toLocaleString()}개 · 주간 기록 ${rows.length.toLocaleString()}건 불러왔어요`);}
+  try{const rows=await cloudFullLoad(cloudPw);
+    if(rows.length){updateLandingVisibility();toast(`☁️ 소재 ${new Set(rows.map(r=>r.ad_name)).size.toLocaleString()}개 · 주간 기록 ${rows.length.toLocaleString()}건 불러왔어요`);}
     else toast("☁️ 아직 저장된 데이터가 없어요");
   }catch(e){toast("☁️ 못 불러왔어요 · "+e.message);}
   refreshCloudLine();}
@@ -4647,12 +4684,41 @@ function greetingFor(name){
   const s=GREETINGS.find(g=>t>=g.lo&&t<g.hi)||GREETINGS[0];
   return s.lines[Math.floor(Math.random()*s.lines.length)].replace(/\{n\}/g,name);}
 async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
-  try{/* 무거운 본 데이터(cr_load)와 kv 묶음(loadNameMap)을 동시에 — 렌더는 둘 다 온 뒤(이름 매핑·gwstat이 렌더에 필요) */
-    const [rows]=await Promise.all([sbRpc("cr_load",{pw}),loadNameMap(pw)]);
+  try{
+    /* ① 가벼운 cr_status 한 번 — 비밀번호 검증 + 서버 시그니처(총 행수·최근 업로드) 확보 */
+    let st=null;
+    try{st=await sbRpc("cr_status",{pw},{timeout:12000});}
+    catch(e){
+      /* 네트워크 지연·오프라인(408/0)이고 캐시가 있으면 캐시로라도 연다 — '가끔 로그인 실패' 방지.
+         비밀번호 오류(4xx)는 그대로 실패 처리 */
+      if((e.status===408||e.status===0)){
+        const cached=await IDB.get("boot");
+        if(cached&&cached.rows&&cached.rows.length){
+          cloudPw=pw;sessionStorage.setItem("crpw",pw);
+          applyNameMapBundle(cached.kv);loadCloudRows(cached.rows);
+          toast("📴 서버 응답이 늦어 저장해 둔 데이터로 열었어요 — 연결되면 자동 갱신돼요");
+          refreshCloudLine();return true;}}
+      throw e;}
     cloudPw=pw;sessionStorage.setItem("crpw",pw);
-    /* 접속·로그인 시엔 저장소 로드 토스트("저장소를 열었어요 …")를 띄우지 않고 환영 인사만 보여준다(아래) */
-    if(rows.length)loadCloudRows(rows);
-    else if(!silent)toast("☁️ 연결됐어요 · 아직 데이터가 없어요. 주간 CSV를 올리면 여기 쌓여요");
+    const sig=bootSigOf(st);
+    /* ② 캐시가 있으면 즉시 렌더(접속 체감 = IndexedDB 읽기 한 번), 서버가 달라졌거나 24시간 묵었으면 백그라운드 최신화 */
+    const cached=await IDB.get("boot");
+    const canCache=cached&&cached.rows&&cached.rows.length&&cached.kv;
+    if(canCache){
+      applyNameMapBundle(cached.kv);
+      loadCloudRows(cached.rows);
+      const fresh=bootSigSame(cached.sig,sig);
+      const aged=(Date.now()-(cached.at||0))>24*3600*1000;
+      if(!fresh||aged){
+        (async()=>{try{
+          await cloudFullLoad(cloudPw,sig);
+          updateLandingVisibility();
+          if(!fresh)toast("☁️ 새 데이터가 있어 최신으로 갱신했어요");
+        }catch(e){toast("☁️ 최신화에 실패해 저장해 둔 데이터로 보고 있어요 · "+e.message);}})();}
+    }else{
+      /* 캐시 없음(첫 접속·캐시 유실) — 전체 로드 후 캐시 적재 */
+      const rows=await cloudFullLoad(pw,sig);
+      if(!rows.length&&!silent)toast("☁️ 연결됐어요 · 아직 데이터가 없어요. 주간 CSV를 올리면 여기 쌓여요");}
     /* 탭 세션당 1회 환영 인사 — 권한별 문구. 자동 재접속 시엔 sessionStorage 값 사용 */
     /* 자동 재접속(restore) 경로면 서버에서 최신 이름·권한을 다시 받아 반영 —
        관리자가 admin에서 daangn name/권한을 바꿔도 본 페이지 닉네임·서명·권한이 새로고침만으로 갱신 */
