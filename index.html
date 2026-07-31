@@ -582,6 +582,8 @@
   .cmp-btn .lk{flex:0 0 auto;opacity:.9}
   .cmp-xbtn{width:22px;height:22px;border:0;border-radius:50%;background:rgba(20,19,15,.78);color:#F3F0E8;font-size:11px;cursor:pointer;line-height:1}
   .cmp-xbtn:hover{background:rgba(190,63,83,.95)}
+  /* display 지정이 hidden 속성을 무력화하지 않도록 [hidden] 가드 필수 — 빠지면 투명 오버레이가 화면 전체를 덮어 클릭을 가로챈다 */
+  .cmp-bar[hidden],.cmp-modal[hidden]{display:none}
   .cmp-bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:900;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;padding:8px 10px 8px 14px;border-radius:999px;background:rgba(28,26,20,.94);color:#F3F0E8;box-shadow:0 12px 40px -10px rgba(0,0,0,.5);font-size:12px;max-width:calc(100vw - 24px)}
   .cmpb-t{font-weight:800;color:#FF8A3D;white-space:nowrap}
   .cmpb-slot{display:inline-flex;align-items:center;gap:5px;padding:3px 6px 3px 10px;border-radius:999px;background:rgba(255,255,255,.08);white-space:nowrap;max-width:280px;overflow:hidden}
@@ -2740,7 +2742,7 @@ function typeAggRows(ds,dim){const a=ds.agg;
     "신규+재활성 eCPA":trimMet(arr,e=>e["신규+재활성 eCPA"],e=>e.비용,e=>e["신규+재활성 유저 수"]||0)}));}
 
 /* table — paginated */
-let tState={sort:"score",dir:-1,q:""};
+let tState={sort:"비용",dir:-1,q:""};
 let tQuickFo=null; /* "영상" | "이미지" | null */
 let tGroupBy=false; /* true → aggregate table rows by 광고그룹 ID */
 let tGroupByTouched=false; /* 사용자가 그룹뷰를 직접 조작했는지 — false면 구글 매체에서 자동 ON(2026-07 회의: "구글만 그룹뷰") */
@@ -3951,7 +3953,7 @@ function orderedRowsForTable(ds){
   rows=applyTFilter(rows,ds);
   if(tState.q){const q=tState.q.toLowerCase();rows=rows.filter(r=>r.name.toLowerCase().includes(q)||displayNameOf(r).toLowerCase().includes(q));}
   /* 매체 전환 후 현재 매체에 없는 컬럼(예: ACE 홈 단가)으로 정렬 상태가 남으면 조용히 무정렬되므로 점수순 폴백 */
-  if(tState.sort!=="name"&&tState.sort!=="score"&&!tableCols(ds.L,ds).some(c=>c.k===tState.sort))tState.sort="score";
+  if(tState.sort!=="name"&&tState.sort!=="score"&&!tableCols(ds.L,ds).some(c=>c.k===tState.sort))tState.sort="비용"; /* 정렬 폴백 = 광고비 소진순(기본 정렬과 동일) */
   rows.sort((a,b)=>{
     if(tState.sort==="name")return tState.dir*a.name.localeCompare(b.name);
     const k=tState.sort;
@@ -4672,7 +4674,7 @@ function show(ds){scope(ds);
     renderTrend(ds);
     requestAnimationFrame(()=>{curDS=ds;renderQuickFo();renderTable(ds);renderAB(ds);});});}
 function setActive(k){if(!DATASETS[k])return;active=k;
-  tableShowAll=false;tState={sort:"score",dir:-1,q:""};tQuickFo=null;tGroupBy=false;tGroupByTouched=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;
+  tableShowAll=false;tState={sort:"비용",dir:-1,q:""};tQuickFo=null;tGroupBy=false;tGroupByTouched=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;
   tMarkView="all";tServices=new Set();tCreators=new Set();mineAs=null;_mselSig={svc:"",cr:"",ma:""}; /* 마크/서비스/제작자 필터도 리셋 — 데이터 재로드·스탠드얼론에서 필터가 새어 빈 표로 고착되는 것 방지 */
   tGallery=false;_galShown=100;const _gvc=$("#galleryView");if(_gvc)_gvc.checked=false;
   if($("#search"))$("#search").value="";if($("#showAll"))$("#showAll").checked=false;
@@ -4818,7 +4820,7 @@ function renderFooter(){$("#ft").innerHTML=`
 function refreshAll(){if(!active||!DATASETS[active])active=TAB_ORDER.find(k=>DATASETS[k])||Object.keys(DATASETS)[0];if(active)setActive(active);}
 
 function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;tableShowAll=false;
-  tState={sort:"score",dir:-1,q:""};tQuickFo=null;tGroupBy=false;tGroupByTouched=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;ISLE.name=null;
+  tState={sort:"비용",dir:-1,q:""};tQuickFo=null;tGroupBy=false;tGroupByTouched=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;ISLE.name=null;
   tMarkView="all";tServices=new Set();tCreators=new Set();mineAs=null;_mselSig={svc:"",cr:"",ma:""};
   tGallery=false;_galShown=100;const _gvc2=$("#galleryView");if(_gvc2)_gvc2.checked=false;
   const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
