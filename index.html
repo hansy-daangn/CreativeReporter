@@ -665,6 +665,13 @@
   .fam .g-name{color:var(--muted);font-size:11.5px}
   .fam tr.me .g-name{color:var(--ink);font-weight:650}
   .fam-note{font-size:11px;color:var(--faint);margin-top:8px}
+  .xmedia-wrap{margin-top:16px}
+  .xmedia-wrap .fam th:nth-child(2),.xmedia-wrap .fam td:nth-child(2){width:56px}
+  .xmedia-wrap .fam th:nth-child(3),.xmedia-wrap .fam td:nth-child(3){width:94px}
+  .xm-media{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:4px;background:var(--surface-3);color:var(--muted);font-weight:650;margin-right:5px;vertical-align:middle;white-space:nowrap}
+  .xm-conf{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:999px;font-weight:700}
+  .xm-conf.same{background:var(--g2-f);color:var(--g2)}
+  .xm-conf.sim{background:var(--mid-f);color:var(--mid)}
   .isle-load{font-size:12px;color:var(--faint);padding:16px 4px}
   .asset-wrap{display:flex;flex-direction:column;gap:6px;width:100%;align-items:center;min-width:0}
   .asset-vid{width:100%;aspect-ratio:16/9;border-radius:8px;border:0;background:#000;max-width:100%}
@@ -2220,12 +2227,7 @@ function perfPillHTML(e){
   if(tHideEst&&p.est)return ""; /* '추정 숨기기' — 실제 실적 값만 표시 */
   const t=PERF_TIER[p.lab]||"m";
   const cls="sp "+(t==="g2"?"sp-g2":t==="g1"?"sp-g1":t==="w1"?"sp-w1":t==="w2"?"sp-w2":"sp-mid")+(p.est?" pf-est":"");
-  const stateDesc=/^대기/.test(p.lab)?" · 대기중 = 아직 게재·노출이 없어 구글이 평가를 시작하지 않은 소재":(/^학습/.test(p.lab)?" · 학습 = 게재를 시작해 데이터를 모으는 중(평가 확정 전)":"");
-  const tip=(p.na
-    ?"구글 리포트 실적이 '-'(등급 없음)인 소재예요 — 값이 비었다고 오해하지 않게 '보통'으로 표시해요"
-    :p.est
-    ?"추정 실적 (cc) — 실제 실적이 없는 소재라 지표 관계(전환·CTR 등수, 전환·광고비 물량 비율)로 추정한 값이에요"
-    :"구글 리포트의 실적 값이에요 (매주 자동 동기화)")+stateDesc;
+  const tip=p.est?"구글 알고리즘 기반 추정 실적":"구글 리포트 실적"; /* 툴팁은 이 두 마디만 — 상세 설명은 푸터 '실적 분석' */
   return `<span class="${cls}" title="${escAttr(tip)}">${escHtml(p.lab)}${p.est?`<i class="cc">(cc)</i>`:""}</span>`;}
 function computeScores(ds){const L=ds.L,a=ds.agg;
   ds.fieldAvail=computeFieldAvail(a);
@@ -2517,7 +2519,7 @@ function goToIslandFromQuad(name){if(!curDS)return;_userActed=true;
   switchTab("table");
   tGroupBy=false;tGroupByTouched=true;tQuickFo=null;tLiveOnly=false;tChip=null;renderQuickFo(); /* 소재 상세로 가는 경로 — 그룹뷰 자동 복귀 방지 */
   /* 대상 소재가 필터로 숨겨져 상세가 조용히 안 열리는 것을 방지 — 마크/서비스/제작자 필터도 해제 후 이동 */
-  tMarkView="all";tServices.clear();tCreators.clear();_mselSig.svc="";_mselSig.cr="";renderViewSeg();
+  tMarkView="all";tServices.clear();tCreators.clear();tPerfSel.clear();_mselSig.svc="";_mselSig.cr="";_mselSig.pf="";renderViewSeg();
   tState.q="";tableShowAll=true;const sb=$("#search");if(sb)sb.value="";const sa=$("#showAll");if(sa)sa.checked=true;
   const p=pageForName(curDS,name);if(p)tPage=p;
   renderTable(curDS);
@@ -3340,6 +3342,122 @@ function qualityHTML(ds,e){
   if(base1>0&&base1<30)parts.push(`<b style="color:var(--w1)">표본 적음</b> — D1 코호트 ${fmtInt(base1)}명뿐이라 잔존율 변동이 큽니다 (참고용)`);
   if(parts.length)s+=`<div class="vret-cap" style="margin-top:6px">${parts.join("<br>")}</div>`;
   return s+`</section>`;}
+/* ═════ 교차 매체 동일/유사 소재 탐지 ═════
+   "이 소재가 다른 매체에선 어떤가"를 보기 위해, 신호 강한 순서로 매칭한다:
+   ① 같은 유튜브 영상 ID  ② 같은 미리보기 URL  ③ 이미지 지각 해시 일치(dHash 9×8 · 해밍≤6 · 종횡비 ±12% — 완전 동일 이미지 판별)
+   ④ 정규화 소재명 완전 일치  → '동일' / ⑤ 이름 토큰 자카드 ≥0.6 + 같은 서비스 → '유사'(참고)
+   이미지 지문은 CORS 허용 프록시(wsrv.nl 9×8 리사이즈)로 브라우저에서 직접 계산 — 광고 CDN 원본은 CORS가 없어
+   캔버스가 오염되므로 반드시 프록시 경유. 결과는 localStorage(cr_dhash)에 영구 캐시(재방문 시 즉시). */
+const DHASH=(()=>{try{return JSON.parse(localStorage.getItem("cr_dhash")||"{}");}catch(_){return{};}})();
+let _dhashDirty=false,_dhashTimer=null;
+function dhashSave(){if(!_dhashDirty)return;_dhashDirty=false;try{localStorage.setItem("cr_dhash",JSON.stringify(DHASH));}catch(_){}}
+function dhashHam(a,b){let d=0;for(let i=0;i<16;i++){let x=parseInt(a[i],16)^parseInt(b[i],16);x=x-((x>>1)&5);d+=(x&3)+((x>>2)&3);}return d;}
+function computeDhash(url){
+  if(DHASH[url]!==undefined)return Promise.resolve(DHASH[url]);
+  const px=`https://wsrv.nl/?url=${encodeURIComponent(url)}&w=9&h=8&fit=fill&output=jpg`;
+  return new Promise(res=>{
+    const im=new Image();im.crossOrigin="anonymous";
+    const done=h=>{DHASH[url]=h;_dhashDirty=true;res(h);};
+    const to=setTimeout(()=>done(null),12000);
+    im.onload=()=>{clearTimeout(to);
+      try{const c=document.createElement("canvas");c.width=9;c.height=8;
+        const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(im,0,0,9,8);
+        const d=g.getImageData(0,0,9,8).data;
+        const lum=[];for(let i=0;i<72;i++)lum.push(0.299*d[i*4]+0.587*d[i*4+1]+0.114*d[i*4+2]);
+        let hex="";for(let y=0;y<8;y++){let nib=0,cnt=0;
+          for(let x=0;x<8;x++){nib=(nib<<1)|(lum[y*9+x]<lum[y*9+x+1]?1:0);cnt++;
+            if(cnt===4){hex+=nib.toString(16);nib=0;cnt=0;}}}
+        done(hex);}catch(_){done(null);}};
+    im.onerror=()=>{clearTimeout(to);done(null);};
+    im.src=px;});}
+let _dhashRan=false;
+/* 매체 풀 — DATASETS는 레벨(ad/cg/adset) 키. 채널드 모드에선 한 레벨 안에 매체별 인덱스(aggByChannel)가 있다 */
+function _xmPools(ds){
+  const out=[];
+  if(dsMode==="channeled"&&ds&&ds.aggByChannel)
+    for(const[ch,idx]of ds.aggByChannel){if(ch===ds.media)continue;out.push({ch,list:idx.aggAll||[]});}
+  return out;}
+async function prehashAllImages(){ /* 백그라운드 이미지 지문 채우기 — 동시 3 · 상한 400 · 캐시 영구 */
+  if(_dhashRan)return;_dhashRan=true;
+  const urls=[],seen=new Set();
+  const add=e=>{if(!(e.tags&&e.tags.fo==="이미지"))return;
+    const u=previewUrlOf(e);
+    if(u&&!ytIdOf(u)&&DHASH[u]===undefined&&!seen.has(u)){seen.add(u);urls.push(u);}};
+  for(const k in DATASETS){const ds=DATASETS[k];
+    if(ds.aggByChannel)for(const idx of ds.aggByChannel.values())(idx.aggAll||[]).forEach(add);
+    else (ds.aggAll||ds.agg||[]).forEach(add);}
+  for(let i=0;i<urls.length&&i<400;i+=3){
+    await Promise.all(urls.slice(i,i+3).map(computeDhash));
+    if(i%30===0){dhashSave();refreshCrossBlock();}}
+  dhashSave();refreshCrossBlock();}
+function nameTokensOf(e){
+  if(e._nmTok)return e._nmTok;
+  let s=String(displayNameOf(e)||e.name||"").toLowerCase();
+  s=s.replace(/\.(mp4|png|jpe?g|gif|webp|mov|webm)\b/g,"");
+  s=s.replace(/\d{3,4}\s*[x×]\s*\d{3,4}/g,"");            /* 해상도 */
+  s=s.replace(/\b20\d{2}[-._]?\d{1,2}[-._]?\d{1,2}\b/g,""); /* 날짜 */
+  s=s.replace(/[?&](v|si)=[a-z0-9_-]+/g,"");
+  const t=new Set(s.split(/[^0-9a-z가-힣]+/).filter(x=>x.length>=2&&!/^(meta|moloco|google|img|image|mau|maugrowth|video|vid|jpg|png)$/.test(x)));
+  return e._nmTok=t;}
+function nameSim(a,b){if(!a.size||!b.size)return 0;let n=0;for(const x of a)if(b.has(x))n++;return n/(a.size+b.size-n);}
+function _arOf(e){const t=e.tags&&e.tags.size;if(!t)return null;const[w,h]=String(t).split("×").map(Number);return w&&h?w/h:null;}
+function crossMediaMatches(ds,e){
+  if(e._isGroup)return{list:[],pend:0,chs:0};
+  const pools=_xmPools(ds);
+  if(!pools.length)return{list:[],pend:0,chs:0};
+  const myU=previewUrlOf(e),myYt=ytIdOf(e._g_url||myU||e.name);
+  const myHash=(myU&&!myYt)?DHASH[myU]:undefined;
+  const myTok=nameTokensOf(e),myKey=[...myTok].sort().join("|");
+  const mySvc=svcOf(e)||null,myAr=_arOf(e);
+  let pend=(myU&&!myYt&&myHash===undefined&&e.tags&&e.tags.fo==="이미지")?1:0;
+  const list=[];
+  for(const{ch,list:pool}of pools){
+    for(const o of pool){
+      if(o._isGroup)continue;
+      let conf=null,why="";
+      const oU=previewUrlOf(o),oYt=ytIdOf(o._g_url||oU||o.name);
+      if(myYt&&oYt&&myYt===oYt){conf=2;why="같은 유튜브 영상";}
+      else if(myU&&oU&&myU===oU){conf=2;why="같은 소재 파일(URL 일치)";}
+      else{
+        if(myHash&&oU&&!oYt){const oh=DHASH[oU];
+          if(oh===undefined){if(o.tags&&o.tags.fo==="이미지")pend++;}
+          else if(oh){const d=dhashHam(myHash,oh);const oAr=_arOf(o);
+            const arOk=myAr==null||oAr==null||Math.abs(myAr-oAr)/myAr<=0.12;
+            if(d<=6&&arOk){conf=2;why=`동일 이미지(지문 차이 ${d}/64)`;}}}
+        if(conf==null&&myTok.size>=2){
+          const oTok=nameTokensOf(o);
+          if(myKey===[...oTok].sort().join("|")){conf=2;why="소재명 일치";}
+          else{const s=nameSim(myTok,oTok);
+            if(s>=0.6&&(mySvc==null||(svcOf(o)||null)===mySvc))(conf=1,why=`이름 유사 ${Math.round(s*100)}%${mySvc?" · 같은 서비스":""}`);}}}
+      if(conf!=null)list.push({ch,e:o,conf,why});}}
+  list.sort((a,b)=>b.conf-a.conf||(b.e.비용||0)-(a.e.비용||0));
+  return{list:list.slice(0,8),pend,chs:pools.length};}
+function crossBlockHTML(ds,e){
+  const{list,pend,chs}=crossMediaMatches(ds,e);
+  if(!chs)return ""; /* 다른 매체 자체가 없으면(단일 매체·임시 분석) 블록을 그리지 않는다 */
+  const body=list.length
+    ?`<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">매체 / 이름</th><th>판정</th><th>광고비</th><th>실적</th></tr></thead><tbody>`+
+      list.map(m=>{const dn=displayNameOf(m.e);
+        return `<tr class="hoverable xgo" data-ch="${escAttr(m.ch)}" data-nm="${escAttr(m.e.name)}" data-preview="${escAttr(previewUrlOf(m.e))}" data-label="${escAttr(trunc(dn,40))}" title="${escAttr(m.why+" — 클릭하면 그 매체의 이 소재로 이동")}"><td class="l"><span class="xm-media">${escHtml(String(m.ch))}</span> ${escHtml(trunc(dn,28))}</td><td><span class="xm-conf ${m.conf===2?"same":"sim"}">${m.conf===2?"동일":"유사"}</span></td><td class="num">${fmtKRW(m.e.비용)}원</td><td>${perfPillHTML(m.e)}</td></tr>`;}).join("")+
+      `</tbody></table></div></div>`
+    :`<div class="fam-note">다른 매체에서 같은/유사 소재를 찾지 못했어요${pend?` — 이미지 지문 ${pend}개 계산 중이에요`:""}</div>`;
+  return `<div class="ish">다른 매체의 같은 소재 <span class="n">유튜브 ID · 이미지 지문 · 이름${pend&&list.length?` · 지문 ${pend}개 계산 중`:""}</span></div>${body}`;}
+function wireCrossBlock(scopeEl,ds){
+  scopeEl.querySelectorAll("tr.xgo").forEach(tr=>{
+    tr.style.cursor="pointer";
+    tr.addEventListener("click",ev=>{ev.stopPropagation();hideTip();crossGo(tr.dataset.ch,tr.dataset.nm);});
+    const url=tr.dataset.preview;if(!url)return;
+    tr.addEventListener("mouseenter",ev=>{const h=assetPreviewTipHTML(url,tr.dataset.label||"");if(h)showTip(h,ev.clientX,ev.clientY,true);});
+    tr.addEventListener("mousemove",ev=>{if(tip.style.opacity!=="0")placeTip(ev.clientX,ev.clientY);});
+    tr.addEventListener("mouseleave",hideTip);});}
+function refreshCrossBlock(){ /* 지문이 새로 계산되면 열린 상세의 교차 매체 블록만 제자리 갱신 */
+  const wrap=document.querySelector(".isle-row .xmedia-wrap");
+  if(!wrap||!curDS||!ISLE.name)return;
+  const e=findRow(curDS,ISLE.name);if(!e||e._isGroup)return;
+  wrap.innerHTML=crossBlockHTML(curDS,e);wireCrossBlock(wrap,curDS);}
+function crossGo(ch,nm){const ds=curDS;if(!ds||!ds.aggByChannel||!ds.aggByChannel.has(ch))return;
+  ds.media=ch;tPage=1;tGroupByTouched=false;show(ds); /* 매체 드롭다운과 같은 전환 경로 */
+  setTimeout(()=>{try{goToIslandFromQuad(nm);}catch(_){}},250);}
 /* ═════ 소재 비교(A/B) — 상세 미디어 프레임 좌상단 '비교' 버튼으로 두 소재를 한 그래프에 겹쳐 보기 ═════
    흐름: 소재1에서 '비교' 클릭 → 비교 A 담김(열린 자물쇠) → 소재2에서 '비교' 클릭 → 비교 B 담김 + 겹침 그래프 자동 오픈.
    담긴 소재에서 '비교'를 한 번 더 누르면 그 슬롯을 고정(잠긴 자물쇠) — 이후 다른 소재를 담아도 고정 슬롯은 유지되고
@@ -3536,7 +3654,8 @@ function fillIsland(ds,e,inner){const L=ds.L;
         return `<tr class="${x.name===e.name?"me":""}" data-nm="${escAttr(x.name)}" title="${escAttr(dn)}"><td class="l">${escHtml(_ftrim(dn))}</td><td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td><td>${perfPillHTML(x)}</td></tr>`;}).join("");})()+
       `</tbody></table></div></div>`;}
   const preview=assetPreview(previewUrlOf(e),e);
-  const cmpB=`<div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}`;
+  const _xmh=e._isGroup?"":crossBlockHTML(ds,e);
+  const cmpB=`<div class="ish">${listTitle} <span class="n">${listMetaN}</span></div>${listHTML}`+(_xmh?`<div class="xmedia-wrap">${_xmh}</div>`:"");
   /* 미디어 비율 클래스: 몰로코 해상도·유튜브는 즉시, 그 외 이미지는 로드 후(isleAr) 판정 */
   inner.classList.remove("ar-v","ar-h","ar-s");
   const _pu=previewUrlOf(e);
@@ -3546,6 +3665,8 @@ function fillIsland(ds,e,inner){const L=ds.L;
   const sideMedia=e._isGroup?((gwStatHTML(e)||"")+(groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group))||"")):preview; /* 그룹은 정확 소스+보고서 정보가 미디어 자리 */
   inner.innerHTML=`<div class="isle-row3${sideMedia?"":" nomedia"}">${sideMedia?`<div class="ir-media">${sideMedia}</div>`:""}<div class="ir-mid"></div><div class="ir-cmp">${cmpB}</div></div>`;
   renderIsleMid(ds,e,inner.querySelector(".ir-mid"));
+  const _xw=inner.querySelector(".xmedia-wrap");
+  if(_xw)wireCrossBlock(_xw,ds);
   /* 비교(A/B) 버튼 — 미디어 프레임 좌상단 오버레이 (그룹 상세는 미디어 프레임이 없어 제외) */
   const _cfr=inner.querySelector(".ir-media .isle-frame");
   if(_cfr&&!e._isGroup)mountCmpOvl(_cfr,ds,e);
@@ -3605,7 +3726,7 @@ function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-r
    대표(lead)만 기본 표시, +를 누르면 그 카테고리의 하위(sub)가 펼쳐진다.
    매체와 연관 없는 지표(예: 구글의 eCPI/활성유저, 몰로코의 구글 전환류)는 아예 만들지 않는다. */
 /* 뱃지 전용 열 폐지 — 등급 뱃지(왕관·엄지·독보적)는 점수 칸에 흡수(같은 정보의 중복 열 제거) */
-function tableCols(L,ds){const meta=[{k:"name",t:L.name},{k:"score",t:"실적",help:"구글 리포트의 '실적'(매우 좋음·좋음·낮음·학습·대기중)을 표시 — 매주 자동 동기화, 실적이 '-'면 '보통'으로 표시해요. 내보내기 어휘 '인기순'(=Best)은 UI 표기 '매우 좋음'으로 바꿔 보여줘요. 실적이 없는 소재(몰로코·메타·과거 구글)는 지표 관계(전환·CTR 등수, 물량 비율)로 추정해 점선 연한 필에 (cc)를 붙여요. 정렬은 실적 서열(매우 좋음>좋음>보통>낮음>학습>대기중, 같은 실적은 광고비순)"}];
+function tableCols(L,ds){const meta=[{k:"name",t:L.name},{k:"score",t:"실적",help:"실적은 구글 리포트 기반 · 점선(cc)은 구글 알고리즘 기반 추정 실적"}];
   const isM=ds&&ds.agg&&ds.agg.some(e=>e._m_ctype),isG=ds&&ds.agg&&ds.agg.some(e=>e._g_assetType);
   const isQ=ds&&ds.agg&&ds.agg.some(e=>e._q_retD1!=null||e._q_afInstalls!=null||e._q_reEng!=null);
   const isAce=isG&&ds&&ds.media==="Google ACE"; /* ACE는 CPM이 '채점 1순위' 대표 열로 승격 — 공통 CPM 서브와 중복 방지 */
@@ -4323,7 +4444,8 @@ function loadCloudRows(rows){
      나중에 그려져 보였음). 탭과 무관하게 표를 다시 그려 마크를 채운다(숨은 표 재렌더는 값싼 작업). */
   loadMarks().then(()=>{renderViewSeg();if(active&&DATASETS[active])renderTable(DATASETS[active]);});
   setTimeout(openDeepLink,700);
-  setTimeout(()=>{hydrateAllYtTitles().catch(()=>{});},1200);}
+  setTimeout(()=>{hydrateAllYtTitles().catch(()=>{});},1200);
+  setTimeout(()=>{prehashAllImages().catch(()=>{});},4000);} /* 이미지 지문(dHash) 백그라운드 수집 — 매체 간 동일 소재 판정용 */
 /* #ad= 딥링크 — 공유받은 링크로 접속하면 해당 소재 상세를 바로 연다 (최초 로드 후 1회).
    ⚠️ 반드시 '로드 시점'의 해시(_initHash)만 본다. 상세를 열면 toggleIsland가 location.hash를
    #ad=… 로 바꾸기 때문에, fire 시점에 live 해시를 읽으면 사용자가 방금 연/닫은 소재를 딥링크가
@@ -4675,7 +4797,7 @@ function show(ds){scope(ds);
     requestAnimationFrame(()=>{curDS=ds;renderQuickFo();renderTable(ds);renderAB(ds);});});}
 function setActive(k){if(!DATASETS[k])return;active=k;
   tableShowAll=false;tState={sort:"비용",dir:-1,q:""};tQuickFo=null;tGroupBy=false;tGroupByTouched=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;
-  tMarkView="all";tServices=new Set();tCreators=new Set();mineAs=null;_mselSig={svc:"",cr:"",ma:""}; /* 마크/서비스/제작자 필터도 리셋 — 데이터 재로드·스탠드얼론에서 필터가 새어 빈 표로 고착되는 것 방지 */
+  tMarkView="all";tServices=new Set();tCreators=new Set();tPerfSel=new Set();mineAs=null;_mselSig={svc:"",cr:"",ma:"",pf:""}; /* 마크/서비스/제작자/실적 필터도 리셋 — 데이터 재로드·스탠드얼론에서 필터가 새어 빈 표로 고착되는 것 방지 */
   tGallery=false;_galShown=100;const _gvc=$("#galleryView");if(_gvc)_gvc.checked=false;
   if($("#search"))$("#search").value="";if($("#showAll"))$("#showAll").checked=false;
   show(DATASETS[k]);}
@@ -4937,6 +5059,7 @@ function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(
     }
     rebuildAllDatasets();
     refreshAll();
+    setTimeout(()=>{prehashAllImages().catch(()=>{});},4000);
     const gTxt=forceTags.length?`✓ ${forceTags.map(t=>t==="Google"?"Google Ads":t).join(" · ")} 리포트 인식했어요 · `:"";
     const cf=costFiltered>0?` · 소액 기록 ${costFiltered.toLocaleString()}건은 뺐어요(소재·주 합산 ₩1,500 미만)`:"";
     toast(`${gTxt}${notes.join(" · ")}${cf}${failed.length?` · ${failed.length}건은 건너뛰었어요`:""}`);
