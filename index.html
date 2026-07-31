@@ -1798,7 +1798,7 @@ async function hydrateAllYtTitles(){
   if(_yttRan)return;_yttRan=true;
   const ids=new Set();
   for(const k in DATASETS){const ds=DATASETS[k];
-    for(const r of ds.dataAll){const id=ytIdOf(r._g_url||r[ds.L.nameCol]);if(id&&(_ytTitles[id]===undefined||!YTAR[id]))ids.add(id);}}
+    for(const r of ds.dataAll){const id=ytIdOf(r._g_url||r[ds.L.nameCol]);if(id&&_ytTitles[id]===undefined)ids.add(id);}}
   const list=[...ids];if(!list.length)return;
   const fresh={};
   for(let i=0;i<list.length;i+=4){
@@ -1812,28 +1812,61 @@ async function hydrateAllYtTitles(){
    시작 시 캐시를 미리 올려 표·순위의 유튜브 URL 이름도 아는 제목으로 바로 표시 */
 const _ytTitles={};
 try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf("ytt_")===0)_ytTitles[k.slice(4)]=localStorage.getItem(k);}}catch(e){}
-/* 유튜브 화면비 — 스트리밍이라 픽셀 해상도는 브라우저에서 못 읽지만, oEmbed(noembed)의 width/height가
-   실제 화면비를 담고 있어 가로(16:9)/세로(9:16)/정사각(1:1)은 정확히 판정할 수 있다. 제목 조회와 같은 API 재사용 */
-const YTAR=(()=>{try{return JSON.parse(localStorage.getItem("cr_ytar")||"{}");}catch(_){return{};}})();
+/* 유튜브 화면비 실측 — 스트리밍이라 픽셀 해상도는 못 읽고, oEmbed width/height는 세로·정방형도 전부
+   480×270(16:9)으로 돌려줘 폐기(전부 '가로'로 오판하던 원인). 대신 **썸네일 레터박스 실측**:
+   hqdefault.jpg는 항상 4:3 캔버스에 원본을 비율 유지로 넣고 남는 부분을 검은 띠로 채우므로,
+   띠(상하/좌우) 두께를 재면 원본 화면비가 복원된다 — 16:9=상하 띠 · 9:16=좌우 큰 띠 · 1:1=좌우 중간 띠.
+   키를 cr_ytar2로 올려 구버전(oEmbed 오판) 캐시는 무시한다. */
+const YTAR=(()=>{try{return JSON.parse(localStorage.getItem("cr_ytar2")||"{}");}catch(_){return{};}})();
 let _ytarT=null;
-function _ytarSet(id,w,h){
-  if(!(w>0&&h>0))return;
-  if(YTAR[id]&&YTAR[id][0]===w&&YTAR[id][1]===h)return;
-  YTAR[id]=[w,h];
-  clearTimeout(_ytarT);_ytarT=setTimeout(()=>{try{localStorage.setItem("cr_ytar",JSON.stringify(YTAR));}catch(_){}},800);}
+function _ytarSave(){clearTimeout(_ytarT);_ytarT=setTimeout(()=>{try{localStorage.setItem("cr_ytar2",JSON.stringify(YTAR));}catch(_){}},800);}
+function _ytAspectFromCanvas(g,W,H){
+  const d=g.getImageData(0,0,W,H).data;
+  const lum=(x,y)=>{const i=(y*W+x)*4;return 0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];};
+  const rowDark=y=>{for(let x=0;x<W;x++)if(lum(x,y)>=28)return false;return true;};
+  const colDark=x=>{for(let y=0;y<H;y++)if(lum(x,y)>=28)return false;return true;};
+  let top=0;while(top<H*0.45&&rowDark(top))top++;
+  let bot=0;while(bot<H*0.45&&rowDark(H-1-bot))bot++;
+  let lef=0;while(lef<W*0.45&&colDark(lef))lef++;
+  let rig=0;while(rig<W*0.45&&colDark(W-1-rig))rig++;
+  const cw=W-lef-rig,ch=H-top-bot;
+  if(cw<W*0.2||ch<H*0.2)return null;
+  return [cw,ch];}
+function probeYtAspect(id){
+  if(YTAR[id])return Promise.resolve(YTAR[id]);
+  const tu=`https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+  const px=`https://wsrv.nl/?url=${encodeURIComponent(tu)}&w=96&h=72&fit=fill&output=jpg`; /* CORS 허용 프록시 — 광고 CDN dHash와 동일 경로 */
+  return new Promise(res=>{
+    const im=new Image();im.crossOrigin="anonymous";
+    const done=v=>{if(v){YTAR[id]=v;_ytarSave();}res(v||null);};
+    const to=setTimeout(()=>done(null),12000);
+    im.onload=()=>{clearTimeout(to);
+      try{const c=document.createElement("canvas");c.width=96;c.height=72;
+        const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(im,0,0,96,72);
+        done(_ytAspectFromCanvas(g,96,72));}catch(_){done(null);}};
+    im.onerror=()=>{clearTimeout(to);done(null);};
+    im.src=px;});}
+/* 모든 유튜브 소재의 화면비를 백그라운드 실측(동시 3·상한 300) — 완료 시 열린 상세·타매체 블록 제자리 갱신 */
+let _ytarRan=false;
+async function hydrateYtAspects(){
+  if(_ytarRan)return;_ytarRan=true;
+  const ids=new Set();
+  for(const k in DATASETS){for(const r of (DATASETS[k].dataAll||[])){
+    const id=ytIdOf(r._g_url||r[DATASETS[k].L.nameCol]);if(id&&!YTAR[id])ids.add(id);}}
+  const list=[...ids].slice(0,300);
+  for(let i=0;i<list.length;i+=3){
+    await Promise.all(list.slice(i,i+3).map(probeYtAspect));
+    if(i%30===0&&typeof refreshCrossBlock==="function")refreshCrossBlock();}
+  if(typeof refreshCrossBlock==="function")refreshCrossBlock();}
 function ytIdOf(url){const m=String(url||"").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);return m?m[1]:null;}
 async function fetchYtTitle(id){
-  let cachedT;
-  if(_ytTitles[id]!==undefined)cachedT=_ytTitles[id];
-  else{try{const ls=localStorage.getItem("ytt_"+id);if(ls){_ytTitles[id]=ls;cachedT=ls;}}catch(e){}}
-  if(cachedT!==undefined&&YTAR[id])return cachedT; /* 제목·화면비 둘 다 있으면 왕복 생략 */
+  if(_ytTitles[id]!==undefined)return _ytTitles[id];
+  try{const ls=localStorage.getItem("ytt_"+id);if(ls){_ytTitles[id]=ls;return ls;}}catch(e){}
   try{const r=await fetch(`https://noembed.com/embed?url=${encodeURIComponent("https://www.youtube.com/watch?v="+id)}`);
     const j=await r.json();const t=j&&j.title?String(j.title):null;
-    if(j&&+j.width>0&&+j.height>0)_ytarSet(id,+j.width,+j.height);
-    if(cachedT!==undefined)return cachedT;
     _ytTitles[id]=t;if(t){try{localStorage.setItem("ytt_"+id,t);}catch(e){}}
     return t;
-  }catch(e){if(cachedT!==undefined)return cachedT;_ytTitles[id]=null;return null;}}
+  }catch(e){_ytTitles[id]=null;return null;}}
 
 let WEEKS=[];/* 실데이터 로드 시 rebuildAllDatasets()가 채움 — 하드코딩 주차 없음 */
 /* ── 지표 신뢰성 게이트 ──
@@ -3474,18 +3507,25 @@ function arInfoOf(e){
   const u=previewUrlOf(e);
   const sz=(e.tags&&e.tags.size)||e._m_res||"";
   const m=String(sz).match(/(\d+)\s*[x×]\s*(\d+)/i);
-  let w=0,h=0,exact=true;
+  let w=0,h=0,exact=true,oriOnly=false;
   if(m){w=+m[1];h=+m[2];}
   else{const d=u&&(typeof MDIM!=="undefined")&&MDIM[u];
     if(d&&d.w&&d.h){w=d.w;h=d.h;}
-    else{const id=ytIdOf(e._g_url||u||e.name);
-      if(id&&YTAR[id]){w=YTAR[id][0];h=YTAR[id][1];exact=false;}}}
+    else{
+      /* 구글 공식 '방향'(주간 루틴 수집) — 화면비 클래스로는 가장 신뢰 가능 */
+      const ori=String(e._g_orientation||"");
+      if(/세로/.test(ori)){w=9;h=16;exact=false;oriOnly=true;}
+      else if(/정사각|정방/.test(ori)){w=1;h=1;exact=false;oriOnly=true;}
+      else if(/가로/.test(ori)){w=16;h=9;exact=false;oriOnly=true;}
+      else{const id=ytIdOf(e._g_url||u||e.name);
+        if(id&&YTAR[id]){w=YTAR[id][0];h=YTAR[id][1];exact=false;}}}}
   if(!(w>0&&h>0))return null;
   const r=w/h;
-  return{w,h,r,cls:r>1.05?"가로":r<0.95?"세로":"정사각",exact};}
-function arDispOf(e){ /* 해상도 표시 문자열 — 정확 픽셀 또는 '세로 9:16' 식 화면비 */
+  return{w,h,r,cls:r>1.05?"가로":r<0.95?"세로":"정사각",exact,oriOnly};}
+function arDispOf(e){ /* 해상도 표시 문자열 — 정확 픽셀, '세로 9:16'(실측 비율), 또는 '세로'(공식 방향만) */
   const ai=arInfoOf(e);if(!ai)return "";
   if(ai.exact)return ai.w+"×"+ai.h;
+  if(ai.oriOnly)return ai.cls;
   const rl=ratioLabel(ai.r);return ai.cls+(rl?" "+rl:"");}
 function _arOf(e){const ai=arInfoOf(e);return ai?ai.r:null;}
 function crossMediaMatches(ds,e){
@@ -3952,13 +3992,13 @@ function fillIsland(ds,e,inner){const L=ds.L;
     const cell=tr.children[1];if(!cell||cell.textContent.trim()!=="–")return;
     const u=tr.dataset.preview||"";
     const ytid=ytIdOf(u);
-    if(ytid){ /* 유튜브 — oEmbed 비율 도착 시 '세로 9:16' 식으로 채움 */
+    if(ytid){ /* 유튜브 — 썸네일 레터박스 실측 비율 도착 시 '세로 9:16' 식으로 채움 */
       const fill=()=>{if(!YTAR[ytid])return false;
         const r=YTAR[ytid][0]/YTAR[ytid][1];
         const cls=r>1.05?"가로":r<0.95?"세로":"정사각";
         const rl=ratioLabel(r);
         cell.textContent=cls+(rl?" "+rl:"");return true;};
-      if(!fill())fetchYtTitle(ytid).then(()=>{fill();});
+      if(!fill())probeYtAspect(ytid).then(()=>{fill();});
       return;}
     const med=tr.querySelector(".tthumb video, .tthumb img");if(!med)return;
     const upd=()=>{const d=u&&(typeof MDIM!=="undefined")&&MDIM[u];
@@ -4762,7 +4802,8 @@ function loadCloudRows(rows){
   loadMarks().then(()=>{renderViewSeg();if(active&&DATASETS[active])renderTable(DATASETS[active]);});
   setTimeout(openDeepLink,700);
   setTimeout(()=>{hydrateAllYtTitles().catch(()=>{});},1200);
-  setTimeout(()=>{prehashAllImages().catch(()=>{});},4000);} /* 이미지 지문(dHash) 백그라운드 수집 — 매체 간 동일 소재 판정용 */
+  setTimeout(()=>{prehashAllImages().catch(()=>{});},4000); /* 이미지 지문(dHash) 백그라운드 수집 — 매체 간 동일 소재 판정용 */
+  setTimeout(()=>{hydrateYtAspects().catch(()=>{});},4500);} /* 유튜브 화면비 실측(썸네일 레터박스) 백그라운드 수집 */
 /* #ad= 딥링크 — 공유받은 링크로 접속하면 해당 소재 상세를 바로 연다 (최초 로드 후 1회).
    ⚠️ 반드시 '로드 시점'의 해시(_initHash)만 본다. 상세를 열면 toggleIsland가 location.hash를
    #ad=… 로 바꾸기 때문에, fire 시점에 live 해시를 읽으면 사용자가 방금 연/닫은 소재를 딥링크가
@@ -5422,6 +5463,7 @@ function handleFiles(files,opts){const arr=[...files];let pending=arr.length;if(
     rebuildAllDatasets();
     refreshAll();
     setTimeout(()=>{prehashAllImages().catch(()=>{});},4000);
+    setTimeout(()=>{hydrateYtAspects().catch(()=>{});},4500);
     const gTxt=forceTags.length?`✓ ${forceTags.map(t=>t==="Google"?"Google Ads":t).join(" · ")} 리포트 인식했어요 · `:"";
     const cf=costFiltered>0?` · 소액 기록 ${costFiltered.toLocaleString()}건은 뺐어요(소재·주 합산 ₩1,500 미만)`:"";
     toast(`${gTxt}${notes.join(" · ")}${cf}${failed.length?` · ${failed.length}건은 건너뛰었어요`:""}`);
