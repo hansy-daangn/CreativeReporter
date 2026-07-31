@@ -409,6 +409,11 @@
   /* table thumbnails (creative preview) */
   td.name .nwrap{display:flex;gap:9px;align-items:flex-start;min-width:0}
   td.name .ntxt{min-width:0;flex:1;overflow:hidden}
+  .ckb{flex:0 0 auto;width:15px;height:15px;border:1.5px solid #D8D5C9;border-radius:4px;background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;align-self:center;transition:background .12s,border-color .12s}
+  .ckb:hover{border-color:#AEA99A}
+  .ckb.on{background:var(--karrot);border-color:var(--karrot)}
+  .ckb.on::after{content:"";width:8px;height:4.5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px)}
+  .ckb:focus-visible{outline:2px solid var(--karrot-2);outline-offset:2px}
   .tthumb{position:relative;width:46px;height:46px;flex:0 0 auto;border-radius:8px;overflow:hidden;background:#E9E8E1;display:grid;place-items:center;color:var(--faint);cursor:zoom-in;user-select:none}
   .tthumb img,.tthumb video{width:100%;height:100%;object-fit:cover;display:block;background:#101010}
   .tthumb.ph{background:#26251F;color:#fff;font-size:12px}
@@ -676,6 +681,14 @@
   .fam .g-name{color:var(--muted);font-size:11.5px}
   .fam tr.me .g-name{color:var(--ink);font-weight:650}
   .fam-note{font-size:11px;color:var(--faint);margin-top:8px}
+  .fam.fam-g th,.fam.fam-g td{padding:4px 8px}
+  .fam.fam-g th:nth-child(2),.fam.fam-g td:nth-child(2){width:78px}
+  .fam.fam-g th:nth-child(3),.fam.fam-g td:nth-child(3){width:74px}
+  .fam.fam-g th:nth-child(4),.fam.fam-g td:nth-child(4){width:90px}
+  .fam.fam-g th:nth-child(5),.fam.fam-g td:nth-child(5){width:86px}
+  .fam.fam-g td.l{white-space:nowrap}
+  .fam.fam-g .tthumb{width:46px;height:28px;border-radius:5px;vertical-align:middle}
+  .fam.fam-g .cmp-mark{vertical-align:middle;margin-left:6px}
   .xmedia-wrap{margin-top:16px}
   .xmedia-wrap .fam th:nth-child(2),.xmedia-wrap .fam td:nth-child(2){width:56px}
   .xmedia-wrap .fam th:nth-child(3),.xmedia-wrap .fam td:nth-child(3){width:94px}
@@ -3157,7 +3170,15 @@ function creativeTrendHTML(ds,e){
     const mx=Math.max(...vals.filter(v=>v!=null))*1.12||1;
     let last=null;for(let i=vals.length-1;i>=0;i--)if(vals[i]!=null){last=vals[i];break;}
     lines.push({lab:sp.lab,w:sp.w,col:LINE_COLS[lines.length],fmt:wm.fmt,vals,mx,last});}
-  const H=lines.length>=3?104:92,pl=4,pr=4,pt=8,pb=15; /* 주차 점수 표기 제거로 하단 여백 축소(날짜 한 줄) */
+  /* 주별 실적 라벨(구글 실측 — 그 주 리포트의 실적 값) — 날짜 밑 한 줄로 추이를 라벨과 함께 읽는다 */
+  const _plW={};
+  if(!e._isGroup){const _nc=ds.L.nameCol;
+    for(const r of ds.data){if(r[_nc]!==e.name||r._g_perfLabel===undefined)continue;
+      const w=String(r.date||"").slice(0,10);
+      const v=String(r._g_perfLabel).trim().replace(/^--$/,"");
+      if(_plW[w]==null||v)_plW[w]=v;}}
+  const hasPl=ws.some(w=>_plW[w]!==undefined);
+  const H=(lines.length>=3?104:92)+(hasPl?9:0),pl=4,pr=4,pt=8,pb=hasPl?24:15;
   const W=Math.max(300,pl+pr+ws.length*23),iw=W-pl-pr,ih=H-pt-pb; /* 주당 폭 고정(≈23) — 주가 많으면 차트가 길어지고 스크롤 */
   const cmax=Math.max(...os.map(o=>o.c))||1;
   const bw=5; /* 고정 얇은 막대 */
@@ -3169,7 +3190,12 @@ function creativeTrendHTML(ds,e){
     let tipTxt=`<b>${w.slice(5).replace("-","/")} 주</b><br>광고비 ${fmtWon(o.c)}`;
     for(const ts of tipSpecs)if(ts.vals[i]!=null)tipTxt+=`<br><span class="t-k">${ts.lab}</span> ${ts.fmt(ts.vals[i])}`;
     s+=`<rect class="ispk-b" data-tip="${escAttr(tipTxt)}" x="${(x-bw/2).toFixed(1)}" y="${(H-pb-h).toFixed(1)}" width="${bw}" height="${h.toFixed(1)}" rx="2" fill="var(--karrot)" fill-opacity="0.5"/>`;
-    s+=`<text x="${x.toFixed(1)}" y="${H-4}" font-size="6.8" fill="var(--faint)" text-anchor="middle">${w.slice(5,7)}/${w.slice(8,10)}</text>`;});
+    s+=`<text x="${x.toFixed(1)}" y="${H-(hasPl?13:4)}" font-size="6.8" fill="var(--faint)" text-anchor="middle">${w.slice(5,7)}/${w.slice(8,10)}</text>`;
+    if(hasPl&&_plW[w]!==undefined){
+      const lab0=_plW[w]||"보통",lab=PERF_LABEL_ALIAS[lab0]||lab0;
+      const t=PERF_TIER[lab]||"m";
+      const tc=t==="g2"?"var(--g2)":t==="g1"?"var(--g1)":t==="w1"?"var(--w1)":t==="w2"?"var(--w2)":"var(--mid)";
+      s+=`<text x="${x.toFixed(1)}" y="${H-4}" font-size="6" font-weight="700" fill="${tc}" text-anchor="middle">${escHtml(lab.replace(/\s+/g,""))}</text>`;}});
   for(const ln of lines){let p="",st=false,dots="";
     ws.forEach((w,i)=>{const v=ln.vals[i];if(v==null)return;
       const x=xat(i),y=pt+(1-v/ln.mx)*ih;
@@ -3430,11 +3456,16 @@ function crossMediaMatches(ds,e){
   const myHash=(myU&&!myYt)?DHASH[myU]:undefined;
   const myTok=nameTokensOf(e),myKey=[...myTok].sort().join("|");
   const mySvc=svcOf(e)||null,myAr=_arOf(e);
+  const myFo=(e.tags&&e.tags.fo)||null,mySz=(e.tags&&e.tags.size)||null;
   let pend=(myU&&!myYt&&myHash===undefined&&e.tags&&e.tags.fo==="이미지")?1:0;
   const list=[];
   for(const{ch,list:pool}of pools){
     for(const o of pool){
       if(o._isGroup)continue;
+      /* 같은 유형+해상도만 — 다른 포맷·해상도는 타매체 성과 비교에 방해(둘 다 알 때만 판정) */
+      const oFo=(o.tags&&o.tags.fo)||null,oSz=(o.tags&&o.tags.size)||null;
+      if(myFo&&oFo&&myFo!==oFo)continue;
+      if(mySz&&oSz&&mySz!==oSz)continue;
       let conf=null,why="";
       const oU=previewUrlOf(o),oYt=ytIdOf(o._g_url||oU||o.name);
       if(myYt&&oYt&&myYt===oYt){conf=2;why="같은 유튜브 영상";}
@@ -3461,8 +3492,8 @@ function crossBlockHTML(ds,e){
       list.map(m=>{const dn=displayNameOf(m.e);
         return `<tr class="hoverable xgo" data-ch="${escAttr(m.ch)}" data-nm="${escAttr(m.e.name)}" data-preview="${escAttr(previewUrlOf(m.e))}" data-label="${escAttr(trunc(dn,40))}" title="${escAttr(m.why+" — 클릭하면 그 매체의 이 소재로 이동")}"><td class="l"><span class="xm-media">${escHtml(String(m.ch))}</span> ${escHtml(trunc(dn,28))}</td><td><span class="xm-conf ${m.conf===2?"same":"sim"}">${m.conf===2?"동일":"유사"}</span></td><td class="num">${fmtKRW(m.e.비용)}원</td><td>${perfPillHTML(m.e)}</td></tr>`;}).join("")+
       `</tbody></table></div></div>`
-    :`<div class="fam-note">다른 매체에서 같은/유사 소재를 찾지 못했어요${pend?` — 이미지 지문 ${pend}개 계산 중이에요`:""}</div>`;
-  return `<div class="ish">다른 매체의 같은 소재 <span class="n">유튜브 ID · 이미지 지문 · 이름${pend&&list.length?` · 지문 ${pend}개 계산 중`:""}</span></div>${body}`;}
+    :`<div class="fam-note">다른 매체에서 같은 유형·해상도의 같은/유사 소재를 찾지 못했어요${pend?` — 이미지 지문 ${pend}개 계산 중이에요`:""}</div>`;
+  return `<div class="ish">타매체 성과</div>${body}`;}
 function wireCrossBlock(scopeEl,ds){
   scopeEl.querySelectorAll("tr.xgo").forEach(tr=>{
     tr.style.cursor="pointer";
@@ -3501,11 +3532,10 @@ function dsKeyOf(ds){for(const k in DATASETS)if(DATASETS[k]===ds)return k;return
 function cmpIdxOf(media,name){return CMP.list.findIndex(c=>c.media===media&&c.name===name);}
 function cmpOvlHTML(ds,e){
   const i=cmpIdxOf(ds.media,e.name),c=i>=0?CMP.list[i]:null,locked=c&&c.locked;
-  let col="",rkTxt="";
-  if(c){const R=cmpRank();const rk=R.rankByList.get(i);
-    col=R.colorByList.get(i)||CMP_GRAY;if(rk!=null&&R.ents.length>=2)rkTxt=` ${rk+1}위`;}
+  let col="";
+  if(c){const R=cmpRank();col=R.colorByList.get(i)||CMP_GRAY;}
   const tt=c?(locked?"비교에 고정됨 — 클릭하면 고정 해제":"비교에 담김 — 클릭하면 고정(✕·전체 지우기에서 보호)"):"이 소재를 비교 목록에 담기 — 2개 이상 담으면 한 화면에서 주요 지표를 겹쳐 비교해요 (개수 제한 없음)";
-  return `<div class="cmp-ovl"><button type="button" class="cmp-btn${c?" on":""}"${c?` style="background:${col}"`:""} data-cmpact="toggle" title="${escAttr(tt)}">비교${c?"중"+rkTxt:""} ${locked?LOCK_CLOSED:LOCK_OPEN}</button>${c?`<button type="button" class="cmp-xbtn" data-cmpact="cancel" title="비교에서 빼기">✕</button>`:""}</div>`;}
+  return `<div class="cmp-ovl"><button type="button" class="cmp-btn${c?" on":""}"${c?` style="background:${col}"`:""} data-cmpact="toggle" title="${escAttr(tt)}">비교${c?"중":""} ${locked?LOCK_CLOSED:LOCK_OPEN}</button>${c?`<button type="button" class="cmp-xbtn" data-cmpact="cancel" title="비교에서 빼기">✕</button>`:""}</div>`;}
 function mountCmpOvl(frame,ds,e){
   const old=frame.querySelector(".cmp-ovl");if(old)old.remove();
   frame.insertAdjacentHTML("afterbegin",cmpOvlHTML(ds,e));
@@ -3521,22 +3551,37 @@ function cmpToggle(ds,e){
     const n=CMP.list.length;
     if(n===1)toast("비교에 담았어요 — 다른 소재도 담은 뒤 하단 바 '비교하기'를 누르면 한 화면에서 겹쳐 봐요 (개수 제한 없음)");
     else{const mm=$("#cmpModal");if(mm&&!mm.hidden)renderCmpModal();else toast(`비교 목록 ${n}개 — 하단 바 '비교하기'를 누르면 겹쳐 봐요`);}}
-  renderCmpBar();}
+  renderCmpBar();refreshCmpChecks();}
 function cmpRemove(i){
   const c=CMP.list[i];if(!c)return;
   if(c.locked){toast("고정된 소재예요 — 자물쇠를 먼저 풀어 주세요");return;}
   CMP.list.splice(i,1);
   const mm=$("#cmpModal");
   if(CMP.list.length<2)closeCmpModal();else if(mm&&!mm.hidden)renderCmpModal();
-  renderCmpBar();refreshIsleCmpOvl();}
+  renderCmpBar();refreshIsleCmpOvl();refreshCmpChecks();}
 function cmpCancel(ds,e){const i=cmpIdxOf(ds.media,e.name);if(i>=0)cmpRemove(i);}
+/* 전체목록 체크박스 경로 — 체크=담기, 해제=빼기(잠금은 보호). 상세를 열지 않고 비교 목록 구성 */
+function cmpCheckToggle(ds,e){
+  const i=cmpIdxOf(ds.media,e.name);
+  if(i>=0){cmpRemove(i);return;}
+  if(CMP.list.length&&CMP.list[0].media!==ds.media){toast("비교는 같은 매체 소재끼리만 가능해요 — 기존 비교를 먼저 지워 주세요");return;}
+  CMP.list.push({key:dsKeyOf(ds),media:ds.media,name:e.name,locked:false});
+  if(CMP.list.length===1)toast("비교에 담았어요 — 2개 이상 담으면 하단 바 '비교하기'로 겹쳐 봐요");
+  const mm=$("#cmpModal");if(mm&&!mm.hidden)renderCmpModal();
+  renderCmpBar();refreshIsleCmpOvl();refreshCmpChecks();}
+function refreshCmpChecks(){ /* 표 재렌더 없이 체크 상태만 제자리 갱신 */
+  if(!curDS)return;
+  $$("#table tbody tr.row .ckb").forEach(el=>{
+    const tr=el.closest("tr.row");const nm=tr&&tr.getAttribute("data-name");
+    const on=nm!=null&&cmpIdxOf(curDS.media,nm)>=0;
+    el.classList.toggle("on",on);el.setAttribute("aria-checked",on?"true":"false");});}
 function cmpClear(){
   const kept=CMP.list.filter(c=>c.locked);
   const n=CMP.list.length-kept.length;
   CMP.list=kept;
   toast(kept.length?`고정 안 된 ${n}개를 지웠어요 — 고정 ${kept.length}개는 남아 있어요`:"비교 목록을 모두 지웠어요");
   if(CMP.list.length<2)closeCmpModal();else renderCmpModal();
-  renderCmpBar();refreshIsleCmpOvl();}
+  renderCmpBar();refreshIsleCmpOvl();refreshCmpChecks();}
 function cmpEntOf(i){const c=CMP.list[i];if(!c)return null;
   const ds=(c.key&&DATASETS[c.key])||curDS;if(!ds||!ds.agg||ds.media!==c.media)return null; /* 채널을 바꾸면 비교는 잠시 비활성(바에는 유지) */
   let e=findRow(ds,c.name);
@@ -3589,6 +3634,10 @@ function cmpMetricDefs(ds){
   add("_cost","광고비",0,fmtWon,o=>o.c>0?o.c:null);
   if(reachKeyFor(ds)==="신규+재활성 유저 수")add("_reach","데려온 유저",1,fmtInt,o=>o.nu>0?o.nu:null);
   else add("_reach","노출수",1,fmtInt,o=>o.imp>0?o.imp:null);
+  /* 구글은 노출뿐 아니라 성과 절대량도 — AEO=신규 유저(first_open) · ACE=홈 방문 (없는 값은 자동 제외) */
+  if(String(ds.media||"").startsWith("Google")){
+    add("_fo","신규 유저",1,fmtInt,o=>o.fo>0?o.fo:null);
+    add("_home","홈 방문",1,fmtInt,o=>o.home>0?o.home:null);}
   for(const sp of ((typeof specsFor==="function"?specsFor(ds):[])||[])){
     const wm=WK_METRIC[sp.k];if(wm)add(sp.k,sp.lab,sp.dir,wm.fmt,wm.of);}
   if(!seen.has("CTR"))add("CTR","CTR",1,fmtPct,o=>o.imp>0?o.clk/o.imp:null);
@@ -3634,7 +3683,7 @@ function cmpAxesSVG(R){
     const mx=Math.max(...eff.filter(v=>v!=null).concat([0]));
     return {d,raw,eff,mx};}).filter(c=>c.mx>0&&c.eff.filter(v=>v!=null).length>=2);
   if(!cols.length)return `<div class="fam-note">겹쳐 볼 지표 값이 부족해요</div>`;
-  const CW=108,PL=18,PR=18,PT=24,PB=58,H=300,W=PL+cols.length*CW+PR,ih=H-PT-PB;
+  const CW=94,PL=16,PR=16,PT=20,PB=48,H=228,W=PL+cols.length*CW+PR,ih=H-PT-PB;
   const xAt=c=>PL+c*CW+CW/2;
   let g=`<line x1="${PL}" y1="${H-PB}" x2="${W-PR}" y2="${H-PB}" stroke="#ECE9DE" stroke-width="1"/>`;
   cols.forEach((c,ci)=>{const x=xAt(ci);
@@ -3642,7 +3691,7 @@ function cmpAxesSVG(R){
     const lab=c.d.lab+(c.d.dir<0?" ↓":c.d.dir>0?" ↑":"");
     const words=lab.split(" ");
     const lines=(lab.length>10&&words.length>1)?[words.slice(0,-2).join(" ")||words[0],words.slice(words.length>2?-2:-1).join(" ")]:[lab];
-    lines.forEach((t,li)=>{g+=`<text x="${x.toFixed(1)}" y="${H-PB+30+li*11}" font-size="9.5" font-weight="700" fill="var(--muted)" text-anchor="middle">${escHtml(t)}</text>`;});});
+    lines.forEach((t,li)=>{g+=`<text x="${x.toFixed(1)}" y="${H-PB+25+li*10}" font-size="9" font-weight="650" fill="var(--muted)" text-anchor="middle">${escHtml(t)}</text>`;});});
   const pts=ents.map((en,j)=>cols.map((c,ci)=>{const v=c.eff[j];return v==null?null:{x:xAt(ci),y:PT+(1-v/c.mx)*ih,j};}));
   let lines2="",dots="",vals="";
   /* 그리기 순서 = 우세 역순(1위가 맨 위에 얹힘) — 호버는 "지표 값"만(미니멀) */
@@ -3651,10 +3700,10 @@ function cmpAxesSVG(R){
     const ps=pts[j].filter(Boolean);
     if(!ps.length)return;
     let pth="";ps.forEach((p,k)=>{pth+=(k?" L":"M")+` ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;});
-    lines2+=`<path d="${pth}" fill="none" stroke="${col}" stroke-width="2" stroke-opacity="0.9" stroke-linejoin="round"/>`;
+    lines2+=`<path d="${pth}" fill="none" stroke="${col}" stroke-width="1.6" stroke-opacity="0.9" stroke-linejoin="round"/>`;
     pts[j].forEach((p,ci)=>{if(!p)return;const c=cols[ci];
-      dots+=`<circle class="cmp-dot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.2" fill="${col}" data-cv="${escAttr(c.d.lab+" "+c.d.fmt(c.raw[j]))}" data-cc="${col}"/>`;});});
-  /* 지표(열)마다 최고점 위·최저점 아래에만 수치 표기 */
+      dots+=`<circle class="cmp-dot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${col}" data-cv="${escAttr(c.d.lab+" "+c.d.fmt(c.raw[j]))}" data-cc="${col}"/>`;});});
+  /* 지표(열)마다 최고점 위·최저점 아래에만 수치 표기 — 작고 가볍게 */
   cols.forEach((c,ci)=>{
     const here=pts.map(ent=>ent[ci]).filter(Boolean);
     if(here.length<2)return;
@@ -3662,9 +3711,9 @@ function cmpAxesSVG(R){
     for(const p of here){if(p.y<hi.y)hi=p;if(p.y>lo.y)lo=p;}
     if(hi===lo)return;
     const colOf=p=>R.colorByList.get(ents[p.j].i)||CMP_GRAY;
-    vals+=`<text x="${hi.x.toFixed(1)}" y="${(hi.y-9).toFixed(1)}" font-size="9.5" font-weight="750" fill="${colOf(hi)}" text-anchor="middle">${escHtml(c.d.fmt(c.raw[hi.j]))}</text>`;
-    vals+=`<text x="${lo.x.toFixed(1)}" y="${(lo.y+16).toFixed(1)}" font-size="9.5" font-weight="750" fill="${colOf(lo)}" text-anchor="middle">${escHtml(c.d.fmt(c.raw[lo.j]))}</text>`;});
-  return `<div class="cmpm-chartwrap"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${Math.min(W,720)}px;height:auto">${g}${lines2}${dots}${vals}</svg></div>`;}
+    vals+=`<text x="${hi.x.toFixed(1)}" y="${(hi.y-7).toFixed(1)}" font-size="8" font-weight="600" fill="${colOf(hi)}" text-anchor="middle">${escHtml(c.d.fmt(c.raw[hi.j]))}</text>`;
+    vals+=`<text x="${lo.x.toFixed(1)}" y="${(lo.y+13).toFixed(1)}" font-size="8" font-weight="600" fill="${colOf(lo)}" text-anchor="middle">${escHtml(c.d.fmt(c.raw[lo.j]))}</text>`;});
+  return `<div class="cmpm-chartwrap"><svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${Math.min(W+80,640)}px;min-width:${Math.min(W,520)}px;height:auto">${g}${lines2}${dots}${vals}</svg></div>`;}
 function cmpGridHTML(R){
   const{ents,tots,defs,order}=R;
   const head=order.map((j,rank)=>{const en=ents[j];const nm=displayNameOf(en.e);
@@ -3734,7 +3783,7 @@ function renderCmpModal(){
     ?`<div class="cmpm-secT">주차별 추이 <button type="button" class="cmp-trfull${cmpTrendFull?" on":""}">전체 기간</button></div>${cmpTrendSectionHTML(R)}`
     :`<div class="cmpm-secT">주요 지표 <span class="n">높을수록 좋아요 · 수치에 비례하게 보여줘요</span></div>${cmpAxesSVG(R)}${cmpGridHTML(R)}`;
   m.innerHTML=`<div class="cmpm" role="dialog" aria-modal="true" aria-label="소재 비교">
-    <div class="cmpm-h"><span class="cmpm-name">소재 비교 <b>${ents.length}</b>개 <span class="n">같은 매체(${escHtml(String(ds.media||""))}) · 소재 보유 전체 기간 — 기간 필터와 무관 · 잘된 순서(우세도)로 왼쪽부터, 색은 순위에 고정</span></span>
+    <div class="cmpm-h"><span class="cmpm-name">소재 비교 <b>${ents.length}</b>개 <span class="n">전체 기간 · 우세순</span></span>
       <div class="cmp-seg cmpm-tabs"><button type="button" data-ct="ov" class="${cmpTab==="ov"?"on":""}">개요</button><button type="button" data-ct="tr" class="${cmpTab==="tr"?"on":""}">추이</button></div>
       <button type="button" class="cmpm-close" title="닫기 (Esc)">✕</button></div>
     <div class="cmpm-media n${Math.min(ents.length,4)}">${meds}</div>
@@ -3779,16 +3828,19 @@ function fillIsland(ds,e,inner){const L=ds.L;
     const _lst=_lgi?(/일시중지/.test(_lgi.st||"")||/일시중지/.test(_lgi.op||"")?" · 일시중지":(/제한/.test(_lgi.op||"")||/정책/.test(_lgi.rsn||"")?" · 정책 제한":"")):"";
     listMetaN=`${_lraw?escHtml(trunc(groupPrettyName(_lraw),34)):"그룹 "+escHtml(String(grpId))} · ${grp.length}개${_lst}`;
     const _gtrim=prefixTrimmer(grp.map(x=>displayNameOf(x)));
+    /* 이름 대신 작은 썸네일 — 이름칸이 길어 뒤 열이 안 보이던 문제. 이름은 호버 미리보기·툴팁이 담당, 해상도 열 추가 */
     listHTML=grp.length<=1?`<div class="fam-note">이 그룹에 다른 소재가 없습니다.</div>`:
-      `<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">유형 / 이름</th><th>광고비</th><th>${effLab}</th><th>실적</th></tr></thead><tbody>`+
+      `<div class="fam-wrap"><div class="fam fam-g"><table><thead><tr><th class="l">소재</th><th>해상도</th><th>실적</th><th>광고비</th><th>${effLab}</th></tr></thead><tbody>`+
       grp.map(x=>{const url=previewUrlOf(x);
         const typeShort=entTypeShort(x);
         const emoji=entTypeEmoji(x);
         const dn=displayNameOf(x);
+        const sz=String((x.tags&&x.tags.size)||x._m_res||"").replace(/x/i,"×");
         return `<tr class="${x.name===e.name?"me":""} hoverable" data-nm="${escAttr(x.name)}" data-preview="${escAttr(url)}" data-label="${escAttr(typeShort+' · '+trunc(dn,40))}" title="${escAttr(dn)}">
-        <td class="l"><span class="g-type-emoji">${emoji}</span> <span class="g-type-lab">${escHtml(typeShort)}</span> <span class="g-name">${escHtml(_gtrim(dn))}</span><span class="cmp-mark">${markBtnsHTML(ds.media,x)}</span></td>
-        <td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td>
-        <td>${perfPillHTML(x)}</td></tr>`;}).join("")+
+        <td class="l">${thumbHTML(x)||`<span class="g-type-emoji">${emoji}</span>`}<span class="cmp-mark">${markBtnsHTML(ds.media,x)}</span></td>
+        <td class="num">${sz?escHtml(sz):"–"}</td>
+        <td>${perfPillHTML(x)}</td>
+        <td class="num">${fmtKRW(x.비용)}원</td><td class="num">${x[effK]!=null?effFmt(x[effK]):"–"}</td></tr>`;}).join("")+
       `</tbody></table></div></div>`;
   }else{
     const fam=(ds.byFk.get(e._fk||familyKey(e.name))||[e]).slice().sort((a,b)=>(b.비용||0)-(a.비용||0));
@@ -4154,10 +4206,12 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
         const gst=r._isGroup?giStatusChip(groupInfoOf(r._g_adGroupId||r._m_group)):"";
         const gwc=(r._isGroup&&r._authGw)?authGwChip(r):"";
         const mb=markBtnsHTML(ds.media,r);
+        /* 썸네일 왼쪽 비교 체크박스 — 상세를 열지 않고도 비교 목록에 담는다(그룹 행 제외) */
+        const ck=r._isGroup?"":`<span class="ckb${cmpIdxOf(ds.media,r.name)>=0?" on":""}" role="checkbox" aria-checked="${cmpIdxOf(ds.media,r.name)>=0}" tabindex="0" title="비교에 담기/빼기"></span>`;
         const nmHtml=(renameMode&&!r._isGroup)
           ? `<span class="nm-text editing" contenteditable="true" spellcheck="false" data-nm="${escAttr(r.name)}">${escHtml(dn)}</span>`
           : `<span class="nm-text">${escHtml(trunc(dn,60))}</span>`;
-        return `<td class="name"><div class="nwrap">${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}><div class="nm-line">${liveBadge(ds,r)}${lrnBadge(r)}${nmHtml}${mb}${gst}${assetStatusChip(r)}${gwc}</div><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
+        return `<td class="name"><div class="nwrap">${ck}${th}<div class="ntxt" ${dn!==r.name?`title="${escAttr(r.name)}"`:""}><div class="nm-line">${liveBadge(ds,r)}${lrnBadge(r)}${nmHtml}${mb}${gst}${assetStatusChip(r)}${gwc}</div><div class="chips">${chipsHTML(r.tags,r)}</div></div></div></td>`;}
       if(c.k==="score"){
         /* 커버리지 노트(*)는 실적 블록이 있을 때만 — 빈 칸에 고아 별표가 뜨지 않게 */
         const part=(score&&r._isGroup&&r._gwCover!=null&&r._gwCover<0.7)?`<span class="sc-note" title="소재 커버리지 ${Math.round(r._gwCover*100)}% — 실적·점수는 소재(영상·이미지) 데이터 기준인데 이 그룹은 절반 가까이가 글자 애셋 등 미수집 영역이라 참고용이에요">*</span>`:"";
@@ -4176,6 +4230,14 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
     t.addEventListener("mouseenter",ev=>{const h=assetPreviewTipHTML(url,lab);if(h)showTip(h,ev.clientX,ev.clientY,true);});
     t.addEventListener("mousemove",ev=>{if(tip.style.opacity!=="0")placeTip(ev.clientX,ev.clientY);});
     t.addEventListener("mouseleave",hideTip);});
+  /* 비교 체크박스 — 행 클릭(상세 열기)과 분리 */
+  tbody.querySelectorAll(".ckb").forEach(el=>{
+    const act=ev=>{ev.stopPropagation();ev.preventDefault();
+      const tr=el.closest("tr.row");const nm=tr&&tr.getAttribute("data-name");
+      const ent=nm!=null?findRow(ds,nm):null;
+      if(ent&&!ent._isGroup)cmpCheckToggle(ds,ent);};
+    el.addEventListener("click",act);
+    el.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.key===" ")act(ev);});});
   const _thAct=(th,ev)=>{
     const cx=ev.target.closest(".colx");
     if(cx){const g=cx.dataset.g;if(tExp.has(g))tExp.delete(g);else tExp.add(g);renderTable(ds);return;}
