@@ -589,15 +589,11 @@
   .cmp-xbtn:hover{background:rgba(190,63,83,.95)}
   /* display 지정이 hidden 속성을 무력화하지 않도록 [hidden] 가드 필수 — 빠지면 투명 오버레이가 화면 전체를 덮어 클릭을 가로챈다 */
   .cmp-bar[hidden],.cmp-modal[hidden]{display:none}
-  .cmp-bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:900;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;padding:8px 10px 8px 14px;border-radius:999px;background:rgba(28,26,20,.94);color:#F3F0E8;box-shadow:0 12px 40px -10px rgba(0,0,0,.5);font-size:12px;max-width:calc(100vw - 24px)}
-  .cmpb-t{font-weight:800;color:#FF8A3D;white-space:nowrap}
-  .cmpb-slot{display:inline-flex;align-items:center;gap:5px;padding:3px 6px 3px 10px;border-radius:999px;background:rgba(255,255,255,.08);white-space:nowrap;max-width:280px;overflow:hidden}
-  .cmpb-x{border:0;background:transparent;color:#CFCABB;cursor:pointer;font-size:11px;padding:2px 4px}
-  .cmpb-x:hover{color:#fff}
-  .cmpb-open{border:0;border-radius:999px;padding:6px 14px;background:#FF6F0F;color:#fff;font-weight:800;cursor:pointer;font-size:12px}
+  .cmp-bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:900;display:flex;gap:9px;align-items:center;justify-content:center;padding:9px 11px;border-radius:999px;background:rgba(28,26,20,.94);color:#F3F0E8;box-shadow:0 12px 40px -10px rgba(0,0,0,.5);max-width:calc(100vw - 24px)}
+  .cmpb-open{border:0;border-radius:999px;padding:10px 22px;background:#FF6F0F;color:#fff;font-weight:800;cursor:pointer;font-size:13.5px}
   .cmpb-open:disabled{background:rgba(255,255,255,.14);color:#999285;cursor:default}
-  .cmpb-clear{border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:5px 12px;background:transparent;color:#CFCABB;font-weight:700;cursor:pointer;font-size:11.5px}
-  .cmpb-clear:hover{color:#fff;border-color:rgba(255,255,255,.45)}
+  .cmpb-clear{border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:9px 18px;background:transparent;color:#DEDACF;font-weight:750;cursor:pointer;font-size:12.5px}
+  .cmpb-clear:hover{color:#fff;border-color:rgba(255,255,255,.5)}
   .cmp-modal{position:fixed;inset:0;z-index:1000;background:rgba(15,14,10,.55);display:grid;place-items:center;padding:20px}
   .cmpm{background:#FFFDF7;border-radius:16px;max-width:880px;width:100%;max-height:calc(100vh - 40px);overflow:auto;padding:20px 22px 16px;box-shadow:0 30px 80px -20px rgba(0,0,0,.45)}
   /* A/B 소재 미리보기 — 프레임 안에 contain으로 수납(잘림 금지), 세로 소재도 온전히 보이게 충분한 높이 */
@@ -631,9 +627,11 @@
   .cmp-seg{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 8px}
   .cmp-seg button{border:1px solid #E2DFD3;background:transparent;border-radius:999px;padding:4px 11px;font-size:11.5px;cursor:pointer;color:var(--muted);font-weight:650}
   .cmp-seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .cmpm-sectabs{display:flex;align-items:center;gap:14px;margin:16px 0 8px}
-  .cmpm-sectabs button[data-ct]{border:0;background:transparent;font-weight:800;font-size:12.5px;color:var(--faint);cursor:pointer;padding:0}
-  .cmpm-sectabs button[data-ct].on{color:var(--ink)}
+  .cmpm-sectabs{display:flex;align-items:center;gap:8px;margin:16px 0 8px}
+  .cmpm-sectabs button[data-ct]{border:1px solid #E2DFD3;background:transparent;border-radius:999px;padding:5px 14px;font-weight:750;font-size:12px;color:var(--muted);cursor:pointer;transition:background .12s,color .12s}
+  .cmpm-sectabs button[data-ct]:hover{border-color:#C9C5B6}
+  .cmpm-sectabs button[data-ct].on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .cmpm-sectabs .n{margin-left:6px}
   .cmpm-sectabs .n{font-weight:600;font-size:11px;color:var(--faint)}
   .cmpm-med{position:relative}
   .cmpm-medx{position:absolute;top:26px;right:6px;z-index:5;width:22px;height:22px;border:0;border-radius:50%;background:rgba(20,19,15,.5);color:#fff;font-size:11px;cursor:pointer;display:grid;place-items:center;line-height:1}
@@ -1798,7 +1796,7 @@ async function hydrateAllYtTitles(){
   if(_yttRan)return;_yttRan=true;
   const ids=new Set();
   for(const k in DATASETS){const ds=DATASETS[k];
-    for(const r of ds.dataAll){const id=ytIdOf(r._g_url||r[ds.L.nameCol]);if(id&&_ytTitles[id]===undefined)ids.add(id);}}
+    for(const r of ds.dataAll){const id=ytIdOf(r._g_url||r[ds.L.nameCol]);if(id&&(_ytTitles[id]===undefined||!YTAR[id]))ids.add(id);}}
   const list=[...ids];if(!list.length)return;
   const fresh={};
   for(let i=0;i<list.length;i+=4){
@@ -1812,15 +1810,28 @@ async function hydrateAllYtTitles(){
    시작 시 캐시를 미리 올려 표·순위의 유튜브 URL 이름도 아는 제목으로 바로 표시 */
 const _ytTitles={};
 try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf("ytt_")===0)_ytTitles[k.slice(4)]=localStorage.getItem(k);}}catch(e){}
+/* 유튜브 화면비 — 스트리밍이라 픽셀 해상도는 브라우저에서 못 읽지만, oEmbed(noembed)의 width/height가
+   실제 화면비를 담고 있어 가로(16:9)/세로(9:16)/정사각(1:1)은 정확히 판정할 수 있다. 제목 조회와 같은 API 재사용 */
+const YTAR=(()=>{try{return JSON.parse(localStorage.getItem("cr_ytar")||"{}");}catch(_){return{};}})();
+let _ytarT=null;
+function _ytarSet(id,w,h){
+  if(!(w>0&&h>0))return;
+  if(YTAR[id]&&YTAR[id][0]===w&&YTAR[id][1]===h)return;
+  YTAR[id]=[w,h];
+  clearTimeout(_ytarT);_ytarT=setTimeout(()=>{try{localStorage.setItem("cr_ytar",JSON.stringify(YTAR));}catch(_){}},800);}
 function ytIdOf(url){const m=String(url||"").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);return m?m[1]:null;}
 async function fetchYtTitle(id){
-  if(_ytTitles[id]!==undefined)return _ytTitles[id];
-  try{const ls=localStorage.getItem("ytt_"+id);if(ls){_ytTitles[id]=ls;return ls;}}catch(e){}
+  let cachedT;
+  if(_ytTitles[id]!==undefined)cachedT=_ytTitles[id];
+  else{try{const ls=localStorage.getItem("ytt_"+id);if(ls){_ytTitles[id]=ls;cachedT=ls;}}catch(e){}}
+  if(cachedT!==undefined&&YTAR[id])return cachedT; /* 제목·화면비 둘 다 있으면 왕복 생략 */
   try{const r=await fetch(`https://noembed.com/embed?url=${encodeURIComponent("https://www.youtube.com/watch?v="+id)}`);
     const j=await r.json();const t=j&&j.title?String(j.title):null;
+    if(j&&+j.width>0&&+j.height>0)_ytarSet(id,+j.width,+j.height);
+    if(cachedT!==undefined)return cachedT;
     _ytTitles[id]=t;if(t){try{localStorage.setItem("ytt_"+id,t);}catch(e){}}
     return t;
-  }catch(e){_ytTitles[id]=null;return null;}}
+  }catch(e){if(cachedT!==undefined)return cachedT;_ytTitles[id]=null;return null;}}
 
 let WEEKS=[];/* 실데이터 로드 시 rebuildAllDatasets()가 채움 — 하드코딩 주차 없음 */
 /* ── 지표 신뢰성 게이트 ──
@@ -3453,7 +3464,28 @@ function nameTokensOf(e){
   const t=new Set(s.split(/[^0-9a-z가-힣]+/).filter(x=>x.length>=2&&!/^(meta|moloco|google|img|image|mau|maugrowth|video|vid|jpg|png)$/.test(x)));
   return e._nmTok=t;}
 function nameSim(a,b){if(!a.size||!b.size)return 0;let n=0;for(const x of a)if(b.has(x))n++;return n/(a.size+b.size-n);}
-function _arOf(e){const t=e.tags&&e.tags.size;if(!t)return null;const[w,h]=String(t).split("×").map(Number);return w&&h?w/h:null;}
+/* 화면비 정보 — 픽셀 해상도(tags.size·_m_res·MDIM 실측)가 있으면 정확값(exact),
+   유튜브는 oEmbed 치수(YTAR)로 화면비 클래스(가로/세로/정사각)만 판정(exact=false) */
+const _RATIOS=[["16:9",16/9],["9:16",9/16],["1:1",1],["4:3",4/3],["3:4",3/4],["4:5",4/5],["2:3",2/3]];
+function ratioLabel(r){let best=null,bd=1e9;for(const[lab,v]of _RATIOS){const d=Math.abs(r-v)/v;if(d<bd){bd=d;best=lab;}}return bd<=0.06?best:null;}
+function arInfoOf(e){
+  const u=previewUrlOf(e);
+  const sz=(e.tags&&e.tags.size)||e._m_res||"";
+  const m=String(sz).match(/(\d+)\s*[x×]\s*(\d+)/i);
+  let w=0,h=0,exact=true;
+  if(m){w=+m[1];h=+m[2];}
+  else{const d=u&&(typeof MDIM!=="undefined")&&MDIM[u];
+    if(d&&d.w&&d.h){w=d.w;h=d.h;}
+    else{const id=ytIdOf(e._g_url||u||e.name);
+      if(id&&YTAR[id]){w=YTAR[id][0];h=YTAR[id][1];exact=false;}}}
+  if(!(w>0&&h>0))return null;
+  const r=w/h;
+  return{w,h,r,cls:r>1.05?"가로":r<0.95?"세로":"정사각",exact};}
+function arDispOf(e){ /* 해상도 표시 문자열 — 정확 픽셀 또는 '세로 9:16' 식 화면비 */
+  const ai=arInfoOf(e);if(!ai)return "";
+  if(ai.exact)return ai.w+"×"+ai.h;
+  const rl=ratioLabel(ai.r);return ai.cls+(rl?" "+rl:"");}
+function _arOf(e){const ai=arInfoOf(e);return ai?ai.r:null;}
 function crossMediaMatches(ds,e){
   if(e._isGroup)return{list:[],pend:0,chs:0};
   const pools=_xmPools(ds);
@@ -3461,17 +3493,20 @@ function crossMediaMatches(ds,e){
   const myU=previewUrlOf(e),myYt=ytIdOf(e._g_url||myU||e.name);
   const myHash=(myU&&!myYt)?DHASH[myU]:undefined;
   const myTok=nameTokensOf(e),myKey=[...myTok].sort().join("|");
-  const mySvc=svcOf(e)||null,myAr=_arOf(e);
-  const myFo=(e.tags&&e.tags.fo)||null,mySz=(e.tags&&e.tags.size)||null;
+  const mySvc=svcOf(e)||null,myAr=_arOf(e),myAi=arInfoOf(e);
+  const myFo=(e.tags&&e.tags.fo)||null;
   let pend=(myU&&!myYt&&myHash===undefined&&e.tags&&e.tags.fo==="이미지")?1:0;
   const list=[];
   for(const{ch,list:pool}of pools){
     for(const o of pool){
       if(o._isGroup)continue;
-      /* 같은 유형+해상도만 — 다른 포맷·해상도는 타매체 성과 비교에 방해(둘 다 알 때만 판정) */
-      const oFo=(o.tags&&o.tags.fo)||null,oSz=(o.tags&&o.tags.size)||null;
+      /* 같은 유형+해상도만 — 다른 포맷·해상도는 타매체 성과 비교에 방해.
+         픽셀을 둘 다 알면 정확 비교, 아니면 화면비 클래스(가로/세로/정사각 — 유튜브는 oEmbed 비율)로 비교 */
+      const oFo=(o.tags&&o.tags.fo)||null,oAi=arInfoOf(o);
       if(myFo&&oFo&&myFo!==oFo)continue;
-      if(mySz&&oSz&&mySz!==oSz)continue;
+      if(myAi&&oAi){
+        if(myAi.exact&&oAi.exact){if(myAi.w!==oAi.w||myAi.h!==oAi.h)continue;}
+        else if(myAi.cls!==oAi.cls)continue;}
       let conf=null,why="";
       const oU=previewUrlOf(o),oYt=ytIdOf(o._g_url||oU||o.name);
       if(myYt&&oYt&&myYt===oYt){conf=2;why="같은 유튜브 영상";}
@@ -3621,18 +3656,8 @@ function renderCmpBar(){
   const bar=$("#cmpBar");if(!bar)return;
   if(!CMP.list.length){bar.hidden=true;bar.innerHTML="";return;}
   bar.hidden=false;
-  const R=cmpRank();
-  /* 칩도 우세 순서(잘된 것부터) — 순위 없는(다른 매체) 소재는 회색으로 뒤에 */
-  const seq=R.order.map(j=>R.ents[j].i);
-  for(let i=0;i<CMP.list.length;i++)if(!seq.includes(i))seq.push(i);
-  const chips=seq.map(i=>{const c=CMP.list[i];const got=R.ents.find(g=>g.i===i);
-    const nm=got?displayNameOf(got.e):c.name;
-    const col=R.colorByList.get(i)||CMP_GRAY;
-    const rk=R.rankByList.get(i);
-    return `<span class="cmpb-slot" style="box-shadow:inset 0 0 0 1px ${col}" title="${escAttr(nm)}">${rk!=null&&R.ents.length>=2?`<b style="color:${col}">${rk+1}위</b> `:""}${c.locked?LOCK_CLOSED+" ":""}${escHtml(trunc(nm,20))}<button type="button" class="cmpb-x" data-i="${i}" title="비교에서 빼기">✕</button></span>`;}).join("");
-  /* 버튼 2개가 맨 앞 고정 — '소재 비교 N' 라벨 대신 버튼에 개수 표기 */
-  bar.innerHTML=`<button type="button" class="cmpb-open" id="cmpOpenBtn"${CMP.list.length>=2?"":" disabled"}>비교하기 ${CMP.list.length}</button><button type="button" class="cmpb-clear" id="cmpClearBtn" title="고정(🔒)된 소재는 남아요">전체 지우기</button>${chips}`;
-  bar.querySelectorAll(".cmpb-x").forEach(x=>x.onclick=()=>cmpRemove(+x.dataset.i));
+  /* 버튼 2개만 — 소재 이름 칩은 줄바꿈·길이 문제로 제거(목록 관리는 표 체크박스·모달 ✕가 담당) */
+  bar.innerHTML=`<button type="button" class="cmpb-open" id="cmpOpenBtn"${CMP.list.length>=2?"":" disabled"}>비교하기 ${CMP.list.length}</button><button type="button" class="cmpb-clear" id="cmpClearBtn" title="고정(🔒)된 소재는 남아요">전체 지우기</button>`;
   const ob=$("#cmpOpenBtn");if(ob)ob.onclick=openCmpModal;
   const cb=$("#cmpClearBtn");if(cb)cb.onclick=cmpClear;}
 /* 매체 전환 시 비교 목록 자동 전체 비우기 — 다른 매체와는 지표 축이 달라 비교 불가(잠금 포함) */
@@ -3836,7 +3861,18 @@ function fillIsland(ds,e,inner){const L=ds.L;
   let listHTML,listTitle,listMetaN;
   const grpId=e._g_adGroupId||e._m_group;
   if(grpId&&ds.byAdGr&&(ds.byAdGr.get(grpId)||[]).length){
-    const grp=(ds.byAdGr.get(grpId)||[e]).slice().sort((a,b)=>(b.비용||0)-(a.비용||0));
+    /* 열 헤더 클릭 정렬 — 상태는 상세 이동 간 유지(ISLE.gSort). 기본 광고비 내림차순 */
+    const gs=ISLE.gSort&&ISLE.gSort.k?ISLE.gSort:(ISLE.gSort={k:"광고비",dir:-1});
+    const gSortVal=x=>{switch(gs.k){
+      case"해상도":{const ai=arInfoOf(x);return ai?ai.w*ai.h:null;}
+      case"실적":return perfSortKey(x);
+      case"효율":{const v=x[(L.key==="cg"?"CTR":L.effCol)];return v==null?null:v;}
+      default:return x.비용||0;}};
+    const grp=(ds.byAdGr.get(grpId)||[e]).slice().sort((a,b)=>{
+      const va=gSortVal(a),vb=gSortVal(b);
+      if(va==null&&vb==null)return (b.비용||0)-(a.비용||0);
+      if(va==null)return 1;if(vb==null)return -1;
+      return gs.dir*(va-vb)||((b.비용||0)-(a.비용||0));});
     listTitle=e._m_group?"같은 크리에이티브 그룹 내 비교":"같은 광고 그룹 내 비교";
     const _lgi=e._m_group?null:groupInfoOf(grpId);
     const _lraw=e._m_group?grpId:adGroupLabel(grpId);
@@ -3844,14 +3880,14 @@ function fillIsland(ds,e,inner){const L=ds.L;
     listMetaN=`${_lraw?escHtml(trunc(groupPrettyName(_lraw),34)):"그룹 "+escHtml(String(grpId))} · ${grp.length}개${_lst}`;
     const _gtrim=prefixTrimmer(grp.map(x=>displayNameOf(x)));
     /* 이름 대신 작은 썸네일 — 이름칸이 길어 뒤 열이 안 보이던 문제. 이름은 호버 미리보기·툴팁이 담당, 해상도 열 추가 */
+    const _gArr=k2=>gs.k===k2?(gs.dir<0?" ▼":" ▲"):"";
     listHTML=grp.length<=1?`<div class="fam-note">이 그룹에 다른 소재가 없습니다.</div>`:
-      `<div class="fam-wrap"><div class="fam fam-g"><table><thead><tr><th class="l">소재</th><th>해상도</th><th>실적</th><th>광고비</th><th>${effLab}</th></tr></thead><tbody>`+
+      `<div class="fam-wrap"><div class="fam fam-g"><table><thead><tr><th class="l">소재</th><th data-sk="해상도" title="클릭 = 정렬">해상도${_gArr("해상도")}</th><th data-sk="실적" title="클릭 = 정렬">실적${_gArr("실적")}</th><th data-sk="광고비" title="클릭 = 정렬">광고비${_gArr("광고비")}</th><th data-sk="효율" title="클릭 = 정렬">${effLab}${_gArr("효율")}</th></tr></thead><tbody>`+
       grp.map(x=>{const url=previewUrlOf(x);
         const typeShort=entTypeShort(x);
         const emoji=entTypeEmoji(x);
         const dn=displayNameOf(x);
-        const _md=(typeof MDIM!=="undefined")&&url&&MDIM[url];
-        const sz=String((x.tags&&x.tags.size)||x._m_res||(_md&&_md.w?_md.w+"×"+_md.h:"")).replace(/x/i,"×");
+        const sz=arDispOf(x);
         return `<tr class="${x.name===e.name?"me":""} hoverable" data-nm="${escAttr(x.name)}" data-preview="${escAttr(url)}" data-label="${escAttr(typeShort+' · '+trunc(dn,40))}" title="${escAttr(dn)}">
         <td class="l">${thumbHTML(x)||`<span class="g-type-emoji">${emoji}</span>`}</td>
         <td class="num">${sz?escHtml(sz):"–"}</td>
@@ -3902,11 +3938,30 @@ function fillIsland(ds,e,inner){const L=ds.L;
     tr.addEventListener("mouseenter",ev=>{const h=assetPreviewTipHTML(url,lab);if(h)showTip(h,ev.clientX,ev.clientY,true);});
     tr.addEventListener("mousemove",ev=>{if(tip.style.opacity!=="0")placeTip(ev.clientX,ev.clientY);});
     tr.addEventListener("mouseleave",hideTip);});
-  /* 그룹 목록 해상도 '–' — 썸네일이 로드되면 실측 치수로 제자리 채움(영상 metadata·이미지 natural 크기, MDIM에도 적재) */
+  /* 그룹 목록 정렬 — 해상도·실적·광고비·효율 헤더 클릭 시 그 기준으로 재정렬(같은 키 재클릭=방향 전환) */
+  inner.querySelectorAll(".fam-g thead th[data-sk]").forEach(th=>{
+    th.style.cursor="pointer";
+    th.addEventListener("click",ev=>{ev.stopPropagation();
+      const k=th.dataset.sk;
+      if(ISLE.gSort&&ISLE.gSort.k===k)ISLE.gSort.dir*=-1;
+      else ISLE.gSort={k,dir:-1};
+      fillIsland(ds,e,inner);});});
+  /* 그룹 목록 해상도 '–' — 유튜브는 oEmbed 화면비(YTAR)로, 직접 영상·이미지는 로드된 실측 치수로 제자리 채움.
+     ⚠️ 유튜브 썸네일 img(120×90)의 natural 크기를 영상 해상도로 읽으면 안 된다(전부 120×90으로 뜨던 버그) */
   inner.querySelectorAll(".fam-g tr[data-nm]").forEach(tr=>{
     const cell=tr.children[1];if(!cell||cell.textContent.trim()!=="–")return;
+    const u=tr.dataset.preview||"";
+    const ytid=ytIdOf(u);
+    if(ytid){ /* 유튜브 — oEmbed 비율 도착 시 '세로 9:16' 식으로 채움 */
+      const fill=()=>{if(!YTAR[ytid])return false;
+        const r=YTAR[ytid][0]/YTAR[ytid][1];
+        const cls=r>1.05?"가로":r<0.95?"세로":"정사각";
+        const rl=ratioLabel(r);
+        cell.textContent=cls+(rl?" "+rl:"");return true;};
+      if(!fill())fetchYtTitle(ytid).then(()=>{fill();});
+      return;}
     const med=tr.querySelector(".tthumb video, .tthumb img");if(!med)return;
-    const upd=()=>{const u=tr.dataset.preview,d=u&&(typeof MDIM!=="undefined")&&MDIM[u];
+    const upd=()=>{const d=u&&(typeof MDIM!=="undefined")&&MDIM[u];
       const w=(d&&d.w)||med.videoWidth||med.naturalWidth||0,h2=(d&&d.h)||med.videoHeight||med.naturalHeight||0;
       if(w>1&&h2>1)cell.textContent=w+"×"+h2;};
     if(med.tagName==="VIDEO"){if(med.readyState>=1)upd();else med.addEventListener("loadedmetadata",upd);}
