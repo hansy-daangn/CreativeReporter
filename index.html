@@ -89,6 +89,8 @@
   .sf-dd-menu[hidden]{display:none}
   .sf-dd-menu button{width:100%;display:flex;align-items:center;text-align:left;padding:9px 10px;border-radius:8px;background:transparent;color:var(--side-muted);font:inherit;font-size:12.5px;font-weight:650;border:0;cursor:pointer}
   .prange-info{margin:0 2px 9px;font-size:10.5px;font-weight:500;color:var(--side-faint);letter-spacing:.01em} /* 현재 매체 데이터 보유 범위 — 채점 설정 위 한 줄 */
+  .upd-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:0} /* 자동 업데이트 상태 원 — 다크 사이드바용 밝은 톤 */
+  .upd-dot.g{background:#35B979}.upd-dot.y{background:#E0A62E}.upd-dot.r{background:#E05A6E}
   .sf-dd-menu button:hover{background:rgba(255,255,255,.08);color:var(--side-ink)}
   .sf-dd-menu button.on{color:#fff}
   .sf-dd-menu button.on::after{content:"✓";margin-left:auto;color:var(--karrot-2);font-weight:800}
@@ -5180,9 +5182,19 @@ function renderDataRange(ds){
   const el=$("#dataRangeLine");if(!el)return;
   const rng=ds&&ds.dataAll&&ds.dataAll.length&&!standaloneMode?chDataRange(ds,dsMode==="channeled"?ds.media:null):null;
   el.hidden=!rng;
-  const auto=rng&&rng.max>=lastDoneMonday();
-  el.textContent=rng?(auto?"자동화 연동중🟢":`Data saved: ${fmtRangeShort(rng)} · ${rng.weeks}W`):"";
-  if(rng)el.title=auto?`최신 완결 주까지 자동 동기화됨 — Data saved: ${fmtRangeShort(rng)} · ${rng.weeks}W`:"이 매체에 저장된 주간 데이터 전체 범위(주 시작일 기준) — 기간 필터와 무관";}
+  if(!rng){el.textContent="";return;}
+  /* 상태 원 — 녹색: 직전 완결 주까지 최신(일상). 노랑: 딱 1주 뒤(월요일 동기화 누락 의심 — 확인 필요).
+     빨강: 2주 이상 밀림(자동화 중단). 월요일 정오 전엔 1주 뒤가 정상(11시 루틴 전)이라 녹색 유지 */
+  const behindW=Math.round((new Date(lastDoneMonday())-new Date(rng.max))/6048e5);
+  const now=new Date();
+  const monPre=behindW===1&&now.getDay()===1&&now.getHours()<12;
+  const st=behindW<=0||monPre?"g":behindW===1?"y":"r";
+  const f=d=>`${d.slice(2,4)}.${+d.slice(5,7)}.${+d.slice(8,10)}`;
+  el.innerHTML=`<span class="upd-dot ${st}"></span>자동 업데이트 중 (${f(rng.max)})`;
+  el.title=(st==="g"?(monPre?"오늘 11시 주간 자동 동기화 예정":"최신 완결 주까지 자동 동기화됨")
+    :st==="y"?"지난주 데이터가 아직 없어요 — 월요일 자동 동기화 확인 필요"
+    :`자동 업데이트가 ${behindW}주째 밀렸어요 — 동기화 루틴 점검 필요`)
+    +` — Data saved: ${fmtRangeShort(rng)} · ${rng.weeks}W`;}
 function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)return;
   if(dsMode!=="channeled"||!ds.channels||!ds.channels.length){sec.hidden=true;el.innerHTML="";return;}
   sec.hidden=false;
