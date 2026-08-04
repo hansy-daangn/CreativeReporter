@@ -596,15 +596,15 @@
   .cmpb-open:disabled{background:rgba(255,255,255,.14);color:#999285;cursor:default}
   .cmpb-clear{border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:9px 18px;background:transparent;color:#DEDACF;font-weight:750;cursor:pointer;font-size:12.5px}
   .cmpb-clear:hover{color:#fff;border-color:rgba(255,255,255,.5)}
-  .cmp-modal{position:fixed;inset:0;z-index:1000;background:rgba(15,14,10,.55);display:grid;place-items:center;padding:20px}
-  .cmpm{background:#FFFDF7;border-radius:16px;max-width:880px;width:100%;max-height:calc(100vh - 40px);overflow:auto;padding:20px 22px 16px;box-shadow:0 30px 80px -20px rgba(0,0,0,.45)}
+  .cmp-modal{position:fixed;inset:0;z-index:1000;background:#FFFDF7} /* 비교는 전체 화면 — 작은 플로팅 창 대신 화면을 다 쓴다 */
+  .cmpm{background:#FFFDF7;width:100%;height:100%;overflow:auto;padding:18px 24px 20px}
+  @media(min-width:1700px){.cmpm-chartwrap{max-width:1600px}} /* 초광폭에서 차트만 과하게 커지는 것 방지 */
   /* A/B 소재 미리보기 — 프레임 안에 contain으로 수납(잘림 금지), 세로 소재도 온전히 보이게 충분한 높이 */
   .cmpm-media{display:flex;gap:12px;margin:2px 0 4px;overflow-x:auto;padding-bottom:4px}
   .cmpm-med{flex:1 1 0;min-width:180px;max-width:360px}
-  .cmpm-med .isle-frame{height:220px;border-radius:12px;box-shadow:inset 0 0 0 2px var(--cc,#E2DFD3)}
-  .cmpm-media.n2 .cmpm-med .isle-frame{height:300px}
-  .cmpm-media.n3 .cmpm-med .isle-frame{height:250px}
-  .cmpm-med .asset-src{font-size:10.5px}
+  .cmpm-med .isle-frame{height:240px;border-radius:12px;box-shadow:inset 0 0 0 2px var(--cc,#E2DFD3)}
+  .cmpm-media.n2 .cmpm-med .isle-frame{height:340px}
+  .cmpm-media.n3 .cmpm-med .isle-frame{height:290px}
   .cmpm-medh{display:flex;align-items:center;gap:6px;font-size:11.5px;margin:0 0 5px;min-width:0}
   .cmpm-medh .rank{flex:0 0 auto;font-weight:800;font-size:10.5px;padding:1px 7px;border-radius:999px;background:var(--surface-3);color:var(--muted)}
   .cmpm-medh b{flex:0 0 auto;font-size:12px}
@@ -638,8 +638,8 @@
   .cmpm-med{position:relative}
   .cmpm-medx{position:absolute;top:26px;right:6px;z-index:5;width:22px;height:22px;border:0;border-radius:50%;background:rgba(20,19,15,.5);color:#fff;font-size:11px;cursor:pointer;display:grid;place-items:center;line-height:1}
   .cmpm-medx:hover{background:rgba(20,19,15,.82)}
-  .cmp-trfull{border:1px solid #E2DFD3;background:transparent;border-radius:999px;padding:3px 10px;font-size:11px;cursor:pointer;color:var(--muted);font-weight:650;margin-left:8px;vertical-align:middle}
-  .cmp-trfull.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .cmp-trmin{border:1px solid #E2DFD3;background:#fff;border-radius:999px;padding:4px 10px;font:inherit;font-size:11.5px;font-weight:700;color:var(--muted);cursor:pointer;margin-left:2px}
+  .cmp-trmin:focus{outline:2px solid var(--karrot);outline-offset:1px}
   .cmp-trgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px 16px}
   .cmp-trc h5{font-size:11.5px;font-weight:800;margin:0 0 3px;color:var(--ink)}
   .cmpm-chartwrap{overflow-x:auto}
@@ -3016,7 +3016,7 @@ function applyIsleAr(isle,w,h){if(!w||!h)return;
 function isleAr(el){const isle=el&&el.closest?el.closest(".isle"):null;if(!isle)return;
   applyIsleAr(isle,el.naturalWidth||el.videoWidth||0,el.naturalHeight||el.videoHeight||0);}
 /* 미리보기 — 고정 프레임(.isle-frame) 안에 비율 유지로 수납. 프레임 크기는 .isle의 ar-* 클래스가 결정 */
-function assetPreview(url,ent){if(!url)return "";
+function assetPreview(url,ent,noSrc){if(!url)return ""; /* noSrc=true → 원본 URL 줄 생략(비교 화면) */
   const ocrM=isOcrName(ent)?`<span class="ocr-mark" title="이미지에서 자동 추출한 텍스트(OCR) — 공식 애셋 이름을 등록하면 대체됩니다">OCR</span>`:"";
   /* 해상도 = 미리보기 실측 캐시 우선, 없으면 리포트 표기·영상 표준 규격 환산(arDispOf) + 재생시간 */
   const dm=(typeof MDIM!=="undefined")&&MDIM[url];
@@ -3024,7 +3024,7 @@ function assetPreview(url,ent){if(!url)return "";
   const dimTip=(dm&&dm.w&&dm.h)?"실측 해상도":(ent?arDispTitle(ent):"");
   const dimTxt=[dimRes,dm&&dm.dur?`⏱ ${fmtDur(dm.dur)}`:""].filter(Boolean).join(" · ");
   const dimLine=`<span class="asset-dim" title="${escAttr(dimTip)}">${escHtml(dimTxt)}</span>`; /* 값이 비어도 스팬 유지 — 실측 도착 시 제자리 갱신용 */
-  const srcLine=(note)=>`<div class="asset-src">${ocrM}${dimLine}${note?escHtml(note)+" · ":""}<a href="${escAttr(safeUrl(url))}" target="_blank" rel="noopener">${escHtml(trunc(url,60))}</a></div>`;
+  const srcLine=(note)=>noSrc?"":`<div class="asset-src">${ocrM}${dimLine}${note?escHtml(note)+" · ":""}<a href="${escAttr(safeUrl(url))}" target="_blank" rel="noopener">${escHtml(trunc(url,60))}</a></div>`;
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
   if(yt)return `<div class="isle-frame"><iframe class="asset-yt" src="https://www.youtube.com/embed/${yt[1]}" frameborder="0" allow="encrypted-media" allowfullscreen></iframe></div>${srcLine()}`;
   if(isVideoUrl(url)){const su=safeUrl(url);
@@ -3688,7 +3688,7 @@ function refreshCmpChecks(){ /* 표 재렌더 없이 체크 상태만 제자리 
 function cmpClear(){
   const kept=CMP.list.filter(c=>c.locked);
   const n=CMP.list.length-kept.length;
-  CMP.list=kept;
+  CMP.list=kept;if(!kept.length)cmpTrendMinN=null;
   toast(kept.length?`고정 안 된 ${n}개를 지웠어요 — 고정 ${kept.length}개는 남아 있어요`:"비교 목록을 모두 지웠어요");
   if(CMP.list.length<2)closeCmpModal();else renderCmpModal();
   renderCmpBar();refreshIsleCmpOvl();refreshCmpChecks();}
@@ -3732,7 +3732,7 @@ function renderCmpBar(){
 /* 매체 전환 시 비교 목록 자동 전체 비우기 — 다른 매체와는 지표 축이 달라 비교 불가(잠금 포함) */
 function cmpResetForMedia(media){
   if(!CMP.list.length||CMP.list[0].media===media)return;
-  CMP.list=[];
+  CMP.list=[];cmpTrendMinN=null; /* 새 비교는 겹침 기준도 기본값(전체 개수-2)부터 */
   closeCmpModal();renderCmpBar();refreshCmpChecks();
   toast("매체를 바꿔 비교 목록을 비웠어요");}
 function cmpMetricDefs(ds){
@@ -3791,7 +3791,10 @@ function cmpAxesSVG(R){
     const mx=Math.max(...eff.filter(v=>v!=null).concat([0]));
     return {d,raw,eff,mx};}).filter(c=>c.mx>0&&c.eff.filter(v=>v!=null).length>=2);
   if(!cols.length)return `<div class="fam-note">겹쳐 볼 지표 값이 부족해요</div>`;
-  const PL=18,PR=18,PT=22,PB=48,H=232,W=820,CW=(W-PL-PR)/cols.length,ih=H-PT-PB; /* 좌우 풀폭 — 컨테이너 너비를 꽉 채운다 */
+  /* 좌우 풀폭 — 뷰박스 폭을 실제 표시 폭에 맞춰(1:1) 잡는다. 고정 폭을 늘려 그리면 글자·여백까지
+     통째로 확대돼 전체 화면에서 우스꽝스럽게 커지므로, 폭만 키우고 글자 크기는 그대로 둔다 */
+  const availW=Math.max(560,Math.min(1600,(window.innerWidth||900)-52));
+  const PL=18,PR=18,PT=22,PB=48,H=232,W=Math.round(availW),CW=(W-PL-PR)/cols.length,ih=H-PT-PB; /* 높이는 고정(차트가 화면을 지배하지 않게) */
   const xAt=c=>PL+c*CW+CW/2;
   let g=`<line x1="${PL}" y1="${H-PB}" x2="${W-PR}" y2="${H-PB}" stroke="#ECE9DE" stroke-width="1"/>`;
   cols.forEach((c,ci)=>{const x=xAt(ci);
@@ -3839,16 +3842,23 @@ function cmpGridHTML(R){
       return `<td class="num${win?" win":""}${win&&domi?" gold":""}">${v!=null?d.fmt(v):"–"}</td>`;}).join("");
     return `<tr><td class="l">${escHtml(d.lab)}${d.dir<0?" ↓":d.dir>0?" ↑":""}</td>${cells}</tr>`;}).join("");
   return `<div class="cmpg-wrap"><table class="cmpg"><thead><tr><th class="l">지표</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;}
-/* [추이] 지표별 바둑판 — 전 지표를 한눈에. 기본은 비교 소재 2개 이상이 함께 있는 주만(혼자인 구간 제외),
-   '전체 기간' 토글로 확장. 미니멀: 호버는 "주 값"만 */
-let cmpTrendFull=false;
+/* [추이] 지표별 바둑판 — 전 지표를 한눈에. 표시 구간은 '몇 개 이상의 소재가 함께 집행된 주'로 직접 고른다
+   (드롭다운, 1개 = 전체 기간). 기본은 전체 개수-2, 그 값으로 볼 주가 2주 미만이면 자동으로 한 단계씩 완화.
+   미니멀: 호버는 "주 값"만 */
+let cmpTrendMinN=null;            /* null = 자동(전체 개수-2) · 숫자 = 사용자가 고른 값 */
+let _cmpTrendMinEff=1;            /* 이번 렌더에 실제 적용된 값 — 드롭다운 표시용 */
 function cmpTrendSectionHTML(R){
   const{ents,defs}=R;
   const was=ents.map(en=>weeklyAggOf(en.ds,en.e,true)); /* 소재 보유 전체 기간 */
   const allWeeks=[...new Set(was.flatMap(w=>w.ws))].sort();
   const maps=was.map(w=>new Map(w.ws.map((x,i)=>[x,w.os[i]])));
-  const shared=allWeeks.filter(w=>maps.reduce((n,mp)=>n+(mp.has(w)?1:0),0)>=2);
-  const weeks=(cmpTrendFull||shared.length<2)?allWeeks:shared;
+  const cnt=w=>maps.reduce((n,mp)=>n+(mp.has(w)?1:0),0);
+  const N=ents.length;
+  const pick=v=>allWeeks.filter(w=>cnt(w)>=v);
+  let minN=Math.max(1,Math.min(N,cmpTrendMinN==null?N-2:cmpTrendMinN));
+  if(cmpTrendMinN==null)while(minN>1&&pick(minN).length<2)minN--; /* 자동값일 때만 완화 — 빈 화면 방지 */
+  _cmpTrendMinEff=minN;
+  const weeks=pick(minN);
   if(weeks.length<2)return `<div class="fam-note">겹쳐 볼 주간 데이터가 부족해요 (2주 이상 필요)</div>`;
   const weeksTip=i=>weeks[i].slice(5,7)+"/"+weeks[i].slice(8,10)+"주";
   const xlab=(xat,W,H,fs)=>{const lstep=Math.max(1,Math.ceil(weeks.length/(W>420?9:5)));
@@ -3882,15 +3892,19 @@ function renderCmpModal(){
   const R=cmpRank();
   if(R.ents.length<2){closeCmpModal();return;}
   const{ents,domPct,order,ds}=R;
-  const meds=order.map((j,rank)=>{const en=ents[j];const url=previewUrlOf(en.e);const pv=url?assetPreview(url,en.e):"";
+  const meds=order.map((j,rank)=>{const en=ents[j];const url=previewUrlOf(en.e);const pv=url?assetPreview(url,en.e,true):"";
     const nm=displayNameOf(en.e),col=R.colorByList.get(en.i);
     return `<div class="cmpm-med" style="--cc:${col}">
       <div class="cmpm-medh"><span class="rank" style="background:${col};color:#fff">${rank+1}위</span>${en.c.locked?" 🔒":""}<span class="nm" title="${escAttr(nm)}">${escHtml(trunc(nm,26))}</span><span class="dp">${domPct[j]!=null?"우세도 "+Math.round(domPct[j]*100)+"%":""}</span></div>
       <button type="button" class="cmpm-medx" data-i="${en.i}" title="비교에서 빼기">✕</button>
       ${pv||'<div class="fam-note">미리보기가 없는 소재예요</div>'}</div>`;}).join("");
-  /* 탭이 곧 섹션 제목 — '개요/추이' 세그먼트를 따로 두지 않고 제목 자리에서 전환 */
-  const secTabs=`<div class="cmpm-sectabs"><button type="button" data-ct="ov" class="${cmpTab==="ov"?"on":""}">주요 지표</button><button type="button" data-ct="tr" class="${cmpTab==="tr"?"on":""}">주차별 추이</button>${cmpTab==="ov"?`<span class="n">높을수록 좋아요 · 수치에 비례하게 보여줘요</span>`:`<button type="button" class="cmp-trfull${cmpTrendFull?" on":""}">전체 기간</button>`}</div>`;
-  const body=secTabs+(cmpTab==="tr"?cmpTrendSectionHTML(R):cmpAxesSVG(R)+cmpGridHTML(R));
+  /* 탭이 곧 섹션 제목 — '개요/추이' 세그먼트를 따로 두지 않고 제목 자리에서 전환.
+     추이 탭의 드롭다운은 본문이 실제 적용한 값을 표시해야 해 본문을 먼저 만든다 */
+  const inner=cmpTab==="tr"?cmpTrendSectionHTML(R):cmpAxesSVG(R)+cmpGridHTML(R);
+  const trMin=cmpTab==="tr"?`<select class="cmp-trmin" title="선택한 개수 이상의 소재가 함께 집행된 주만 표시">${
+    Array.from({length:ents.length},(_,i)=>i+1).map(v=>`<option value="${v}"${v===_cmpTrendMinEff?" selected":""}>${v}개 이상 겹친 주</option>`).join("")}</select>`:"";
+  const secTabs=`<div class="cmpm-sectabs"><button type="button" data-ct="ov" class="${cmpTab==="ov"?"on":""}">주요 지표</button><button type="button" data-ct="tr" class="${cmpTab==="tr"?"on":""}">주차별 추이</button>${cmpTab==="ov"?`<span class="n">높을수록 좋아요 · 수치에 비례하게 보여줘요</span>`:trMin}</div>`;
+  const body=secTabs+inner;
   m.innerHTML=`<div class="cmpm" role="dialog" aria-modal="true" aria-label="소재 비교">
     <div class="cmpm-h"><span class="cmpm-name">소재 비교 <b>${ents.length}</b>개 <span class="n">전체 기간 · 우세순</span></span>
       <button type="button" class="cmpm-close" title="닫기 (Esc)">✕</button></div>
@@ -3901,7 +3915,7 @@ function renderCmpModal(){
   m.querySelector(".cmpm-close").onclick=closeCmpModal;
   m.querySelectorAll(".cmpm-sectabs button[data-ct]").forEach(b=>b.onclick=()=>{cmpTab=b.dataset.ct;renderCmpModal();});
   m.querySelectorAll(".cmpm-medx").forEach(b=>b.onclick=()=>cmpRemove(+b.dataset.i));
-  const tf=m.querySelector(".cmp-trfull");if(tf)tf.onclick=()=>{cmpTrendFull=!cmpTrendFull;renderCmpModal();};
+  const tm=m.querySelector(".cmp-trmin");if(tm)tm.onchange=()=>{cmpTrendMinN=+tm.value;renderCmpModal();};
   hideCmpDotTip();wireCmpDots(m);}
 document.addEventListener("keydown",ev=>{if(ev.key==="Escape"){const m=$("#cmpModal");if(m&&!m.hidden){closeCmpModal();ev.stopPropagation();}}},true);
 function renderIsleMid(ds,e,mid){if(!mid)return;
@@ -5599,7 +5613,8 @@ $("#chipFil").addEventListener("click",()=>{tChip=null;tPage=1;renderQuickFo();i
    표/AB 탭에서 창을 조절할 땐 숨은 차트를 건드리지 않아 렉이 없다. 디바운스도 넉넉히. */
 let rz;addEventListener("resize",()=>{clearTimeout(rz);rz=setTimeout(()=>{
   if(mainTab==="analysis"&&active&&DATASETS[active]){renderQuad(DATASETS[active]);renderTrend(DATASETS[active]);}
-  const inner=document.querySelector(".isle"),sc=document.querySelector(".tbl-scroll");if(inner&&sc)inner.style.width=sc.clientWidth+"px";},200);});
+  const inner=document.querySelector(".isle"),sc=document.querySelector(".tbl-scroll");if(inner&&sc)inner.style.width=sc.clientWidth+"px";
+  const cm=$("#cmpModal");if(cm&&!cm.hidden)renderCmpModal(); /* 비교 차트는 화면 폭에 맞춰 그리므로 리사이즈 시 다시 */},200);});
 
 function _qRender(){if(active&&DATASETS[active])renderQuad(DATASETS[active]);}
 function setupDual(rootId,vertical,getQ,setQ){const el=$("#"+rootId);
