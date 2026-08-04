@@ -4817,13 +4817,20 @@ async function cloudRestore(){
   }catch(e){toast("☁️ 못 불러왔어요 · "+e.message);}
   refreshCloudLine();}
 /* 구글 캠페인 유형 분리 — 캠페인명(gmap)에 AEO(신규·설치 최적화)/ACE(리타겟팅·인앱액션) 표기가 있어
-   그걸로 매체를 'Google AEO'·'Google ACE'로 나눈다. 유형 미상·비구글은 원 채널 그대로. */
-const CAMP_AEO=/(?:^|[_\s-])AEO(?:[_\s-]|$)/i, CAMP_ACE=/(?:^|[_\s-])ACE(?:[_\s-]|$)/i;
-function googleSubChannel(channel,d){
+   그걸로 매체를 'Google AEO'·'Google ACE'로 나눈다. 유형 미상·비구글은 원 채널 그대로.
+   캠페인 ID가 빠진 행(자동화 업로드 초기 형태)도 유령 'Google'로 새지 않게 폴백 2단:
+   ① 같은 광고그룹의 다른 주가 아는 캠페인(ag2c — 로드 시 전체 행에서 구축)
+   ② 광고그룹 raw 이름 토큰 — ACE 표기 우선, UA 접두는 AEO와 동의어(집행 네이밍 관례) */
+const CAMP_AEO=/(?:^|[_\s-])AEO(?:[_\s-]|$)/i, CAMP_ACE=/(?:^|[_\s-])ACE(?:[_\s-]|$)/i, AG_UA=/(?:^|[_\s-])UA(?:[_\s-]|$)/i;
+function googleSubChannel(channel,d,ag2c){
   if(channel!=="Google")return channel;
-  const cid=String((d&&d._g_campaignId)||"").replace(/\D/g,"");
+  let cid=String((d&&d._g_campaignId)||"").replace(/\D/g,"");
+  const agid=String((d&&d._g_adGroupId)||"");
+  if(!cid&&ag2c&&agid&&ag2c.has(agid))cid=ag2c.get(agid);
   const nm=cid&&gNameMap&&gNameMap.campaign?gNameMap.campaign[cid]:null;
   if(nm){if(CAMP_ACE.test(nm))return "Google ACE";if(CAMP_AEO.test(nm))return "Google AEO";}
+  const gn=agid.startsWith("name:")?agid.slice(5):((gNameMap&&gNameMap.adgroup&&gNameMap.adgroup[agid])||"");
+  if(gn){if(CAMP_ACE.test(gn))return "Google ACE";if(CAMP_AEO.test(gn)||AG_UA.test(gn))return "Google AEO";}
   return "Google";}
 /* 구글 하위 매체의 대표 '단가' 지표 — AEO=신규 단가(비용÷first_open), ACE=CPA(비용÷전환수) 또는 홈 단가(비용÷home, 토글) */
 /* 구글 대표(채점 1순위) 지표 — 2026-07 개편: AEO=신규 단가 · ACE=CPM(전환 CPA·홈 계열은 과집계로 채점 제외) */
@@ -4832,9 +4839,14 @@ function gCostLabel(media){return media==="Google ACE"?"CPM":"신규 단가";}
 function gCostHelp(media){return media==="Google ACE"?"노출 1,000회당 비용 = 비용÷노출×1,000 · 낮을수록 좋음 · 같은 애드그룹 안에서 상대평가":"신규 유저(앱 최초 실행) 1인당 비용 = 비용÷first_open · 낮을수록 좋음 · 같은 애드그룹 안에서 상대평가";}
 function loadCloudRows(rows){
   resetAll();dsMode="channeled";setStandalone(false);
+  /* 광고그룹→캠페인 사전 — 캠페인 ID가 빠진 행을 같은 그룹의 다른 주 데이터로 분류(유령 'Google' 방지) */
+  const ag2c=new Map();
+  for(const r of rows){if(r.channel!=="Google")continue;const p=r.payload||{};
+    const ag=String(p._g_adGroupId||""),ci=String(p._g_campaignId||"").replace(/\D/g,"");
+    if(ag&&ci&&!ag2c.has(ag))ag2c.set(ag,ci);}
   const byCh=new Map();
   for(const r of rows){const d={date:String(r.week_start).slice(0,10),ad_name:r.ad_name,...(r.payload||{})};
-    const ch=googleSubChannel(r.channel,d); /* 구글은 캠페인 유형(AEO/ACE)별로 분리 */
+    const ch=googleSubChannel(r.channel,d,ag2c); /* 구글은 캠페인 유형(AEO/ACE)별로 분리 */
     let a=byCh.get(ch);if(!a){a=[];byCh.set(ch,a);}a.push(d);}
   for(const[ch,arr]of byCh)ingest(["date","ad_name","비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"],arr,"Supabase 저장소",ch,"replace");
   rebuildAllDatasets();
