@@ -243,53 +243,40 @@
   .glb-lgd{display:flex;gap:12px;flex-wrap:wrap;font-size:var(--fs-1);color:var(--muted);margin-top:7px}
   .glb-lgd i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 
-  /* 비교군 내 위치 — 같은 광고그룹·서비스에서의 백분위 */
+  /* 비교군 내 위치 — 실증 블록과 같은 행 문법(.mrow)을 쓴다 */
   .peer{padding:11px 13px;background:var(--surface);border:1px solid var(--surface-3);border-radius:10px;text-align:left}
-  .peer .us-h{margin-bottom:8px}
-  .peer-g{display:grid;grid-template-columns:118px minmax(0,1fr);gap:12px;align-items:center;padding:5px 0}
-  .peer-g+.peer-g{border-top:1px solid var(--surface-2)}
-  .peer-gl{font-size:var(--fs-2);font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .peer-gl em{font-style:normal;font-weight:500;color:var(--faint);font-size:var(--fs-1);margin-left:5px}
-  .peer-bars{display:flex;flex-direction:column;gap:5px;min-width:0}
-  .peer-row{display:grid;grid-template-columns:38px minmax(40px,1fr) 56px max-content;align-items:center;gap:9px;font-size:var(--fs-1)}
-  .peer-row .pr-k{color:var(--muted);font-weight:650;white-space:nowrap}
-  .peer-row .pr-b{position:relative;height:3px;border-radius:2px;background:var(--surface-3)}
-  .peer-row .pr-b i{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--g2);box-shadow:0 0 0 2px var(--surface)}
-  .peer-row .pr-b u{position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:var(--mid);opacity:.75;border-radius:1px;transform:translateX(-1px)}
-  .peer-row .pr-v{font-size:var(--fs-2);font-weight:750;color:var(--ink);white-space:nowrap;text-align:right}
-  .peer-row .pr-x{color:var(--faint);white-space:nowrap}
+  .peer .us-h{margin-bottom:4px}
+  .peer .us-sub:first-of-type{margin-top:2px;padding-top:0;border-top:0}
 
+  /* ── 상세 지표 행 문법 — [라벨 · 값 · 등급 · 위치 · 편차] 한 줄. 모든 블록이 같은 문법을 쓴다 ── */
+  /* 행을 2열로 흘려 넓은 폭을 쓴다 — 한 열이면 트랙만 길어지고 마커가 눈금에서 멀어진다 */
+  .mrows{display:grid;grid-template-columns:repeat(auto-fit,minmax(372px,1fr));gap:0 24px;margin-top:5px}
+  .mrows .us-sub,.mrows .us-life{grid-column:1/-1}
+  /* 컬럼 합(최소) + gap이 열 폭을 넘으면 6px씩 새어 나간다 — 실측(392px 열)에 맞춰 여유를 둔다 */
+  .mrow{display:grid;grid-template-columns:94px 60px 54px minmax(64px,1fr) 54px;align-items:center;gap:8px;padding:3px 0;font-size:var(--fs-1);min-width:0}
+  .mrow>*{min-width:0}
+  .mrow .mr-k{color:var(--muted);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mrow .mr-v{font-size:var(--fs-2);font-weight:750;color:var(--ink);text-align:right;white-space:nowrap}
+  .mrow .mr-t{justify-self:start}
+  .mrow .mr-t.sp{font-size:9.5px;padding:1px 6px}
+  /* 위치 트랙 — 눈금(중앙값)은 항상 정중앙 고정, 마커만 좌우로 움직인다 */
+  .mrow .mr-b{position:relative;height:3px;border-radius:2px;background:var(--surface-3)}
+  .mrow .mr-b.nb{background:transparent}
+  .mrow .mr-b u{position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:var(--mid);opacity:.8;border-radius:1px;transform:translateX(-1px)}
+  .mrow .mr-b i{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--karrot);box-shadow:0 0 0 2px var(--surface)}
+  .mrow .mr-b i.out{border-radius:2px;width:7px;height:7px;margin:-3.5px 0 0 -3.5px} /* 축을 벗어남 — 길이로 과장하지 않고 모양으로 알린다 */
+  .mrow .mr-d{color:var(--faint);white-space:nowrap;text-align:right}
+  .mrow:hover{background:var(--surface-2);border-radius:6px}
+  /* 섹션 소제목 — 블록 안 구분 */
+  .us-sub{font-size:var(--fs-1);font-weight:700;color:var(--muted);margin:9px 0 3px;padding-top:8px;border-top:1px solid var(--surface-2);display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+  .us-sub em{font-style:normal;font-weight:500;color:var(--faint)}
+  .us-life{display:block;width:100%;max-width:560px;height:auto;margin-top:3px}
   /* 소재 상세 — 실유저(주간) 블록: 그래프 탭 위 상시 노출 스트립 */
   .umet-strip{margin:0;padding:12px 14px;background:var(--surface);border:1px solid var(--surface-3);border-radius:10px;text-align:left}
   .umet-strip .us-h{font-size:var(--fs-2);font-weight:700;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
   .umet-strip .us-h .n{font-weight:500;color:var(--faint)}
   .umet-strip .us-h .uc-q{width:13px;height:13px}
-  .umet-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:13px 18px;margin-top:9px}
-  .umet-stat{min-width:0}
-  .umet-stat .us-v{font-size:var(--fs-4);font-weight:750;letter-spacing:-.01em;display:block}
-  .umet-stat .us-k{font-size:var(--fs-1);color:var(--muted);font-weight:600;display:block;margin-top:1px;white-space:nowrap}
-  /* 분포 트랙 + 위치 마커 — 채움 막대와 달리 '비슷한 값'은 마커가 가운데 몰려 자리를 뺏지 않는다 */
-  .umet-stat .us-bar{position:relative;height:3px;border-radius:2px;background:var(--surface-3);margin-top:7px;overflow:visible;min-width:64px}
-  .umet-stat .us-bar u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--mid);opacity:.75;border-radius:1px;transform:translateX(-1px)}
-  .umet-stat .us-bar i{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--karrot);box-shadow:0 0 0 2px var(--surface)}
-  .umet-stat .us-bar i.out{border-radius:2px;width:7px;height:7px;margin:-3.5px 0 0 -3.5px} /* 분포 밖(하위·상위 10% 초과) — 네모로 구분 */
-  .umet-stat .us-d{font-size:var(--fs-1);color:var(--faint);display:block;margin-top:4px;white-space:nowrap}
-  .umet-stat .us-d b{font-weight:700}
   /* 상세 블록 확장 — 주차 추이 미니차트 · 소재별 유효 복귀 · 라이프사이클 */
-  .us-charts{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;padding-top:9px;border-top:1px solid var(--surface-2)}
-  .us-mini{width:100%;max-width:560px} /* viewBox 폭 560에 맞춰 배율≤1 — 글자가 확대되지 않게 */
-  .us-mini svg{display:block;width:100%;height:auto}
-  .us-cap{font-size:var(--fs-1);color:var(--faint);display:block;margin-top:2px}
-  .us-sec{display:flex;align-items:center;gap:10px;margin-top:9px;padding-top:8px;border-top:1px solid var(--surface-2)}
-  .us-sk{font-size:var(--fs-1);font-weight:700;color:var(--muted);white-space:nowrap;flex:0 0 auto;display:inline-flex;align-items:center;gap:4px}
-  .us-rrows{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
-  .us-rrow{display:grid;grid-template-columns:28px minmax(40px,1fr) max-content max-content;align-items:center;gap:8px;font-size:var(--fs-1)}
-  .us-rrow .us-rw{color:var(--faint);font-size:var(--fs-1);white-space:nowrap}
-  .us-rbar{position:relative;height:6px;border-radius:3px;background:var(--surface-3);overflow:visible}
-  .us-rbar i{display:block;height:100%;background:var(--karrot);border-radius:0 3px 3px 0;min-width:2px}
-  .us-rbar u{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink);opacity:.65;border-radius:1px}
-  .us-rrow b{font-weight:750}
-  .us-cpv{font-size:var(--fs-1);color:var(--muted)}
   .us-life{flex:1;min-width:0;display:block;height:auto;max-width:560px}
 
   svg.chart{display:block;overflow:visible;max-width:100%}
@@ -643,7 +630,7 @@
   .ispark-h .lgd{display:inline-block;width:7px;height:7px;border-radius:2px;margin:0 3px 0 7px;vertical-align:-0.5px}
   .ispark-svg{width:100%;height:auto;display:block;direction:ltr}
   /* 전 기간 추이 — 주가 많으면 가로 스크롤. direction:rtl 트릭으로 처음부터 오른쪽(최신 주)이 보인다 */
-  .ispark-scroll{overflow-x:auto;direction:rtl}
+  .ispark-scroll{overflow-x:auto;direction:rtl} /* viewBox를 렌더 폭에 맞춘 뒤로는 넘칠 일이 없지만 좁은 화면 대비로 유지 */
   .ispk-b{cursor:pointer}.ispk-b:hover{fill-opacity:.85}
   /* 상세 가운데(그래프) 열 탭 — [주차별 추이|영상 시청|포지셔닝]. 선택은 소재를 옮겨 다녀도 유지 */
   .gtabs{margin:0 0 12px}
@@ -2142,7 +2129,7 @@ function aggregate(data,L){const map=new Map();
     if(!map.has(nm))map.set(nm,{name:nm,비용:0,"노출 수":0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0});
     const e=map.get(nm);for(const c of["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e[c]+=v;}
     const _cv=num(r["비용"]);if(_cv!=null&&_cv>0){if(!e._wkSet)e._wkSet=new Set();e._wkSet.add(r.date);}
-    for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_statusReason","_g_url","_g_assetId","_g_assetName","_g_orientation","_g_adGroupId","_g_campaignId","_m_url","_m_ctype","_m_res","_m_group","_q_campaign"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
+    for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_statusReason","_g_url","_g_assetId","_g_assetName","_g_orientation","_g_adGroupId","_g_campaignId","_m_url","_m_ctype","_m_res","_m_group","_q_campaign","_svc"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
     /* 실적(_g_perfLabel)은 매주 바뀌는 스냅샷 — 첫 값이 아니라 '가장 최근 주' 값을 유지. 키가 있었는데 값이 빈 경우('-')도 _plSeen으로 구분(표시 안 함 ↔ 추정 대상).
        더 새로운 주는 빈 값('-')이라도 채택해 옛 라벨을 지운다(강등·라벨 회수 반영) · 같은 주에선 비어있지 않은 값이 우선(다중 애드그룹 행) */
     if(r._g_perfLabel!==undefined){e._plSeen=1;const _pl=String(r._g_perfLabel).trim().replace(/^--$/,"");
@@ -3683,35 +3670,46 @@ function creativeTrendHTML(ds,e){
       const v=String(r._g_perfLabel).trim().replace(/^--$/,"");
       if(_plW[w]==null||v)_plW[w]=v;}}
   const hasPl=ws.some(w=>_plW[w]!==undefined);
-  const H=(lines.length>=3?104:92)+(hasPl?9:0),pl=4,pr=4,pt=8,pb=hasPl?24:15;
-  const W=Math.max(300,pl+pr+ws.length*23),iw=W-pl-pr,ih=H-pt-pb; /* 주당 폭 고정(≈23) — 주가 많으면 차트가 길어지고 스크롤 */
-  /* 이 차트는 viewBox(≈300)가 렌더 폭(≈490)보다 작아 약 1.6배 확대된다 → font-size는 '실효 px ÷ 1.6'로 적는다:
-     6.25 = 화면 10px(--fs-1) · 7.2 = 화면 11.5px(--fs-2). 다른 차트는 viewBox를 실제 폭에 맞춰 배율 1이다. */
+  /* viewBox를 렌더 폭(≈820)에 맞춰 배율 1로 둔다 — 좌표계가 작으면 SVG가 통째로 확대돼(실측 2.7배)
+     글자·선이 타이포 스케일을 무시하고 커진다. 주가 많으면 폭 대신 슬롯을 좁혀 담는다(가로 스크롤 없음). */
+  const W=820,pl=10,pr=10,pt=14;
+  const pb=hasPl?36:20;
+  const H=(lines.length>=3?200:180),iw=W-pl-pr,ih=H-pt-pb;
   const cmax=Math.max(...os.map(o=>o.c))||1;
-  const bw=5; /* 고정 얇은 막대 */
   const slot=iw/ws.length,xat=i=>pl+(i+0.5)*slot;
+  const bw=Math.max(4,Math.min(22,slot*0.38)); /* 슬롯에 비례한 막대 — 주가 많아도 겹치지 않는다 */
   let s="";
   ws.forEach((w,i)=>{const o=os[i],x=xat(i);
     const h=Math.max(2,(o.c/cmax)*ih);
     /* 주차 점수 표기·티어색 제거 — 점수는 내부 계산 전용, 화면엔 지표 원값만 */
     let tipTxt=`<b>${w.slice(5).replace("-","/")} 주</b><br>광고비 ${fmtWon(o.c)}`;
     for(const ts of tipSpecs)if(ts.vals[i]!=null)tipTxt+=`<br><span class="t-k">${ts.lab}</span> ${ts.fmt(ts.vals[i])}`;
-    s+=`<rect class="ispk-b" data-tip="${escAttr(tipTxt)}" x="${(x-bw/2).toFixed(1)}" y="${(H-pb-h).toFixed(1)}" width="${bw}" height="${h.toFixed(1)}" rx="2" fill="var(--karrot)" fill-opacity="0.5"/>`;
-    s+=`<text x="${x.toFixed(1)}" y="${H-(hasPl?13:4)}" font-size="6.25" fill="var(--faint)" text-anchor="middle">${w.slice(5,7)}/${w.slice(8,10)}</text>`;
-    if(hasPl&&_plW[w]!==undefined){
-      const lab0=_plW[w]||"보통",lab=PERF_LABEL_ALIAS[lab0]||lab0;
-      const t=PERF_TIER[lab]||"m";
-      const tc=t==="g2"?"var(--g2)":t==="g1"?"var(--g1)":t==="w1"?"var(--w1)":t==="w2"?"var(--w2)":"var(--mid)";
-      s+=`<text x="${x.toFixed(1)}" y="${H-4}" font-size="6.25" font-weight="700" fill="${tc}" text-anchor="middle">${escHtml(lab.replace(/\s+/g,""))}</text>`;}});
+    s+=`<rect class="ispk-b" data-tip="${escAttr(tipTxt)}" x="${(x-bw/2).toFixed(1)}" y="${(H-pb-h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="var(--karrot)" fill-opacity="0.5"/>`;
+    s+=`<text x="${x.toFixed(1)}" y="${H-(hasPl?20:6)}" font-size="10" fill="var(--faint)" text-anchor="middle">${w.slice(5,7)}/${w.slice(8,10)}</text>`;
+    if(hasPl){
+      /* 그 주의 실측 실적 라벨. 없는 주는 빈칸으로 두지 않고 소재 전체 추정 등급을 점선 밑줄로 표기 —
+         "라벨이 없다"와 "성과가 없다"는 다른 뜻이라 빈칸이 오독을 만든다 */
+      const act=_plW[w];
+      /* 그 주 실측 라벨이 없으면 빈칸으로 두지 않는다 — 소재의 현재 라벨(없으면 추정)을 점선으로 깐다.
+         "라벨이 없다"와 "성과가 없다"는 다른 뜻이라 빈칸이 오독을 만든다 */
+      const _fb=(typeof perfLabelOf==="function")?perfLabelOf(e):null;
+      const lab0=(act!==undefined&&act)?act:(act===undefined?((_fb&&_fb.lab)||e._perfEst||""):"보통");
+      if(lab0){
+        const est=!(act!==undefined&&act);
+        const lab=PERF_LABEL_ALIAS[lab0]||lab0;
+        const t=PERF_TIER[lab]||"m";
+        const tc=t==="g2"?"var(--g2)":t==="g1"?"var(--g1)":t==="w1"?"var(--w1)":t==="w2"?"var(--w2)":"var(--mid)";
+        s+=`<text x="${x.toFixed(1)}" y="${H-6}" font-size="10" font-weight="${est?600:700}" fill="${tc}" fill-opacity="${est?0.65:1}" text-anchor="middle" data-tip="${escAttr(est?"<b>추정 실적</b> — 이 주의 리포트 실적 라벨이 없어 소재 전체 추정 등급을 표시(점선)":"구글 리포트 실측 실적")}">${escHtml(lab.replace(/\s+/g,""))}</text>`;
+        if(est)s+=`<line x1="${(x-14).toFixed(1)}" y1="${H-3.5}" x2="${(x+14).toFixed(1)}" y2="${H-3.5}" stroke="${tc}" stroke-width="1" stroke-dasharray="2 2" stroke-opacity="0.55"/>`;}}});
   for(const ln of lines){let p="",st=false,dots="";
     ws.forEach((w,i)=>{const v=ln.vals[i];if(v==null)return;
       const x=xat(i),y=pt+(1-v/ln.mx)*ih;
       p+=st?` L ${x.toFixed(1)} ${y.toFixed(1)}`:`M ${x.toFixed(1)} ${y.toFixed(1)}`;st=true;
-      dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.4" fill="${ln.col}"/>`;});
-    s+=`<path d="${p}" fill="none" stroke="${ln.col}" stroke-width="${ln.dash?1.8:1.5}"${ln.dash?' stroke-dasharray="3 2"':''} stroke-opacity="0.95"/>${dots}`;}
+      dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" fill="${ln.col}"/>`;});
+    s+=`<path d="${p}" fill="none" stroke="${ln.col}" stroke-width="2"${ln.dash?' stroke-dasharray="5 3"':''} stroke-opacity="0.95"/>${dots}`;}
   /* 범례는 최소한으로: 주 수 · 색=지표 매핑 · 최신값. 비율·설명은 푸터/툴팁이 담당(중복 금지) */
   const leg=lines.map(ln=>`<span><i class="lgd" style="background:${ln.col}"></i>${ln.lab} <b>${ln.last!=null?ln.fmt(ln.last):"–"}</b></span>`).join(" ");
-  return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · <i class="lgd" style="background:var(--karrot);opacity:.55"></i>광고비 ${leg}</span></div><div class="ispark-scroll"><svg class="ispark-svg" viewBox="0 0 ${W} ${H}" style="width:${Math.round(W*1.6)}px;min-width:100%;height:auto">${s}</svg></div></div>`;}
+  return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · <i class="lgd" style="background:var(--karrot);opacity:.55"></i>광고비 ${leg}</span></div><div class="ispark-scroll"><svg class="ispark-svg" viewBox="0 0 ${W} ${H}">${s}</svg></div></div>`;}
 /* 상세 '영상 시청' — 어디까지 많이 보고 어디서 이탈했는지 (영상 소재만).
    구간 도달 곡선 데이터 우선순위: ① 소재 자체 구간별 재생수(_v25~_v100 ÷ 노출, 선택 기간)
    ② 구글 광고그룹 보고서 누적 퍼널 v25~v100(소재별 데이터가 없어 그룹 단위임을 캡션에 명시).
@@ -3896,20 +3894,15 @@ function qualityHTML(ds,e){
   if(base1>0&&base1<30)parts.push(`<b style="color:var(--w1)">표본 적음</b> — D1 코호트 ${fmtInt(base1)}명뿐이라 잔존율 변동이 큽니다 (참고용)`);
   if(parts.length)s+=`<div class="vret-cap" style="margin-top:6px">${parts.join("<br>")}</div>`;
   return s+`</section>`;}
-/* ═════ 소재 상세 — 실유저(주간) 블록: umetrics weeks.{주차}.cohort 실증치 ═════
-   "매체|소재"(구글은 "[그룹] 광고그룹명") 키로 최신 주부터 조회. 값 없으면 미렌더.
-   각 % 통계엔 그 주 전체 코호트 분포로 만든 막대(0~주 최대)와 중앙값 눈금을 붙여 한눈에 상대 위치를 읽게 한다 */
 /* ═════ 비교군 내 위치 — 같은 광고그룹 / 같은 서비스에서 이 소재의 수준 ═════
-   "이 소재가 잘한 건가?"는 절대값이 아니라 또래 대비로만 답할 수 있다. 두 비교군(같은 광고그룹·같은 서비스)에서
-   광고비(예산이 얼마나 몰렸나)와 실유저(실제로 몇 명을 데려왔나)의 백분위를 한 줄 막대로 보여준다.
-   막대 채움=백분위(오른쪽일수록 상위), 회색 눈금=비교군 중앙값 위치(항상 50%), 값은 텍스트로 병기. */
+   "이 소재가 잘한 건가?"는 절대값이 아니라 또래 대비로만 답할 수 있다. 실증 블록과 같은 행 문법(.mrow)을 써서
+   광고비(예산이 얼마나 몰렸나)와 실유저(실제로 몇 명을 데려왔나)의 위치·등급을 보여준다. */
 function peerRankHTML(ds,e){
   if(!ds||!e||e._isGroup)return "";
   /* '실유저' = 표의 '데려온 유저'와 같은 기준 — 구글은 first_open(앱 최초 실행), 몰로코·메타는 신규+재활성(AUU).
-     채점용 규모축(reachKeyFor)은 구글에서 노출이라 여기 쓰지 않는다(사용자가 보는 '데려온 유저'와 어긋남) */
+     채점용 규모축(reachKeyFor)은 구글에서 노출이라 쓰지 않는다(표에서 보는 수치와 어긋남) */
   const rk=(ds.agg||[]).some(p=>p&&p._g_firstOpen!=null)?"_g_firstOpen"
     :((ds.agg||[]).some(p=>p&&p["신규+재활성 유저 수"]!=null)?"신규+재활성 유저 수":"어트리뷰션 수");
-  const rkLab="실유저";
   const pool=(ds.agg||[]).filter(p=>p&&!p._isGroup&&(p.비용||0)>0);
   if(pool.length<4)return "";
   const gid=e._g_adGroupId||e._m_group||null;
@@ -3917,118 +3910,174 @@ function peerRankHTML(ds,e){
   const groups=[];
   if(gid){const g=pool.filter(p=>String(p._g_adGroupId||p._m_group||"")===String(gid));
     if(g.length>=4){const raw=e._m_group?gid:adGroupLabel(gid);
-      groups.push({key:"grp",lab:"같은 광고그룹",sub:raw?trunc(groupPrettyName(raw),20):("그룹 "+String(gid).slice(-4)),list:g});}}
+      groups.push({lab:"같은 광고그룹",sub:raw?trunc(groupPrettyName(raw),22):("그룹 "+String(gid).slice(-4)),list:g});}}
   if(svc){const g=pool.filter(p=>svcOf(p)===svc);
-    if(g.length>=4&&(!groups.length||g.length!==groups[0].list.length))groups.push({key:"svc",lab:"같은 서비스",sub:svc,list:g});}
-  if(!groups.length){const g=pool;if(g.length>=6)groups.push({key:"all",lab:"이 매체 전체",sub:String(ds.media||""),list:g});}
+    if(g.length>=4&&(!groups.length||g.length!==groups[0].list.length))groups.push({lab:"같은 서비스",sub:svc,list:g});}
+  if(!groups.length){const g=pool;if(g.length>=6)groups.push({lab:"이 매체 전체",sub:String(ds.media||""),list:g});}
   if(!groups.length)return "";
-  /* 백분위(0~100) — 동률 안전 중위 순위. 값이 없으면 null */
-  const pct=(list,val,key)=>{
-    if(val==null||!isFinite(val))return null;
-    const vs=list.map(p=>+p[key]).filter(v=>v!=null&&isFinite(v));
-    if(vs.length<4)return null;
-    let lo=0,hi=0;for(const v of vs){if(v<val)lo++;if(v<=val)hi++;}
-    return (lo+hi)/(2*vs.length)*100;};
-  const rows=[];
+  let body="";
   for(const g of groups){
-    const cells=[["비용","광고비",v=>fmtKRW(v)+"원"],[rk,rkLab,v=>fmtInt(v)]].map(([k,lab,fmt])=>{
-      const p=pct(g.list,+e[k],k);
-      if(p==null)return null;
-      const better=Math.round(100-p); /* 상위 N% */
-      return {lab,p,better,txt:fmt(+e[k]),
-        tip:`<b>${g.lab}(${g.list.length}개) · ${lab}</b><br>이 소재 ${fmt(+e[k])} — <b>상위 ${better}%</b>(백분위 ${p.toFixed(0)})<br>회색 눈금 = 비교군 중앙값`};}).filter(Boolean);
-    if(cells.length)rows.push({g,cells});}
-  if(!rows.length)return "";
+    const cells=[["비용","광고비",v=>fmtKRW(v)+"원"],[rk,"실유저",v=>fmtInt(v)]].map(([k,lab,fmt])=>{
+      const vs=g.list.map(p=>+p[k]).filter(v=>v!=null&&isFinite(v));
+      const v=+e[k];
+      const t=umTrack(vs,v,1);
+      if(!t)return "";
+      return umRow({k:lab,v:fmt(v),tr:t,
+        d:t.pct!=null?`상위 ${Math.max(1,Math.round(100-t.pct))}%`:"",
+        tip:`<b>${g.lab}(${g.list.length}개) · ${lab}</b><br>이 소재 ${fmt(v)}${t.pct!=null?` — <b>상위 ${Math.max(1,Math.round(100-t.pct))}%</b>`:""}`
+          +`<br>비교군 중앙값 ${fmt(t.med)} — 눈금(가운데) 위치`});}).join("");
+    if(cells)body+=`<div class="us-sub">${escHtml(g.lab)} <em>${escHtml(g.sub)} · ${g.list.length}개</em></div>${cells}`;}
+  if(!body)return "";
   return `<div class="peer">
-    <div class="us-h">비교군 내 위치<span class="uc-q" data-tip="${escAttr(`<b>또래 대비 위치</b><br>같은 광고그룹·같은 서비스 소재들 사이에서 이 소재의 백분위입니다.<br>광고비 = 예산이 얼마나 몰렸나(머신러닝 신호) · ${escHtml(rkLab)} = 실제로 몇 명을 데려왔나.<br>둘 다 상위면 위너, 광고비만 상위면 재검토 대상.`)}">?</span><span class="n">기간·매체 기준</span></div>
-    ${rows.map(r=>`<div class="peer-g"><div class="peer-gl" title="${escAttr(r.g.sub)}">${r.g.lab}<em>${r.g.list.length}개</em></div>
-      <div class="peer-bars">${r.cells.map(c=>`<div class="peer-row" data-tip="${escAttr(c.tip)}">
-        <span class="pr-k">${c.lab}</span>
-        <span class="pr-b"><u></u><i style="left:${Math.max(0,Math.min(100,c.p)).toFixed(1)}%"></i></span>
-        <b class="pr-v num">상위 ${c.better}%</b><span class="pr-x num">${c.txt}</span></div>`).join("")}</div></div>`).join("")}
-  </div>`;}
+    <div class="us-h">비교군 내 위치<span class="uc-q" data-tip="${escAttr(`<b>또래 대비 위치</b><br>같은 광고그룹·같은 서비스 소재들 사이에서 이 소재가 어디쯤인지.<br>광고비 = 예산이 얼마나 몰렸나(머신러닝 신호) · 실유저 = 실제로 몇 명을 데려왔나.<br>둘 다 상위면 위너, 광고비만 상위면 재검토 대상.<br>눈금(가운데)이 비교군 중앙값이고 마커가 오른쪽일수록 상위.`)}">?</span><span class="n">기간·매체 기준</span></div>
+    <div class="mrows">${body}</div></div>`;}
+/* ═════ 소재 상세 — 실유저(주간) ═════
+   설계 원칙(2026-08-05 재설계):
+   ① 모든 지표를 같은 행 문법으로 읽는다 — [라벨 · 값 · 등급 · 위치 · 편차].
+   ② 위치 트랙은 **중앙값을 항상 정중앙(50%)에 고정**한다. 기준점이 매번 움직이면 눈금이 의미를 잃는다.
+   ③ 숫자만으로는 좋고 나쁨을 알 수 없으므로 비교군 백분위를 등급(매우 좋음·좋음·보통·낮음)으로 함께 준다.
+   ④ 추이가 필요 없는 값(D1·D7·D30)은 선을 그리지 않고 수치 행으로 둔다 — 수평선 두 줄은 정보가 아니다. */
+const UM_TIERS=[[80,"매우 좋음","g2"],[60,"좋음","g1"],[35,"보통","m"],[0,"낮음","w1"]];
+/* 비교군 대비 백분위(0~100, 클수록 값이 큼) — 동률 안전 중위 순위 */
+function umPctRank(pool,v){
+  if(!pool||pool.length<4||v==null||!isFinite(v))return null;
+  let lo=0,hi=0;for(const x of pool){if(x<v)lo++;if(x<=v)hi++;}
+  return (lo+hi)/(2*pool.length)*100;}
+/* 등급 — dir>0이면 클수록 좋음. 비교군이 얕으면(4개 미만) 등급을 매기지 않는다 */
+function umTierOf(pct,dir){
+  if(pct==null)return null;
+  const good=dir<0?100-pct:pct;
+  for(const[lo,lab,t]of UM_TIERS)if(good>=lo)return{lab,t,good};
+  return null;}
+/* 중앙값 고정 트랙 — 중앙값=50%, 퍼짐(p10~p90의 큰 쪽)을 반폭으로 삼아 좌우 대칭.
+   비교군 전체로 스케일이 고정되므로 소재마다 축이 달라지지 않는다 */
+function umTrack(pool,v,dir){
+  if(!pool||pool.length<4||v==null||!isFinite(v))return null;
+  const srt=pool.slice().sort((a,b)=>a-b);
+  const med=quantile(srt,0.5),p10=quantile(srt,0.1),p90=quantile(srt,0.9);
+  const spread=Math.max(Math.abs(p90-med),Math.abs(med-p10))||Math.abs(med)||1;
+  const raw=50+(v-med)/spread*50;
+  return{pos:Math.max(3,Math.min(97,raw)),out:raw<3?-1:(raw>97?1:0),med,p10,p90,
+    pct:umPctRank(srt,v),tier:umTierOf(umPctRank(srt,v),dir)};}
+/* 지표 한 줄 — 값·등급·위치·편차를 같은 문법으로. tr(트랙)이 없으면 값만 조용히 보여준다 */
+function umRow(o){
+  const t=o.tr&&o.tr.tier;
+  return `<div class="mrow"${o.tip?` data-tip="${escAttr(o.tip)}"`:""}>`
+    +`<span class="mr-k">${escHtml(o.k)}</span>`
+    +`<b class="mr-v num">${escHtml(o.v)}</b>`
+    +(t?`<span class="sp ${t.t==="g2"?"sp-g2":t.t==="g1"?"sp-g1":t.t==="w1"?"sp-w1":"sp-mid"} mr-t">${t.lab}</span>`:`<span class="mr-t"></span>`)
+    +(o.tr?`<span class="mr-b"><u></u><i class="${o.tr.out?"out":""}" style="left:${o.tr.pos.toFixed(1)}%"></i></span>`:`<span class="mr-b nb"></span>`)
+    +`<span class="mr-d">${o.d||""}</span></div>`;}
+/* ── 서비스별 7일 도달(svc7 = 신규 설치 코호트 · svcRe7 = 몰로코 재관여) ──
+   소재의 _svc에 맞는 주지표 하나 + 앱 접속(홈피드) + 재방문만 보여준다. 서비스가 다른 소재끼리 비교 금지라
+   비교는 같은 서비스의 전체 평균(peer_baseline_svc7)과만 한다(svcRe7은 분모가 달라 참고선 금지). */
+function umSvc7For(ds,e){
+  const sm=UMET&&UMET.svcmap;if(!sm||!sm.map)return null;
+  const ch=umChOf(ds&&ds.media);
+  const ad=markAd(e&&e.name);
+  const s7=umLatest(/^svc7_w(\d{2})(\d{2})$/),sr7=umLatest(/^svcRe7_w(\d{2})(\d{2})$/);
+  let hit=null,basis=null,wk=null;
+  if(s7&&s7.val.creatives&&ch){
+    /* 구글은 소재 단위 미제공 → 코호트와 같은 "[그룹] 광고그룹명" 키 */
+    const kk=umKeyFor(ds,e);
+    const key=kk?kk.key:umNorm(ch+"|"+ad);
+    const v=umNMap(s7.val.creatives).get(key);
+    if(v&&typeof v==="object"){hit=v;basis="svc7";wk=`${+s7.m[1]}/${+s7.m[2]}`;}}
+  if(!hit&&sr7&&sr7.val.creatives){
+    const v=umNMap(sr7.val.creatives).get(umNorm(ad));
+    if(v&&typeof v==="object"){hit=v;basis="svcRe7";wk=`${+sr7.m[1]}/${+sr7.m[2]}`;}}
+  if(!hit)return null;
+  const svc=String((e&&e._svc)||"unknown");
+  const mapped=sm.map[svc]||sm.map.unknown||{key:"home",label:"앱 접속(홈피드)"};
+  const always=Array.isArray(sm.always_show)?sm.always_show:[{key:"home",label:"앱 접속(홈피드)"},{key:"common",label:"재방문"}];
+  const rows=[];
+  const seen=new Set();
+  const push=(key,label,primary)=>{
+    if(seen.has(key))return;seen.add(key);
+    const v=+hit[key];if(!isFinite(v))return;
+    rows.push({key,label,v,primary});};
+  push(mapped.key,mapped.label,true); /* 주지표 — brand/unknown이면 home과 겹쳐 자동으로 한 번만 나온다 */
+  for(const a of always)push(a.key,a.label,false);
+  if(!rows.length)return null;
+  const base=(basis==="svc7"&&sm.peer_baseline_svc7&&typeof sm.peer_baseline_svc7==="object")?sm.peer_baseline_svc7:null;
+  /* 같은 기준(basis) 안의 소재 분포 — svcRe7은 참고선(peer_baseline_svc7)이 금지지만
+     '같은 복귀 기준'끼리의 비교는 분모가 같아 정당하다. 이 분포로 위치·등급을 준다 */
+  const src=(basis==="svc7"?s7:sr7).val.creatives;
+  const distOf=key=>{const a=[];for(const k in src){const v=src[k];const x=+(v&&v[key]);if(isFinite(x))a.push(x);}return a;};
+  return {rows,basis,wk,n:+hit.n||0,svc,svcLabel:mapped.label,
+    basisLabel:(sm.basis_label&&sm.basis_label[basis])||(basis==="svc7"?"신규 설치 7일":"복귀 후 7일"),base,distOf};}
 function umCohortHTML(ds,e){
-  const hit=umCohortFor(ds,e),tr=umTrendFor(ds,e),re=umReengFor(ds,e),lf=umLifeFor(ds,e);
-  if(!hit&&!tr&&!re&&!lf)return "";
+  const hit=umCohortFor(ds,e),tr=umTrendFor(ds,e),re=umReengFor(ds,e),lf=umLifeFor(ds,e),sv=umSvc7For(ds,e);
+  if(!hit&&!tr&&!re&&!lf&&!sv)return "";
   const md=w=>String(w||"").slice(5,7).replace(/^0/,"")+"/"+String(w||"").slice(8,10).replace(/^0/,"");
   const base="설치 코호트 실방문 기준 · 하한 추정치";
   const NB=(()=>{const r=umLatest(/^reeng_w(\d{2})(\d{2})$/);return r&&isFinite(+r.val.naturalBaseline_pct)?+r.val.naturalBaseline_pct:null;})();
-  /* ── ① 최신 주 코호트 스탯(신규·D1·D7·습관·서비스 도달 + D30) ── */
   const c=(hit&&hit.cohort)||{};
   const ix=umIndex(),wb=hit&&ix&&ix.byWeek.get(hit.week);
-  const pool=k=>{const a=[];if(wb)for(const v of wb.cohort.values()){const x=+v[k];if(isFinite(x))a.push(x);}return a.sort((x,y)=>x-y);};
+  const pool=k=>{const a=[];if(wb)for(const v of wb.cohort.values()){const x=+v[k];if(isFinite(x))a.push(x);}return a;};
   const wkLab=hit?md(hit.week)+" 주":"";
-  const stats=[];
-  if(hit&&hit.news!=null)stats.push({v:fmtInt(hit.news),k:"신규 실유저",
-    tip:`<b>신규 실유저 ${fmtInt(hit.news)}명</b><br>${wkLab} 설치 코호트 — 도달=배타 검증 완료(오차&lt;0.6%)<br>${base}`});
-  /* 비교군 분포(p10~p90)를 트랙으로 삼고 이 소재의 위치만 점으로 찍는다.
-     0부터 채우는 막대는 값들이 비슷하면 전부 비슷하게 길어져 자리만 차지하고 변별이 안 된다.
-     스케일은 '그 주 전체 코호트' 분포로 고정 — 소재마다 축이 달라지지 않아 과장·오독이 없다. */
-  const trackOf=(p,v,med)=>{
-    if(p.length<4)return null;
-    const lo=quantile(p,0.1),hi=quantile(p,0.9),span=Math.max(1e-9,hi-lo);
-    const at=x=>Math.max(0,Math.min(100,(x-lo)/span*100));
-    return {v:at(v),t:med!=null?at(med):null,out:v<lo?-1:(v>hi?1:0),lo,hi};};
-  const pctStat=(key,lab,extra)=>{
+  const rowsHtml=[];
+  /* 규모 — 신규 실유저도 '많은 건지'를 같은 주 코호트 분포로 판정 */
+  if(hit&&hit.news!=null){
+    const np=[];if(wb)for(const v of wb.news.values()){const x=+v;if(isFinite(x))np.push(x);}
+    const t=umTrack(np,hit.news,1);
+    rowsHtml.push(umRow({k:"신규 실유저",v:fmtInt(hit.news),tr:t,
+      d:t&&t.pct!=null?`상위 ${Math.max(1,Math.round(100-t.pct))}%`:"",
+      tip:`<b>신규 실유저 ${fmtInt(hit.news)}명</b><br>${wkLab} 설치 코호트${t&&t.med!=null?`<br>같은 주 코호트 중앙값 ${fmtInt(t.med)}명 — 눈금 위치`:""}<br>${base}`}));}
+  /* 질 — 값·등급·중앙값 대비 편차 */
+  const pctRow=(key,lab,extra)=>{
     const v=+c[key];if(!isFinite(v))return;
-    const p=pool(key),med=p.length>=4?quantile(p,0.5):null;
-    const d=med!=null?v-med:null;
-    stats.push({v:v.toFixed(1)+"%",k:lab,
-      bar:trackOf(p,v,med),
-      d:med!=null?`<b style="color:${d>=0?"var(--g1)":"var(--w2)"}">${d>=0?"+":""}${d.toFixed(1)}%p</b> vs 중앙값`:null,
-      tip:`<b>${lab} ${v.toFixed(1)}%</b>${extra?`<br>${extra}`:""}${med!=null?`<br>이번 주 전체 코호트 중앙값 ${med.toFixed(1)}% — 눈금 위치<br>트랙 양끝 = 하위 10%(${quantile(p,0.1).toFixed(1)}%) ~ 상위 10%(${quantile(p,0.9).toFixed(1)}%)`:""}<br>${base}`});};
-  pctStat("d1","익일 재방문","설치 다음 날 실제 방문한 비율");
-  pctStat("d7","7일 내 재방문","설치 후 7일 안에 다시 방문한 비율");
-  pctStat("habit4","습관 형성 4일+","첫 주 4일 이상 방문 — 습관 형성 신호");
-  pctStat("home7","홈피드 7일","7일 내 홈피드 방문 비율");
-  pctStat("flea7","중고거래 7일","7일 내 중고거래 방문 비율");
+    const p=pool(key),t=umTrack(p,v,1);
+    const d=t&&t.med!=null?v-t.med:null;
+    rowsHtml.push(umRow({k:lab,v:v.toFixed(1)+"%",tr:t,
+      d:d!=null?`<b style="color:${d>=0?"var(--g1)":"var(--w2)"}">${d>=0?"+":""}${d.toFixed(1)}%p</b>`:"",
+      tip:`<b>${lab} ${v.toFixed(1)}%</b>${extra?`<br>${extra}`:""}${t&&t.med!=null?`<br>같은 주 코호트 중앙값 ${t.med.toFixed(1)}%${t.pct!=null?` · 상위 ${Math.max(1,Math.round(100-t.pct))}%`:""}`:""}<br>${base}`}));};
+  pctRow("d1","익일 재방문","설치 다음 날 실제 방문한 비율");
+  pctRow("d7","7일 내 재방문","설치 후 7일 안에 다시 방문한 비율");
+  pctRow("habit4","습관 형성 4일+","첫 주 4일 이상 방문 — 습관 형성 신호");
+  /* 서비스 도달이 있으면 그 블록이 홈피드·중고거래를 담당하므로 코호트의 같은 항목은 접는다(중복 방지) */
+  if(!sv){pctRow("home7","홈피드 7일","7일 내 홈피드 방문 비율");pctRow("flea7","중고거래 7일","7일 내 중고거래 방문 비율");}
   if(tr&&tr.d30){
-    /* D30도 같은 주차 코호트 분포와 비교 — 다른 스탯과 같은 형식(막대+중앙값 눈금) */
     const dk=Object.keys(UMET||{}).find(k=>new RegExp("^d30_w"+tr.d30.w.slice(5,7)+tr.d30.w.slice(8,10)+"$").test(k));
     const dp=[];if(dk)for(const v of umNMap(UMET[dk]).values()){const x=+(v&&v.d30w);if(isFinite(x))dp.push(x);}
-    dp.sort((a,b)=>a-b);
-    const dmed=dp.length>=4?quantile(dp,0.5):null;
-    const dd=dmed!=null?tr.d30.d30w-dmed:null;
-    stats.push({v:tr.d30.d30w.toFixed(1)+"%",k:"D30 주간",
-      bar:trackOf(dp,tr.d30.d30w,dmed),
-      d:dmed!=null?`<b style="color:${dd>=0?"var(--g1)":"var(--w2)"}">${dd>=0?"+":""}${dd.toFixed(1)}%p</b> vs 중앙값`:null,
-      tip:`<b>D30(주간 방문) ${tr.d30.d30w.toFixed(1)}%</b><br>${md(tr.d30.w)} 주 설치 코호트의 4주차(d0+25~31) 주간 방문율 · 표본 ${fmtInt(tr.d30.n)}명${dmed!=null?`<br>같은 주 코호트 중앙값 ${dmed.toFixed(1)}%`:""}<br>${base}`});}
-  /* ── ② 주차 추이 미니 차트: 신규 실유저 막대 + D1/D7 라인(+D30 마커) ── */
-  let charts="";
-  if(tr&&tr.weeks.length){
-    const wks=tr.weeks;
-    const rtW=wks.filter(o=>o.d1!=null||o.d7!=null);
-    if(rtW.length>=2||(rtW.length>=1&&tr.d30)){
-      /* 코호트 재방문 추이(질) — 규모(신규 실유저)는 아래 '주차별 추이'가 같은 축에서 보여준다 */
-      const W=560,H=136,pt=18,pb=22,pl=22,pr=46,iw=W-pl-pr,ih=H-pt-pb;
-      const vals=[...rtW.map(o=>o.d1),...rtW.map(o=>o.d7),tr.d30?tr.d30.d30w:null].filter(v=>v!=null&&isFinite(v));
-      /* 라인차트라 0에서 시작할 필요가 없다 — 실제 값 범위로 축을 잡아야 주 단위 변화가 보인다(막대와 다름) */
-      const vlo=Math.max(0,Math.min(...vals)-4),vhi=Math.max(...vals)+4;
-      const X=i=>pl+(rtW.length<2?iw/2:i/(rtW.length-1)*iw),Y=v=>pt+(1-(v-vlo)/Math.max(1,vhi-vlo))*ih;
-      let g="";
-      const line=(k,col)=>{const pts=rtW.map((o,i)=>o[k]!=null?[X(i),Y(o[k]),o]:null).filter(Boolean);
-        if(pts.length>=2){let d=`M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;for(let i=1;i<pts.length;i++)d+=` L ${pts[i][0].toFixed(1)} ${pts[i][1].toFixed(1)}`;
-          g+=`<path d="${d}" fill="none" stroke="${col}" stroke-width="1.8"/>`;}
-        pts.forEach(p=>{g+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="${col}" data-tip="${escAttr(`<b>${md(p[2].w)} 주 코호트</b><br>${k.toUpperCase()} ${p[2][k].toFixed(1)}%${p[2].n?` · 표본 ${fmtInt(p[2].n)}명`:""}<br>${base}`)}"/>`;});
-        if(pts.length){const lp=pts[pts.length-1];
-          g+=`<text x="${(lp[0]+6).toFixed(1)}" y="${(lp[1]+3.5).toFixed(1)}" font-size="10" font-weight="700" fill="${col}">${k.toUpperCase()}</text>`;}};
-      line("d1","var(--g2)");line("d7","var(--g1)");
-      if(tr.d30){const i=rtW.findIndex(o=>o.w===tr.d30.w);
-        const x=i>=0?X(i):X(0),y=Y(tr.d30.d30w);
-        g+=`<path d="M ${x.toFixed(1)} ${(y-4.6).toFixed(1)} L ${(x+4.6).toFixed(1)} ${y.toFixed(1)} L ${x.toFixed(1)} ${(y+4.6).toFixed(1)} L ${(x-4.6).toFixed(1)} ${y.toFixed(1)} Z" fill="var(--gold)" data-tip="${escAttr(`<b>D30(주간) ${tr.d30.d30w.toFixed(1)}%</b><br>${md(tr.d30.w)} 주 코호트의 4주차 주간 방문율 · 표본 ${fmtInt(tr.d30.n)}명`)}"/>`;
-        g+=`<text x="${(x+7).toFixed(1)}" y="${(y-7).toFixed(1)}" font-size="10" font-weight="700" fill="var(--gold)">D30</text>`;}
-      rtW.forEach((o,i)=>{const an=i===0?"start":(i===rtW.length-1?"end":"middle"); /* 양끝은 안쪽 정렬 — 캔버스 밖으로 잘리지 않게 */
-        const lx=i===0?X(i)-6:(i===rtW.length-1?X(i)+6:X(i));
-        g+=`<text x="${lx.toFixed(1)}" y="${H-4}" text-anchor="${an}" font-size="10" fill="var(--faint)">${md(o.w)}</text>`;});
-      charts=`<div class="us-mini"><svg viewBox="0 0 ${W} ${H}">${g}</svg><span class="us-cap">주차 코호트 재방문 — D1·D7·D30(설치 후 다시 온 비율)</span></div>`;}}
-  /* ── ③ 소재별 유효 복귀(재관여) — 자연 기준선 눈금과 함께, 메타는 뷰스루 포함 표시 ── */
+    const t=umTrack(dp,tr.d30.d30w,1);
+    const d=t&&t.med!=null?tr.d30.d30w-t.med:null;
+    rowsHtml.push(umRow({k:"D30 주간 방문",v:tr.d30.d30w.toFixed(1)+"%",tr:t,
+      d:d!=null?`<b style="color:${d>=0?"var(--g1)":"var(--w2)"}">${d>=0?"+":""}${d.toFixed(1)}%p</b>`:"",
+      tip:`<b>D30(주간 방문) ${tr.d30.d30w.toFixed(1)}%</b><br>${md(tr.d30.w)} 주 설치 코호트의 4주차(d0+25~31) 방문율 · 표본 ${fmtInt(tr.d30.n)}명${t&&t.med!=null?`<br>같은 주 코호트 중앙값 ${t.med.toFixed(1)}%`:""}<br>${base}`}));}
+  /* 서비스 도달 — 소재의 _svc에 맞는 주지표 + 홈피드 + 재방문. 비교는 같은 서비스 전체 평균과만 */
+  let svcHtml="";
+  if(sv){
+    const rs=sv.rows.map(r=>{
+      const dist=sv.distOf(r.key);
+      const b=sv.base&&isFinite(+sv.base[r.key])?+sv.base[r.key]:null;
+      /* 눈금·등급·편차를 모두 '같은 기준(basis) 소재 분포'로 통일한다.
+         눈금은 평균, 등급은 백분위처럼 기준이 갈리면 "평균과 같은데 낮음" 같은 오독이 생긴다.
+         전체 평균(peer_baseline_svc7)은 참고값으로 툴팁에만 둔다(svcRe7은 분모가 달라 언급도 하지 않음). */
+      const t=umTrack(dist,r.v,1);
+      const ref=t?t.med:null;
+      const refLab=sv.basis==="svc7"?"같은 서비스 소재 중앙값":"같은 복귀 기준 소재 중앙값";
+      const d=ref!=null?`<b style="color:${r.v>=ref?"var(--g1)":"var(--w2)"}">${r.v>=ref?"+":""}${(r.v-ref).toFixed(1)}%p</b>`:"";
+      return umRow({k:r.label+" 7일",v:r.v.toFixed(1)+"%",tr:t,d,
+        tip:`<b>${r.label} 7일 ${r.v.toFixed(1)}%</b><br>기준: ${sv.basisLabel} · 코호트 n=${fmtInt(sv.n)}`
+          +(ref!=null?`<br>${refLab} ${ref.toFixed(2)}% — 눈금(가운데) 위치`:"")
+          +(t&&t.pct!=null?`<br>같은 기준 소재 중 상위 ${Math.max(1,Math.round(100-t.pct))}%`:"")
+          +(sv.basis==="svc7"&&b!=null?`<br>참고: 같은 서비스 전체 평균 ${b.toFixed(2)}%`:"")
+          +(sv.basis==="svcRe7"?`<br>재관여 기준이라 신규 설치 평균과는 섞지 않는다(분모가 다름)`:"")
+          +(r.primary?`<br><b>이 소재의 서비스(${escHtml(sv.svcLabel)}) 주지표</b>`:"")});}).join("");
+    svcHtml=`<div class="us-sub">서비스 도달 <em>${escHtml(sv.svcLabel)} · ${escHtml(sv.basisLabel)} · n=${fmtInt(sv.n)}</em></div>${rs}`;}
+  /* 유효 복귀(재관여) — 자연 복귀 기준선을 중앙에 둔 같은 문법의 행 */
   let reengHtml="";
   if(re){
-    const rows=re.seq.slice(-2).map(o=>{
-      const tip=`<b>${md(o.w)} 주 유효 복귀 ${o.pct.toFixed(1)}%</b><br>되돌린 유저 ${fmtInt(o.n)}명 중 유효 복귀 ${fmtInt(o.valid)}명${o.cpv!=null?`<br>유효 복귀 1명당 ₩${fmtInt(o.cpv)}`:""}${NB!=null?`<br>자연 복귀 기준선 ${NB.toFixed(1)}%(눈금) 대비로 읽을 것`:""}<br>소재 값은 같은 매체 안에서 비교하세요 — 매체 간 비교는 분석 탭의 클릭 접촉 기준 차트`;
-      return `<div class="us-rrow" data-tip="${escAttr(tip)}"><span class="us-rw">${md(o.w)}</span><div class="us-rbar"><i style="width:${Math.max(2,Math.min(100,o.pct)).toFixed(1)}%"></i>${NB!=null?`<u style="left:${Math.min(99,NB).toFixed(1)}%"></u>`:""}</div><b class="num">${o.pct.toFixed(1)}%</b>${o.cpv!=null?`<span class="us-cpv num">₩${fmtInt(o.cpv)}</span>`:""}</div>`;}).join("");
-    reengHtml=`<div class="us-sec"><span class="us-sk">유효 복귀</span><div class="us-rrows">${rows}</div></div>`;}
-  /* ── ④ 라이프사이클 타임라인 — 개시→최근, 피크▲·최대 증액↑ 마커 ── */
+    const rs=re.seq.slice(-2).map(o=>{
+      const t=NB!=null?(()=>{const raw=50+(o.pct-NB)/NB*50;
+        return{pos:Math.max(3,Math.min(97,raw)),out:raw<3?-1:(raw>97?1:0),med:NB,pct:null,
+          tier:umTierOf(Math.max(0,Math.min(100,50+(o.pct-NB)/NB*50)),1)};})():null;
+      return umRow({k:md(o.w)+" 주",v:o.pct.toFixed(1)+"%",tr:t,
+        d:o.cpv!=null?`₩${fmtInt(o.cpv)}`:"",
+        tip:`<b>${md(o.w)} 주 유효 복귀 ${o.pct.toFixed(1)}%</b><br>되돌린 유저 ${fmtInt(o.n)}명 중 유효 복귀 ${fmtInt(o.valid)}명${o.cpv!=null?`<br>유효 복귀 1명당 ₩${fmtInt(o.cpv)}`:""}${NB!=null?`<br>자연 복귀 기준선 ${NB.toFixed(1)}% — 눈금 위치`:""}<br>소재 값은 같은 매체 안에서 비교하세요`});}).join("");
+    reengHtml=`<div class="us-sub">유효 복귀 <em>자연 기준선 ${NB!=null?NB.toFixed(1)+"%":"—"} 대비</em></div>${rs}`;}
+  /* 라이프사이클 — 개시→최근 스팬, 피크▲, 최대 증액↑ */
   let lifeHtml="";
   if(lf){
     const t0=Date.parse(lf.f),t1=Date.parse(lf.l);
@@ -4036,36 +4085,32 @@ function umCohortHTML(ds,e){
       const lc=UMET.lifecycle;let maxL="";
       for(const k in lc){if(k==="basis")continue;const v=lc[k];if(v&&v.l&&v.l>maxL)maxL=v.l;}
       const ongoing=lf.l===maxL;
-      const W=560,H=48,pl=12,pr=12,base_y=28,iw=W-pl-pr; /* 위=증액 라벨·아래=날짜 라벨 공간 확보(글자 잘림 방지) */
+      const W=560,H=48,pl=12,pr=12,base_y=28,iw=W-pl-pr;
       const X=d=>{const t=Date.parse(d);return pl+(t1===t0?iw/2:(t-t0)/(t1-t0)*iw);};
       let g=`<line x1="${pl}" y1="${base_y}" x2="${W-pr}" y2="${base_y}" stroke="var(--surface-3)" stroke-width="4" stroke-linecap="round"/>`;
       g+=`<line x1="${pl}" y1="${base_y}" x2="${W-pr}" y2="${base_y}" stroke="var(--mid)" stroke-width="4" stroke-linecap="round" data-tip="${escAttr(`<b>집행 ${fmtInt(lf.wks)}주</b> · ${md(lf.f)} ~ ${md(lf.l)}${ongoing?" (진행중)":""}<br>누적 광고비 ${fmtKRW(lf.tot)}원${lf.hi?`<br>고소진 유지 ${fmtInt(lf.hi)}주(매체 상위 25% 이상)`:""}`)}"/>`;
       if(lf.rw&&isFinite(+lf.rx)){const x=X(lf.rw);
-        g+=`<path d="M ${x.toFixed(1)} ${base_y-4} L ${x.toFixed(1)} ${base_y-11}" stroke="var(--g2)" stroke-width="1.8" marker-end="none"/><path d="M ${(x-3).toFixed(1)} ${base_y-8.5} L ${x.toFixed(1)} ${base_y-12.5} L ${(x+3).toFixed(1)} ${base_y-8.5}" fill="none" stroke="var(--g2)" stroke-width="1.8" data-tip="${escAttr(`<b>최대 증액 ×${(+lf.rx).toFixed(1)}</b> · ${md(lf.rw)} 주<br>직전 주 대비 주간 광고비 증가 배수`)}"/>`;
-        g+=`<text x="${x.toFixed(1)}" y="${base_y-15}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--g2)">×${(+lf.rx).toFixed(1)}</text>`;}
+        g+=`<path d="M ${x.toFixed(1)} ${base_y-5} L ${x.toFixed(1)} ${base_y-12}" stroke="var(--g2)" stroke-width="1.8"/><path d="M ${(x-3.4).toFixed(1)} ${base_y-9.5} L ${x.toFixed(1)} ${base_y-13.5} L ${(x+3.4).toFixed(1)} ${base_y-9.5}" fill="none" stroke="var(--g2)" stroke-width="1.8" data-tip="${escAttr(`<b>최대 증액 ×${(+lf.rx).toFixed(1)}</b> · ${md(lf.rw)} 주<br>직전 주 대비 주간 광고비 증가 배수`)}"/>`;
+        g+=`<text x="${x.toFixed(1)}" y="${base_y-16}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--g2)">×${(+lf.rx).toFixed(1)}</text>`;}
       if(lf.pk_w){const x=X(lf.pk_w);
-        g+=`<path d="M ${x.toFixed(1)} ${base_y+4} L ${(x-3.6).toFixed(1)} ${base_y+10} L ${(x+3.6).toFixed(1)} ${base_y+10} Z" fill="var(--karrot)" data-tip="${escAttr(`<b>피크 주간 광고비 ${fmtKRW(lf.pk)}원</b> · ${md(lf.pk_w)} 주`)}"/>`;}
-      g+=`<circle cx="${(W-pr).toFixed(1)}" cy="${base_y}" r="3.4" fill="${ongoing?"#35B979":"var(--faint)"}" data-tip="${escAttr(ongoing?"진행중 — 최신 주에도 집행":`중단 — 마지막 집행 ${md(lf.l)} 주`)}"/>`;
+        g+=`<path d="M ${x.toFixed(1)} ${base_y+5} L ${(x-3.6).toFixed(1)} ${base_y+11} L ${(x+3.6).toFixed(1)} ${base_y+11} Z" fill="var(--karrot)" data-tip="${escAttr(`<b>피크 주간 광고비 ${fmtKRW(lf.pk)}원</b> · ${md(lf.pk_w)} 주`)}"/>`;}
+      g+=`<circle cx="${(W-pr).toFixed(1)}" cy="${base_y}" r="3.6" fill="${ongoing?"#35B979":"var(--faint)"}" data-tip="${escAttr(ongoing?"진행중 — 최신 주에도 집행":`중단 — 마지막 집행 ${md(lf.l)} 주`)}"/>`;
       g+=`<text x="${pl}" y="${H-3}" font-size="10" fill="var(--faint)">${md(lf.f)}</text><text x="${W-pr}" y="${H-3}" text-anchor="end" font-size="10" fill="var(--faint)">${md(lf.l)}</text>`;
-      lifeHtml=`<div class="us-sec"><span class="us-sk">수명 ${fmtInt(lf.wks)}주 · ${fmtKRW(lf.tot)}</span><svg class="us-life" viewBox="0 0 ${W} ${H}">${g}</svg></div>`;}}
-  if(!stats.length&&!charts&&!reengHtml&&!lifeHtml)return "";
-  /* 헤더 — 컨텍스트 최소 표기 + 상세 기준은 ? 툴팁 */
+      lifeHtml=`<div class="us-sub">수명 <em>${fmtInt(lf.wks)}주 · 누적 ${fmtKRW(lf.tot)}원</em></div><svg class="us-life" viewBox="0 0 ${W} ${H}">${g}</svg>`;}}
+  if(!rowsHtml.length&&!svcHtml&&!reengHtml&&!lifeHtml)return "";
   const n=+((c&&c.n)||0);
   const hdr=[];
-  if(hit){hdr.push(`${wkLab} 설치 코호트`);if(n)hdr.push(`표본 ${fmtInt(n)}명 실측`);if(hit.grpLevel)hdr.push("광고그룹 단위 제공");}
+  if(hit){hdr.push(`${wkLab} 설치 코호트`);if(n)hdr.push(`표본 ${fmtInt(n)}명`);if(hit.grpLevel)hdr.push("광고그룹 단위");}
   else if(re)hdr.push("재관여 실증");
-  let tip=`<b>실유저(주간)</b><br>유저 단위 실증(BigQuery·karrotmetrics 집계, 유저 ID 무저장)<br>${base}`;
-  if(hit&&hit.grpLevel)tip+=`<br>구글은 소재 단위 미제공 — 소속 광고그룹 <b>${escHtml(trunc(hit.grpName||"",44))}</b> 값을 광고그룹 단위로 표시`;
+  let tip=`<b>실유저(주간)</b><br>유저 단위 실증(BigQuery·karrotmetrics 집계, 유저 ID 무저장)<br>${base}`
+    +`<br>등급은 같은 주 코호트 안에서의 백분위 — 눈금(가운데)이 중앙값이고, 마커가 오른쪽일수록 상위`;
+  if(hit&&hit.grpLevel)tip+=`<br>구글은 소재 단위 미제공 — 소속 광고그룹 <b>${escHtml(trunc(hit.grpName||"",44))}</b> 값`;
   const nmol=(umIndex()&&umIndex().byWeek.get(umIndex().weeks[0])||{}).noteMoloco||"";
   if(umChOf(ds&&ds.media)==="Moloco"&&nmol)tip+=`<br>${escHtml(nmol)}`;
   if(hit&&hit.ch==="Moloco"&&hit.news==null&&nmol)hdr.push("신규 없음 정상(재관여 전담)");
   return `<div class="umet-strip">
     <div class="us-h">실유저(주간)<span class="uc-q" data-tip="${escAttr(tip)}" title="유저 단위 실증 — 마우스를 올려 기준 확인">?</span><span class="n">${hdr.map(escHtml).join(" · ")}</span></div>
-    ${stats.length?`<div class="umet-stats">${stats.map(s=>`<div class="umet-stat" data-tip="${escAttr(s.tip)}">`
-      +`<span class="us-v num">${s.v}</span><span class="us-k">${s.k}</span>`
-      +(s.bar?`<div class="us-bar">${s.bar.t!=null?`<u style="left:${s.bar.t.toFixed(1)}%"></u>`:""}<i class="${s.bar.out?"out":""}" style="left:${s.bar.v.toFixed(1)}%"></i></div>`:"")
-      +(s.d?`<span class="us-d">${s.d}</span>`:"")+`</div>`).join("")}</div>`:""}
-    ${charts}${reengHtml}${lifeHtml}
+    <div class="mrows">${rowsHtml.join("")}${svcHtml}${reengHtml}${lifeHtml}</div>
   </div>`;}
 /* ═════ 교차 매체 동일/유사 소재 탐지 ═════
    "이 소재가 다른 매체에선 어떤가"를 보기 위해, 신호 강한 순서로 매칭한다:
