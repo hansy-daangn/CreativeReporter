@@ -186,8 +186,9 @@
   .umet-card .uc-sub{font-size:10.5px;color:var(--faint);margin-top:2px}
   .umet-card .uc-sub b{color:var(--ink);font-weight:700}
   /* 점유율 한 줄 막대 — 채움 끝만 둥글게, 트랙 위 텍스트 없이 값은 옆 텍스트가 담당 */
-  .uc-share{height:8px;border-radius:4px;background:var(--surface-3);overflow:hidden;margin-top:9px}
-  .uc-share i{display:block;height:100%;background:var(--karrot);border-radius:0 4px 4px 0;min-width:2px}
+  .uc-share{position:relative;height:8px;border-radius:4px;background:var(--surface-3);margin-top:9px}
+  .uc-share i{display:block;height:100%;background:var(--karrot);border-radius:4px 4px 4px 4px;min-width:2px}
+  .uc-share u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);opacity:.55;border-radius:1px;cursor:help}
   /* 매체별 가로 막대 행 — [라벨 | 막대 | 값 | 보조칩] 그리드 정렬로 스캔성 확보 */
   .uc-rows{display:flex;flex-direction:column;gap:7px;margin-top:10px}
   .uc-row{display:grid;grid-template-columns:52px minmax(30px,1fr) max-content;align-items:center;gap:8px;font-size:11px}
@@ -207,9 +208,29 @@
   .reeng .rg-t b{margin-left:auto;font-size:12.5px;color:var(--side-ink);font-weight:750;letter-spacing:-.01em}
   .reeng .rg-bar{position:relative;height:5px;border-radius:3px;background:rgba(255,255,255,.12);margin:7px 0 6px;overflow:visible}
   .reeng .rg-bar i{display:block;height:100%;background:var(--karrot-2);border-radius:0 3px 3px 0;min-width:2px}
+  .reeng .rg-bar.vt i{background:repeating-linear-gradient(135deg,var(--karrot-2) 0 3px,rgba(255,138,61,.25) 3px 6px)} /* 뷰스루 포함 측정 — 빗금 */
+  .reeng .rg-vt{font-size:11px;color:var(--karrot-2);font-weight:800;margin-left:-2px}
   .reeng .rg-bar u{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--side-ink);opacity:.85;border-radius:1px}
   .reeng .rg-s{font-size:9.5px;color:var(--side-faint);display:flex;gap:4px;flex-wrap:wrap}
   .reeng .rg-s b{color:var(--side-muted);font-weight:650}
+
+  /* 유효 복귀 소재 산점 스트립 — 매체 3행, 자연 기준선 세로선, 점=소재(크기=모수).
+     측정 방식을 모양으로 구분: ● 클릭 실측 · ○ 노출(뷰스루) 포함(빗금 밑판) — 액면 비교 금지를 시각으로 전달 */
+  .rst{background:var(--surface);border:1px solid var(--surface-3);border-radius:var(--r-sm);padding:12px 16px 8px;margin-bottom:20px}
+  .rst-h{font-size:11.5px;font-weight:650;color:var(--muted);display:flex;align-items:center;gap:6px;margin-bottom:2px}
+  .rst-h .uc-when{margin-left:auto;font-size:10px;color:var(--faint);font-weight:500}
+  .rst svg{display:block;width:100%;height:auto}
+  .rst .rst-lgd{font-size:9.5px;color:var(--faint);display:flex;gap:14px;flex-wrap:wrap;margin-top:2px;padding-left:2px}
+  .rst .rst-lgd b{color:var(--muted);font-weight:650}
+  /* 구글 실적 라벨 × 비용 스택바 — 세그먼트 간 2px 여백 + 상시 라벨(색만으로 전달 금지) */
+  .glb{background:var(--surface);border:1px solid var(--surface-3);border-radius:var(--r-sm);padding:11px 16px;margin-bottom:20px}
+  .glb-k{font-size:11.5px;font-weight:650;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .glb-k em{font-style:normal;font-size:10px;color:var(--faint);font-weight:500}
+  .glb-bar{display:flex;gap:2px;height:22px;border-radius:6px;overflow:hidden;margin-top:8px}
+  .glb-bar i{display:flex;align-items:center;justify-content:center;min-width:3px;font-style:normal}
+  .glb-bar i b{font-size:10px;font-weight:750;color:#fff;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+  .glb-lgd{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--muted);margin-top:7px}
+  .glb-lgd i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 
   /* 소재 상세 — 실유저(주간) 블록: 그래프 탭 위 상시 노출 스트립 */
   .umet-strip{margin:0 0 14px;padding:11px 13px;background:var(--surface);border:1px solid var(--surface-3);border-radius:10px}
@@ -225,6 +246,25 @@
   .umet-stat .us-bar u{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--mid);border-radius:1px}
   .umet-stat .us-d{font-size:9.5px;color:var(--faint);display:block;margin-top:4px;white-space:nowrap}
   .umet-stat .us-d b{font-weight:700}
+  /* 상세 블록 확장 — 주차 추이 미니차트 · 소재별 유효 복귀 · 라이프사이클 */
+  .us-charts{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;padding-top:9px;border-top:1px solid var(--surface-2)}
+  .us-mini{flex:1 1 150px;min-width:140px;max-width:230px}
+  .us-mini svg{display:block;width:100%;height:auto}
+  .us-cap{font-size:9.5px;color:var(--faint);display:block;margin-top:2px}
+  .us-sec{display:flex;align-items:center;gap:10px;margin-top:9px;padding-top:8px;border-top:1px solid var(--surface-2)}
+  .us-sk{font-size:10px;font-weight:700;color:var(--muted);white-space:nowrap;flex:0 0 auto;display:inline-flex;align-items:center;gap:4px}
+  .us-vt{font-style:normal;font-size:11px;font-weight:800;color:var(--w1);cursor:help}
+  .us-rrows{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+  .us-rrow{display:grid;grid-template-columns:28px minmax(40px,1fr) max-content max-content;align-items:center;gap:8px;font-size:10.5px}
+  .us-rrow .us-rw{color:var(--faint);font-size:9.5px;white-space:nowrap}
+  .us-rbar{position:relative;height:6px;border-radius:3px;background:var(--surface-3);overflow:visible}
+  .us-rbar i{display:block;height:100%;background:var(--karrot);border-radius:0 3px 3px 0;min-width:2px}
+  /* 뷰스루 포함 측정(메타) — 빗금 채움으로 '같은 자로 잰 값이 아님'을 표시 */
+  .us-rbar.vt i{background:repeating-linear-gradient(135deg,var(--karrot) 0 3px,var(--karrot-f) 3px 6px)}
+  .us-rbar u{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink);opacity:.65;border-radius:1px}
+  .us-rrow b{font-weight:750}
+  .us-cpv{font-size:9.5px;color:var(--muted)}
+  .us-life{flex:1;min-width:0;display:block;height:auto;max-width:300px}
 
   svg.chart{display:block;overflow:visible;max-width:100%}
   .axis text{font-size:10px;fill:var(--faint)} .gl{stroke:#E6E5DE;stroke-dasharray:2 3}
@@ -1208,6 +1248,8 @@
         <div id="umetWrap" hidden>
           <div class="umet-h">실유저 · MAU 실증 <span class="n" id="umetUpd"></span></div>
           <div class="umet-cards" id="umetCards"></div>
+          <div id="reengStrip"></div>
+          <div id="glabelBar"></div>
         </div>
         <div class="keyrow" id="keyrow"></div>
         <p class="qhint" id="qhint"></p>
@@ -1367,8 +1409,14 @@ function mdimApply(){
   let changed=false;
   const scan=list=>{for(const e of (list||[])){if(!e||e._isGroup)continue;const pu=previewUrlOf(e),d=pu&&MDIM[pu];if(!d)continue;
     if(d.dur&&e._dur==null)e._dur=d.dur;
-    if(d.w&&d.h&&!(e.tags&&e.tags.size)){e.tags=e.tags||{ve:null,fo:null,size:null,nat:null,shape:null};
-      e.tags.size=d.w+"×"+d.h;e.tags.shape=d.w>d.h?"가로":d.w<d.h?"세로":"정사각";changed=true;}}};
+    if(d.w&&d.h){e.tags=e.tags||{ve:null,fo:null,size:null,nat:null,shape:null};
+      const meas=d.w+"×"+d.h;
+      const isVid=(e.tags.fo==="영상")||/video/i.test(String(e._m_ctype||""));
+      /* 실측 우선 — 크기 없으면 채우고, '영상'은 리포트 신고값과 실측(영상 파일 메타데이터)이 다르면 실측으로 교체
+         (신고값은 게재 지면 크기일 수 있음). 원 신고값은 _szDecl로 보존해 툴팁에서 밝힌다 */
+      if(!e.tags.size){e.tags.size=meas;e.tags.shape=d.w>d.h?"가로":d.w<d.h?"세로":"정사각";changed=true;}
+      else if(isVid&&e.tags.size!==meas&&!e._szMeas){e._szDecl=e.tags.size;e.tags.size=meas;
+        e.tags.shape=d.w>d.h?"가로":d.w<d.h?"세로":"정사각";e._szMeas=1;changed=true;}}}};
   for(const k in DATASETS){const ds=DATASETS[k];scan(ds.aggAll);if(ds.aggByChannel)for(const v of ds.aggByChannel.values())scan(v.aggAll);}
   if(curDS)scan(curDS.agg); /* 기간 필터 시 ds.agg는 재집계본이라 별도 반영 */
   if(!changed||!curDS)return;
@@ -1915,6 +1963,57 @@ function umCohortFor(ds,e){
     const nu=b.news.has(kk.key)?b.news.get(kk.key):null;
     if(c||nu!=null)return {week:w,cohort:c,news:nu,ch:kk.ch,grpLevel:kk.grpLevel,grpName:kk.grpName||null,noteMoloco:b.noteMoloco};}
   return null;}
+/* umetrics 하위 객체의 정규화 키 Map(지연·WeakMap 캐시) — basis 등 메타 키는 제외 */
+const _umNMaps=new WeakMap();
+function umNMap(o){
+  if(!o||typeof o!=="object")return new Map();
+  let m=_umNMaps.get(o);if(m)return m;
+  m=new Map();
+  for(const k in o){if(k==="basis"||k==="note")continue;m.set(umNorm(k),o[k]);}
+  _umNMaps.set(o,m);return m;}
+/* 주차 추이 — trend_new_users(신규)·trend_d7(D1/D7) + weeks(최신 주) + d30_w*(코호트 D30) 통합 */
+function umTrendFor(ds,e){
+  if(!UMET)return null;
+  const kk=umKeyFor(ds,e);if(!kk)return null;
+  const rows=new Map();
+  const add=(w,patch)=>{const o=rows.get(w)||{w};Object.assign(o,patch);rows.set(w,o);};
+  const tn=UMET.trend_new_users,td=UMET.trend_d7;
+  if(tn&&typeof tn==="object")for(const w in tn){if(!/^\d{4}-\d{2}-\d{2}$/.test(w))continue;
+    const v=umNMap(tn[w]).get(kk.key);if(v!=null&&isFinite(+v))add(w,{nu:+v});}
+  if(td&&typeof td==="object")for(const w in td){if(!/^\d{4}-\d{2}-\d{2}$/.test(w))continue;
+    const o=umNMap(td[w]).get(kk.key);if(o&&typeof o==="object"){add(w,{n:+o.n});if(isFinite(+o.d1))add(w,{d1:+o.d1});if(isFinite(+o.d7))add(w,{d7:+o.d7});}}
+  const ix=umIndex();
+  if(ix)for(const w of ix.weeks){const b=ix.byWeek.get(w);
+    const c=b.cohort.get(kk.key);
+    if(c&&typeof c==="object"){add(w,{n:+c.n});if(isFinite(+c.d1))add(w,{d1:+c.d1});if(isFinite(+c.d7))add(w,{d7:+c.d7});}
+    const nu=b.news.get(kk.key);if(nu!=null)add(w,{nu:+nu});}
+  /* D30 — d30_w{MMDD} 코호트 스냅샷을 해당 주에 붙인다 */
+  let d30=null;
+  if(UMET)for(const k in UMET){const m=k.match(/^d30_w(\d{2})(\d{2})$/);if(!m)continue;
+    const o=umNMap(UMET[k]).get(kk.key);
+    if(o&&typeof o==="object"&&isFinite(+o.d30w)){const wk=[...rows.keys()].find(w=>w.slice(5)===m[1]+"-"+m[2])||`2026-${m[1]}-${m[2]}`;
+      if(!d30||wk>d30.w)d30={w:wk,n:+o.n,d30w:+o.d30w};}}
+  const weeks=[...rows.keys()].sort().map(w=>rows.get(w));
+  if(!weeks.length&&!d30)return null;
+  return {weeks,d30};}
+/* 소재별 유효 복귀(재관여) — reeng_byCreative.weeks의 주차 시퀀스 */
+function umReengFor(ds,e){
+  const rb=UMET&&UMET.reeng_byCreative;if(!rb||!rb.weeks||typeof rb.weeks!=="object")return null;
+  const kk=umKeyFor(ds,e);if(!kk)return null;
+  const seq=[];
+  for(const w of Object.keys(rb.weeks).filter(w=>/^\d{4}-\d{2}-\d{2}$/.test(w)).sort()){
+    const o=umNMap(rb.weeks[w]).get(kk.key);
+    if(o&&typeof o==="object"&&isFinite(+o.pct))seq.push({w,n:+o.n,valid:+o.valid,pct:+o.pct,cpv:isFinite(+o.cpv)?+o.cpv:null});}
+  return seq.length?{seq,ch:kk.ch,grpLevel:kk.grpLevel,basis:String(rb.basis||"")}:null;}
+/* 라이프사이클 — 소재 수명 요약. 구글 과거분 키는 URL 기반(Google|youtube_{영상ID}) */
+function umLifeFor(ds,e){
+  const lc=UMET&&UMET.lifecycle;if(!lc||typeof lc!=="object"||!e||e._isGroup)return null;
+  const ch=umChOf(ds&&ds.media);if(!ch)return null;
+  let key;
+  if(ch==="Google"){const id=ytIdOf(e._g_url||previewUrlOf(e)||e.name);if(!id)return null;key=umNorm("Google|youtube_"+id);}
+  else key=umNorm(ch+"|"+markAd(e.name));
+  const o=umNMap(lc).get(key);
+  return (o&&typeof o==="object"&&o.f&&o.l)?o:null;}
 async function loadNameMap(pw){applyNameMapBundle(await fetchNameMapBundle(pw));}
 /* 모든 유튜브 소재 제목을 로드 직후 백그라운드 일괄 조회(동시 4) — 클릭 없이 자동 표시, kv(ytt)로 기기 간 공유 */
 let _yttRan=false;
@@ -1936,58 +2035,47 @@ async function hydrateAllYtTitles(){
    시작 시 캐시를 미리 올려 표·순위의 유튜브 URL 이름도 아는 제목으로 바로 표시 */
 const _ytTitles={};
 try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf("ytt_")===0)_ytTitles[k.slice(4)]=localStorage.getItem(k);}}catch(e){}
-/* 유튜브 화면비 — 1순위는 구글 공식 '방향'(_g_orientation, DB 백필+주간 루틴)이며 이 실측은 그게 없는
-   소재의 마지막 폴백. oEmbed width/height는 세로·정방형도 전부 480×270(16:9)으로 돌려줘 폐기.
-   **썸네일 레터박스 실측**: hqdefault.jpg는 4:3 캔버스에 원본을 비율 유지로 넣고 검은 띠로 채우므로
-   띠 두께로 화면비가 복원된다. 단 커스텀 썸네일은 띠가 없거나(풀블리드) 어중간해 오판 위험 →
-   측정값이 16:9·9:16·1:1 셋 중 하나에 8% 이내로 들어맞을 때만 채택, 아니면 null(모름)로 둔다.
-   키를 cr_ytar3로 올려 구버전(스냅 없는 오판) 캐시는 무시한다. */
-const YTAR=(()=>{try{return JSON.parse(localStorage.getItem("cr_ytar3")||"{}");}catch(_){return{};}})();
+/* 유튜브 화면비/해상도 실측 v2 — oardefault.jpg(비가로 영상 전용 썸네일)로 판정한다.
+   실측 검증(2026-08-05, 세로3·정사각2·가로3 표본 전부 일치): oardefault.jpg는 세로·정사각 영상에서
+   '영상의 실제 캔버스 크기'(예: 1080×1920, 1080×1080)로 응답하고, 가로(16:9) 영상엔 404을 준다.
+   → ① 로드 성공: natural 크기 = 실제 해상도(픽셀 단위 실측) ② 404: 가로 영상(표준 16:9)
+     ③ 응답 없음(시간초과·네트워크): hqdefault 존재 확인으로 '404=가로'와 '네트워크 불능'을 구분.
+   구버전 hqdefault 레터박스 추정(cr_ytar3)은 커스텀 썸네일에서 오판이 많아 폐기, cr_ytar4로 전면 재수집.
+   oEmbed width/height는 세로·정방형도 전부 480×270으로 돌려줘 여전히 사용 불가. */
+const YTAR=(()=>{try{return JSON.parse(localStorage.getItem("cr_ytar4")||"{}");}catch(_){return{};}})();
+try{localStorage.removeItem("cr_ytar3");}catch(_){}
 let _ytarT=null;
-function _ytarSave(){clearTimeout(_ytarT);_ytarT=setTimeout(()=>{try{localStorage.setItem("cr_ytar3",JSON.stringify(YTAR));}catch(_){}},800);}
-const _YT_CANON=[[16,9],[9,16],[1,1]];
-function _ytSnap(cw,ch){
-  const r=cw/ch;
-  for(const[w,h]of _YT_CANON)if(Math.abs(r-w/h)/(w/h)<=0.08)return[w,h];
-  return null;}
-function _ytAspectFromCanvas(g,W,H){
-  const d=g.getImageData(0,0,W,H).data;
-  const lum=(x,y)=>{const i=(y*W+x)*4;return 0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];};
-  const rowDark=y=>{for(let x=0;x<W;x++)if(lum(x,y)>=28)return false;return true;};
-  const colDark=x=>{for(let y=0;y<H;y++)if(lum(x,y)>=28)return false;return true;};
-  let top=0;while(top<H*0.45&&rowDark(top))top++;
-  let bot=0;while(bot<H*0.45&&rowDark(H-1-bot))bot++;
-  let lef=0;while(lef<W*0.45&&colDark(lef))lef++;
-  let rig=0;while(rig<W*0.45&&colDark(W-1-rig))rig++;
-  const cw=W-lef-rig,ch=H-top-bot;
-  if(cw<W*0.2||ch<H*0.2)return null;
-  return _ytSnap(cw,ch);}
+function _ytarSave(){clearTimeout(_ytarT);_ytarT=setTimeout(()=>{try{localStorage.setItem("cr_ytar4",JSON.stringify(YTAR));}catch(_){}},800);}
+/* 이미지 존재·크기 프로브 — 크기(naturalWidth/Height)는 CORS 없이도 읽힌다. false=명확한 실패(404류), null=시간초과 */
+function _imgProbe(u,ms){return new Promise(res=>{const im=new Image();let done=false;
+  const fin=v=>{if(done)return;done=true;res(v);};
+  const to=setTimeout(()=>{try{im.src="";}catch(_){}fin(null);},ms||12000);
+  im.onload=()=>{clearTimeout(to);fin({w:im.naturalWidth||0,h:im.naturalHeight||0});};
+  im.onerror=()=>{clearTimeout(to);fin(false);};
+  im.src=u;});}
 function probeYtAspect(id){
   if(YTAR[id]!==undefined)return Promise.resolve(YTAR[id]||null);
-  const tu=`https://img.youtube.com/vi/${id}/hqdefault.jpg`;
-  const px=`https://wsrv.nl/?url=${encodeURIComponent(tu)}&w=96&h=72&fit=fill&output=jpg`; /* CORS 허용 프록시 — 광고 CDN dHash와 동일 경로 */
-  return new Promise(res=>{
-    const im=new Image();im.crossOrigin="anonymous";
-    const done=(v,save)=>{if(save){YTAR[id]=v||0;_ytarSave();}res(v||null);}; /* 측정 성공 시에만 캐시(모름=0) — 로드 실패는 다음에 재시도 */
-    const to=setTimeout(()=>done(null,false),12000);
-    im.onload=()=>{clearTimeout(to);
-      try{const c=document.createElement("canvas");c.width=96;c.height=72;
-        const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(im,0,0,96,72);
-        done(_ytAspectFromCanvas(g,96,72),true);}catch(_){done(null,false);}};
-    im.onerror=()=>{clearTimeout(to);done(null,false);};
-    im.src=px;});}
-/* 모든 유튜브 소재의 화면비를 백그라운드 실측(동시 3·상한 300) — 완료 시 열린 상세·타매체 블록 제자리 갱신 */
+  return (async()=>{
+    const oar=await _imgProbe(`https://i.ytimg.com/vi/${id}/oardefault.jpg`);
+    if(oar&&oar.w>1&&oar.h>1){YTAR[id]=[oar.w,oar.h];_ytarSave();return YTAR[id];} /* 실제 캔버스 픽셀 */
+    if(oar===false){
+      const hq=await _imgProbe(`https://i.ytimg.com/vi/${id}/hqdefault.jpg`);
+      if(hq&&hq.w>1){YTAR[id]=[16,9];_ytarSave();return YTAR[id];}} /* oar만 404 = 가로 영상 확정 */
+    return null;})();} /* 미확정(네트워크) — 캐시하지 않고 다음 기회에 재시도 */
+/* 모든 유튜브 소재의 화면비·해상도를 백그라운드 실측(동시 4·상한 600) — oar 실측이라 전량 판정 가능.
+   완료 시 열린 상세·타매체 블록 제자리 갱신 + 표의 해상도 칩은 mdimApply 경로처럼 다음 렌더에 반영 */
 let _ytarRan=false;
 async function hydrateYtAspects(){
   if(_ytarRan)return;_ytarRan=true;
   const ids=new Set();
   for(const k in DATASETS){for(const r of (DATASETS[k].dataAll||[])){
     const id=ytIdOf(r._g_url||r[DATASETS[k].L.nameCol]);if(id&&YTAR[id]===undefined)ids.add(id);}}
-  const list=[...ids].slice(0,300);
-  for(let i=0;i<list.length;i+=3){
-    await Promise.all(list.slice(i,i+3).map(probeYtAspect));
-    if(i%30===0&&typeof refreshCrossBlock==="function")refreshCrossBlock();}
-  if(typeof refreshCrossBlock==="function")refreshCrossBlock();}
+  const list=[...ids].slice(0,600);
+  for(let i=0;i<list.length;i+=4){
+    await Promise.all(list.slice(i,i+4).map(probeYtAspect));
+    if(i%40===0&&typeof refreshCrossBlock==="function")refreshCrossBlock();}
+  if(typeof refreshCrossBlock==="function")refreshCrossBlock();
+  if(list.length&&curDS&&!ISLE.name){if(mainTab==="table")renderTable(curDS);}}
 function ytIdOf(url){const m=String(url||"").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);return m?m[1]:null;}
 async function fetchYtTitle(id){
   if(_ytTitles[id]!==undefined)return _ytTitles[id];
@@ -2564,6 +2652,97 @@ function renderAutoInsight(ds){
   el.style.display="";
   el.innerHTML=`<span class="ai-tag">자동 해석</span>`+out.map(s=>`<span class="ai-item">${s}</span>`).join("");
 }
+/* ═════ 유효 복귀 소재 산점 스트립(분석 탭) — "매체 평균 한 숫자"가 감추는 것을 소재 단위로 편다 ═════
+   행=매체, x=유효 복귀 %(0~100), 세로 점선=자연 복귀 기준선. 점=소재/그룹(최신 주, 크기=되돌린 유저 수).
+   측정 방식이 달라 매체 간 액면 비교가 불가함을 '모양'으로 전달: 클릭 실측=● 채운 점 · 뷰스루(노출) 포함=○ 빈 점+빗금 밑판.
+   몰로코 내부 3배 격차(수수료 소구 61~64% vs 대형 영상 20~22%)가 이 화면에서 처음 보인다. */
+function renderReengStrip(ds){
+  const host=$("#reengStrip");if(!host)return;
+  const rb=UMET&&UMET.reeng_byCreative;
+  const re=umLatest(/^reeng_w(\d{2})(\d{2})$/);
+  if(!rb||!rb.weeks||typeof rb.weeks!=="object"){host.innerHTML="";return;}
+  const wks=Object.keys(rb.weeks).filter(w=>/^\d{4}-\d{2}-\d{2}$/.test(w)).sort();
+  if(!wks.length){host.innerHTML="";return;}
+  const latest=new Map(); /* key → {..., w} 최신 주 우선 */
+  for(const w of wks){const o=rb.weeks[w];if(!o||typeof o!=="object")continue;
+    for(const k in o){const v=o[k];if(v&&typeof v==="object"&&isFinite(+v.pct))latest.set(k,{n:+v.n,valid:+v.valid,pct:+v.pct,cpv:isFinite(+v.cpv)?+v.cpv:null,w});}}
+  const NB=re&&isFinite(+re.val.naturalBaseline_pct)?+re.val.naturalBaseline_pct:null;
+  const cost2=umLatest(/^cost_2w_ssot$/);
+  const curCh=umChOf(ds&&ds.media);
+  const MEDIA=[["Meta",true],["Google",false],["Moloco",false]]; /* [매체, 뷰스루 포함 여부] */
+  const rows=MEDIA.map(([m,vt])=>{
+    const dots=[...latest.entries()].filter(([k])=>k.startsWith(m+"|"))
+      .map(([k,v])=>({key:k,name:k.slice(m.length+1),...v})).sort((a,b)=>a.pct-b.pct);
+    return {m,vt,dots};}).filter(r=>r.dots.length);
+  if(!rows.length){host.innerHTML="";return;}
+  const maxN=Math.max(...rows.flatMap(r=>r.dots.map(d=>d.n)),1);
+  const W=760,pl=64,pr=16,rowH=36,top=16,iw=W-pl-pr;
+  const H=top+rows.length*rowH+4;
+  const X=p=>pl+Math.max(0,Math.min(100,p))/100*iw;
+  let g=`<defs><pattern id="umHatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="none"/><line x1="0" y1="0" x2="0" y2="6" stroke="var(--surface-3)" stroke-width="2.5"/></pattern></defs>`;
+  for(const t of[0,25,50,75,100]){const x=X(t);
+    g+=`<line x1="${x}" y1="${top-2}" x2="${x}" y2="${H-4}" stroke="var(--surface-2)" stroke-width="1"/>`;
+    g+=`<text x="${x}" y="${top-6}" text-anchor="middle" font-size="8.5" fill="var(--faint)">${t}%</text>`;}
+  rows.forEach((r,ri)=>{
+    const y0=top+ri*rowH,cy=y0+rowH/2;
+    if(r.m===curCh)g+=`<rect x="1" y="${y0+2}" width="${W-2}" height="${rowH-4}" rx="7" fill="var(--karrot-f)" opacity="0.45"/>`;
+    if(r.vt)g+=`<rect x="${pl}" y="${y0+5}" width="${iw}" height="${rowH-10}" rx="5" fill="url(#umHatch)" opacity="0.8"/>`;
+    const c2v=cost2&&isFinite(+cost2.val[r.m])?+cost2.val[r.m]:null;
+    const mtip=`<b>${r.m}</b> — 소재 ${r.dots.length}개(최신 주 기준)`
+      +(re&&re.val.maugrowth&&re.val.maugrowth[r.m]?`<br>매체 전체: 되돌린 ${fmtInt(+re.val.maugrowth[r.m].users)}명 중 유효 ${fmtInt(+re.val.maugrowth[r.m].valid)}명 = ${(+re.val.maugrowth[r.m].pct).toFixed(1)}%`:"")
+      +(c2v!=null?`<br>최근 2주 총비용 ≈ ${fmtKRW(c2v)}원 (${escHtml(String(cost2.val.period||""))} · SSOT)`:"")
+      +(r.vt?`<br><b>뷰스루(노출) 기여 포함 — 소재 간 차이가 안 보이는 것도 선택편향(85±1% 균일) 때문. 규모·단가로만 비교</b>`:"<br>전부 클릭으로 딴 실접촉 기준");
+    g+=`<text x="${pl-10}" y="${cy+3}" text-anchor="end" font-size="10.5" font-weight="700" fill="var(--ink)" data-tip="${escAttr(mtip)}" style="cursor:help">${r.m}</text>`;
+    g+=`<text x="${pl-10}" y="${cy+14}" text-anchor="end" font-size="8.5" fill="var(--faint)">${r.vt?"○ 노출 포함":"● 클릭 실측"}</text>`;
+    /* 매체 평균 ◆ (reeng_w0713) */
+    const avg=re&&re.val.maugrowth&&re.val.maugrowth[r.m]&&isFinite(+re.val.maugrowth[r.m].pct)?+re.val.maugrowth[r.m].pct:null;
+    if(avg!=null){const x=X(avg);
+      g+=`<path d="M ${x} ${cy-5.5} L ${x+5} ${cy} L ${x} ${cy+5.5} L ${x-5} ${cy} Z" fill="var(--ink)" opacity="0.8" data-tip="${escAttr(`<b>${r.m} 매체 평균 ${avg.toFixed(1)}%</b> (${+re.m[1]}/${+re.m[2]} 주)`)}"/>`;}
+    r.dots.forEach((d,i)=>{
+      const rr=3+Math.sqrt(d.n/maxN)*6.5;
+      const jit=((i%3)-1)*7; /* 겹침 방지 결정적 지터 */
+      const cx=X(d.pct),cyy=cy+jit;
+      const nm=escAttr(trunc(d.name,44));
+      const disp=r.m==="Google"?"[그룹] "+groupPrettyName(d.name.replace(/^\[그룹\]\s*/,"")):d.name;
+      const tip=`<b>${escHtml(trunc(disp,44))}</b><br>유효 복귀 <b>${d.pct.toFixed(1)}%</b> · 되돌린 ${fmtInt(d.n)}명 중 ${fmtInt(d.valid)}명 (${md2(d.w)} 주)`
+        +(d.cpv!=null?`<br>유효 복귀 1명당 ₩${fmtInt(d.cpv)}`:"")
+        +(NB!=null?`<br>자연 기준선 ${NB.toFixed(1)}% ${d.pct>=NB?"이상":"미만"}`:"")
+        +(r.vt?"<br>뷰스루 포함 측정 — 액면 비교 금지":"");
+      const go=(r.m!=="Google")?` data-go="1" data-ch="${escAttr(r.m)}" data-nm="${nm}" style="cursor:pointer"`:"";
+      g+=r.vt
+        ?`<circle cx="${cx.toFixed(1)}" cy="${cyy.toFixed(1)}" r="${rr.toFixed(1)}" fill="var(--surface)" stroke="var(--g2)" stroke-width="1.8" data-tip="${escAttr(tip)}"${go}/>`
+        :`<circle cx="${cx.toFixed(1)}" cy="${cyy.toFixed(1)}" r="${rr.toFixed(1)}" fill="var(--g2)" fill-opacity="0.82" stroke="var(--surface)" stroke-width="1.5" data-tip="${escAttr(tip)}"${go}/>`;});});
+  if(NB!=null){const x=X(NB);
+    g+=`<line x1="${x}" y1="${top-2}" x2="${x}" y2="${H-4}" stroke="var(--ink)" stroke-width="1.4" stroke-dasharray="4 3" opacity="0.75" data-tip="${escAttr(`<b>자연 복귀 기준선 ${NB.toFixed(1)}%</b><br>광고 없이도 스스로 돌아오는 비율 — 이 선을 넘어야 광고의 몫`)}"/>`;
+    g+=`<text x="${x+4}" y="${top+7}" font-size="9" font-weight="750" fill="var(--ink)">자연 ${NB.toFixed(0)}%</text>`;}
+  const wkLab=wks.map(w=>md2(w)).join("·");
+  host.innerHTML=`<div class="rst">
+    <div class="rst-h">유효 복귀 — 소재별 실증<span class="uc-q" data-tip="${escAttr(`<b>유효 복귀(재관여)</b><br>${escHtml(String(rb.basis||""))}<br>측정 방식이 매체마다 달라 <b>액면 비교 금지</b> — 정확한 증분 판별은 홀드아웃 실험 필요(이 실측이 그 근거)`)}">?</span><span class="uc-when">${wkLab} 주 · 점=소재(크기=되돌린 유저)</span></div>
+    <svg viewBox="0 0 ${W} ${H}">${g}</svg>
+    <div class="rst-lgd"><span><b>●</b> 클릭 실측</span><span><b>○</b>+빗금 노출(뷰스루) 포함 — 액면 비교 금지</span><span><b>◆</b> 매체 평균</span><span><b>┊</b> 자연 복귀 기준선</span></div>
+  </div>`;
+  host.querySelectorAll("[data-go]").forEach(el=>{el.addEventListener("click",()=>{hideTip();crossGo(el.dataset.ch,el.dataset.nm);});});}
+function md2(w){return String(w||"").slice(5,7).replace(/^0/,"")+"/"+String(w||"").slice(8,10).replace(/^0/,"");}
+/* 구글 실적 라벨 × 주간 비용 스택바 — 구글 매체 선택 시에만. 비용의 89%가 좋음·인기순에 몰려있음이 한눈에 */
+function renderGlabelBar(ds){
+  const host=$("#glabelBar");if(!host)return;
+  const gl=umLatest(/^glabel_w(\d{2})(\d{2})$/);
+  if(!gl||!gl.val.dist||typeof gl.val.dist!=="object"||!String((ds&&ds.media)||"").startsWith("Google")){host.innerHTML="";return;}
+  const dist=gl.val.dist;
+  const order=Object.keys(dist).filter(k=>dist[k]&&isFinite(+dist[k].cost)).sort((a,b)=>+dist[b].cost-+dist[a].cost);
+  if(!order.length){host.innerHTML="";return;}
+  const tot=order.reduce((s,k)=>s+ +dist[k].cost,0)||1;
+  const totN=order.reduce((s,k)=>s+(+dist[k].n||0),0);
+  const COL={"매우 좋음":"var(--g2)","좋음":"var(--g1)","낮음":"var(--w1)","학습":"var(--mid)"};
+  const segs=order.map(k=>{const o=dist[k],lab=PERF_LABEL_ALIAS[k]||k,sh=+o.cost/tot*100;
+    return `<i style="width:${sh.toFixed(1)}%;background:${COL[lab]||"var(--mid)"}" data-tip="${escAttr(`<b>${lab}${lab!==k?` (구글 원문 '${k}')`:""}</b> — ${fmtInt(o.n)}개 애셋<br>주간 비용 ${fmtKRW(+o.cost)}원 · 전체의 ${sh.toFixed(0)}%`)}">${sh>=13?`<b>${escHtml(lab)} ${sh.toFixed(0)}%</b>`:""}</i>`;}).join("");
+  const lgd=order.map(k=>{const lab=PERF_LABEL_ALIAS[k]||k;
+    return `<span><i style="background:${COL[lab]||"var(--mid)"}"></i>${escHtml(lab)} ${fmtInt(dist[k].n)}개</span>`;}).join("");
+  host.innerHTML=`<div class="glb">
+    <span class="glb-k">구글 실적 라벨 × 주간 비용<span class="uc-q" data-tip="${escAttr(`<b>구글 실적 라벨 분포(비용 가중)</b><br>${escHtml(String(gl.val.basis||""))}`)}">?</span><em>${+gl.m[1]}/${+gl.m[2]} 주 · ${fmtInt(totN)}애셋 · 라벨은 구글만 제공</em></span>
+    <div class="glb-bar">${segs}</div>
+    <div class="glb-lgd">${lgd}</div>
+  </div>`;}
 /* ═════ 유저 실증 지표 카드(분석 탭 상단) — A. MAU와 페이드 기여 · B. 매체별 MAU(설치 기여) · C. 설치 대비 삭제 ═════
    전 매체 공통 스냅샷(월간·28일 실측)이라 아래 기간·매체 필터와 무관 — 현재 매체 행만 주황으로 강조해 맥락을 잇는다.
    막대는 식별을 색이 아니라 라벨·값 텍스트로 전달(막대는 크기 비교 보조). UMET 없거나 파일 임시 분석이면 통째 숨김 */
@@ -2590,7 +2769,8 @@ function renderUmetCards(ds){
     cards.push(`<div class="umet-card">
       <div class="uc-k">MAU와 페이드 기여<span class="uc-q" data-tip="${escAttr(tip)}" title="자세한 기준은 마우스를 올려 확인">?</span><span class="uc-when">${+mo.m[2]}월 실측</span></div>
       <div class="uc-big"><b class="num">${nInt(mo.val.kr_total)}</b><span>전사 공식 MAU</span></div>
-      <div class="uc-share" title="${escAttr(`이 중 페이드 터치 활성 ${nPct(share)}`)}"><i style="width:${Math.max(0,Math.min(100,share||0)).toFixed(1)}%"></i></div>
+      <div class="uc-share" title="${escAttr(`이 중 페이드 터치 활성 ${nPct(share)}`)}"><i style="width:${Math.max(0,Math.min(100,share||0)).toFixed(1)}%"></i>${(()=>{const ho=umLatest(/^mau_hoian_(\d{4})_(\d{2})$/);const hp=ho&&isFinite(+ho.val.paid_touch_share_pct)?+ho.val.paid_touch_share_pct:null;
+        return hp!=null?`<u style="left:${Math.min(99,hp).toFixed(1)}%" data-tip="${escAttr(`<b>보조 눈금 — 회원 동일계열 기준 ${hp.toFixed(1)}%</b><br>${escHtml(String(ho.val.basis||""))}<br>세 MAU 정의는 합산·혼용 금지`)}"></u>`:"";})()}</div>
       <div class="uc-sub">페이드 터치 활성 <b class="num">${nInt(touch)}</b> · <b>${nPct(share)}</b> — 기여 유저 중 실방문(증분 아님)</div>
       ${rows.length?`<div class="uc-rows">${rows.map(r=>`<div class="uc-row${r.c===curCh?" cur":""}" title="${escAttr(`${r.c} 기여 유저 중 ${+mo.m[2]}월 실방문 ${nInt(r.v)}명 — 기여치이지 증분치 아님`)}"><span class="ur-l">${r.c}</span><span class="ur-b"><i style="width:${(r.v/mx*100).toFixed(1)}%"></i></span><span class="ur-v num">${nInt(r.v)}</span></div>`).join("")}</div>`:""}
     </div>`);}
@@ -2623,7 +2803,9 @@ function renderUmetCards(ds){
   wrap.hidden=false;
   const upd=$("#umetUpd");if(upd)upd.textContent=`umetrics · ${UMET.updated||"?"} 갱신 · 유저 단위 실증(읽기 전용)`;
   host.innerHTML=cards.join("");
-  host.querySelectorAll("[data-tip]").forEach(el=>{
+  renderReengStrip(ds);
+  renderGlabelBar(ds);
+  wrap.querySelectorAll("[data-tip]").forEach(el=>{
     el.addEventListener("mousemove",ev=>showTip(el.dataset.tip||"",ev.clientX,ev.clientY));
     el.addEventListener("mouseleave",hideTip);});}
 function renderKeyrow(ds){const L=ds.L,a=ds.agg,tiles=[];
@@ -3652,14 +3834,18 @@ function qualityHTML(ds,e){
    "매체|소재"(구글은 "[그룹] 광고그룹명") 키로 최신 주부터 조회. 값 없으면 미렌더.
    각 % 통계엔 그 주 전체 코호트 분포로 만든 막대(0~주 최대)와 중앙값 눈금을 붙여 한눈에 상대 위치를 읽게 한다 */
 function umCohortHTML(ds,e){
-  const hit=umCohortFor(ds,e);if(!hit)return "";
-  const c=hit.cohort||{};
-  const ix=umIndex(),wb=ix&&ix.byWeek.get(hit.week);
-  const pool=k=>{const a=[];if(wb)for(const v of wb.cohort.values()){const x=+v[k];if(isFinite(x))a.push(x);}return a.sort((x,y)=>x-y);};
-  const wkLab=hit.week.slice(5).replace("-","/")+" 주";
+  const hit=umCohortFor(ds,e),tr=umTrendFor(ds,e),re=umReengFor(ds,e),lf=umLifeFor(ds,e);
+  if(!hit&&!tr&&!re&&!lf)return "";
+  const md=w=>String(w||"").slice(5,7).replace(/^0/,"")+"/"+String(w||"").slice(8,10).replace(/^0/,"");
   const base="설치 코호트 실방문 기준 · 하한 추정치";
+  const NB=(()=>{const r=umLatest(/^reeng_w(\d{2})(\d{2})$/);return r&&isFinite(+r.val.naturalBaseline_pct)?+r.val.naturalBaseline_pct:null;})();
+  /* ── ① 최신 주 코호트 스탯(신규·D1·D7·습관·서비스 도달 + D30) ── */
+  const c=(hit&&hit.cohort)||{};
+  const ix=umIndex(),wb=hit&&ix&&ix.byWeek.get(hit.week);
+  const pool=k=>{const a=[];if(wb)for(const v of wb.cohort.values()){const x=+v[k];if(isFinite(x))a.push(x);}return a.sort((x,y)=>x-y);};
+  const wkLab=hit?md(hit.week)+" 주":"";
   const stats=[];
-  if(hit.news!=null)stats.push({v:fmtInt(hit.news),k:"신규 실유저",
+  if(hit&&hit.news!=null)stats.push({v:fmtInt(hit.news),k:"신규 실유저",
     tip:`<b>신규 실유저 ${fmtInt(hit.news)}명</b><br>${wkLab} 설치 코호트 — 도달=배타 검증 완료(오차&lt;0.6%)<br>${base}`});
   const pctStat=(key,lab,extra)=>{
     const v=+c[key];if(!isFinite(v))return;
@@ -3674,21 +3860,93 @@ function umCohortHTML(ds,e){
   pctStat("habit4","습관 형성 4일+","첫 주 4일 이상 방문 — 습관 형성 신호");
   pctStat("home7","홈피드 7일","7일 내 홈피드 방문 비율");
   pctStat("flea7","중고거래 7일","7일 내 중고거래 방문 비율");
-  if(!stats.length)return "";
+  if(tr&&tr.d30)stats.push({v:tr.d30.d30w.toFixed(1)+"%",k:"D30 주간",
+    tip:`<b>D30(주간 방문) ${tr.d30.d30w.toFixed(1)}%</b><br>${md(tr.d30.w)} 주 설치 코호트의 4주차(d0+25~31) 주간 방문율 · 표본 ${fmtInt(tr.d30.n)}명<br>${base}`});
+  /* ── ② 주차 추이 미니 차트: 신규 실유저 막대 + D1/D7 라인(+D30 마커) ── */
+  let charts="";
+  if(tr&&tr.weeks.length){
+    const wks=tr.weeks;
+    const nuW=wks.filter(o=>o.nu!=null);
+    let nuSvg="";
+    if(nuW.length>=2){
+      const W=150,H=74,pt=14,pb=14,pl=4,pr=4,iw=W-pl-pr,ih=H-pt-pb;
+      const mx=Math.max(...nuW.map(o=>o.nu))||1;
+      const bw=Math.min(22,iw/nuW.length-4);
+      let g="";
+      nuW.forEach((o,i)=>{const x=pl+(i+0.5)*(iw/nuW.length)-bw/2,bh=Math.max(1.5,o.nu/mx*ih);
+        g+=`<rect x="${x.toFixed(1)}" y="${(pt+ih-bh).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="2" fill="var(--karrot)" data-tip="${escAttr(`<b>${md(o.w)} 주</b><br>신규 실유저 ${fmtInt(o.nu)}명`)}"/>`;
+        g+=`<text x="${(x+bw/2).toFixed(1)}" y="${H-3}" text-anchor="middle" font-size="8" fill="var(--faint)">${md(o.w)}</text>`;});
+      const last=nuW[nuW.length-1];
+      g+=`<text x="${W-pr}" y="${pt-4}" text-anchor="end" font-size="9" font-weight="700" fill="var(--ink)">${fmtInt(last.nu)}</text>`;
+      nuSvg=`<div class="us-mini"><svg viewBox="0 0 ${W} ${H}">${g}</svg><span class="us-cap">신규 실유저 · 주차</span></div>`;}
+    const rtW=wks.filter(o=>o.d1!=null||o.d7!=null);
+    let rtSvg="";
+    if(rtW.length>=2||(rtW.length>=1&&tr.d30)){
+      const W=196,H=74,pt=12,pb=14,pl=6,pr=26,iw=W-pl-pr,ih=H-pt-pb;
+      const vals=[...rtW.map(o=>o.d1||0),...rtW.map(o=>o.d7||0),tr.d30?tr.d30.d30w:0];
+      const mx=Math.max(...vals,10)*1.12;
+      const X=i=>pl+(rtW.length<2?iw/2:i/(rtW.length-1)*iw),Y=v=>pt+(1-v/mx)*ih;
+      let g="";
+      const line=(k,col)=>{const pts=rtW.map((o,i)=>o[k]!=null?[X(i),Y(o[k]),o]:null).filter(Boolean);
+        if(pts.length>=2){let d=`M ${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;for(let i=1;i<pts.length;i++)d+=` L ${pts[i][0].toFixed(1)} ${pts[i][1].toFixed(1)}`;
+          g+=`<path d="${d}" fill="none" stroke="${col}" stroke-width="1.8"/>`;}
+        pts.forEach(p=>{g+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.8" fill="${col}" data-tip="${escAttr(`<b>${md(p[2].w)} 주 코호트</b><br>${k.toUpperCase()} ${p[2][k].toFixed(1)}%${p[2].n?` · 표본 ${fmtInt(p[2].n)}명`:""}<br>${base}`)}"/>`;});
+        if(pts.length){const lp=pts[pts.length-1];
+          g+=`<text x="${(lp[0]+5).toFixed(1)}" y="${(lp[1]+3).toFixed(1)}" font-size="8.5" font-weight="700" fill="${col}">${k.toUpperCase()}</text>`;}};
+      line("d1","var(--g2)");line("d7","var(--g1)");
+      if(tr.d30){const i=rtW.findIndex(o=>o.w===tr.d30.w);
+        const x=i>=0?X(i):X(0),y=Y(tr.d30.d30w);
+        g+=`<path d="M ${x.toFixed(1)} ${(y-4.4).toFixed(1)} L ${(x+4.4).toFixed(1)} ${y.toFixed(1)} L ${x.toFixed(1)} ${(y+4.4).toFixed(1)} L ${(x-4.4).toFixed(1)} ${y.toFixed(1)} Z" fill="var(--gold)" data-tip="${escAttr(`<b>D30(주간) ${tr.d30.d30w.toFixed(1)}%</b><br>${md(tr.d30.w)} 주 코호트의 4주차 주간 방문율 · 표본 ${fmtInt(tr.d30.n)}명`)}"/>`;
+        g+=`<text x="${(x+6).toFixed(1)}" y="${(y-5).toFixed(1)}" font-size="8.5" font-weight="700" fill="var(--gold)">D30</text>`;}
+      rtW.forEach((o,i)=>{g+=`<text x="${X(i).toFixed(1)}" y="${H-3}" text-anchor="middle" font-size="8" fill="var(--faint)">${md(o.w)}</text>`;});
+      rtSvg=`<div class="us-mini"><svg viewBox="0 0 ${W} ${H}">${g}</svg><span class="us-cap">주차 코호트 재방문 추이</span></div>`;}
+    if(nuSvg||rtSvg)charts=`<div class="us-charts">${nuSvg}${rtSvg}</div>`;}
+  /* ── ③ 소재별 유효 복귀(재관여) — 자연 기준선 눈금과 함께, 메타는 뷰스루 포함 표시 ── */
+  let reengHtml="";
+  if(re){
+    const isMeta=re.ch==="Meta";
+    const rows=re.seq.slice(-2).map(o=>{
+      const tip=`<b>${md(o.w)} 주 유효 복귀 ${o.pct.toFixed(1)}%</b><br>되돌린 유저 ${fmtInt(o.n)}명 중 유효 복귀 ${fmtInt(o.valid)}명${o.cpv!=null?`<br>유효 복귀 1명당 ₩${fmtInt(o.cpv)}`:""}${NB!=null?`<br>자연 복귀 기준선 ${NB.toFixed(1)}%(눈금) 대비로 읽을 것`:""}${isMeta?`<br><b>메타는 뷰스루(노출) 기여 포함 — 액면 비교 금지</b>`:""}`;
+      return `<div class="us-rrow" data-tip="${escAttr(tip)}"><span class="us-rw">${md(o.w)}</span><div class="us-rbar${isMeta?" vt":""}"><i style="width:${Math.max(2,Math.min(100,o.pct)).toFixed(1)}%"></i>${NB!=null?`<u style="left:${Math.min(99,NB).toFixed(1)}%"></u>`:""}</div><b class="num">${o.pct.toFixed(1)}%</b>${o.cpv!=null?`<span class="us-cpv num">₩${fmtInt(o.cpv)}</span>`:""}</div>`;}).join("");
+    reengHtml=`<div class="us-sec"><span class="us-sk">유효 복귀${isMeta?`<i class="us-vt" title="뷰스루(노출) 기여 포함 측정 — 클릭 실측 매체와 액면 비교 금지">○</i>`:""}</span><div class="us-rrows">${rows}</div></div>`;}
+  /* ── ④ 라이프사이클 타임라인 — 개시→최근, 피크▲·최대 증액↑ 마커 ── */
+  let lifeHtml="";
+  if(lf){
+    const t0=Date.parse(lf.f),t1=Date.parse(lf.l);
+    if(isFinite(t0)&&isFinite(t1)&&t1>=t0){
+      const lc=UMET.lifecycle;let maxL="";
+      for(const k in lc){if(k==="basis")continue;const v=lc[k];if(v&&v.l&&v.l>maxL)maxL=v.l;}
+      const ongoing=lf.l===maxL;
+      const W=250,H=30,pl=6,pr=6,base_y=17,iw=W-pl-pr;
+      const X=d=>{const t=Date.parse(d);return pl+(t1===t0?iw/2:(t-t0)/(t1-t0)*iw);};
+      let g=`<line x1="${pl}" y1="${base_y}" x2="${W-pr}" y2="${base_y}" stroke="var(--surface-3)" stroke-width="4" stroke-linecap="round"/>`;
+      g+=`<line x1="${pl}" y1="${base_y}" x2="${W-pr}" y2="${base_y}" stroke="var(--mid)" stroke-width="4" stroke-linecap="round" data-tip="${escAttr(`<b>집행 ${fmtInt(lf.wks)}주</b> · ${md(lf.f)} ~ ${md(lf.l)}${ongoing?" (진행중)":""}<br>누적 광고비 ${fmtKRW(lf.tot)}원${lf.hi?`<br>고소진 유지 ${fmtInt(lf.hi)}주(매체 상위 25% 이상)`:""}`)}"/>`;
+      if(lf.rw&&isFinite(+lf.rx)){const x=X(lf.rw);
+        g+=`<path d="M ${x.toFixed(1)} ${base_y-4} L ${x.toFixed(1)} ${base_y-11}" stroke="var(--g2)" stroke-width="1.8" marker-end="none"/><path d="M ${(x-3).toFixed(1)} ${base_y-8.5} L ${x.toFixed(1)} ${base_y-12.5} L ${(x+3).toFixed(1)} ${base_y-8.5}" fill="none" stroke="var(--g2)" stroke-width="1.8" data-tip="${escAttr(`<b>최대 증액 ×${(+lf.rx).toFixed(1)}</b> · ${md(lf.rw)} 주<br>직전 주 대비 주간 광고비 증가 배수`)}"/>`;
+        g+=`<text x="${x.toFixed(1)}" y="${base_y-15}" text-anchor="middle" font-size="8" font-weight="700" fill="var(--g2)">×${(+lf.rx).toFixed(1)}</text>`;}
+      if(lf.pk_w){const x=X(lf.pk_w);
+        g+=`<path d="M ${x.toFixed(1)} ${base_y+4} L ${(x-3.6).toFixed(1)} ${base_y+10} L ${(x+3.6).toFixed(1)} ${base_y+10} Z" fill="var(--karrot)" data-tip="${escAttr(`<b>피크 주간 광고비 ${fmtKRW(lf.pk)}원</b> · ${md(lf.pk_w)} 주`)}"/>`;}
+      g+=`<circle cx="${(W-pr).toFixed(1)}" cy="${base_y}" r="3.4" fill="${ongoing?"#35B979":"var(--faint)"}" data-tip="${escAttr(ongoing?"진행중 — 최신 주에도 집행":`중단 — 마지막 집행 ${md(lf.l)} 주`)}"/>`;
+      g+=`<text x="${pl}" y="${H-1}" font-size="8" fill="var(--faint)">${md(lf.f)}</text><text x="${W-pr}" y="${H-1}" text-anchor="end" font-size="8" fill="var(--faint)">${md(lf.l)}</text>`;
+      lifeHtml=`<div class="us-sec"><span class="us-sk">수명 ${fmtInt(lf.wks)}주 · ${fmtKRW(lf.tot)}</span><svg class="us-life" viewBox="0 0 ${W} ${H}">${g}</svg></div>`;}}
+  if(!stats.length&&!charts&&!reengHtml&&!lifeHtml)return "";
+  /* 헤더 — 컨텍스트 최소 표기 + 상세 기준은 ? 툴팁 */
   const n=+((c&&c.n)||0);
-  const hdr=[`${wkLab} 설치 코호트`];
-  if(n)hdr.push(`표본 ${fmtInt(n)}명 실측`);
-  if(hit.grpLevel)hdr.push("광고그룹 단위 제공");
+  const hdr=[];
+  if(hit){hdr.push(`${wkLab} 설치 코호트`);if(n)hdr.push(`표본 ${fmtInt(n)}명 실측`);if(hit.grpLevel)hdr.push("광고그룹 단위 제공");}
+  else if(re)hdr.push("재관여 실증");
   let tip=`<b>실유저(주간)</b><br>유저 단위 실증(BigQuery·karrotmetrics 집계, 유저 ID 무저장)<br>${base}`;
-  if(hit.grpLevel)tip+=`<br>구글은 소재 단위 미제공 — 소속 광고그룹 <b>${escHtml(trunc(hit.grpName||"",44))}</b> 값을 광고그룹 단위로 표시`;
-  if(hit.ch==="Moloco"&&hit.noteMoloco)tip+=`<br>${escHtml(hit.noteMoloco)}`;
-  if(hit.ch==="Moloco"&&hit.news==null&&hit.noteMoloco)hdr.push("신규 없음 정상(재관여 전담)");
+  if(hit&&hit.grpLevel)tip+=`<br>구글은 소재 단위 미제공 — 소속 광고그룹 <b>${escHtml(trunc(hit.grpName||"",44))}</b> 값을 광고그룹 단위로 표시`;
+  const nmol=(umIndex()&&umIndex().byWeek.get(umIndex().weeks[0])||{}).noteMoloco||"";
+  if(umChOf(ds&&ds.media)==="Moloco"&&nmol)tip+=`<br>${escHtml(nmol)}`;
+  if(hit&&hit.ch==="Moloco"&&hit.news==null&&nmol)hdr.push("신규 없음 정상(재관여 전담)");
   return `<div class="umet-strip">
     <div class="us-h">실유저(주간)<span class="uc-q" data-tip="${escAttr(tip)}" title="유저 단위 실증 — 마우스를 올려 기준 확인">?</span><span class="n">${hdr.map(escHtml).join(" · ")}</span></div>
-    <div class="umet-stats">${stats.map(s=>`<div class="umet-stat" data-tip="${escAttr(s.tip)}">`
+    ${stats.length?`<div class="umet-stats">${stats.map(s=>`<div class="umet-stat" data-tip="${escAttr(s.tip)}">`
       +`<span class="us-v num">${s.v}</span><span class="us-k">${s.k}</span>`
       +(s.bar?`<div class="us-bar"><i style="width:${Math.max(2,Math.min(100,s.bar.w)).toFixed(1)}%"></i>${s.bar.t!=null?`<u style="left:${Math.max(0,Math.min(99,s.bar.t)).toFixed(1)}%"></u>`:""}</div>`:"")
-      +(s.d?`<span class="us-d">${s.d}</span>`:"")+`</div>`).join("")}</div>
+      +(s.d?`<span class="us-d">${s.d}</span>`:"")+`</div>`).join("")}</div>`:""}
+    ${charts}${reengHtml}${lifeHtml}
   </div>`;}
 /* ═════ 교차 매체 동일/유사 소재 탐지 ═════
    "이 소재가 다른 매체에선 어떤가"를 보기 위해, 신호 강한 순서로 매칭한다:
@@ -3754,23 +4012,26 @@ const _RATIOS=[["16:9",16/9],["9:16",9/16],["1:1",1],["4:3",4/3],["3:4",3/4],["4
 function ratioLabel(r){let best=null,bd=1e9;for(const[lab,v]of _RATIOS){const d=Math.abs(r-v)/v;if(d<bd){bd=d;best=lab;}}return bd<=0.06?best:null;}
 function arInfoOf(e){
   const u=previewUrlOf(e);
+  /* 유튜브는 oar 실측(실제 캔버스 픽셀)이 최우선 — 신고값·방향 클래스보다 정밀 */
+  const ytid=ytIdOf(e._g_url||u||e.name);
+  const ya=ytid&&YTAR[ytid];
+  if(ya&&ya[0]>100)return{w:ya[0],h:ya[1],r:ya[0]/ya[1],cls:ya[0]/ya[1]>1.05?"가로":ya[0]/ya[1]<0.95?"세로":"정사각",exact:true,oriOnly:false,src:"oar"};
   const sz=(e.tags&&e.tags.size)||e._m_res||"";
   const m=String(sz).match(/(\d+)\s*[x×]\s*(\d+)/i);
-  let w=0,h=0,exact=true,oriOnly=false;
-  if(m){w=+m[1];h=+m[2];}
+  let w=0,h=0,exact=true,oriOnly=false,src="decl";
+  if(m){w=+m[1];h=+m[2];if(e._szMeas)src="mdim";}
   else{const d=u&&(typeof MDIM!=="undefined")&&MDIM[u];
-    if(d&&d.w&&d.h){w=d.w;h=d.h;}
+    if(d&&d.w&&d.h){w=d.w;h=d.h;src="mdim";}
     else{
-      /* 구글 공식 '방향'(주간 루틴 수집) — 화면비 클래스로는 가장 신뢰 가능 */
+      /* 구글 공식 '방향'(주간 루틴 수집) — oar 실측 없을 때의 화면비 클래스 */
       const ori=String(e._g_orientation||"");
-      if(/세로/.test(ori)){w=9;h=16;exact=false;oriOnly=true;}
-      else if(/정사각|정방/.test(ori)){w=1;h=1;exact=false;oriOnly=true;}
-      else if(/가로/.test(ori)){w=16;h=9;exact=false;oriOnly=true;}
-      else{const id=ytIdOf(e._g_url||u||e.name);
-        if(id&&YTAR[id]){w=YTAR[id][0];h=YTAR[id][1];exact=false;}}}}
+      if(/세로/.test(ori)){w=9;h=16;exact=false;oriOnly=true;src="ori";}
+      else if(/정사각|정방/.test(ori)){w=1;h=1;exact=false;oriOnly=true;src="ori";}
+      else if(/가로/.test(ori)){w=16;h=9;exact=false;oriOnly=true;src="ori";}
+      else if(ya){w=ya[0];h=ya[1];exact=false;src="oar";}}} /* oar 404=가로 확정(16:9 표준) */
   if(!(w>0&&h>0))return null;
   const r=w/h;
-  return{w,h,r,cls:r>1.05?"가로":r<0.95?"세로":"정사각",exact,oriOnly};}
+  return{w,h,r,cls:r>1.05?"가로":r<0.95?"세로":"정사각",exact,oriOnly,src};}
 /* 영상 표준 해상도 — 광고 영상은 사실상 16:9·9:16·1:1 세 규격으로만 제작된다.
    실측 검증(해상도가 확인된 영상 361개): 1080×1920·1080×1080·1920×1080이 349개(96.7%),
    화면비 기준으로는 360개(99.7%)가 이 셋. 유튜브 영상은 스트리밍이라 픽셀을 직접 잴 방법이 없으므로
@@ -3789,9 +4050,11 @@ function arDispOf(e){ /* 해상도 표시 — ① 실측 픽셀 ② 영상은 �
   const rl=ratioLabel(ai.r);return ai.cls+(rl?" "+rl:"");}
 /* 해상도 출처 툴팁 — 실측인지 표준 규격 환산인지 숨기지 않고 밝힌다 */
 function arDispTitle(e){const ai=arInfoOf(e);if(!ai)return "";
-  if(ai.exact)return "실측 해상도";
+  if(ai.src==="oar")return ai.exact?"실측 해상도 — 유튜브 원본 캔버스(oar 썸네일) 실측":"유튜브 실측(가로 확정) — 표준 규격(1920×1080)으로 표기";
+  if(ai.src==="mdim")return "실측 해상도 — 영상 파일 메타데이터 측정"+(e&&e._szDecl?` (리포트 표기 ${e._szDecl}와 달라 실측값 우선)`:"");
+  if(ai.exact)return "리포트 표기 해상도";
   if(isVideoEnt(e)&&stdVidDim(ai.cls))
-    return `${ai.oriOnly?"구글 공식 '방향'":"썸네일 화면비 실측"}으로 확인한 ${ai.cls} 영상 — 유튜브는 픽셀을 직접 잴 수 없어 표준 규격(${stdVidDim(ai.cls)})으로 표기`;
+    return `구글 공식 '방향'으로 확인한 ${ai.cls} 영상 — 표준 규격(${stdVidDim(ai.cls)})으로 표기`;
   return "화면비만 확인됨";}
 function _arOf(e){const ai=arInfoOf(e);return ai?ai.r:null;}
 function crossMediaMatches(ds,e){
@@ -4273,14 +4536,16 @@ function fillIsland(ds,e,inner){const L=ds.L;
     const cell=tr.children[1];if(!cell||cell.textContent.trim()!=="–")return;
     const u=tr.dataset.preview||"";
     const ytid=ytIdOf(u);
-    if(ytid){ /* 유튜브 — 썸네일 레터박스 실측 비율 도착 시 표준 해상도(1080×1920 등)로 채움 */
-      const fill=()=>{if(!YTAR[ytid])return false;
-        const r=YTAR[ytid][0]/YTAR[ytid][1];
+    if(ytid){ /* 유튜브 — oar 실측 도착 시 실제 캔버스 크기(비가로) 또는 표준 16:9(가로)로 채움 */
+      const fill=()=>{const ya=YTAR[ytid];if(!ya)return false;
+        if(ya[0]>100){cell.textContent=ya[0]+"×"+ya[1];
+          cell.title="실측 해상도 — 유튜브 원본 캔버스(oar 썸네일) 실측";return true;}
+        const r=ya[0]/ya[1];
         const cls=r>1.05?"가로":r<0.95?"세로":"정사각";
         const s=stdVidDim(cls);
         if(!s)return false;
         cell.textContent=s;
-        cell.title=`썸네일 화면비 실측으로 확인한 ${cls} 영상 — 유튜브는 픽셀을 직접 잴 수 없어 표준 규격(${s})으로 표기`;
+        cell.title=`유튜브 실측(${cls} 확정) — 표준 규격(${s})으로 표기`;
         return true;};
       if(!fill())probeYtAspect(ytid).then(()=>{fill();});
       return;}
@@ -5504,9 +5769,10 @@ function reengBadgeHTML(media){
     cost!=null?`유효 복귀 1인당 ₩${Math.round(cost).toLocaleString("ko-KR")}`:null,
     re.val.cost_note?String(re.val.cost_note):null,
     nmol||null].filter(Boolean).join(" · ");
-  return `<div class="reeng" title="${escAttr(tip)}">
-    <div class="rg-t">유효 복귀 <span>${wk}</span><b class="num">${pct.toFixed(1)}%</b></div>
-    <div class="rg-bar"><i style="width:${Math.max(2,Math.min(100,pct)).toFixed(1)}%"></i>${isFinite(nb)?`<u style="left:${Math.max(0,Math.min(99,nb)).toFixed(1)}%"></u>`:""}</div>
+  const vt=ch==="Meta"; /* 뷰스루(노출) 기여 포함 측정 — 빗금 채움 + ○ 글리프로 '같은 자가 아님'을 표시 */
+  return `<div class="reeng" title="${escAttr(tip+(vt?" · ○ 뷰스루(노출) 기여 포함 측정 — 클릭 실측 매체와 액면 비교 금지":" · ● 클릭 실측"))}">
+    <div class="rg-t">유효 복귀${vt?' <b class="rg-vt">○</b>':""} <span>${wk}</span><b class="num">${pct.toFixed(1)}%</b></div>
+    <div class="rg-bar${vt?" vt":""}"><i style="width:${Math.max(2,Math.min(100,pct)).toFixed(1)}%"></i>${isFinite(nb)?`<u style="left:${Math.max(0,Math.min(99,nb)).toFixed(1)}%"></u>`:""}</div>
     <div class="rg-s">${isFinite(nb)?`<span>자연 기준선 <b>${nb.toFixed(1)}%</b></span>`:""}${cost!=null?`<span>· 복귀당 <b>₩${Math.round(cost).toLocaleString("ko-KR")}</b></span>`:""}</div>
   </div>`;}
 function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)return;
