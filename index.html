@@ -253,9 +253,9 @@
   .peer-bars{display:flex;flex-direction:column;gap:5px;min-width:0}
   .peer-row{display:grid;grid-template-columns:38px minmax(40px,1fr) 56px max-content;align-items:center;gap:9px;font-size:var(--fs-1)}
   .peer-row .pr-k{color:var(--muted);font-weight:650;white-space:nowrap}
-  .peer-row .pr-b{position:relative;height:7px;border-radius:4px;background:var(--surface-3)}
-  .peer-row .pr-b i{display:block;height:100%;background:var(--g2);border-radius:4px;min-width:2px}
-  .peer-row .pr-b u{position:absolute;left:50%;top:-2px;bottom:-2px;width:2px;background:var(--mid);opacity:.7;border-radius:1px}
+  .peer-row .pr-b{position:relative;height:3px;border-radius:2px;background:var(--surface-3)}
+  .peer-row .pr-b i{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--g2);box-shadow:0 0 0 2px var(--surface)}
+  .peer-row .pr-b u{position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:var(--mid);opacity:.75;border-radius:1px;transform:translateX(-1px)}
   .peer-row .pr-v{font-size:var(--fs-2);font-weight:750;color:var(--ink);white-space:nowrap;text-align:right}
   .peer-row .pr-x{color:var(--faint);white-space:nowrap}
 
@@ -268,9 +268,11 @@
   .umet-stat{min-width:0}
   .umet-stat .us-v{font-size:var(--fs-4);font-weight:750;letter-spacing:-.01em;display:block}
   .umet-stat .us-k{font-size:var(--fs-1);color:var(--muted);font-weight:600;display:block;margin-top:1px;white-space:nowrap}
-  .umet-stat .us-bar{position:relative;height:4px;border-radius:2px;background:var(--surface-3);margin-top:5px;overflow:visible;min-width:64px}
-  .umet-stat .us-bar i{display:block;height:100%;background:var(--karrot);border-radius:0 2px 2px 0;min-width:2px}
-  .umet-stat .us-bar u{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--mid);border-radius:1px}
+  /* 분포 트랙 + 위치 마커 — 채움 막대와 달리 '비슷한 값'은 마커가 가운데 몰려 자리를 뺏지 않는다 */
+  .umet-stat .us-bar{position:relative;height:3px;border-radius:2px;background:var(--surface-3);margin-top:7px;overflow:visible;min-width:64px}
+  .umet-stat .us-bar u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--mid);opacity:.75;border-radius:1px;transform:translateX(-1px)}
+  .umet-stat .us-bar i{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--karrot);box-shadow:0 0 0 2px var(--surface)}
+  .umet-stat .us-bar i.out{border-radius:2px;width:7px;height:7px;margin:-3.5px 0 0 -3.5px} /* 분포 밖(하위·상위 10% 초과) — 네모로 구분 */
   .umet-stat .us-d{font-size:var(--fs-1);color:var(--faint);display:block;margin-top:4px;white-space:nowrap}
   .umet-stat .us-d b{font-weight:700}
   /* 상세 블록 확장 — 주차 추이 미니차트 · 소재별 유효 복귀 · 라이프사이클 */
@@ -3942,7 +3944,7 @@ function peerRankHTML(ds,e){
     ${rows.map(r=>`<div class="peer-g"><div class="peer-gl" title="${escAttr(r.g.sub)}">${r.g.lab}<em>${r.g.list.length}개</em></div>
       <div class="peer-bars">${r.cells.map(c=>`<div class="peer-row" data-tip="${escAttr(c.tip)}">
         <span class="pr-k">${c.lab}</span>
-        <span class="pr-b"><i style="width:${Math.max(2,Math.min(100,c.p)).toFixed(1)}%"></i><u></u></span>
+        <span class="pr-b"><u></u><i style="left:${Math.max(0,Math.min(100,c.p)).toFixed(1)}%"></i></span>
         <b class="pr-v num">상위 ${c.better}%</b><span class="pr-x num">${c.txt}</span></div>`).join("")}</div></div>`).join("")}
   </div>`;}
 function umCohortHTML(ds,e){
@@ -3959,14 +3961,22 @@ function umCohortHTML(ds,e){
   const stats=[];
   if(hit&&hit.news!=null)stats.push({v:fmtInt(hit.news),k:"신규 실유저",
     tip:`<b>신규 실유저 ${fmtInt(hit.news)}명</b><br>${wkLab} 설치 코호트 — 도달=배타 검증 완료(오차&lt;0.6%)<br>${base}`});
+  /* 비교군 분포(p10~p90)를 트랙으로 삼고 이 소재의 위치만 점으로 찍는다.
+     0부터 채우는 막대는 값들이 비슷하면 전부 비슷하게 길어져 자리만 차지하고 변별이 안 된다.
+     스케일은 '그 주 전체 코호트' 분포로 고정 — 소재마다 축이 달라지지 않아 과장·오독이 없다. */
+  const trackOf=(p,v,med)=>{
+    if(p.length<4)return null;
+    const lo=quantile(p,0.1),hi=quantile(p,0.9),span=Math.max(1e-9,hi-lo);
+    const at=x=>Math.max(0,Math.min(100,(x-lo)/span*100));
+    return {v:at(v),t:med!=null?at(med):null,out:v<lo?-1:(v>hi?1:0),lo,hi};};
   const pctStat=(key,lab,extra)=>{
     const v=+c[key];if(!isFinite(v))return;
-    const p=pool(key),med=p.length>=4?quantile(p,0.5):null,mx=p.length?Math.max(p[p.length-1],v):v;
+    const p=pool(key),med=p.length>=4?quantile(p,0.5):null;
     const d=med!=null?v-med:null;
     stats.push({v:v.toFixed(1)+"%",k:lab,
-      bar:mx>0?{w:v/mx*100,t:med!=null?med/mx*100:null}:null,
-      d:med!=null?`<b style="color:${d>=0?"var(--g1)":"var(--w2)"}">${d>=0?"+":""}${d.toFixed(1)}%p</b> vs 주 중앙값`:null,
-      tip:`<b>${lab} ${v.toFixed(1)}%</b>${extra?`<br>${extra}`:""}${med!=null?`<br>이번 주 전체 코호트 중앙값 ${med.toFixed(1)}% — 막대의 회색 눈금 위치`:""}<br>${base}`});};
+      bar:trackOf(p,v,med),
+      d:med!=null?`<b style="color:${d>=0?"var(--g1)":"var(--w2)"}">${d>=0?"+":""}${d.toFixed(1)}%p</b> vs 중앙값`:null,
+      tip:`<b>${lab} ${v.toFixed(1)}%</b>${extra?`<br>${extra}`:""}${med!=null?`<br>이번 주 전체 코호트 중앙값 ${med.toFixed(1)}% — 눈금 위치<br>트랙 양끝 = 하위 10%(${quantile(p,0.1).toFixed(1)}%) ~ 상위 10%(${quantile(p,0.9).toFixed(1)}%)`:""}<br>${base}`});};
   pctStat("d1","익일 재방문","설치 다음 날 실제 방문한 비율");
   pctStat("d7","7일 내 재방문","설치 후 7일 안에 다시 방문한 비율");
   pctStat("habit4","습관 형성 4일+","첫 주 4일 이상 방문 — 습관 형성 신호");
@@ -3977,11 +3987,11 @@ function umCohortHTML(ds,e){
     const dk=Object.keys(UMET||{}).find(k=>new RegExp("^d30_w"+tr.d30.w.slice(5,7)+tr.d30.w.slice(8,10)+"$").test(k));
     const dp=[];if(dk)for(const v of umNMap(UMET[dk]).values()){const x=+(v&&v.d30w);if(isFinite(x))dp.push(x);}
     dp.sort((a,b)=>a-b);
-    const dmed=dp.length>=4?quantile(dp,0.5):null,dmx=dp.length?Math.max(dp[dp.length-1],tr.d30.d30w):tr.d30.d30w;
+    const dmed=dp.length>=4?quantile(dp,0.5):null;
     const dd=dmed!=null?tr.d30.d30w-dmed:null;
     stats.push({v:tr.d30.d30w.toFixed(1)+"%",k:"D30 주간",
-      bar:dmx>0?{w:tr.d30.d30w/dmx*100,t:dmed!=null?dmed/dmx*100:null}:null,
-      d:dmed!=null?`<b style="color:${dd>=0?"var(--g1)":"var(--w2)"}">${dd>=0?"+":""}${dd.toFixed(1)}%p</b> vs 주 중앙값`:null,
+      bar:trackOf(dp,tr.d30.d30w,dmed),
+      d:dmed!=null?`<b style="color:${dd>=0?"var(--g1)":"var(--w2)"}">${dd>=0?"+":""}${dd.toFixed(1)}%p</b> vs 중앙값`:null,
       tip:`<b>D30(주간 방문) ${tr.d30.d30w.toFixed(1)}%</b><br>${md(tr.d30.w)} 주 설치 코호트의 4주차(d0+25~31) 주간 방문율 · 표본 ${fmtInt(tr.d30.n)}명${dmed!=null?`<br>같은 주 코호트 중앙값 ${dmed.toFixed(1)}%`:""}<br>${base}`});}
   /* ── ② 주차 추이 미니 차트: 신규 실유저 막대 + D1/D7 라인(+D30 마커) ── */
   let charts="";
@@ -4053,7 +4063,7 @@ function umCohortHTML(ds,e){
     <div class="us-h">실유저(주간)<span class="uc-q" data-tip="${escAttr(tip)}" title="유저 단위 실증 — 마우스를 올려 기준 확인">?</span><span class="n">${hdr.map(escHtml).join(" · ")}</span></div>
     ${stats.length?`<div class="umet-stats">${stats.map(s=>`<div class="umet-stat" data-tip="${escAttr(s.tip)}">`
       +`<span class="us-v num">${s.v}</span><span class="us-k">${s.k}</span>`
-      +(s.bar?`<div class="us-bar"><i style="width:${Math.max(2,Math.min(100,s.bar.w)).toFixed(1)}%"></i>${s.bar.t!=null?`<u style="left:${Math.max(0,Math.min(99,s.bar.t)).toFixed(1)}%"></u>`:""}</div>`:"")
+      +(s.bar?`<div class="us-bar">${s.bar.t!=null?`<u style="left:${s.bar.t.toFixed(1)}%"></u>`:""}<i class="${s.bar.out?"out":""}" style="left:${s.bar.v.toFixed(1)}%"></i></div>`:"")
       +(s.d?`<span class="us-d">${s.d}</span>`:"")+`</div>`).join("")}</div>`:""}
     ${charts}${reengHtml}${lifeHtml}
   </div>`;}
