@@ -250,23 +250,19 @@
 
   /* ── 상세 지표 행 문법 — [라벨 · 값 · 등급 · 위치 · 편차] 한 줄. 모든 블록이 같은 문법을 쓴다 ── */
   /* 행을 2열로 흘려 넓은 폭을 쓴다 — 한 열이면 트랙만 길어지고 마커가 눈금에서 멀어진다 */
-  .mrows{display:grid;grid-template-columns:repeat(auto-fit,minmax(372px,1fr));gap:0 24px;margin-top:5px}
+  .mrows{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:0 26px;margin-top:5px}
   .mrows .us-sub,.mrows .us-life{grid-column:1/-1}
-  /* 컬럼 합(최소) + gap이 열 폭을 넘으면 6px씩 새어 나간다 — 실측(392px 열)에 맞춰 여유를 둔다 */
-  .mrow{display:grid;grid-template-columns:94px 60px 54px minmax(64px,1fr) 54px;align-items:center;gap:8px;padding:3px 0;font-size:var(--fs-1);min-width:0}
+  /* 지표 행 — 막대 없이 [라벨 … 값 · 등급 · 순위]. 판단에 쓰는 세 값을 오른쪽에 모아 한 번에 읽힌다.
+     라벨은 남는 폭을 차지해 값 블록과 시각적으로 분리되고(거리), 값·등급·순위는 붙어 한 덩어리로 보인다(근접). */
+  .mrow{display:grid;grid-template-columns:minmax(0,1fr) 58px 54px 52px;align-items:center;gap:8px;padding:4px 2px;font-size:var(--fs-1);min-width:0;border-radius:6px}
   .mrow>*{min-width:0}
   .mrow .mr-k{color:var(--muted);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .mrow .mr-v{font-size:var(--fs-2);font-weight:750;color:var(--ink);text-align:right;white-space:nowrap}
-  .mrow .mr-t{justify-self:start}
-  .mrow .mr-t.sp{font-size:9.5px;padding:1px 6px}
-  /* 위치 트랙 — 눈금(중앙값)은 항상 정중앙 고정, 마커만 좌우로 움직인다 */
-  .mrow .mr-b{position:relative;height:3px;border-radius:2px;background:var(--surface-3)}
-  .mrow .mr-b.nb{background:transparent}
-  .mrow .mr-b u{position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:var(--mid);opacity:.8;border-radius:1px;transform:translateX(-1px)}
-  .mrow .mr-b i{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--karrot);box-shadow:0 0 0 2px var(--surface)}
-  .mrow .mr-b i.out{border-radius:2px;width:7px;height:7px;margin:-3.5px 0 0 -3.5px} /* 축을 벗어남 — 길이로 과장하지 않고 모양으로 알린다 */
+  .mrow .mr-t{justify-self:center}
+  .mrow .mr-t.sp{font-size:9.5px;padding:1px 6px;white-space:nowrap}
   .mrow .mr-d{color:var(--faint);white-space:nowrap;text-align:right}
-  .mrow:hover{background:var(--surface-2);border-radius:6px}
+  .mrow:hover{background:var(--surface-2)}
+  .mrow+.mrow{border-top:1px solid var(--surface-2)}
   /* 섹션 소제목 — 블록 안 구분 */
   .us-sub{font-size:var(--fs-1);font-weight:700;color:var(--muted);margin:9px 0 3px;padding-top:8px;border-top:1px solid var(--surface-2);display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
   .us-sub em{font-style:normal;font-weight:500;color:var(--faint)}
@@ -3679,6 +3675,7 @@ function creativeTrendHTML(ds,e){
   const slot=iw/ws.length,xat=i=>pl+(i+0.5)*slot;
   const bw=Math.max(4,Math.min(22,slot*0.38)); /* 슬롯에 비례한 막대 — 주가 많아도 겹치지 않는다 */
   let s="";
+  let _prevLab=null; /* 같은 등급이 이어지면 생략하고 '바뀐 지점'에만 라벨을 찍는다 — 13주 내내 같은 글자가 반복되면 노이즈다 */
   ws.forEach((w,i)=>{const o=os[i],x=xat(i);
     const h=Math.max(2,(o.c/cmax)*ih);
     /* 주차 점수 표기·티어색 제거 — 점수는 내부 계산 전용, 화면엔 지표 원값만 */
@@ -3694,13 +3691,14 @@ function creativeTrendHTML(ds,e){
          "라벨이 없다"와 "성과가 없다"는 다른 뜻이라 빈칸이 오독을 만든다 */
       const _fb=(typeof perfLabelOf==="function")?perfLabelOf(e):null;
       const lab0=(act!==undefined&&act)?act:(act===undefined?((_fb&&_fb.lab)||e._perfEst||""):"보통");
-      if(lab0){
+      const changed=lab0!==_prevLab;_prevLab=lab0;
+      if(lab0&&(changed||i===ws.length-1)){
         const est=!(act!==undefined&&act);
         const lab=PERF_LABEL_ALIAS[lab0]||lab0;
         const t=PERF_TIER[lab]||"m";
         const tc=t==="g2"?"var(--g2)":t==="g1"?"var(--g1)":t==="w1"?"var(--w1)":t==="w2"?"var(--w2)":"var(--mid)";
-        s+=`<text x="${x.toFixed(1)}" y="${H-6}" font-size="10" font-weight="${est?600:700}" fill="${tc}" fill-opacity="${est?0.65:1}" text-anchor="middle" data-tip="${escAttr(est?"<b>추정 실적</b> — 이 주의 리포트 실적 라벨이 없어 소재 전체 추정 등급을 표시(점선)":"구글 리포트 실측 실적")}">${escHtml(lab.replace(/\s+/g,""))}</text>`;
-        if(est)s+=`<line x1="${(x-14).toFixed(1)}" y1="${H-3.5}" x2="${(x+14).toFixed(1)}" y2="${H-3.5}" stroke="${tc}" stroke-width="1" stroke-dasharray="2 2" stroke-opacity="0.55"/>`;}}});
+        s+=`<text x="${x.toFixed(1)}" y="${H-6}" font-size="10" font-weight="${est?600:700}" fill="${tc}" fill-opacity="${est?0.6:1}" text-anchor="middle" data-tip="${escAttr((est?"<b>추정 실적</b> — 이 주의 리포트 실적 라벨이 없어 최근 확인된 등급을 표시(점선)":"구글 리포트 실측 실적")+"<br>등급이 바뀐 주와 마지막 주에만 표시합니다")}">${escHtml(lab.replace(/\s+/g,""))}</text>`;
+        if(est)s+=`<line x1="${(x-14).toFixed(1)}" y1="${H-3.5}" x2="${(x+14).toFixed(1)}" y2="${H-3.5}" stroke="${tc}" stroke-width="1" stroke-dasharray="2 2" stroke-opacity="0.5"/>`;}}});
   for(const ln of lines){let p="",st=false,dots="";
     ws.forEach((w,i)=>{const v=ln.vals[i];if(v==null)return;
       const x=xat(i),y=pt+(1-v/ln.mx)*ih;
@@ -3922,10 +3920,9 @@ function peerRankHTML(ds,e){
       const v=+e[k];
       const t=umTrack(vs,v,1);
       if(!t)return "";
-      return umRow({k:lab,v:fmt(v),tr:t,
-        d:t.pct!=null?`상위 ${Math.max(1,Math.round(100-t.pct))}%`:"",
+      return umRow({k:lab,v:fmt(v),tr:t,rank:umRankTxt(t),
         tip:`<b>${g.lab}(${g.list.length}개) · ${lab}</b><br>이 소재 ${fmt(v)}${t.pct!=null?` — <b>상위 ${Math.max(1,Math.round(100-t.pct))}%</b>`:""}`
-          +`<br>비교군 중앙값 ${fmt(t.med)} — 눈금(가운데) 위치`});}).join("");
+          +`<br>비교군 중앙값 ${fmt(t.med)}`});}).join("");
     if(cells)body+=`<div class="us-sub">${escHtml(g.lab)} <em>${escHtml(g.sub)} · ${g.list.length}개</em></div>${cells}`;}
   if(!body)return "";
   return `<div class="peer">
@@ -3962,12 +3959,18 @@ function umTrack(pool,v,dir){
 /* 지표 한 줄 — 값·등급·위치·편차를 같은 문법으로. tr(트랙)이 없으면 값만 조용히 보여준다 */
 function umRow(o){
   const t=o.tr&&o.tr.tier;
+  /* 막대를 그리지 않는다 — 마커 하나의 위치로는 좋고 나쁨이 가늠되지 않는다는 것이 실사용 결론.
+     판단에 필요한 건 값·등급·순위 세 가지이고, 셋을 오른쪽에 붙여 한 번에 읽히게 한다(근접성). */
+  const rank=o.rank||"";
   return `<div class="mrow"${o.tip?` data-tip="${escAttr(o.tip)}"`:""}>`
     +`<span class="mr-k">${escHtml(o.k)}</span>`
     +`<b class="mr-v num">${escHtml(o.v)}</b>`
     +(t?`<span class="sp ${t.t==="g2"?"sp-g2":t.t==="g1"?"sp-g1":t.t==="w1"?"sp-w1":"sp-mid"} mr-t">${t.lab}</span>`:`<span class="mr-t"></span>`)
-    +(o.tr?`<span class="mr-b"><u></u><i class="${o.tr.out?"out":""}" style="left:${o.tr.pos.toFixed(1)}%"></i></span>`:`<span class="mr-b nb"></span>`)
-    +`<span class="mr-d">${o.d||""}</span></div>`;}
+    +`<span class="mr-d">${rank}</span></div>`;}
+/* 순위 표기 — 등급과 같은 기준(비교군 백분위)에서 뽑는다. 작을수록 상위 */
+function umRankTxt(tr){
+  if(!tr||tr.pct==null)return "";
+  return `상위 ${Math.max(1,Math.round(100-tr.pct))}%`;}
 /* ── 서비스별 7일 도달(svc7 = 신규 설치 코호트 · svcRe7 = 몰로코 재관여) ──
    소재의 _svc에 맞는 주지표 하나 + 앱 접속(홈피드) + 재방문만 보여준다. 서비스가 다른 소재끼리 비교 금지라
    비교는 같은 서비스의 전체 평균(peer_baseline_svc7)과만 한다(svcRe7은 분모가 달라 참고선 금지). */
@@ -4021,17 +4024,15 @@ function umCohortHTML(ds,e){
   if(hit&&hit.news!=null){
     const np=[];if(wb)for(const v of wb.news.values()){const x=+v;if(isFinite(x))np.push(x);}
     const t=umTrack(np,hit.news,1);
-    rowsHtml.push(umRow({k:"신규 실유저",v:fmtInt(hit.news),tr:t,
-      d:t&&t.pct!=null?`상위 ${Math.max(1,Math.round(100-t.pct))}%`:"",
+    rowsHtml.push(umRow({k:"신규 실유저",v:fmtInt(hit.news),tr:t,rank:umRankTxt(t),
       tip:`<b>신규 실유저 ${fmtInt(hit.news)}명</b><br>${wkLab} 설치 코호트${t&&t.med!=null?`<br>같은 주 코호트 중앙값 ${fmtInt(t.med)}명 — 눈금 위치`:""}<br>${base}`}));}
   /* 질 — 값·등급·중앙값 대비 편차 */
   const pctRow=(key,lab,extra)=>{
     const v=+c[key];if(!isFinite(v))return;
     const p=pool(key),t=umTrack(p,v,1);
     const d=t&&t.med!=null?v-t.med:null;
-    rowsHtml.push(umRow({k:lab,v:v.toFixed(1)+"%",tr:t,
-      d:d!=null?`<b style="color:${d>=0?"var(--g1)":"var(--w2)"}">${d>=0?"+":""}${d.toFixed(1)}%p</b>`:"",
-      tip:`<b>${lab} ${v.toFixed(1)}%</b>${extra?`<br>${extra}`:""}${t&&t.med!=null?`<br>같은 주 코호트 중앙값 ${t.med.toFixed(1)}%${t.pct!=null?` · 상위 ${Math.max(1,Math.round(100-t.pct))}%`:""}`:""}<br>${base}`}));};
+    rowsHtml.push(umRow({k:lab,v:v.toFixed(1)+"%",tr:t,rank:umRankTxt(t),
+      tip:`<b>${lab} ${v.toFixed(1)}%</b>${extra?`<br>${extra}`:""}${t&&t.med!=null?`<br>같은 주 코호트 중앙값 ${t.med.toFixed(1)}% (${d>=0?"+":""}${d.toFixed(1)}%p)`:""}<br>${base}`}));};
   pctRow("d1","익일 재방문","설치 다음 날 실제 방문한 비율");
   pctRow("d7","7일 내 재방문","설치 후 7일 안에 다시 방문한 비율");
   pctRow("habit4","습관 형성 4일+","첫 주 4일 이상 방문 — 습관 형성 신호");
@@ -4042,9 +4043,8 @@ function umCohortHTML(ds,e){
     const dp=[];if(dk)for(const v of umNMap(UMET[dk]).values()){const x=+(v&&v.d30w);if(isFinite(x))dp.push(x);}
     const t=umTrack(dp,tr.d30.d30w,1);
     const d=t&&t.med!=null?tr.d30.d30w-t.med:null;
-    rowsHtml.push(umRow({k:"D30 주간 방문",v:tr.d30.d30w.toFixed(1)+"%",tr:t,
-      d:d!=null?`<b style="color:${d>=0?"var(--g1)":"var(--w2)"}">${d>=0?"+":""}${d.toFixed(1)}%p</b>`:"",
-      tip:`<b>D30(주간 방문) ${tr.d30.d30w.toFixed(1)}%</b><br>${md(tr.d30.w)} 주 설치 코호트의 4주차(d0+25~31) 방문율 · 표본 ${fmtInt(tr.d30.n)}명${t&&t.med!=null?`<br>같은 주 코호트 중앙값 ${t.med.toFixed(1)}%`:""}<br>${base}`}));}
+    rowsHtml.push(umRow({k:"D30 주간 방문",v:tr.d30.d30w.toFixed(1)+"%",tr:t,rank:umRankTxt(t),
+      tip:`<b>D30(주간 방문) ${tr.d30.d30w.toFixed(1)}%</b><br>${md(tr.d30.w)} 주 설치 코호트의 4주차(d0+25~31) 방문율 · 표본 ${fmtInt(tr.d30.n)}명${t&&t.med!=null?`<br>같은 주 코호트 중앙값 ${t.med.toFixed(1)}%${d!=null?` (${d>=0?"+":""}${d.toFixed(1)}%p)`:""}`:""}<br>${base}`}));}
   /* 서비스 도달 — 소재의 _svc에 맞는 주지표 + 홈피드 + 재방문. 비교는 같은 서비스 전체 평균과만 */
   let svcHtml="";
   if(sv){
@@ -4057,10 +4057,10 @@ function umCohortHTML(ds,e){
       const t=umTrack(dist,r.v,1);
       const ref=t?t.med:null;
       const refLab=sv.basis==="svc7"?"같은 서비스 소재 중앙값":"같은 복귀 기준 소재 중앙값";
-      const d=ref!=null?`<b style="color:${r.v>=ref?"var(--g1)":"var(--w2)"}">${r.v>=ref?"+":""}${(r.v-ref).toFixed(1)}%p</b>`:"";
-      return umRow({k:r.label+" 7일",v:r.v.toFixed(1)+"%",tr:t,d,
+      const dtxt=ref!=null?`${r.v>=ref?"+":""}${(r.v-ref).toFixed(1)}%p`:"";
+      return umRow({k:r.label+" 7일",v:r.v.toFixed(1)+"%",tr:t,rank:umRankTxt(t),
         tip:`<b>${r.label} 7일 ${r.v.toFixed(1)}%</b><br>기준: ${sv.basisLabel} · 코호트 n=${fmtInt(sv.n)}`
-          +(ref!=null?`<br>${refLab} ${ref.toFixed(2)}% — 눈금(가운데) 위치`:"")
+          +(ref!=null?`<br>${refLab} ${ref.toFixed(2)}%${dtxt?` (${dtxt})`:""}`:"")
           +(t&&t.pct!=null?`<br>같은 기준 소재 중 상위 ${Math.max(1,Math.round(100-t.pct))}%`:"")
           +(sv.basis==="svc7"&&b!=null?`<br>참고: 같은 서비스 전체 평균 ${b.toFixed(2)}%`:"")
           +(sv.basis==="svcRe7"?`<br>재관여 기준이라 신규 설치 평균과는 섞지 않는다(분모가 다름)`:"")
@@ -4073,9 +4073,8 @@ function umCohortHTML(ds,e){
       const t=NB!=null?(()=>{const raw=50+(o.pct-NB)/NB*50;
         return{pos:Math.max(3,Math.min(97,raw)),out:raw<3?-1:(raw>97?1:0),med:NB,pct:null,
           tier:umTierOf(Math.max(0,Math.min(100,50+(o.pct-NB)/NB*50)),1)};})():null;
-      return umRow({k:md(o.w)+" 주",v:o.pct.toFixed(1)+"%",tr:t,
-        d:o.cpv!=null?`₩${fmtInt(o.cpv)}`:"",
-        tip:`<b>${md(o.w)} 주 유효 복귀 ${o.pct.toFixed(1)}%</b><br>되돌린 유저 ${fmtInt(o.n)}명 중 유효 복귀 ${fmtInt(o.valid)}명${o.cpv!=null?`<br>유효 복귀 1명당 ₩${fmtInt(o.cpv)}`:""}${NB!=null?`<br>자연 복귀 기준선 ${NB.toFixed(1)}% — 눈금 위치`:""}<br>소재 값은 같은 매체 안에서 비교하세요`});}).join("");
+      return umRow({k:md(o.w)+" 주",v:o.pct.toFixed(1)+"%",tr:t,rank:o.cpv!=null?`₩${fmtInt(o.cpv)}`:"",
+        tip:`<b>${md(o.w)} 주 유효 복귀 ${o.pct.toFixed(1)}%</b><br>되돌린 유저 ${fmtInt(o.n)}명 중 유효 복귀 ${fmtInt(o.valid)}명${o.cpv!=null?`<br>유효 복귀 1명당 ₩${fmtInt(o.cpv)}`:""}${NB!=null?`<br>자연 복귀 기준선 ${NB.toFixed(1)}% 대비 ${o.pct>=NB?"+":""}${(o.pct-NB).toFixed(1)}%p`:""}<br>소재 값은 같은 매체 안에서 비교하세요`});}).join("");
     reengHtml=`<div class="us-sub">유효 복귀 <em>자연 기준선 ${NB!=null?NB.toFixed(1)+"%":"—"} 대비</em></div>${rs}`;}
   /* 라이프사이클 — 개시→최근 스팬, 피크▲, 최대 증액↑ */
   let lifeHtml="";
