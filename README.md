@@ -10,11 +10,11 @@ https://hansy-daangn.github.io/CreativeReporter/
 
 | | 개선안 A · 가독형 (Readable) | 개선안 B · 프리미엄 (Refined) |
 |---|---|---|
-| | [![개선안 A](proposals/preview-a.png)](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/header-ui-restructure-y7wnwx/proposals/a-editorial.html) | [![개선안 B](proposals/preview-b.png)](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/header-ui-restructure-y7wnwx/proposals/b-console.html) |
+| | [![개선안 A](proposals/preview-a.png)](https://hansy-daangn.github.io/CreativeReporter/proposals/a-editorial.html) | [![개선안 B](proposals/preview-b.png)](https://hansy-daangn.github.io/CreativeReporter/proposals/b-console.html) |
 | 성격 | 넓은 표에서 **스캔·행 추적**이 쉽게 — 은은한 줄무늬, 이름/점수와 지표 블록 사이 구분선, 정렬 열 강조. | **완성도** 지향 — 여백 리듬을 조금 더, 브랜드 오렌지를 정렬·활성 지점에만 정제, 점수 칩·타일에 미세한 깊이. |
-| 지금 바로 열기 | **[▶ 개선안 A 열기](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/header-ui-restructure-y7wnwx/proposals/a-editorial.html)** | **[▶ 개선안 B 열기](https://raw.githack.com/hansy-daangn/CreativeReporter/claude/header-ui-restructure-y7wnwx/proposals/b-console.html)** |
+| 지금 바로 열기 | **[▶ 개선안 A 열기](https://hansy-daangn.github.io/CreativeReporter/proposals/a-editorial.html)** | **[▶ 개선안 B 열기](https://hansy-daangn.github.io/CreativeReporter/proposals/b-console.html)** |
 
-> **위 '지금 바로 열기'** 는 [raw.githack.com](https://raw.githack.com)이 이 브랜치의 파일을 그대로 렌더링해 주므로 **병합 없이 클릭 즉시** 열립니다(저장소가 공개라 가능). 병합 후에는 GitHub Pages 정식 주소로도 열립니다 → [개선안 A](https://hansy-daangn.github.io/CreativeReporter/proposals/a-editorial.html) · [개선안 B](https://hansy-daangn.github.io/CreativeReporter/proposals/b-console.html).
+> 개선안 페이지는 GitHub Pages 정식 주소로 열립니다(비밀번호 없이 합성 샘플 데이터 미리보기).
 
 **본 사이트(`index.html`)에 이미 반영된 개선**
 - 표 툴바 등급 범례 제거 · **제목행을 툴바 바로 아래에 고정**(뷰포트 sticky, 스크롤바 1개, 이음새 없음) · 클릭 정렬·`+` 세부지표.
