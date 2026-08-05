@@ -208,8 +208,6 @@
   .reeng .rg-t b{margin-left:auto;font-size:12.5px;color:var(--side-ink);font-weight:750;letter-spacing:-.01em}
   .reeng .rg-bar{position:relative;height:5px;border-radius:3px;background:rgba(255,255,255,.12);margin:7px 0 6px;overflow:visible}
   .reeng .rg-bar i{display:block;height:100%;background:var(--karrot-2);border-radius:0 3px 3px 0;min-width:2px}
-  .reeng .rg-bar.vt i{background:repeating-linear-gradient(135deg,var(--karrot-2) 0 3px,rgba(255,138,61,.25) 3px 6px)} /* 뷰스루 포함 측정 — 빗금 */
-  .reeng .rg-vt{font-size:11px;color:var(--karrot-2);font-weight:800;margin-left:-2px}
   .reeng .rg-bar u{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--side-ink);opacity:.85;border-radius:1px}
   .reeng .rg-s{font-size:9.5px;color:var(--side-faint);display:flex;gap:4px;flex-wrap:wrap}
   .reeng .rg-s b{color:var(--side-muted);font-weight:650}
@@ -220,8 +218,13 @@
   .rst-h{font-size:11.5px;font-weight:650;color:var(--muted);display:flex;align-items:center;gap:6px;margin-bottom:2px}
   .rst-h .uc-when{margin-left:auto;font-size:10px;color:var(--faint);font-weight:500}
   .rst svg{display:block;width:100%;height:auto}
-  .rst .rst-lgd{font-size:9.5px;color:var(--faint);display:flex;gap:14px;flex-wrap:wrap;margin-top:2px;padding-left:2px}
-  .rst .rst-lgd b{color:var(--muted);font-weight:650}
+  .rst .rst-lgd{font-size:9.5px;color:var(--muted);display:flex;gap:15px;flex-wrap:wrap;margin-top:4px;padding-left:2px;align-items:center}
+  .rst .rst-lgd span{display:inline-flex;align-items:center;gap:5px}
+  .rst .rst-lgd i{display:inline-block;font-style:normal}
+  .rst .rst-lgd .lg-bar{width:14px;height:8px;border-radius:2px;background:var(--g2)}
+  .rst .rst-lgd .lg-ghost{width:14px;height:8px;border-radius:2px;background:var(--g2);opacity:.16}
+  .rst .rst-lgd .lg-dot{width:8px;height:8px;border-radius:50%;background:var(--g2);opacity:.5}
+  .rst .rst-lgd .lg-nb{width:0;height:11px;border-left:1.5px dashed var(--ink);opacity:.75}
   /* 구글 실적 라벨 × 비용 스택바 — 세그먼트 간 2px 여백 + 상시 라벨(색만으로 전달 금지) */
   .glb{background:var(--surface);border:1px solid var(--surface-3);border-radius:var(--r-sm);padding:11px 16px;margin-bottom:20px}
   .glb-k{font-size:11.5px;font-weight:650;color:var(--muted);display:flex;align-items:center;gap:6px}
@@ -253,14 +256,11 @@
   .us-cap{font-size:9.5px;color:var(--faint);display:block;margin-top:2px}
   .us-sec{display:flex;align-items:center;gap:10px;margin-top:9px;padding-top:8px;border-top:1px solid var(--surface-2)}
   .us-sk{font-size:10px;font-weight:700;color:var(--muted);white-space:nowrap;flex:0 0 auto;display:inline-flex;align-items:center;gap:4px}
-  .us-vt{font-style:normal;font-size:11px;font-weight:800;color:var(--w1);cursor:help}
   .us-rrows{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
   .us-rrow{display:grid;grid-template-columns:28px minmax(40px,1fr) max-content max-content;align-items:center;gap:8px;font-size:10.5px}
   .us-rrow .us-rw{color:var(--faint);font-size:9.5px;white-space:nowrap}
   .us-rbar{position:relative;height:6px;border-radius:3px;background:var(--surface-3);overflow:visible}
   .us-rbar i{display:block;height:100%;background:var(--karrot);border-radius:0 3px 3px 0;min-width:2px}
-  /* 뷰스루 포함 측정(메타) — 빗금 채움으로 '같은 자로 잰 값이 아님'을 표시 */
-  .us-rbar.vt i{background:repeating-linear-gradient(135deg,var(--karrot) 0 3px,var(--karrot-f) 3px 6px)}
   .us-rbar u{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink);opacity:.65;border-radius:1px}
   .us-rrow b{font-weight:750}
   .us-cpv{font-size:9.5px;color:var(--muted)}
@@ -2658,68 +2658,69 @@ function renderAutoInsight(ds){
    몰로코 내부 3배 격차(수수료 소구 61~64% vs 대형 영상 20~22%)가 이 화면에서 처음 보인다. */
 function renderReengStrip(ds){
   const host=$("#reengStrip");if(!host)return;
-  const rb=UMET&&UMET.reeng_byCreative;
   const re=umLatest(/^reeng_w(\d{2})(\d{2})$/);
-  if(!rb||!rb.weeks||typeof rb.weeks!=="object"){host.innerHTML="";return;}
-  const wks=Object.keys(rb.weeks).filter(w=>/^\d{4}-\d{2}-\d{2}$/.test(w)).sort();
-  if(!wks.length){host.innerHTML="";return;}
-  const latest=new Map(); /* key → {..., w} 최신 주 우선 */
-  for(const w of wks){const o=rb.weeks[w];if(!o||typeof o!=="object")continue;
-    for(const k in o){const v=o[k];if(v&&typeof v==="object"&&isFinite(+v.pct))latest.set(k,{n:+v.n,valid:+v.valid,pct:+v.pct,cpv:isFinite(+v.cpv)?+v.cpv:null,w});}}
-  const NB=re&&isFinite(+re.val.naturalBaseline_pct)?+re.val.naturalBaseline_pct:null;
-  const cost2=umLatest(/^cost_2w_ssot$/);
+  if(!re||!re.val.touch_all_campaign){host.innerHTML="";return;}
+  const tac=re.val.touch_all_campaign,mg=re.val.maugrowth||{},cpv=re.val.costPerValidReturn_krw||{};
+  const NB=isFinite(+re.val.naturalBaseline_pct)?+re.val.naturalBaseline_pct:null;
   const curCh=umChOf(ds&&ds.media);
-  const MEDIA=[["Meta",true],["Google",false],["Moloco",false]]; /* [매체, 뷰스루 포함 여부] */
-  const rows=MEDIA.map(([m,vt])=>{
-    const dots=[...latest.entries()].filter(([k])=>k.startsWith(m+"|"))
-      .map(([k,v])=>({key:k,name:k.slice(m.length+1),...v})).sort((a,b)=>a.pct-b.pct);
-    return {m,vt,dots};}).filter(r=>r.dots.length);
+  /* 소재별 값(최신 주) — 매체 행 안에서만 비교되는 편차 점 */
+  const rb=UMET&&UMET.reeng_byCreative,dotsBy=new Map();
+  if(rb&&rb.weeks&&typeof rb.weeks==="object"){
+    const latest=new Map();
+    for(const w of Object.keys(rb.weeks).filter(w=>/^\d{4}-\d{2}-\d{2}$/.test(w)).sort()){
+      const o=rb.weeks[w];if(!o||typeof o!=="object")continue;
+      for(const k in o){const v=o[k];if(v&&typeof v==="object"&&isFinite(+v.pct))latest.set(k,{n:+v.n,valid:+v.valid,pct:+v.pct,cpv:isFinite(+v.cpv)?+v.cpv:null,w});}}
+    for(const[k,v]of latest){const i=k.indexOf("|");if(i<0)continue;
+      const m=k.slice(0,i);let a=dotsBy.get(m);if(!a){a=[];dotsBy.set(m,a);}a.push({name:k.slice(i+1),...v});}}
+  /* 매체 행 — 클릭 접촉 복귀율(같은 잣대) 내림차순 */
+  const rows=["Meta","Google","Moloco"].map(m=>{
+    const t=tac[m]||{};
+    const clk=isFinite(+t.click_pct)?+t.click_pct:null;
+    const imp=isFinite(+t.imp_pct)?+t.imp_pct:null;
+    return {m,clk,imp,mg:mg[m]||null,cpv:isFinite(+cpv[m])?+cpv[m]:null,
+      dots:(dotsBy.get(m)||[]).sort((a,b)=>a.pct-b.pct)};})
+    .filter(r=>r.clk!=null).sort((a,b)=>b.clk-a.clk);
   if(!rows.length){host.innerHTML="";return;}
   const maxN=Math.max(...rows.flatMap(r=>r.dots.map(d=>d.n)),1);
-  const W=760,pl=64,pr=16,rowH=36,top=16,iw=W-pl-pr;
-  const H=top+rows.length*rowH+4;
+  const W=760,pl=70,pr=54,top=22,rowH=46,iw=W-pl-pr;
+  const H=top+rows.length*rowH+6;
   const X=p=>pl+Math.max(0,Math.min(100,p))/100*iw;
-  let g=`<defs><pattern id="umHatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="none"/><line x1="0" y1="0" x2="0" y2="6" stroke="var(--surface-3)" stroke-width="2.5"/></pattern></defs>`;
+  let g="";
   for(const t of[0,25,50,75,100]){const x=X(t);
-    g+=`<line x1="${x}" y1="${top-2}" x2="${x}" y2="${H-4}" stroke="var(--surface-2)" stroke-width="1"/>`;
-    g+=`<text x="${x}" y="${top-6}" text-anchor="middle" font-size="8.5" fill="var(--faint)">${t}%</text>`;}
+    g+=`<line x1="${x}" y1="${top-4}" x2="${x}" y2="${H-6}" stroke="var(--surface-2)" stroke-width="1"/>`;
+    g+=`<text x="${x}" y="${top-9}" text-anchor="middle" font-size="8.5" fill="var(--faint)">${t}%</text>`;}
   rows.forEach((r,ri)=>{
-    const y0=top+ri*rowH,cy=y0+rowH/2;
-    if(r.m===curCh)g+=`<rect x="1" y="${y0+2}" width="${W-2}" height="${rowH-4}" rx="7" fill="var(--karrot-f)" opacity="0.45"/>`;
-    if(r.vt)g+=`<rect x="${pl}" y="${y0+5}" width="${iw}" height="${rowH-10}" rx="5" fill="url(#umHatch)" opacity="0.8"/>`;
-    const c2v=cost2&&isFinite(+cost2.val[r.m])?+cost2.val[r.m]:null;
-    const mtip=`<b>${r.m}</b> — 소재 ${r.dots.length}개(최신 주 기준)`
-      +(re&&re.val.maugrowth&&re.val.maugrowth[r.m]?`<br>매체 전체: 되돌린 ${fmtInt(+re.val.maugrowth[r.m].users)}명 중 유효 ${fmtInt(+re.val.maugrowth[r.m].valid)}명 = ${(+re.val.maugrowth[r.m].pct).toFixed(1)}%`:"")
-      +(c2v!=null?`<br>최근 2주 총비용 ≈ ${fmtKRW(c2v)}원 (${escHtml(String(cost2.val.period||""))} · SSOT)`:"")
-      +(r.vt?`<br><b>뷰스루(노출) 기여 포함 — 소재 간 차이가 안 보이는 것도 선택편향(85±1% 균일) 때문. 규모·단가로만 비교</b>`:"<br>전부 클릭으로 딴 실접촉 기준");
-    g+=`<text x="${pl-10}" y="${cy+3}" text-anchor="end" font-size="10.5" font-weight="700" fill="var(--ink)" data-tip="${escAttr(mtip)}" style="cursor:help">${r.m}</text>`;
-    g+=`<text x="${pl-10}" y="${cy+14}" text-anchor="end" font-size="8.5" fill="var(--faint)">${r.vt?"○ 노출 포함":"● 클릭 실측"}</text>`;
-    /* 매체 평균 ◆ (reeng_w0713) */
-    const avg=re&&re.val.maugrowth&&re.val.maugrowth[r.m]&&isFinite(+re.val.maugrowth[r.m].pct)?+re.val.maugrowth[r.m].pct:null;
-    if(avg!=null){const x=X(avg);
-      g+=`<path d="M ${x} ${cy-5.5} L ${x+5} ${cy} L ${x} ${cy+5.5} L ${x-5} ${cy} Z" fill="var(--ink)" opacity="0.8" data-tip="${escAttr(`<b>${r.m} 매체 평균 ${avg.toFixed(1)}%</b> (${+re.m[1]}/${+re.m[2]} 주)`)}"/>`;}
-    r.dots.forEach((d,i)=>{
-      const rr=3+Math.sqrt(d.n/maxN)*6.5;
-      const jit=((i%3)-1)*7; /* 겹침 방지 결정적 지터 */
-      const cx=X(d.pct),cyy=cy+jit;
-      const nm=escAttr(trunc(d.name,44));
-      const disp=r.m==="Google"?"[그룹] "+groupPrettyName(d.name.replace(/^\[그룹\]\s*/,"")):d.name;
-      const tip=`<b>${escHtml(trunc(disp,44))}</b><br>유효 복귀 <b>${d.pct.toFixed(1)}%</b> · 되돌린 ${fmtInt(d.n)}명 중 ${fmtInt(d.valid)}명 (${md2(d.w)} 주)`
-        +(d.cpv!=null?`<br>유효 복귀 1명당 ₩${fmtInt(d.cpv)}`:"")
-        +(NB!=null?`<br>자연 기준선 ${NB.toFixed(1)}% ${d.pct>=NB?"이상":"미만"}`:"")
-        +(r.vt?"<br>뷰스루 포함 측정 — 액면 비교 금지":"");
-      const go=(r.m!=="Google")?` data-go="1" data-ch="${escAttr(r.m)}" data-nm="${nm}" style="cursor:pointer"`:"";
-      g+=r.vt
-        ?`<circle cx="${cx.toFixed(1)}" cy="${cyy.toFixed(1)}" r="${rr.toFixed(1)}" fill="var(--surface)" stroke="var(--g2)" stroke-width="1.8" data-tip="${escAttr(tip)}"${go}/>`
-        :`<circle cx="${cx.toFixed(1)}" cy="${cyy.toFixed(1)}" r="${rr.toFixed(1)}" fill="var(--g2)" fill-opacity="0.82" stroke="var(--surface)" stroke-width="1.5" data-tip="${escAttr(tip)}"${go}/>`;});});
+    const y0=top+ri*rowH,barY=y0+7,barH=12,dotY=y0+32;
+    if(r.m===curCh)g+=`<rect x="1" y="${y0+1}" width="${W-2}" height="${rowH-4}" rx="7" fill="var(--karrot-f)" opacity="0.4"/>`;
+    const mtip=`<b>${r.m}</b> — 클릭 접촉 유저의 복귀 <b>${r.clk.toFixed(1)}%</b>(같은 잣대)`
+      +(r.imp!=null?`<br>노출까지 인정 시 ${r.imp.toFixed(1)}%${r.imp-r.clk>3?` — 클릭 대비 +${(r.imp-r.clk).toFixed(1)}%p 부풀려짐`:" — 클릭과 거의 같음"}`:"<br>노출(뷰스루) 기여 0건 — 전부 클릭")
+      +(r.mg?`<br>재관여(maugrowth) 캠페인: 되돌린 ${fmtInt(+r.mg.users)}명 중 ${fmtInt(+r.mg.valid)}명 = ${(+r.mg.pct).toFixed(1)}%`:"")
+      +(r.cpv!=null?` · 복귀당 ₩${fmtInt(r.cpv)}(재관여 기준)`:"");
+    g+=`<text x="${pl-12}" y="${barY+10}" text-anchor="end" font-size="11" font-weight="700" fill="var(--ink)" data-tip="${escAttr(mtip)}" style="cursor:help">${r.m}</text>`;
+    /* 노출까지 인정 시 — 클릭 막대 뒤 연한 연장(고스트) */
+    if(r.imp!=null&&r.imp>r.clk){
+      g+=`<rect x="${X(0)}" y="${barY}" width="${(X(r.imp)-X(0)).toFixed(1)}" height="${barH}" rx="3" fill="var(--g2)" opacity="0.16" data-tip="${escAttr(`<b>${r.m} — 노출까지 인정하면 ${r.imp.toFixed(1)}%</b><br>스쳐 지나간 노출도 기여로 세는 경우. 클릭 실측은 ${r.clk.toFixed(1)}%`)}"/>`;
+      g+=`<line x1="${X(r.imp).toFixed(1)}" y1="${barY-2}" x2="${X(r.imp).toFixed(1)}" y2="${barY+barH+2}" stroke="var(--g2)" stroke-width="1.5" opacity="0.5"/>`;
+      g+=`<text x="${(X(r.imp)+5).toFixed(1)}" y="${barY+barH-2}" font-size="9" fill="var(--faint)">${r.imp.toFixed(1)}%</text>`;}
+    /* 클릭 접촉 = 같은 잣대(주인공) */
+    g+=`<rect x="${X(0)}" y="${barY}" width="${Math.max(2,X(r.clk)-X(0)).toFixed(1)}" height="${barH}" rx="3" fill="var(--g2)" data-tip="${escAttr(mtip)}"/>`;
+    g+=`<text x="${(X(r.clk)+(r.imp!=null&&r.imp>r.clk?0:6)).toFixed(1)}" y="${barY+barH-2.5}" ${r.imp!=null&&r.imp>r.clk?`text-anchor="end" fill="#fff" dx="-5"`:`fill="var(--ink)"`} font-size="10.5" font-weight="750">${r.clk.toFixed(1)}%</text>`;
+    /* 소재 편차 — 이 매체 행 안에서만 비교 */
+    r.dots.forEach(d=>{
+      const rr=3+Math.sqrt(d.n/maxN)*5.5;
+      const disp=r.m==="Google"?groupPrettyName(d.name.replace(/^\[그룹\]\s*/,"")):d.name;
+      const tip=`<b>${escHtml(trunc(disp,42))}</b><br>유효 복귀 <b>${d.pct.toFixed(1)}%</b> · 되돌린 ${fmtInt(d.n)}명 중 ${fmtInt(d.valid)}명`
+        +(d.cpv!=null?` · 1명당 ₩${fmtInt(d.cpv)}`:"")
+        +`<br>같은 매체 안에서 비교하세요(소재 단위는 매체 어트리뷰션 그대로)`;
+      const go=(r.m!=="Google")?` data-go="1" data-ch="${escAttr(r.m)}" data-nm="${escAttr(d.name)}" style="cursor:pointer"`:"";
+      g+=`<circle cx="${X(d.pct).toFixed(1)}" cy="${dotY}" r="${rr.toFixed(1)}" fill="var(--g2)" fill-opacity="0.5" stroke="var(--surface)" stroke-width="1.2" data-tip="${escAttr(tip)}"${go}/>`;});});
   if(NB!=null){const x=X(NB);
-    g+=`<line x1="${x}" y1="${top-2}" x2="${x}" y2="${H-4}" stroke="var(--ink)" stroke-width="1.4" stroke-dasharray="4 3" opacity="0.75" data-tip="${escAttr(`<b>자연 복귀 기준선 ${NB.toFixed(1)}%</b><br>광고 없이도 스스로 돌아오는 비율 — 이 선을 넘어야 광고의 몫`)}"/>`;
-    g+=`<text x="${x+4}" y="${top+7}" font-size="9" font-weight="750" fill="var(--ink)">자연 ${NB.toFixed(0)}%</text>`;}
-  const wkLab=wks.map(w=>md2(w)).join("·");
+    g+=`<line x1="${x}" y1="${top-4}" x2="${x}" y2="${H-6}" stroke="var(--ink)" stroke-width="1.4" stroke-dasharray="4 3" opacity="0.75" data-tip="${escAttr(`<b>자연 복귀 기준선 ${NB.toFixed(1)}%</b><br>광고 없이도 스스로 돌아오는 비율 — 이 선을 넘는 만큼이 광고의 몫`)}"/>`;
+    g+=`<text x="${x}" y="${top-9}" text-anchor="middle" font-size="9" font-weight="750" fill="var(--ink)">자연 ${NB.toFixed(0)}%</text>`;}
   host.innerHTML=`<div class="rst">
-    <div class="rst-h">유효 복귀 — 소재별 실증<span class="uc-q" data-tip="${escAttr(`<b>유효 복귀(재관여)</b><br>${escHtml(String(rb.basis||""))}<br>측정 방식이 매체마다 달라 <b>액면 비교 금지</b> — 정확한 증분 판별은 홀드아웃 실험 필요(이 실측이 그 근거)`)}">?</span><span class="uc-when">${wkLab} 주 · 점=소재(크기=되돌린 유저)</span></div>
+    <div class="rst-h">유효 복귀 — 클릭 접촉 기준<span class="uc-q" data-tip="${escAttr(`<b>같은 잣대 = 클릭으로 접촉한 유저의 복귀율</b><br>매체마다 기여 인정 방식이 달라(노출만 스쳐도 기여로 세는 매체가 있음) 액면 비교가 불가했던 것을, 클릭 접촉 하나로 통일해 비교합니다.<br>연한 연장 막대 = 노출까지 인정했을 때의 값.<br>점 = 소재별 편차(재관여 캠페인 기준) — 같은 매체 행 안에서만 비교.<br>정확한 증분 판별은 홀드아웃 실험 필요(이 실측이 그 근거).`)}">?</span><span class="uc-when">${+re.m[1]}/${+re.m[2]} 주</span></div>
     <svg viewBox="0 0 ${W} ${H}">${g}</svg>
-    <div class="rst-lgd"><span><b>●</b> 클릭 실측</span><span><b>○</b>+빗금 노출(뷰스루) 포함 — 액면 비교 금지</span><span><b>◆</b> 매체 평균</span><span><b>┊</b> 자연 복귀 기준선</span></div>
+    <div class="rst-lgd"><span><i class="lg-bar"></i>클릭 접촉(같은 잣대)</span><span><i class="lg-ghost"></i>노출까지 인정 시</span><span><i class="lg-dot"></i>소재별 · 크기=되돌린 유저</span><span><i class="lg-nb"></i>자연 복귀 기준선</span></div>
   </div>`;
   host.querySelectorAll("[data-go]").forEach(el=>{el.addEventListener("click",()=>{hideTip();crossGo(el.dataset.ch,el.dataset.nm);});});}
 function md2(w){return String(w||"").slice(5,7).replace(/^0/,"")+"/"+String(w||"").slice(8,10).replace(/^0/,"");}
@@ -2809,6 +2810,11 @@ function renderUmetCards(ds){
     el.addEventListener("mousemove",ev=>showTip(el.dataset.tip||"",ev.clientX,ev.clientY));
     el.addEventListener("mouseleave",hideTip);});}
 function renderKeyrow(ds){const L=ds.L,a=ds.agg,tiles=[];
+  /* 실증 카드(umetrics)가 상단에 있으면 파생 요약 타일은 중복·산만이라 숨긴다.
+     파일 드롭 즉석 분석·umetrics 비활성처럼 카드가 없을 때만 기존 타일을 그린다 */
+  const _kr=$("#keyrow"),_uw=$("#umetWrap");
+  if(_kr&&_uw&&!_uw.hidden){_kr.innerHTML="";_kr.style.display="none";return;}
+  if(_kr)_kr.style.display="";
   const volK=L.hasConv?L.volCol:"클릭 수",szLab=L.hasConv?L.volLab+" 1건당":"클릭 1회당";
   function bestDim(key){const g={};a.forEach(e=>{const k=e.tags[key];if(!k)return;(g[k]=g[k]||{비용:0,v:0});g[k].비용+=e.비용;g[k].v+=e[volK]||0;});
     const arr=Object.entries(g).filter(([,o])=>o.v>0&&o.비용>0).map(([k,o])=>({k,eff:o.비용/o.v}));if(arr.length<2)return null;arr.sort((x,y)=>x.eff-y.eff);return{best:arr[0],worst:arr[arr.length-1],n:arr.length};}
@@ -3904,11 +3910,10 @@ function umCohortHTML(ds,e){
   /* ── ③ 소재별 유효 복귀(재관여) — 자연 기준선 눈금과 함께, 메타는 뷰스루 포함 표시 ── */
   let reengHtml="";
   if(re){
-    const isMeta=re.ch==="Meta";
     const rows=re.seq.slice(-2).map(o=>{
-      const tip=`<b>${md(o.w)} 주 유효 복귀 ${o.pct.toFixed(1)}%</b><br>되돌린 유저 ${fmtInt(o.n)}명 중 유효 복귀 ${fmtInt(o.valid)}명${o.cpv!=null?`<br>유효 복귀 1명당 ₩${fmtInt(o.cpv)}`:""}${NB!=null?`<br>자연 복귀 기준선 ${NB.toFixed(1)}%(눈금) 대비로 읽을 것`:""}${isMeta?`<br><b>메타는 뷰스루(노출) 기여 포함 — 액면 비교 금지</b>`:""}`;
-      return `<div class="us-rrow" data-tip="${escAttr(tip)}"><span class="us-rw">${md(o.w)}</span><div class="us-rbar${isMeta?" vt":""}"><i style="width:${Math.max(2,Math.min(100,o.pct)).toFixed(1)}%"></i>${NB!=null?`<u style="left:${Math.min(99,NB).toFixed(1)}%"></u>`:""}</div><b class="num">${o.pct.toFixed(1)}%</b>${o.cpv!=null?`<span class="us-cpv num">₩${fmtInt(o.cpv)}</span>`:""}</div>`;}).join("");
-    reengHtml=`<div class="us-sec"><span class="us-sk">유효 복귀${isMeta?`<i class="us-vt" title="뷰스루(노출) 기여 포함 측정 — 클릭 실측 매체와 액면 비교 금지">○</i>`:""}</span><div class="us-rrows">${rows}</div></div>`;}
+      const tip=`<b>${md(o.w)} 주 유효 복귀 ${o.pct.toFixed(1)}%</b><br>되돌린 유저 ${fmtInt(o.n)}명 중 유효 복귀 ${fmtInt(o.valid)}명${o.cpv!=null?`<br>유효 복귀 1명당 ₩${fmtInt(o.cpv)}`:""}${NB!=null?`<br>자연 복귀 기준선 ${NB.toFixed(1)}%(눈금) 대비로 읽을 것`:""}<br>소재 값은 같은 매체 안에서 비교하세요 — 매체 간 비교는 분석 탭의 클릭 접촉 기준 차트`;
+      return `<div class="us-rrow" data-tip="${escAttr(tip)}"><span class="us-rw">${md(o.w)}</span><div class="us-rbar"><i style="width:${Math.max(2,Math.min(100,o.pct)).toFixed(1)}%"></i>${NB!=null?`<u style="left:${Math.min(99,NB).toFixed(1)}%"></u>`:""}</div><b class="num">${o.pct.toFixed(1)}%</b>${o.cpv!=null?`<span class="us-cpv num">₩${fmtInt(o.cpv)}</span>`:""}</div>`;}).join("");
+    reengHtml=`<div class="us-sec"><span class="us-sk">유효 복귀</span><div class="us-rrows">${rows}</div></div>`;}
   /* ── ④ 라이프사이클 타임라인 — 개시→최근, 피크▲·최대 증액↑ 마커 ── */
   let lifeHtml="";
   if(lf){
@@ -5769,10 +5774,13 @@ function reengBadgeHTML(media){
     cost!=null?`유효 복귀 1인당 ₩${Math.round(cost).toLocaleString("ko-KR")}`:null,
     re.val.cost_note?String(re.val.cost_note):null,
     nmol||null].filter(Boolean).join(" · ");
-  const vt=ch==="Meta"; /* 뷰스루(노출) 기여 포함 측정 — 빗금 채움 + ○ 글리프로 '같은 자가 아님'을 표시 */
-  return `<div class="reeng" title="${escAttr(tip+(vt?" · ○ 뷰스루(노출) 기여 포함 측정 — 클릭 실측 매체와 액면 비교 금지":" · ● 클릭 실측"))}">
-    <div class="rg-t">유효 복귀${vt?' <b class="rg-vt">○</b>':""} <span>${wk}</span><b class="num">${pct.toFixed(1)}%</b></div>
-    <div class="rg-bar${vt?" vt":""}"><i style="width:${Math.max(2,Math.min(100,pct)).toFixed(1)}%"></i>${isFinite(nb)?`<u style="left:${Math.max(0,Math.min(99,nb)).toFixed(1)}%"></u>`:""}</div>
+  /* 이 매체의 '같은 잣대' 값(클릭 접촉 복귀율)을 툴팁에 병기 — 배지 수치는 재관여 캠페인 기준 */
+  const tac=re.val.touch_all_campaign&&re.val.touch_all_campaign[ch];
+  const clk=tac&&isFinite(+tac.click_pct)?+tac.click_pct:null;
+  const tip2=tip+(clk!=null?` · 같은 잣대(클릭 접촉) ${clk.toFixed(1)}%${tac&&isFinite(+tac.imp_pct)?` · 노출까지 인정 시 ${(+tac.imp_pct).toFixed(1)}%`:""} — 매체 간 비교는 분석 탭 '유효 복귀' 차트에서`:"");
+  return `<div class="reeng" title="${escAttr(tip2)}">
+    <div class="rg-t">유효 복귀 <span>${wk}</span><b class="num">${pct.toFixed(1)}%</b></div>
+    <div class="rg-bar"><i style="width:${Math.max(2,Math.min(100,pct)).toFixed(1)}%"></i>${isFinite(nb)?`<u style="left:${Math.max(0,Math.min(99,nb)).toFixed(1)}%"></u>`:""}</div>
     <div class="rg-s">${isFinite(nb)?`<span>자연 기준선 <b>${nb.toFixed(1)}%</b></span>`:""}${cost!=null?`<span>· 복귀당 <b>₩${Math.round(cost).toLocaleString("ko-KR")}</b></span>`:""}</div>
   </div>`;}
 function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)return;
