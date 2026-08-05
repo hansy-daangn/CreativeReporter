@@ -169,6 +169,63 @@
   .ktile .kt-s{font-size:11.5px;color:var(--muted);margin-top:3px}
   .ktile.g .kt-k{color:var(--g1)} .ktile.b .kt-k{color:var(--w2)} .ktile.n .kt-k{color:var(--c2)}
 
+  /* ═════ 유저 실증 지표(umetrics) 카드 — 분석 탭 상단 ═════
+     읽기 전용 스냅샷(주간 갱신). 기존 토큰만 사용 — 막대는 굵기 얇게, 값은 항상 텍스트 병기(색만으로 전달 금지) */
+  .umet-h{font-size:12px;font-weight:700;color:var(--muted);margin:0 0 10px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .umet-h .n{font-size:10.5px;font-weight:500;color:var(--faint)}
+  .umet-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+  @media(max-width:1150px){.umet-cards{grid-template-columns:1fr 1fr}}
+  @media(max-width:760px){.umet-cards{grid-template-columns:1fr}}
+  .umet-card{background:var(--surface);border:1px solid var(--surface-3);border-radius:var(--r-sm);padding:14px 16px;min-width:0}
+  .umet-card .uc-k{font-size:11.5px;color:var(--muted);font-weight:650;display:flex;align-items:center;gap:6px}
+  .umet-card .uc-k .uc-when{margin-left:auto;font-size:10px;color:var(--faint);font-weight:500;white-space:nowrap}
+  .uc-q{flex:0 0 auto;width:14px;height:14px;border-radius:50%;background:var(--surface-3);color:var(--muted);font-size:9.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;cursor:help;user-select:none}
+  .umet-card .uc-big{display:flex;align-items:baseline;gap:7px;margin-top:7px;flex-wrap:wrap}
+  .umet-card .uc-big b{font-size:23px;font-weight:750;letter-spacing:-.02em}
+  .umet-card .uc-big span{font-size:11px;color:var(--muted)}
+  .umet-card .uc-sub{font-size:10.5px;color:var(--faint);margin-top:2px}
+  .umet-card .uc-sub b{color:var(--ink);font-weight:700}
+  /* 점유율 한 줄 막대 — 채움 끝만 둥글게, 트랙 위 텍스트 없이 값은 옆 텍스트가 담당 */
+  .uc-share{height:8px;border-radius:4px;background:var(--surface-3);overflow:hidden;margin-top:9px}
+  .uc-share i{display:block;height:100%;background:var(--karrot);border-radius:0 4px 4px 0;min-width:2px}
+  /* 매체별 가로 막대 행 — [라벨 | 막대 | 값 | 보조칩] 그리드 정렬로 스캔성 확보 */
+  .uc-rows{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+  .uc-row{display:grid;grid-template-columns:52px minmax(30px,1fr) max-content;align-items:center;gap:8px;font-size:11px}
+  .uc-row .ur-l{color:var(--muted);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .uc-row .ur-b{height:7px;border-radius:4px;background:var(--surface-3);overflow:hidden}
+  .uc-row .ur-b i{display:block;height:100%;background:var(--mid);border-radius:0 4px 4px 0;min-width:2px}
+  .uc-row.cur .ur-l{color:var(--karrot);font-weight:750}
+  .uc-row.cur .ur-b i{background:var(--karrot)}
+  .uc-row .ur-v{color:var(--ink);font-weight:700;white-space:nowrap;text-align:right}
+  .uc-row .ur-v small{font-weight:550;color:var(--muted);font-size:10px;margin-left:4px}
+  .uc-note{font-size:10px;color:var(--faint);margin-top:9px;line-height:1.45}
+  .uc-note b{color:var(--muted);font-weight:650}
+
+  /* 사이드바 매체 아래 — 유효 복귀 배지(다크 톤). 기준선 눈금은 흰 세로선, 값은 텍스트 병기 */
+  .reeng{margin-top:8px;padding:8px 10px;border:1px solid rgba(255,255,255,.10);border-radius:9px;background:rgba(255,255,255,.04);cursor:help}
+  .reeng .rg-t{display:flex;align-items:baseline;gap:6px;font-size:10.5px;color:var(--side-muted);font-weight:650}
+  .reeng .rg-t b{margin-left:auto;font-size:12.5px;color:var(--side-ink);font-weight:750;letter-spacing:-.01em}
+  .reeng .rg-bar{position:relative;height:5px;border-radius:3px;background:rgba(255,255,255,.12);margin:7px 0 6px;overflow:visible}
+  .reeng .rg-bar i{display:block;height:100%;background:var(--karrot-2);border-radius:0 3px 3px 0;min-width:2px}
+  .reeng .rg-bar u{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--side-ink);opacity:.85;border-radius:1px}
+  .reeng .rg-s{font-size:9.5px;color:var(--side-faint);display:flex;gap:4px;flex-wrap:wrap}
+  .reeng .rg-s b{color:var(--side-muted);font-weight:650}
+
+  /* 소재 상세 — 실유저(주간) 블록: 그래프 탭 위 상시 노출 스트립 */
+  .umet-strip{margin:0 0 14px;padding:11px 13px;background:var(--surface);border:1px solid var(--surface-3);border-radius:10px}
+  .umet-strip .us-h{font-size:11px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .umet-strip .us-h .n{font-weight:500;color:var(--faint)}
+  .umet-strip .us-h .uc-q{width:13px;height:13px}
+  .umet-stats{display:flex;gap:4px 18px;flex-wrap:wrap;margin-top:8px}
+  .umet-stat{min-width:74px}
+  .umet-stat .us-v{font-size:16.5px;font-weight:750;letter-spacing:-.01em;display:block}
+  .umet-stat .us-k{font-size:10px;color:var(--muted);font-weight:600;display:block;margin-top:1px;white-space:nowrap}
+  .umet-stat .us-bar{position:relative;height:4px;border-radius:2px;background:var(--surface-3);margin-top:5px;overflow:visible;min-width:64px}
+  .umet-stat .us-bar i{display:block;height:100%;background:var(--karrot);border-radius:0 2px 2px 0;min-width:2px}
+  .umet-stat .us-bar u{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--mid);border-radius:1px}
+  .umet-stat .us-d{font-size:9.5px;color:var(--faint);display:block;margin-top:4px;white-space:nowrap}
+  .umet-stat .us-d b{font-weight:700}
+
   svg.chart{display:block;overflow:visible;max-width:100%}
   .axis text{font-size:10px;fill:var(--faint)} .gl{stroke:#E6E5DE;stroke-dasharray:2 3}
   .qnote{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:12px;font-size:11px}
@@ -1147,6 +1204,11 @@
     <div class="content">
 
       <section class="card" id="tabAnalysis">
+        <!-- 유저 실증 지표(umetrics) — MAU·페이드 기여·매체별 설치 기여 MAU·삭제율. 클라우드 데이터 있을 때만 표시 -->
+        <div id="umetWrap" hidden>
+          <div class="umet-h">실유저 · MAU 실증 <span class="n" id="umetUpd"></span></div>
+          <div class="umet-cards" id="umetCards"></div>
+        </div>
         <div class="keyrow" id="keyrow"></div>
         <p class="qhint" id="qhint"></p>
         <div class="auto-insight" id="autoInsight" style="display:none"></div>
@@ -1182,6 +1244,7 @@
           <div class="tbar-cl">
             <div class="msel" id="svcMsel" title="서비스별로 모아 보기 (복수 선택)"></div>
             <div class="msel" id="perfMsel" title="실적별로 보기 (복수 선택)"></div>
+            <div class="msel" id="resMsel" title="해상도별로 보기 (복수 선택)"></div>
             <div class="msel" id="creatorMsel" title="내 소재 제작자별로 보기 (복수 선택)" hidden></div>
             <div class="msel mineas" id="mineAsMsel" title="내 소재를 누구 이름으로 등록·열람할지 (관리자 전용)" hidden></div>
           </div>
@@ -1783,8 +1846,8 @@ function mergeNameMap(delta){
 async function fetchNameMapBundle(pw){
   /* 7개 키를 순차 왕복(≈7×RTT)하던 것이 로그인 체감 지연의 한 축 — 병렬로 한 번에. 실패는 키별 무시(종전과 동일) */
   const get=k=>sbRpc("cr_kv_get",{pw,key:k}).catch(()=>null);
-  const [gm,gi,oc,yt,no,so,gw]=await Promise.all([get("gmap"),get("ginfo"),get("ocr"),get("ytt"),get("nameovr"),get("svcovr"),get("gwstat")]);
-  return {gm,gi,oc,yt,no,so,gw};}
+  const [gm,gi,oc,yt,no,so,gw,um]=await Promise.all([get("gmap"),get("ginfo"),get("ocr"),get("ytt"),get("nameovr"),get("svcovr"),get("gwstat"),get("umetrics")]);
+  return {gm,gi,oc,yt,no,so,gw,um};}
 function applyNameMapBundle(b){
   if(!b)return;
   const{gm,gi,oc,yt,no,so,gw}=b;
@@ -1794,7 +1857,64 @@ function applyNameMapBundle(b){
   if(yt&&typeof yt==="object")for(const id in yt){if(typeof yt[id]==="string"&&yt[id]&&_ytTitles[id]===undefined)_ytTitles[id]=yt[id];}
   if(no&&typeof no==="object")NAME_OVR=no;
   if(so&&typeof so==="object")SVC_OVR=so;
-  if(gw&&typeof gw==="object")gWeekMap=gw;}
+  if(gw&&typeof gw==="object")gWeekMap=gw;
+  if("um" in b)setUmetrics(b.um);} /* 구버전 부팅 캐시(um 키 없음)는 건드리지 않음 — cloudUnlock에서 1회 보충 */
+/* ═════ 유저 실증 지표(umetrics · sr_kv k='umetrics' · 읽기 전용) ═════
+   BigQuery·karrotmetrics 유저 단위 실증 스냅샷(주간 갱신, 유저 ID 무저장). cr_kv_get 번들에 편승해
+   부팅 1회 로드 + IndexedDB 부팅 캐시 포함. 주간 성과가 갱신되면 시그니처 불일치 → 전체 로드가 함께
+   최신화하므로 cr_status 재검증 대상에선 제외. 실패·스키마 불일치 시 조용히 비활성(콘솔 경고만). */
+let UMET=null,_umIdx=null;
+function setUmetrics(um){
+  UMET=null;_umIdx=null;
+  if(um==null){console.warn("[umetrics] 데이터 없음/로드 실패 — 실유저 지표 비활성");return;}
+  try{
+    if(typeof um!=="object"||Array.isArray(um))throw new Error("루트가 객체가 아님");
+    if(um.weeks!=null&&(typeof um.weeks!=="object"||Array.isArray(um.weeks)))throw new Error("weeks 형식");
+    for(const k in um){if(/^(mau_|sessions_|reeng_|uninstall_|cost_)/.test(k)&&um[k]!=null&&typeof um[k]!=="object")throw new Error(k+" 형식");}
+    UMET=um;
+  }catch(e){console.warn("[umetrics] 스키마 불일치 — 실유저 지표 비활성:",e&&e.message);}}
+/* 매칭 키 정규화 — NFC + 제로폭 문자 제거(구글 소재명 U+200B 증식 이력) */
+const umNorm=s=>String(s==null?"":s).normalize("NFC").replace(/[\u200B\u200C\u200D\uFEFF]/g,"").trim();
+/* 주차 인덱스(지연 구축) — weeks.{주차}.{cohort,newUsers_maugrowth}를 정규화 키 Map으로 */
+function umIndex(){
+  if(!UMET||!UMET.weeks)return null;
+  if(_umIdx)return _umIdx;
+  const weeks=Object.keys(UMET.weeks).filter(w=>/^\d{4}-\d{2}-\d{2}$/.test(w)).sort().reverse();
+  if(!weeks.length)return null;
+  const byWeek=new Map();
+  for(const w of weeks){
+    const o=UMET.weeks[w]||{},cm=new Map(),nm=new Map();
+    if(o.cohort&&typeof o.cohort==="object")for(const k in o.cohort){const v=o.cohort[k];if(v&&typeof v==="object")cm.set(umNorm(k),v);}
+    if(o.newUsers_maugrowth&&typeof o.newUsers_maugrowth==="object")for(const k in o.newUsers_maugrowth){const v=+o.newUsers_maugrowth[k];if(isFinite(v))nm.set(umNorm(k),v);}
+    byWeek.set(w,{cohort:cm,news:nm,noteMoloco:typeof o.note_moloco==="string"?o.note_moloco:""});}
+  _umIdx={weeks,byWeek};return _umIdx;}
+/* UMET 최상위에서 패턴에 맞는 키 중 최신(사전순 최대)을 고른다 — 월간/일자 스냅샷 키가 갱신돼도 코드 무변경 */
+function umLatest(re){
+  if(!UMET)return null;let best=null;
+  for(const k in UMET){const m=k.match(re);if(m&&UMET[k]&&typeof UMET[k]==="object"&&(!best||k>best.key))best={key:k,m,val:UMET[k]};}
+  return best;}
+/* 현재 매체명 → umetrics 매체 키(구글 하위 매체는 'Google'로 합침) */
+function umChOf(media){const m=String(media||"");return m.startsWith("Google")?"Google":(m==="Meta"||m==="Moloco")?m:null;}
+/* 이 소재/그룹의 코호트 조회 키 — 구글은 소재 단위 미제공이라 "[그룹] {광고그룹명}" 키(그룹명은 실측 매핑에서만, 추정 금지) */
+function umKeyFor(ds,e){
+  if(!ds||!e)return null;
+  const ch=umChOf(ds.media);if(!ch)return null;
+  if(ch==="Google"){
+    const agid=String(e._g_adGroupId||"");if(!agid)return null;
+    const gn=agid.startsWith("name:")?agid.slice(5):adGroupLabel(agid);if(!gn)return null;
+    return {ch,key:umNorm("Google|[그룹] "+gn),grpName:gn,grpLevel:true};}
+  if(e._isGroup)return null; /* 몰로코 크리에이티브 그룹 행은 소재 단위 데이터라 개별 상세에서만 */
+  return {ch,key:umNorm(ch+"|"+markAd(e.name)),grpLevel:false};}
+/* 최신 주부터 내려가며 이 소재의 실유저 기록을 찾는다 — 없으면 null(블록 미렌더) */
+function umCohortFor(ds,e){
+  const ix=umIndex();if(!ix)return null;
+  const kk=umKeyFor(ds,e);if(!kk)return null;
+  for(const w of ix.weeks){
+    const b=ix.byWeek.get(w);
+    const c=b.cohort.get(kk.key)||null;
+    const nu=b.news.has(kk.key)?b.news.get(kk.key):null;
+    if(c||nu!=null)return {week:w,cohort:c,news:nu,ch:kk.ch,grpLevel:kk.grpLevel,grpName:kk.grpName||null,noteMoloco:b.noteMoloco};}
+  return null;}
 async function loadNameMap(pw){applyNameMapBundle(await fetchNameMapBundle(pw));}
 /* 모든 유튜브 소재 제목을 로드 직후 백그라운드 일괄 조회(동시 4) — 클릭 없이 자동 표시, kv(ytt)로 기기 간 공유 */
 let _yttRan=false;
@@ -2364,15 +2484,16 @@ function sFmt(v,f){return f==="pct"?fmtPct(v):f==="num"?(v!=null&&isFinite(v)?v.
 /* 이름 아래 태그 칩 — 표에서는 클릭하면 그 값으로 필터 (data-ck 있는 칩만) */
 function chipsHTML(t,e){
   const mk=(k,v,cls,lab)=>`<span class="chip${cls?" "+cls:""}" data-ck="${k}" data-cv="${escAttr(v)}" title="클릭 = ${escAttr(lab||v)}만 보기">${escHtml(lab||v)}</span>`;
-  const foChip=t.fo&&(e&&e._foFix
-    ?`<span class="chip fo" data-ck="fo" data-cv="${escAttr(t.fo)}" title="리포트 유형은 '네이티브 영상'이지만 첨부 파일이 이미지이고 완주율 데이터가 전 기간 없어 이미지로 분류했습니다 · 클릭 = 이미지만 보기">${escHtml(t.fo)}*</span>`
-    :mk("fo",t.fo,"fo"));
   /* 서비스 칩 — 관리자가 수동 지정했으면 그 값(주황 강조), 아니면 자동(ve) */
   const _svcOv=svcOverrideFor(e);
   const veChip=_svcOv?`<span class="chip svc-ovr" title="관리자가 지정한 서비스">${escHtml(_svcOv)}</span>`:(t.ve&&mk("ve",t.ve));
   /* 리포트 이상 배지 — 노출 과소집계가 실측 확인된 소재(물리 불가 CTR). 무효화된 지표와 정상 지표를 명시 */
   const anomChip=e&&e._impBad?`<span class="chip warn" title="리포트 이상 감지 — 이 소재는 구글 리포트의 노출수가 실제 대비 크게 과소집계되어(클릭·전환 추적은 정상) CTR·CPM·홈도달율·전환율이 물리적으로 불가능한 값이 됩니다. 해당 지표는 표시·채점에서 자동 제외했고, 단가·건수 지표(신규 단가·홈 단가 등)는 정상입니다">⚠ 노출 과소집계</span>`:"";
-  const arr=[veChip,foChip,anomChip,t.nat==="네이티브"&&mk("nat","네이티브"),t.size&&mk("size",t.size)];
+  /* 해상도 칩 — 매체·포맷(영상/이미지) 불문 항상 표시: 실측 픽셀 우선, 영상은 화면비→표준 규격 환산(arDispOf).
+     영상/이미지 칩은 제거 — 포맷 구분·필터는 툴바 비디오/이미지 버튼이 담당 */
+  const _res=(e&&!e._isGroup)?(arDispOf(e)||""):(t.size||"");
+  const resChip=_res&&`<span class="chip" data-ck="res" data-cv="${escAttr(_res)}" title="${escAttr(((e&&!e._isGroup)?arDispTitle(e):"")||"해상도")} · 클릭 = ${escAttr(_res)}만 보기">${escHtml(_res)}</span>`;
+  const arr=[veChip,anomChip,t.nat==="네이티브"&&mk("nat","네이티브"),resChip];
   if(e&&e._isGroup){
     /* 그룹 행: 이름 분절 칩 — 접두(Google UA 등)·날짜·수식어. 서비스(ve)는 위 공통 경로로 이미 표시 */
     if(t.pre)arr.unshift(mk("gpre",t.pre));
@@ -2443,6 +2564,68 @@ function renderAutoInsight(ds){
   el.style.display="";
   el.innerHTML=`<span class="ai-tag">자동 해석</span>`+out.map(s=>`<span class="ai-item">${s}</span>`).join("");
 }
+/* ═════ 유저 실증 지표 카드(분석 탭 상단) — A. MAU와 페이드 기여 · B. 매체별 MAU(설치 기여) · C. 설치 대비 삭제 ═════
+   전 매체 공통 스냅샷(월간·28일 실측)이라 아래 기간·매체 필터와 무관 — 현재 매체 행만 주황으로 강조해 맥락을 잇는다.
+   막대는 식별을 색이 아니라 라벨·값 텍스트로 전달(막대는 크기 비교 보조). UMET 없거나 파일 임시 분석이면 통째 숨김 */
+function renderUmetCards(ds){
+  const wrap=$("#umetWrap"),host=$("#umetCards");if(!wrap||!host)return;
+  if(!UMET||standaloneMode||dsMode!=="channeled"){wrap.hidden=true;host.innerHTML="";return;}
+  const curCh=umChOf(ds&&ds.media);
+  const MEDIA=["Meta","Google","Moloco"];
+  const nInt=v=>(v!=null&&isFinite(+v))?Math.round(+v).toLocaleString("ko-KR"):"–";
+  const nPct=v=>(v!=null&&isFinite(+v))?(+v).toFixed(1)+"%":"–";
+  const cards=[];
+  /* A. 공식 MAU × 페이드 터치 비중 — mau_official_*(공식) + mau_*(3매체 터치 활성, 기여치≠증분치) */
+  const mo=umLatest(/^mau_official_(\d{4})_(\d{2})$/);
+  const ma=umLatest(/^mau_(\d{4})_(\d{2})$/); /* mau_official_·mau_hoian_은 뒤가 숫자가 아니라 비매칭 */
+  if(mo&&mo.val.kr_total!=null){
+    const share=+mo.val.paid_touch_share_pct;
+    const touch=ma&&ma.val.active_total!=null?+ma.val.active_total:null;
+    const attr=ma&&ma.val.attributed_total!=null?+ma.val.attributed_total:null;
+    const rows=(ma?MEDIA.map(c=>({c,v:+ma.val[c]||0})).filter(r=>r.v>0):[]).sort((a,b)=>b.v-a.v);
+    const mx=rows.length?rows[0].v:0;
+    const tip=`<b>MAU와 페이드 기여</b><br>${escHtml(mo.val.note||"")}<br>출처: ${escHtml(mo.val.source||"umetrics")}`
+      +(attr!=null?`<br>매체 합산 ${nInt(attr)}명은 매체 간 중복 터치 포함 — 중복 제거 ${nInt(touch)}명`:"")
+      +`<br><b>기여 유저 중 실방문 — 광고로 늘어난 수(증분)가 아님</b>`;
+    cards.push(`<div class="umet-card">
+      <div class="uc-k">MAU와 페이드 기여<span class="uc-q" data-tip="${escAttr(tip)}" title="자세한 기준은 마우스를 올려 확인">?</span><span class="uc-when">${+mo.m[2]}월 실측</span></div>
+      <div class="uc-big"><b class="num">${nInt(mo.val.kr_total)}</b><span>전사 공식 MAU</span></div>
+      <div class="uc-share" title="${escAttr(`이 중 페이드 터치 활성 ${nPct(share)}`)}"><i style="width:${Math.max(0,Math.min(100,share||0)).toFixed(1)}%"></i></div>
+      <div class="uc-sub">페이드 터치 활성 <b class="num">${nInt(touch)}</b> · <b>${nPct(share)}</b> — 기여 유저 중 실방문(증분 아님)</div>
+      ${rows.length?`<div class="uc-rows">${rows.map(r=>`<div class="uc-row${r.c===curCh?" cur":""}" title="${escAttr(`${r.c} 기여 유저 중 ${+mo.m[2]}월 실방문 ${nInt(r.v)}명 — 기여치이지 증분치 아님`)}"><span class="ur-l">${r.c}</span><span class="ur-b"><i style="width:${(r.v/mx*100).toFixed(1)}%"></i></span><span class="ur-v num">${nInt(r.v)}</span></div>`).join("")}</div>`:""}
+    </div>`);}
+  /* B. 매체별 MAU(설치 기여 기준) — sessions_mau_* : '설치를 데려온 매체' 기준 28일 방문 + WAU/MAU 고착도 */
+  const sm=umLatest(/^sessions_mau_(\d{8})$/);
+  if(sm){
+    const st=(sm.val.stickiness_wau_mau_pct&&typeof sm.val.stickiness_wau_mau_pct==="object")?sm.val.stickiness_wau_mau_pct:{};
+    const rows=MEDIA.map(c=>({c,v:+sm.val[c]||0,s:st[c]!=null?+st[c]:null})).filter(r=>r.v>0).sort((a,b)=>b.v-a.v);
+    if(rows.length){
+      const mx=rows[0].v,d=sm.m[1],when=`${+d.slice(4,6)}/${+d.slice(6,8)} · 28일`;
+      const tip=`<b>매체별 MAU(설치 기여 기준)</b><br><b>매체 = 설치를 데려온 매체(재방문시킨 매체 아님)</b> — 매체 간 합산 금지<br>${escHtml(sm.val.basis||"")}<br>고착도 = WAU/MAU(높을수록 자주 방문)`;
+      cards.push(`<div class="umet-card">
+        <div class="uc-k">매체별 MAU · 설치 기여 기준<span class="uc-q" data-tip="${escAttr(tip)}" title="매체 = 설치를 데려온 매체(재방문시킨 매체 아님)">?</span><span class="uc-when">${when}</span></div>
+        <div class="uc-rows" style="margin-top:11px">${rows.map(r=>`<div class="uc-row${r.c===curCh?" cur":""}" title="${escAttr(`${r.c}가 설치를 데려온 유저 중 28일 내 방문 ${nInt(r.v)}명 · 고착도(WAU/MAU) ${nPct(r.s)}`)}"><span class="ur-l">${r.c}</span><span class="ur-b"><i style="width:${(r.v/mx*100).toFixed(1)}%"></i></span><span class="ur-v num">${nInt(r.v)}<small>고착 ${nPct(r.s)}</small></span></div>`).join("")}</div>
+        <div class="uc-note">오가닉 설치 출신 <b class="num">${nInt(sm.val.organic)}</b> · 고착 <b>${nPct(st.organic)}</b> — 설치의 페이드 기원 비중 <b>${nPct(sm.val.install_origin_share_pct)}</b></div>
+      </div>`);}}
+  /* C. 설치 대비 삭제율 — uninstall_* : 낮을수록 좋음. 삭제 보고는 수 주 지연이라 참고 지표 */
+  const un=umLatest(/^uninstall_(\d{8})$/);
+  if(un){
+    const rows=MEDIA.map(c=>{const o=un.val[c];return o&&typeof o==="object"&&isFinite(+o.ratio_pct)?{c,r:+o.ratio_pct,i:+o.installs,u:+o.uninstalls}:null;}).filter(Boolean).sort((a,b)=>b.r-a.r);
+    if(rows.length){
+      const mx=Math.max(...rows.map(r=>r.r)),d=un.m[1],when=`${+d.slice(4,6)}/${+d.slice(6,8)} 기준`;
+      const tip=`<b>설치 대비 삭제율</b><br>최근 설치분 대비 삭제 보고 비율 — <b>낮을수록 좋음</b><br>${escHtml(un.val.note||"")}`;
+      cards.push(`<div class="umet-card">
+        <div class="uc-k">설치 대비 삭제율<span class="uc-q" data-tip="${escAttr(tip)}" title="낮을수록 좋음 · 삭제 보고는 수 주 지연">?</span><span class="uc-when">${when}</span></div>
+        <div class="uc-rows" style="margin-top:11px">${rows.map(r=>`<div class="uc-row${r.c===curCh?" cur":""}" title="${escAttr(`${r.c} 설치 ${nInt(r.i)} 중 삭제 보고 ${nInt(r.u)} — ${nPct(r.r)}`)}"><span class="ur-l">${r.c}</span><span class="ur-b"><i style="width:${(r.r/mx*100).toFixed(1)}%"></i></span><span class="ur-v num">${nPct(r.r)}<small>${nInt(r.u)}/${nInt(r.i)}</small></span></div>`).join("")}</div>
+        <div class="uc-note">${escHtml(un.val.note||"")} · 낮을수록 좋음</div>
+      </div>`);}}
+  if(!cards.length){wrap.hidden=true;host.innerHTML="";return;}
+  wrap.hidden=false;
+  const upd=$("#umetUpd");if(upd)upd.textContent=`umetrics · ${UMET.updated||"?"} 갱신 · 유저 단위 실증(읽기 전용)`;
+  host.innerHTML=cards.join("");
+  host.querySelectorAll("[data-tip]").forEach(el=>{
+    el.addEventListener("mousemove",ev=>showTip(el.dataset.tip||"",ev.clientX,ev.clientY));
+    el.addEventListener("mouseleave",hideTip);});}
 function renderKeyrow(ds){const L=ds.L,a=ds.agg,tiles=[];
   const volK=L.hasConv?L.volCol:"클릭 수",szLab=L.hasConv?L.volLab+" 1건당":"클릭 1회당";
   function bestDim(key){const g={};a.forEach(e=>{const k=e.tags[key];if(!k)return;(g[k]=g[k]||{비용:0,v:0});g[k].비용+=e.비용;g[k].v+=e[volK]||0;});
@@ -2848,6 +3031,7 @@ let tChip=null; /* 칩 클릭 필터 {k:"ve|fo|nat|size|grp", v, lab} — 한 �
 let tMarkView="all"; /* 전체 / 내 소재(mine) / 즐겨찾기(fav) — 좌측 nav 세그먼트 */
 let tServices=new Set(); /* 서비스 복수선택 필터 — 비면 전체, 아니면 선택 서비스만("기타"=미분류) */
 let tPerfSel=new Set(); /* 실적 복수선택 필터 — 비면 전체, "없음"=실적 블록 없는 소재 */
+let tRes=new Set(); /* 해상도 복수선택 필터 — 비면 전체, "미확인"=해상도 정보 없는 소재. 값은 arDispOf 표시값 기준 */
 let tHideEst=false; /* 추정(cc) 실적 숨기기 — 실제 실적 값만 표시 */
 /* 화면 기준 실적 라벨 — 추정 숨김이 켜져 있으면 추정 라벨은 없는 것으로 취급(표시·필터·정렬이 같은 기준을 공유) */
 function perfDispLabOf(e){const p=perfLabelOf(e);if(!p||(tHideEst&&p.est))return null;return p.lab;}
@@ -2903,9 +3087,12 @@ function applyTFilter(rows,ds){
     if(tChip.k==="gpre")return !!(e.tags&&e.tags.pre===tChip.v);
     if(tChip.k==="gdt")return !!(e.tags&&e.tags.dt===tChip.v);
     if(tChip.k==="gxt")return !!(e.tags&&Array.isArray(e.tags.xt)&&e.tags.xt.includes(tChip.v));
+    if(tChip.k==="res")return (e._isGroup?"":(arDispOf(e)||""))===tChip.v;
     return !!(e.tags&&e.tags[tChip.k]===tChip.v);});
   if(tServices.size)rows=rows.filter(e=>tServices.has(svcOf(e)||"기타"));
   if(tPerfSel.size)rows=rows.filter(e=>tPerfSel.has(perfDispLabOf(e)||"없음"));
+  /* 해상도 필터 — 그룹 행은 멤버 중 하나라도 선택 해상도면 통과(그룹뷰에서도 쓸 수 있게) */
+  if(tRes.size)rows=rows.filter(e=>e._isGroup?(e._members||[]).some(m=>tRes.has(arDispOf(m)||"미확인")):tRes.has(arDispOf(e)||"미확인"));
   if(tCreators.size)rows=rows.filter(e=>{const cs=rosterCreatorsOf(e);
     if(cs.some(n=>tCreators.has(n)))return true;
     if(tCreators.has("기타")&&cs.length===0)return true;
@@ -2935,16 +3122,19 @@ function buildMsel(host,allLabel,items,selected,onChange){
   host.querySelectorAll(".msel-opt input").forEach(cb=>cb.onchange=()=>{if(cb.checked)selected.add(cb.value);else selected.delete(cb.value);refresh();onChange();});
   clr.onclick=()=>{selected.clear();host.querySelectorAll(".msel-opt input").forEach(cb=>{cb.checked=false;});refresh();onChange();};}
 /* 서비스·제작자 드롭다운 — 옵션 목록이 바뀔 때만 재구성(선택 토글 중엔 팝업 유지) */
-let _mselSig={svc:"",cr:"",ma:"",pf:""};
+let _mselSig={svc:"",cr:"",ma:"",pf:"",res:""};
 function renderFilters(ds){
   const base=getRowsForTable(ds);
   const svcCnt={};let other=0;
   const crCnt={};let crOther=0;
   const pfCnt={};let pfNone=0;
+  const resCnt={};let resNone=0;
+  const resTally=x=>{const rv=arDispOf(x)||"";if(rv)resCnt[rv]=(resCnt[rv]||0)+1;else resNone++;};
   for(const e of base){const s=svcOf(e);if(s)svcCnt[s]=(svcCnt[s]||0)+1;else other++;
     const rc=rosterCreatorsOf(e);
     if(rc.length){for(const nm of rc)crCnt[nm]=(crCnt[nm]||0)+1;}else crOther++;
-    const pl=perfDispLabOf(e);if(pl)pfCnt[pl]=(pfCnt[pl]||0)+1;else pfNone++;}
+    const pl=perfDispLabOf(e);if(pl)pfCnt[pl]=(pfCnt[pl]||0)+1;else pfNone++;
+    if(e._isGroup)(e._members||[]).forEach(resTally);else resTally(e);}
   const svcItems=[];for(const[k]of SVC_DEFS)if(svcCnt[k])svcItems.push({v:k,label:k,n:svcCnt[k]});
   if(other)svcItems.push({v:"기타",label:"기타",n:other});
   /* 실적 필터 — 서열 순으로 나열, 낯선 어휘는 뒤에, '없음'=실적 블록 없는 소재 */
@@ -2955,13 +3145,18 @@ function renderFilters(ds){
   /* 제작자 필터는 항상 로스터 전체 + 기타 노출 */
   const crItems=CREATORS.map(nm=>({v:nm,label:nm,n:crCnt[nm]||0}));
   crItems.push({v:"기타",label:"기타",n:crOther});
+  /* 해상도 필터 — 많은 순 정렬(동률은 이름순), 정보 없는 소재는 '미확인' 버킷 */
+  const resItems=Object.keys(resCnt).sort((a,b)=>resCnt[b]-resCnt[a]||a.localeCompare(b,"ko")).map(v=>({v,label:v,n:resCnt[v]}));
+  if(resNone)resItems.push({v:"미확인",label:"미확인",n:resNone});
   for(const v of [...tServices])if(!svcItems.some(it=>it.v===v))tServices.delete(v);
   for(const v of [...tPerfSel])if(!pfItems.some(it=>it.v===v))tPerfSel.delete(v);
-  const svcSig=JSON.stringify(svcItems),crSig=JSON.stringify(crItems),pfSig=JSON.stringify(pfItems);
-  if(svcSig!==_mselSig.svc){_mselSig.svc=svcSig;buildMsel($("#svcMsel"),"전체 서비스",svcItems,tServices,()=>{tPage=1;renderTable(ds);});}
-  if(pfSig!==_mselSig.pf){_mselSig.pf=pfSig;buildMsel($("#perfMsel"),"전체 실적",pfItems,tPerfSel,()=>{tPage=1;renderTable(ds);});}
+  for(const v of [...tRes])if(!resItems.some(it=>it.v===v))tRes.delete(v);
+  const svcSig=JSON.stringify(svcItems),crSig=JSON.stringify(crItems),pfSig=JSON.stringify(pfItems),resSig=JSON.stringify(resItems);
+  if(svcSig!==_mselSig.svc){_mselSig.svc=svcSig;buildMsel($("#svcMsel"),"서비스",svcItems,tServices,()=>{tPage=1;renderTable(ds);});}
+  if(pfSig!==_mselSig.pf){_mselSig.pf=pfSig;buildMsel($("#perfMsel"),"실적",pfItems,tPerfSel,()=>{tPage=1;renderTable(ds);});}
+  if(resSig!==_mselSig.res){_mselSig.res=resSig;buildMsel($("#resMsel"),"해상도",resItems,tRes,()=>{tPage=1;renderTable(ds);});}
   const crHost=$("#creatorMsel");if(crHost)crHost.hidden=false;
-  if(crSig!==_mselSig.cr){_mselSig.cr=crSig;buildMsel(crHost,"전체 제작자",crItems,tCreators,()=>{tPage=1;renderTable(ds);});}
+  if(crSig!==_mselSig.cr){_mselSig.cr=crSig;buildMsel(crHost,"제작자",crItems,tCreators,()=>{tPage=1;renderTable(ds);});}
   renderMineAs(ds);}
 /* 관리자 전용 '내 소재 등록·열람 대상' 단일선택 드롭다운 — 고르면 별 토글·내 소재 보기가 그 사람 기준으로 동작.
    남을 고르면 별은 cr_admin_mark_set로 그 사람 이름의 mine 마크를 대신 등록/해제(등록자 칩으로도 확인). */
@@ -3453,6 +3648,48 @@ function qualityHTML(ds,e){
   if(base1>0&&base1<30)parts.push(`<b style="color:var(--w1)">표본 적음</b> — D1 코호트 ${fmtInt(base1)}명뿐이라 잔존율 변동이 큽니다 (참고용)`);
   if(parts.length)s+=`<div class="vret-cap" style="margin-top:6px">${parts.join("<br>")}</div>`;
   return s+`</section>`;}
+/* ═════ 소재 상세 — 실유저(주간) 블록: umetrics weeks.{주차}.cohort 실증치 ═════
+   "매체|소재"(구글은 "[그룹] 광고그룹명") 키로 최신 주부터 조회. 값 없으면 미렌더.
+   각 % 통계엔 그 주 전체 코호트 분포로 만든 막대(0~주 최대)와 중앙값 눈금을 붙여 한눈에 상대 위치를 읽게 한다 */
+function umCohortHTML(ds,e){
+  const hit=umCohortFor(ds,e);if(!hit)return "";
+  const c=hit.cohort||{};
+  const ix=umIndex(),wb=ix&&ix.byWeek.get(hit.week);
+  const pool=k=>{const a=[];if(wb)for(const v of wb.cohort.values()){const x=+v[k];if(isFinite(x))a.push(x);}return a.sort((x,y)=>x-y);};
+  const wkLab=hit.week.slice(5).replace("-","/")+" 주";
+  const base="설치 코호트 실방문 기준 · 하한 추정치";
+  const stats=[];
+  if(hit.news!=null)stats.push({v:fmtInt(hit.news),k:"신규 실유저",
+    tip:`<b>신규 실유저 ${fmtInt(hit.news)}명</b><br>${wkLab} 설치 코호트 — 도달=배타 검증 완료(오차&lt;0.6%)<br>${base}`});
+  const pctStat=(key,lab,extra)=>{
+    const v=+c[key];if(!isFinite(v))return;
+    const p=pool(key),med=p.length>=4?quantile(p,0.5):null,mx=p.length?Math.max(p[p.length-1],v):v;
+    const d=med!=null?v-med:null;
+    stats.push({v:v.toFixed(1)+"%",k:lab,
+      bar:mx>0?{w:v/mx*100,t:med!=null?med/mx*100:null}:null,
+      d:med!=null?`<b style="color:${d>=0?"var(--g1)":"var(--w2)"}">${d>=0?"+":""}${d.toFixed(1)}%p</b> vs 주 중앙값`:null,
+      tip:`<b>${lab} ${v.toFixed(1)}%</b>${extra?`<br>${extra}`:""}${med!=null?`<br>이번 주 전체 코호트 중앙값 ${med.toFixed(1)}% — 막대의 회색 눈금 위치`:""}<br>${base}`});};
+  pctStat("d1","익일 재방문","설치 다음 날 실제 방문한 비율");
+  pctStat("d7","7일 내 재방문","설치 후 7일 안에 다시 방문한 비율");
+  pctStat("habit4","습관 형성 4일+","첫 주 4일 이상 방문 — 습관 형성 신호");
+  pctStat("home7","홈피드 7일","7일 내 홈피드 방문 비율");
+  pctStat("flea7","중고거래 7일","7일 내 중고거래 방문 비율");
+  if(!stats.length)return "";
+  const n=+((c&&c.n)||0);
+  const hdr=[`${wkLab} 설치 코호트`];
+  if(n)hdr.push(`표본 ${fmtInt(n)}명 실측`);
+  if(hit.grpLevel)hdr.push("광고그룹 단위 제공");
+  let tip=`<b>실유저(주간)</b><br>유저 단위 실증(BigQuery·karrotmetrics 집계, 유저 ID 무저장)<br>${base}`;
+  if(hit.grpLevel)tip+=`<br>구글은 소재 단위 미제공 — 소속 광고그룹 <b>${escHtml(trunc(hit.grpName||"",44))}</b> 값을 광고그룹 단위로 표시`;
+  if(hit.ch==="Moloco"&&hit.noteMoloco)tip+=`<br>${escHtml(hit.noteMoloco)}`;
+  if(hit.ch==="Moloco"&&hit.news==null&&hit.noteMoloco)hdr.push("신규 없음 정상(재관여 전담)");
+  return `<div class="umet-strip">
+    <div class="us-h">실유저(주간)<span class="uc-q" data-tip="${escAttr(tip)}" title="유저 단위 실증 — 마우스를 올려 기준 확인">?</span><span class="n">${hdr.map(escHtml).join(" · ")}</span></div>
+    <div class="umet-stats">${stats.map(s=>`<div class="umet-stat" data-tip="${escAttr(s.tip)}">`
+      +`<span class="us-v num">${s.v}</span><span class="us-k">${s.k}</span>`
+      +(s.bar?`<div class="us-bar"><i style="width:${Math.max(2,Math.min(100,s.bar.w)).toFixed(1)}%"></i>${s.bar.t!=null?`<u style="left:${Math.max(0,Math.min(99,s.bar.t)).toFixed(1)}%"></u>`:""}</div>`:"")
+      +(s.d?`<span class="us-d">${s.d}</span>`:"")+`</div>`).join("")}</div>
+  </div>`;}
 /* ═════ 교차 매체 동일/유사 소재 탐지 ═════
    "이 소재가 다른 매체에선 어떤가"를 보기 위해, 신호 강한 순서로 매칭한다:
    ① 같은 유튜브 영상 ID  ② 같은 미리보기 URL  ③ 이미지 지각 해시 일치(dHash 9×8 · 해밍≤6 · 종횡비 ±12% — 완전 동일 이미지 판별)
@@ -3924,7 +4161,8 @@ function renderIsleMid(ds,e,mid){if(!mid)return;
   const vh=videoRetentionHTML(ds,e);if(vh)tabs.push({k:"video",lab:"영상 시청",html:vh});
   const ph=positioningHTML(ds,e);if(ph)tabs.push({k:"pos",lab:"포지셔닝",html:ph});
   const cur=tabs.find(t=>t.k===ISLE.gtab)||tabs[0];
-  mid.innerHTML=(tabs.length>1?`<div class="dtog gtabs">${tabs.map(t=>`<button data-gt="${t.k}" class="${t.k===cur.k?"on":""}">${t.lab}</button>`).join("")}</div>`:"")+`<div class="gtab-body">${cur.html}</div>`;
+  /* 실유저(주간) 실증 블록 — 탭 위 상시 노출(탭 전환과 무관). 데이터 없으면 빈 문자열이라 미렌더 */
+  mid.innerHTML=(umCohortHTML(ds,e)||"")+(tabs.length>1?`<div class="dtog gtabs">${tabs.map(t=>`<button data-gt="${t.k}" class="${t.k===cur.k?"on":""}">${t.lab}</button>`).join("")}</div>`:"")+`<div class="gtab-body">${cur.html}</div>`;
   mid.querySelectorAll(".gtabs button").forEach(b=>b.onclick=()=>{ISLE.gtab=b.dataset.gt;renderIsleMid(ds,e,mid);});
   /* 그래프 요소 공통 툴팁(data-tip) — 추이 막대·유지 곡선 점·산점도 점이 함께 쓴다 */
   mid.querySelectorAll("[data-tip]").forEach(el=>{
@@ -4503,7 +4741,7 @@ function renderQuickFo(){const ds=curDS;
   syncTbarH();}
 /* 현재 뷰(그룹/개별)에 맞지 않는 칩 필터 자동 해제 — 그룹 전용: gpre/gdt/gxt · 소재 전용: fo/nat/size.
    개별뷰로 바뀌었는데 그룹 전용 칩이 남아 표가 통째로 비는 것을 방지 */
-function _syncChipToView(){if(tChip&&((!tGroupBy&&["gpre","gdt","gxt"].includes(tChip.k))||(tGroupBy&&["fo","nat","size"].includes(tChip.k))))tChip=null;}
+function _syncChipToView(){if(tChip&&((!tGroupBy&&["gpre","gdt","gxt"].includes(tChip.k))||(tGroupBy&&["fo","nat","size","res"].includes(tChip.k))))tChip=null;}
 function toggleQuickFo(val){tQuickFo=tQuickFo===val?null:val;
   if(tQuickFo)tGroupBy=false; /* Video/Image 선택 시 GroupView 자동 해제 */
   _syncChipToView();
@@ -4939,6 +5177,11 @@ async function cloudUnlock(pw,opts){const silent=opts&&opts.silent;
       cloudPw=pw;sessionStorage.setItem("crpw",pw);
       applyNameMapBundle(cached.kv);
       loadCloudRows(cached.rows);
+      if(cached.kv&&!("um" in cached.kv)){ /* 구버전 부팅 캐시 — umetrics만 1회 보충(시그니처·at은 보존) */
+        sbRpc("cr_kv_get",{pw,key:"umetrics"},{timeout:15000}).then(um=>{
+          cached.kv.um=(um==null?null:um);setUmetrics(cached.kv.um);
+          if(UMET&&active&&DATASETS[active]){renderUmetCards(DATASETS[active]);renderMediaSeg(DATASETS[active]);}
+          IDB.set("boot",cached);}).catch(()=>{});}
       (async()=>{
         let st=null;
         try{st=await sbRpc("cr_status",{pw:cloudPw},{timeout:15000});}
@@ -5245,6 +5488,27 @@ function renderDataRange(ds){
     :st==="y"?"지난주 데이터가 아직 없어요 — 월요일 자동 동기화 확인 필요"
     :`자동 업데이트가 ${behindW}주째 밀렸어요 — 동기화 루틴 점검 필요`)
     +` — Data saved: ${fmtRangeShort(rng)} · ${rng.weeks}W`;}
+/* 매체 헤더 소형 배지 — MAU 캠페인 유효 복귀(reeng_w*): 되돌린 유저 중 유효 복귀 %를 0~100 축 막대로,
+   자연 복귀 기준선(u 눈금)을 반드시 함께 표기. 뷰스루 기여 과대 인정 가능성은 툴팁으로 고지 */
+function reengBadgeHTML(media){
+  const ch=umChOf(media);if(!ch||!UMET||standaloneMode)return "";
+  const re=umLatest(/^reeng_w(\d{2})(\d{2})$/);if(!re)return "";
+  const mg=re.val.maugrowth&&re.val.maugrowth[ch];if(!mg||!isFinite(+mg.pct))return "";
+  const pct=+mg.pct,nb=+re.val.naturalBaseline_pct;
+  const cost=re.val.costPerValidReturn_krw&&isFinite(+re.val.costPerValidReturn_krw[ch])?+re.val.costPerValidReturn_krw[ch]:null;
+  const wk=`${+re.m[1]}/${+re.m[2]} 주`;
+  /* 몰로코는 MAU 캠페인 소재가 재관여 전담(신규 없음 정상) — 그 실측 확정 문구(note_moloco)를 이 배지 툴팁에서 고지 */
+  const ix=umIndex(),nmol=(ch==="Moloco"&&ix&&ix.byWeek.get(ix.weeks[0]))?ix.byWeek.get(ix.weeks[0]).noteMoloco:"";
+  const tip=[`${ch} MAU 캠페인이 되돌린 유저 ${fmtInt(+mg.users)}명 중 유효 복귀 ${fmtInt(+mg.valid)}명 = ${pct.toFixed(1)}% (${wk})`,
+    isFinite(nb)?`자연 복귀 기준선 ${nb.toFixed(1)}%(막대의 흰 눈금) 대비로 읽을 것 — 뷰스루 기여는 과대 인정 가능`:null,
+    cost!=null?`유효 복귀 1인당 ₩${Math.round(cost).toLocaleString("ko-KR")}`:null,
+    re.val.cost_note?String(re.val.cost_note):null,
+    nmol||null].filter(Boolean).join(" · ");
+  return `<div class="reeng" title="${escAttr(tip)}">
+    <div class="rg-t">유효 복귀 <span>${wk}</span><b class="num">${pct.toFixed(1)}%</b></div>
+    <div class="rg-bar"><i style="width:${Math.max(2,Math.min(100,pct)).toFixed(1)}%"></i>${isFinite(nb)?`<u style="left:${Math.max(0,Math.min(99,nb)).toFixed(1)}%"></u>`:""}</div>
+    <div class="rg-s">${isFinite(nb)?`<span>자연 기준선 <b>${nb.toFixed(1)}%</b></span>`:""}${cost!=null?`<span>· 복귀당 <b>₩${Math.round(cost).toLocaleString("ko-KR")}</b></span>`:""}</div>
+  </div>`;}
 function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)return;
   if(dsMode!=="channeled"||!ds.channels||!ds.channels.length){sec.hidden=true;el.innerHTML="";return;}
   sec.hidden=false;
@@ -5254,7 +5518,7 @@ function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)r
   const cur=ds.media;
   el.innerHTML=`<div class="sf-dd" id="mediaDD">
     <button class="sf-dd-btn" type="button" aria-haspopup="listbox" aria-expanded="false"><span class="sf-dd-cur">${escHtml(cur)}</span><svg viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
-    <div class="sf-dd-menu" role="listbox" hidden>${chans.map(ch=>`<button type="button" role="option" data-m="${escAttr(ch)}" class="${ch===cur?"on":""}">${escHtml(ch)} <em>${counts.get(ch).toLocaleString()}</em></button>`).join("")}</div></div>`;
+    <div class="sf-dd-menu" role="listbox" hidden>${chans.map(ch=>`<button type="button" role="option" data-m="${escAttr(ch)}" class="${ch===cur?"on":""}">${escHtml(ch)} <em>${counts.get(ch).toLocaleString()}</em></button>`).join("")}</div></div>${reengBadgeHTML(cur)}`;
   const dd=el.querySelector(".sf-dd"),btn=dd.querySelector(".sf-dd-btn"),menu=dd.querySelector(".sf-dd-menu");
   btn.onclick=e=>{e.stopPropagation();const willOpen=menu.hidden;closeAllDD();if(willOpen){dd.classList.add("open");menu.hidden=false;btn.setAttribute("aria-expanded","true");}};
   menu.querySelectorAll("button").forEach(b=>b.onclick=()=>{const m=b.dataset.m;closeAllDD();if(ds.media===m)return;ds.media=m;cmpResetForMedia(m);tPage=1;tGroupByTouched=false;show(ds);});} /* 매체 전환 시 그룹뷰 기본값 재적용 + 비교 목록 초기화 */
@@ -5263,13 +5527,13 @@ function show(ds){scope(ds);
   if(!tGroupByTouched&&tMarkView==="all"){
     const g=String(ds.media||"").startsWith("Google")&&ds.agg.some(e=>e._g_adGroupId);
     if(g!==tGroupBy){tGroupBy=g;if(g){tQuickFo=null;}}}
-  renderMediaSeg(ds);renderPeriodSeg();renderViewSeg();renderDataRange(ds);renderKeyrow(ds);renderAutoInsight(ds);
+  renderMediaSeg(ds);renderPeriodSeg();renderViewSeg();renderDataRange(ds);renderUmetCards(ds);renderKeyrow(ds);renderAutoInsight(ds);
   requestAnimationFrame(()=>{renderQuad(ds);renderQuadTierLegend();
     renderTrend(ds);
     requestAnimationFrame(()=>{curDS=ds;renderQuickFo();renderTable(ds);renderAB(ds);});});}
 function setActive(k){if(!DATASETS[k])return;active=k;
   tableShowAll=false;tState={sort:"비용",dir:-1,q:""};tQuickFo=null;tGroupBy=false;tGroupByTouched=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;
-  tMarkView="all";tServices=new Set();tCreators=new Set();tPerfSel=new Set();mineAs=null;_mselSig={svc:"",cr:"",ma:"",pf:""}; /* 마크/서비스/제작자/실적 필터도 리셋 — 데이터 재로드·스탠드얼론에서 필터가 새어 빈 표로 고착되는 것 방지 */
+  tMarkView="all";tServices=new Set();tCreators=new Set();tPerfSel=new Set();tRes=new Set();mineAs=null;_mselSig={svc:"",cr:"",ma:"",pf:"",res:""}; /* 마크/서비스/제작자/실적/해상도 필터도 리셋 — 데이터 재로드·스탠드얼론에서 필터가 새어 빈 표로 고착되는 것 방지 */
   tGallery=false;_galShown=100;const _gvc=$("#galleryView");if(_gvc)_gvc.checked=false;
   if($("#search"))$("#search").value="";if($("#showAll"))$("#showAll").checked=false;
   show(DATASETS[k]);}
@@ -5414,7 +5678,7 @@ function refreshAll(){if(!active||!DATASETS[active])active=TAB_ORDER.find(k=>DAT
 
 function resetAll(){Object.keys(DATASETS).forEach(k=>delete DATASETS[k]);active=null;tableShowAll=false;
   tState={sort:"비용",dir:-1,q:""};tQuickFo=null;tGroupBy=false;tGroupByTouched=false;tLiveOnly=true;tChip=null;tExp=new Set();tPage=1;qLive=false;qFoMap=null;ISLE.name=null;
-  tMarkView="all";tServices=new Set();tCreators=new Set();mineAs=null;_mselSig={svc:"",cr:"",ma:""};
+  tMarkView="all";tServices=new Set();tCreators=new Set();tPerfSel=new Set();tRes=new Set();mineAs=null;_mselSig={svc:"",cr:"",ma:"",pf:"",res:""};
   tGallery=false;_galShown=100;const _gvc2=$("#galleryView");if(_gvc2)_gvc2.checked=false;
   const s=$("#search");if(s)s.value="";const a=$("#showAll");if(a)a.checked=false;}
 function dropZone(e){if(!e||e.clientY==null)return null;
