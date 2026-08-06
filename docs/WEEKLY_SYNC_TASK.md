@@ -36,6 +36,7 @@
 - **몰로코/메타** → `sr_weekly_creative_stats`에 행 단위 INSERT. 규칙(서버 cr_save와 동일):
   - `channel`='Moloco'|'Meta', `week_start`=W(각 행의 date를 주 시작 월요일로 정규화), `ad_name`=소재 식별자, `payload`=그 행의 모든 지표를 JSONB로(수동 CSV의 컬럼명 그대로 키로), `uploaded_by`='auto-weekly'
   - `on conflict (channel, week_start, ad_name) do nothing` · `(payload->>'비용')::numeric >= 1500`인 행만
+  - 통합 키도 함께: `_name`(=`ad_name`), `_svc`. 몰로코는 `_res`·`_ar`와 함께 `_m_resReal`(ffprobe 실측)·`_m_resName`(파일명 표기)을 넣는다 — 실측이 있으면 `_res`=실측값. **몰로코가 업로드본을 트랜스코딩해 실측이 640 계열로 나오는 것은 정상이니 1080으로 보정하지 말 것.** 메타는 해상도 데이터가 없으므로 `_res`를 만들어 넣지 않는다(사이트도 표시하지 않는다).
 - **구글 광고그룹** → `sr_kv` `k='gwstat'` 병합:
   - `adset_name`→광고그룹 ID: `sr_kv k='gmap'`의 `v->'adgroup'`(ID→이름)을 역변환. 매칭 실패는 `name:<이름>` 키로.
   - 값 `{ID:{"W":[비용,노출,클릭,어트리뷰션,활성,신규재활성]}}` — 비용 1500 미만 행 제외.
@@ -46,6 +47,11 @@
   - **`ad_name` = `확장 소재` URL 그대로**(애셋 제목 아님 — 제목은 중복되고, 과거 주와 이름이 이어져야 소재별 추이가 붙는다). **ACE 캠페인 행만 URL 끝에 zero-width space(U+200B) 1개**를 붙인다(같은 소재가 AEO·ACE 양쪽에 있을 때 UNIQUE 충돌 방지 — 사이트 저장 경로와 동일 규칙). 그 외 어떤 경우에도 U+200B를 임의로 덧붙이지 않는다.
   - 같은 (URL×캠페인 유형)이 여러 광고그룹에 있으면 **숫자 지표는 합산**, 문자열은 비용 최대 행 기준 하나로.
   - payload 필수 키: `_g_campaignId`(캠페인 ID — **절대 누락 금지**, 매체 분리 기준), `_g_adGroupId`, `비용`, `노출 수`, `클릭 수`, `어트리뷰션 수`(=설치), `활성 유저 수`(=인앱 액션), `신규+재활성 유저 수`(=조회연결 전환), `_g_conversions`(전환수), `_g_allConv`(모든 전환), `_g_convValue`(전환 가치), `_g_url`, `_g_assetId`, `_g_assetName`, `_g_assetType`, `_g_assetStatus`, `_g_status`, `_g_perfLabel`(실적), `_g_orientation`(방향). 소스에 있으면 `_g_firstOpen`(first_open)·`_g_home`(home)·`_g_interactions`(상호작용 수)·`_g_trueViews`(TrueView 조회수)도 — AEO 신규 단가 등 채점에 쓰인다.
+  - payload 권장 키(사이트 화면이 읽는다 · 소스에 있으면 반드시 채울 것):
+    - `_name` — **표시용 소재 이름**. 영상=영상 제목, 이미지=원본 파일명(네이밍 룰셋 준수). ⚠️ 확장소재 URL을 그대로 넣지 말 것 — 사이트는 URL이면 이름으로 취급하지 않는다. (`ad_name`은 조인 키라 URL 그대로 유지)
+    - `_res`(`"1080x1920"` 형식)·`_ar`(`"9:16"`)·`_g_resSrc` — 해상도와 그 출처. 애셋 이름에 규격이 박혀 있으면 `asset_name`, 보고서 '방향' 열 기반이면 `orientation`(가로 모드=1920x1080 / 정사각형=1080x1080 / 세로=1080x1920).
+    - `_g_assetInstalls`(설치)·`_g_inAppActions`(인앱 액션)·`_g_viewThroughConv`(조회연결 전환)·`_g_assetState`(애셋 상태) — 뒤 둘은 **이벤트 수**이므로 유저 수 컬럼과 섞지 말 것.
+    - `_svc` — 서비스 분류(서비스별 7일 지표가 이 값으로 주지표를 고른다).
   - 합산 후 비용 1500 미만 제외 · `on conflict (channel, week_start, ad_name) do nothing` · `uploaded_by='auto-weekly'`.
 
 ### 3) 검증
