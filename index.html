@@ -150,8 +150,6 @@
   #table .chip[data-ck]:hover{background:var(--karrot-f);color:var(--karrot)}
   .chip.grp{background:#E9E4F2;color:#6B5B95;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .chip.gdt{background:var(--surface-3);color:var(--muted)}
-  .ocr-mark{font-size:var(--fs-1);font-weight:800;letter-spacing:.04em;padding:1px 5px;border-radius:4px;margin-left:5px;background:var(--surface-3);color:var(--faint);vertical-align:1.5px}
-  .asset-src .ocr-mark{margin-left:0;margin-right:6px;vertical-align:0}
   .gst{font-size:var(--fs-1);font-weight:700;padding:1px 7px;border-radius:5px;margin-left:6px;vertical-align:1px;white-space:nowrap}
   .gst.lim{background:var(--w1-f);color:var(--w1)}
   .gst.auth{background:var(--g1-f);color:var(--g1)}
@@ -1910,7 +1908,6 @@ function attachVideoFunnelCols(headers,data){
 let gNameMap={adgroup:{},campaign:{},asset:{}};
 let gInfoMap={}; /* 광고그룹 보고서 스냅샷 — {광고그룹ID:{nm,cpNm,st,op,rsn,tcpa,cost,…,from,to}} */
 let gWeekMap={}; /* 광고그룹 '주간 성과'(정확 소스·AEO+ACE·글자 애셋 포함) — {광고그룹ID:{주:[비용,노출,클릭,어트리뷰션,활성,신규재활성]}}. kv 'gwstat'. 그룹뷰 표시값 교체용(채점 무관) */
-let gOcrMap={}; /* 이미지 소재 OCR 추출 텍스트 — {애셋ID:텍스트}. 별도 kv(ocr) 저장: 마음에 안 들면 키 삭제만으로 전체 취소 */
 /* 소재 이름 수동 변경(관리자 전용) — kv(nameovr)에 {markKey(매체,원본명):새이름} 저장. 표시 최우선.
    NAME_PENDING = /namechange 편집 중 미저장분(''=기본명으로 되돌림). renameMode = 편집 활성 여부 */
 let NAME_OVR={}, NAME_PENDING={}, renameMode=false, renameDirty=false;
@@ -2007,7 +2004,6 @@ function displayNameOf(e){if(!e)return "";
    OCR 추출 텍스트·공식 애셋 이름 매핑(gmap.asset)·유튜브 제목 조회는 전부 쓰이지 않는 경로가 됐다.
    특히 유튜브 제목은 소재마다 noembed.com 왕복이 있어 지우는 편이 로딩에도 이득이다.
    kv(`ocr`·`ytt`)는 서버에 남겨 두되 화면은 더 이상 읽지 않는다. */
-function isOcrName(){return false;}
 function extractNameMap(headers,data){
   const H=(headers||[]).map(h=>String(h).trim());
   const find=(...c)=>H.find(h=>c.includes(h));
@@ -2033,15 +2029,12 @@ async function fetchNameMapBundle(pw){
   const get=k=>sbRpc("cr_kv_get",{pw,key:k}).catch(()=>null);
   /* ocr·ytt는 이름 경로 은퇴로 더 이상 읽지 않는다 — 부팅 왕복 2개 감소 */
   const [gm,gi,no,so,gw,um]=await Promise.all([get("gmap"),get("ginfo"),get("nameovr"),get("svcovr"),get("gwstat"),get("umetrics")]);
-  const oc=null,yt=null;
-  return {gm,gi,oc,yt,no,so,gw,um};}
+  return {gm,gi,no,so,gw,um};}
 function applyNameMapBundle(b){
   if(!b)return;
-  const{gm,gi,oc,yt,no,so,gw}=b;
+  const{gm,gi,no,so,gw}=b;
   if(gm&&typeof gm==="object")gNameMap={adgroup:gm.adgroup||{},campaign:gm.campaign||{},asset:gm.asset||{}};
   if(gi&&typeof gi==="object")gInfoMap=gi;
-  if(oc&&typeof oc==="object")gOcrMap=oc;
-  if(yt&&typeof yt==="object")for(const id in yt){if(typeof yt[id]==="string"&&yt[id]&&_ytTitles[id]===undefined)_ytTitles[id]=yt[id];}
   if(no&&typeof no==="object")NAME_OVR=no;
   if(so&&typeof so==="object")SVC_OVR=so;
   if(gw&&typeof gw==="object")gWeekMap=gw;
@@ -2159,8 +2152,6 @@ let _yttRan=false;
 /* hydrateAllYtTitles: 은퇴 — 표시 이름은 payload._name (외부 제목 조회 없음) */
 /* 유튜브 소재 제목 — noembed(CORS 허용)로 상세 열람 시에만 조회, 로컬 캐시.
    시작 시 캐시를 미리 올려 표·순위의 유튜브 URL 이름도 아는 제목으로 바로 표시 */
-const _ytTitles={};
-try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf("ytt_")===0)_ytTitles[k.slice(4)]=localStorage.getItem(k);}}catch(e){}
 /* 유튜브 화면비/해상도 실측 v2 — oardefault.jpg(비가로 영상 전용 썸네일)로 판정한다.
    실측 검증(2026-08-05, 세로3·정사각2·가로3 표본 전부 일치): oardefault.jpg는 세로·정사각 영상에서
    '영상의 실제 캔버스 크기'(예: 1080×1920, 1080×1080)로 응답하고, 가로(16:9) 영상엔 404을 준다.
@@ -2203,14 +2194,6 @@ async function hydrateYtAspects(){
   if(typeof refreshCrossBlock==="function")refreshCrossBlock();
   if(list.length&&curDS&&!ISLE.name){if(mainTab==="table")renderTable(curDS);}}
 function ytIdOf(url){const m=String(url||"").match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);return m?m[1]:null;}
-async function fetchYtTitle(id){
-  if(_ytTitles[id]!==undefined)return _ytTitles[id];
-  try{const ls=localStorage.getItem("ytt_"+id);if(ls){_ytTitles[id]=ls;return ls;}}catch(e){}
-  try{const r=await fetch(`https://noembed.com/embed?url=${encodeURIComponent("https://www.youtube.com/watch?v="+id)}`);
-    const j=await r.json();const t=j&&j.title?String(j.title):null;
-    _ytTitles[id]=t;if(t){try{localStorage.setItem("ytt_"+id,t);}catch(e){}}
-    return t;
-  }catch(e){_ytTitles[id]=null;return null;}}
 
 let WEEKS=[];/* 실데이터 로드 시 rebuildAllDatasets()가 채움 — 하드코딩 주차 없음 */
 /* ── 지표 신뢰성 게이트 ──
@@ -2668,39 +2651,6 @@ function estimatePerfLabels(ds,rows,groupOf){
 /* 주차별 추정 실적 — estimatePerfLabels와 같은 공식(PERF_EST)을 '그 주 데이터'에만 적용한다.
    소재 전체 라벨을 모든 주에 복사하면 매 주 같은 글자가 찍혀 아무 정보가 없다.
    코호트는 그 주에 함께 집행된 소재들이며, 구글은 같은 광고그룹 안에서만 비교한다(그룹 간 혼합 금지). */
-function weeklyPerfEst(ds,e,ws){
-  const out={};
-  if(!ds||!e||e._isGroup||!ws||!ws.length)return out;
-  const nameCol=ds.L.nameCol;
-  const wsSet=new Set(ws);
-  const pool0=(ds.agg||[]).filter(x=>x.score!=null);
-  if(pool0.length<3)return out;
-  const ck=perfConvKeyOf(pool0);
-  const useGroup=typeof groupOfFor==="function"&&!!groupOfFor(ds);
-  /* 한 번 순회로 주별 소재 집계 */
-  const byWeek=new Map();
-  for(const r of ds.data){
-    const w=String(r.date||"").slice(0,10);if(!wsSet.has(w))continue;
-    const nm=r[nameCol];if(nm==null||nm==="")continue;
-    let m=byWeek.get(w);if(!m){m=new Map();byWeek.set(w,m);}
-    let o=m.get(nm);if(!o){o={c:0,v:0,clk:0,imp:0,gid:null};m.set(nm,o);}
-    o.c+=num(r["비용"])||0;o.v+=num(r[ck])||0;o.clk+=num(r["클릭 수"])||0;o.imp+=num(r["노출 수"])||0;
-    if(!o.gid)o.gid=r._g_adGroupId||r._m_group||null;}
-  const pr=(vals,v)=>{let lo=0,hi=0;for(const x of vals){if(x<v)lo++;if(x<=v)hi++;}return vals.length?(lo+hi)/(2*vals.length):0.5;};
-  for(const w of ws){
-    const m=byWeek.get(w);if(!m)continue;
-    const me=m.get(e.name);if(!me||me.c<=0)continue;
-    let pool=[...m.values()].filter(o=>o.c>0);
-    if(useGroup&&me.gid){const g=pool.filter(o=>String(o.gid||"")===String(me.gid));if(g.length>=3)pool=g;}
-    if(pool.length<3)continue; /* 비교 대상이 없으면 추정하지 않는다(빈칸이 낫다) */
-    const convs=pool.map(o=>o.v),costs=pool.map(o=>o.c);
-    const ctrs=pool.filter(o=>o.imp>0).map(o=>o.clk/o.imp);
-    const mxV=Math.max(...convs)||1,mxC=Math.max(...costs)||1;
-    const ctr=(!(e._clkMix||e._impBad)&&me.imp>0)?me.clk/me.imp:null;
-    const rctr=(ctr!=null&&ctrs.length>=3)?pr(ctrs,ctr):0.5;
-    const S=PERF_EST.W_RV*pr(convs,me.v)+PERF_EST.W_CTR*rctr+PERF_EST.W_FV*(me.v/mxV)+PERF_EST.W_FC*(me.c/mxC);
-    out[w]=S>=PERF_EST.HI?"매우 좋음":S<PERF_EST.LO?"낮음":"좋음";}
-  return out;}
 function perfLabelOf(e){
   const act0=String(e._g_perfLabel||"").trim();
   const act=PERF_LABEL_ALIAS[act0]||act0;
@@ -3447,7 +3397,6 @@ function isleAr(el){const isle=el&&el.closest?el.closest(".isle"):null;if(!isle)
   applyIsleAr(isle,el.naturalWidth||el.videoWidth||0,el.naturalHeight||el.videoHeight||0);}
 /* 미리보기 — 고정 프레임(.isle-frame) 안에 비율 유지로 수납. 프레임 크기는 .isle의 ar-* 클래스가 결정 */
 function assetPreview(url,ent,noSrc){if(!url)return ""; /* noSrc=true → 원본 URL 줄 생략(비교 화면) */
-  const ocrM=""; /* OCR 이름 경로 은퇴 — 마크도 표시하지 않는다 */
   /* 해상도 = 미리보기 실측 캐시 우선, 없으면 리포트 표기·영상 표준 규격 환산(arDispOf) + 재생시간 */
   /* 유튜브는 MDIM(썸네일 측정치)을 쓰지 않는다 — 어떤 영상이든 같은 썸네일 규격이라 세로·가로가 뭉개진다.
      해상도 판단은 arDispOf(oar 실측 → 공식 방향) 한 곳으로 모은다 */
@@ -3460,7 +3409,7 @@ function assetPreview(url,ent,noSrc){if(!url)return ""; /* noSrc=true → 원본
   const dimUn=!_useMeas&&!!(ent&&(arInfoOf(ent)||{}).unver); /* 파일명 파싱값(미검증) — 실측과 구분 */
   const dimTxt=[dimRes,dm&&dm.dur?`⏱ ${fmtDur(dm.dur)}`:""].filter(Boolean).join(" · ");
   const dimLine=`<span class="asset-dim${dimUn?" unver":""}" title="${escAttr(dimTip)}">${escHtml(dimTxt)}</span>`; /* 값이 비어도 스팬 유지 — 실측 도착 시 제자리 갱신용 */
-  const srcLine=(note)=>noSrc?"":`<div class="asset-src">${ocrM}${dimLine}${note?escHtml(note)+" · ":""}<a href="${escAttr(safeUrl(url))}" target="_blank" rel="noopener">${escHtml(trunc(url,60))}</a></div>`;
+  const srcLine=(note)=>noSrc?"":`<div class="asset-src">${dimLine}${note?escHtml(note)+" · ":""}<a href="${escAttr(safeUrl(url))}" target="_blank" rel="noopener">${escHtml(trunc(url,60))}</a></div>`;
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
   if(yt)return `<div class="isle-frame"><iframe class="asset-yt" src="https://www.youtube.com/embed/${yt[1]}" frameborder="0" allow="encrypted-media" allowfullscreen></iframe></div>${srcLine()}`;
   if(isVideoUrl(url)){const su=safeUrl(url);
@@ -4290,7 +4239,7 @@ function umCohortHTML(ds,e){
    이미지 지문은 CORS 허용 프록시(wsrv.nl 9×8 리사이즈)로 브라우저에서 직접 계산 — 광고 CDN 원본은 CORS가 없어
    캔버스가 오염되므로 반드시 프록시 경유. 결과는 localStorage(cr_dhash)에 영구 캐시(재방문 시 즉시). */
 const DHASH=(()=>{try{return JSON.parse(localStorage.getItem("cr_dhash")||"{}");}catch(_){return{};}})();
-let _dhashDirty=false,_dhashTimer=null,_dhashGen=0;
+let _dhashDirty=false,_dhashGen=0;
 function dhashSave(){if(!_dhashDirty)return;_dhashDirty=false;try{localStorage.setItem("cr_dhash",JSON.stringify(DHASH));}catch(_){}}
 function dhashHam(a,b){let d=0;for(let i=0;i<16;i++){let x=parseInt(a[i],16)^parseInt(b[i],16);x=x-((x>>1)&5);d+=(x&3)+((x>>2)&3);}return d;}
 function computeDhash(url){
