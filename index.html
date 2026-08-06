@@ -187,7 +187,10 @@
   @media(max-width:760px){.umet-cards{grid-template-columns:minmax(0,1fr)}}
   .umet-card{background:var(--surface);border:1px solid var(--surface-3);border-radius:var(--r-sm);padding:14px 16px;min-width:0}
   .umet-card .uc-k{font-size:var(--fs-2);color:var(--muted);font-weight:650;display:flex;align-items:center;gap:6px}
-  .umet-card .uc-k .uc-when{margin-left:auto;font-size:var(--fs-1);color:var(--faint);font-weight:500;white-space:nowrap}
+  /* 기준 시점은 제목 바로 옆에 붙인다 — margin-left:auto로 오른쪽 끝에 밀면 카드 폭만큼(240px) 떨어져
+     "무엇의 기준 시점인지" 연결이 끊긴다. 제목·물음표·시점이 한 덩어리여야 한다 */
+  .umet-card .uc-k .uc-when{font-size:var(--fs-1);color:var(--faint);font-weight:500;white-space:nowrap}
+  .uc-k .uc-when::before,.rst-h .uc-when::before{content:"·";margin-right:5px;color:var(--surface-3);font-weight:700}
   .uc-q{flex:0 0 auto;width:14px;height:14px;border-radius:50%;background:var(--surface-3);color:var(--muted);font-size:var(--fs-1);font-weight:800;display:inline-flex;align-items:center;justify-content:center;cursor:help;user-select:none}
   .umet-card .uc-big{display:flex;align-items:baseline;gap:7px;margin-top:7px;flex-wrap:wrap}
   .umet-card .uc-big b{font-size:var(--fs-5);font-weight:750;letter-spacing:-.02em}
@@ -225,7 +228,7 @@
      측정 방식을 모양으로 구분: ● 클릭 실측 · ○ 노출(뷰스루) 포함(빗금 밑판) — 액면 비교 금지를 시각으로 전달 */
   .rst{background:var(--surface);border:1px solid var(--surface-3);border-radius:var(--r-sm);padding:12px 16px 8px;margin-bottom:20px}
   .rst-h{font-size:var(--fs-2);font-weight:650;color:var(--muted);display:flex;align-items:center;gap:6px;margin-bottom:2px}
-  .rst-h .uc-when{margin-left:auto;font-size:var(--fs-1);color:var(--faint);font-weight:500}
+  .rst-h .uc-when{font-size:var(--fs-1);color:var(--faint);font-weight:500} /* 위와 같은 이유 — 1036px 떨어져 있었다 */
   /* 배율 고정 원칙 — SVG는 컨테이너가 좁아지면 통째로 축소돼 글자까지 작아진다.
      viewBox 폭 기준 min-width를 걸어 배율을 0.9~1 사이로 묶고, 더 좁으면 가로 스크롤로 넘긴다.
      (창 너비에 따라 폰트가 제멋대로 변하던 원인) */
@@ -253,21 +256,32 @@
   .peer .us-h{margin-bottom:4px}
   .peer .us-sub:first-of-type{margin-top:2px;padding-top:0;border-top:0}
 
-  /* ── 상세 지표 행 문법 — [라벨 · 값 · 등급 · 위치 · 편차] 한 줄. 모든 블록이 같은 문법을 쓴다 ── */
-  /* 행을 2열로 흘려 넓은 폭을 쓴다 — 한 열이면 트랙만 길어지고 마커가 눈금에서 멀어진다 */
-  /* 2열 → 1열, 두 단계로만 접는다(auto-fit은 폭에 따라 매 순간 바뀌어 레이아웃이 출렁인다) */
-  .mrows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 26px;margin-top:5px}
-  @media(max-width:1080px){.mrows{grid-template-columns:minmax(0,1fr)}}
+  /* ── 상세 지표 행 문법 — [라벨 값 등급 순위] 한 덩어리. 모든 블록이 같은 문법을 쓴다 ──
+     근접성 원칙: 한 지표에 속한 네 조각의 간격(8px)은 지표끼리의 간격(가로 34px·세로 행 구분선)보다
+     반드시 작아야 한다. 예전엔 라벨 열이 1fr이라 남는 폭을 전부 삼켜, 라벨과 그 라벨의 값 사이가
+     114~208px까지 벌어졌다(라벨 글자폭은 30~93px). 한 덩어리여야 할 것이 가장 멀리 떨어져 있었다. */
+  /* 행 폭은 내용에 맞춘 고정값(--mrow-w)이고, 남는 폭은 덩어리 '밖'으로 흘린다.
+     덩어리를 늘려 여백을 채우면 관계가 끊기고, 행마다 늘어난 양이 달라 열도 안 맞는다. */
+  /* 덩어리가 내용 폭(≈220px)까지 줄었으므로 넓은 창에선 3열이 들어간다 — 2열로 두면 카드 오른쪽 380px이 빈다.
+     3→2→1, 세 단계로만 접는다(auto-fit은 폭이 1px 변할 때마다 열 수가 바뀌어 레이아웃이 출렁인다) */
+  .mrows{display:grid;grid-template-columns:repeat(3,max-content);justify-content:start;gap:0 34px;margin-top:5px}
+  @media(max-width:1360px){.mrows{grid-template-columns:repeat(2,max-content)}}
+  @media(max-width:1080px){.mrows{grid-template-columns:max-content}}
   .mrows .us-sub,.mrows .us-life{grid-column:1/-1}
-  /* 지표 행 — 막대 없이 [라벨 … 값 · 등급 · 순위]. 판단에 쓰는 세 값을 오른쪽에 모아 한 번에 읽힌다.
-     라벨은 남는 폭을 차지해 값 블록과 시각적으로 분리되고(거리), 값·등급·순위는 붙어 한 덩어리로 보인다(근접). */
-  .mrow{display:grid;grid-template-columns:minmax(0,1fr) 58px 54px 52px;align-items:center;gap:8px;padding:4px 2px;font-size:var(--fs-1);min-width:0;border-radius:6px}
+  /* 라벨은 오른쪽 정렬 — 짧은 라벨("광고비" 30px)이든 긴 라벨("앱 접속(홈피드) 7일" 93px)이든
+     값 바로 8px 앞에서 끝난다. 왼쪽 정렬이면 라벨 길이만큼 값과의 거리가 제각각이 된다. */
+  /* 값·등급·순위 열은 내용 폭(auto)이다. 고정 폭에 오른쪽 정렬로 두면 짧은 값이 열 안에서 왼쪽에 빈틈을
+     남겨(예: "5,851"이 "4733.7만원"용 76px 열에 들어가면 48px), 라벨과 값 사이가 다시 벌어진다.
+     남는 폭은 덩어리 오른쪽 밖으로 흘려보내고, 내부 간격은 어떤 값이 와도 8px로 고정한다. */
+  .mrow{display:grid;grid-template-columns:auto auto auto auto;align-items:center;gap:8px;padding:4px 6px 4px 0;font-size:var(--fs-1);border-radius:6px}
   .mrow>*{min-width:0}
-  .mrow .mr-k{color:var(--muted);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .mrow .mr-v{font-size:var(--fs-2);font-weight:750;color:var(--ink);text-align:right;white-space:nowrap}
-  .mrow .mr-t{justify-self:center}
+  /* 라벨만 폭을 맞춰 오른쪽 정렬 — 짧은 라벨("광고비")이든 긴 라벨("앱 접속(홈피드) 7일")이든 값 바로 8px
+     앞에서 끝난다. 덕분에 라벨 오른쪽 끝과 값 왼쪽 끝, 두 줄의 정렬선이 생겨 행끼리도 눈으로 이어진다.
+     폭(--mrk-w)은 fitMrows()가 그 블록의 실제 라벨에서 잰다(고정값이면 짧은 블록에서 빈다) */
+  .mrow .mr-k{width:var(--mrk-w,auto);color:var(--muted);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+  .mrow .mr-v{font-size:var(--fs-2);font-weight:750;color:var(--ink);white-space:nowrap}
   .mrow .mr-t.sp{font-size:9.5px;padding:1px 6px;white-space:nowrap}
-  .mrow .mr-d{color:var(--faint);white-space:nowrap;text-align:right}
+  .mrow .mr-d{color:var(--faint);white-space:nowrap}
   .mrow:hover{background:var(--surface-2)}
   .mrow+.mrow{border-top:1px solid var(--surface-2)}
   /* 섹션 소제목 — 블록 안 구분 */
@@ -3972,6 +3986,13 @@ function umRow(o){
     +`<b class="mr-v num">${escHtml(o.v)}</b>`
     +(t?`<span class="sp ${t.t==="g2"?"sp-g2":t.t==="g1"?"sp-g1":t.t==="w1"?"sp-w1":"sp-mid"} mr-t">${t.lab}</span>`:`<span class="mr-t"></span>`)
     +`<span class="mr-d">${rank}</span></div>`;}
+/* 라벨 열 폭을 그 블록에 실제로 있는 라벨의 최댓값으로 맞춘다.
+   고정 폭으로 두면 라벨이 모두 짧은 블록(광고비·실유저 = 30px)에서 열의 왼쪽 68px이 그냥 빈다.
+   라벨은 오른쪽 정렬이라 그 빈 곳이 덩어리 왼쪽에 생기고, 옆 덩어리와의 거리를 쓸데없이 벌린다. */
+function fitMrows(root){
+  (root||document).querySelectorAll(".mrows").forEach(m=>{
+    let w=0;m.querySelectorAll(".mr-k").forEach(k=>{w=Math.max(w,Math.ceil(k.scrollWidth));});
+    if(w>0)m.style.setProperty("--mrk-w",Math.min(w,120)+"px");});}
 /* 순위 표기 — 등급과 같은 기준(비교군 백분위)에서 뽑는다. 작을수록 상위 */
 function umRankTxt(tr){
   if(!tr||tr.pct==null)return "";
@@ -4633,6 +4654,7 @@ function renderIsleMid(ds,e,mid){if(!mid)return;
   const cur=tabs.find(t=>t.k===ISLE.gtab)||tabs[0];
   /* 실유저(주간) 실증 블록 — 탭 위 상시 노출(탭 전환과 무관). 데이터 없으면 빈 문자열이라 미렌더 */
   mid.innerHTML=(peerRankHTML(ds,e)||"")+(umCohortHTML(ds,e)||"")+(tabs.length>1?`<div class="dtog gtabs">${tabs.map(t=>`<button data-gt="${t.k}" class="${t.k===cur.k?"on":""}">${t.lab}</button>`).join("")}</div>`:"")+`<div class="gtab-body">${cur.html}</div>`;
+  fitMrows(mid);
   mid.querySelectorAll(".gtabs button").forEach(b=>b.onclick=()=>{ISLE.gtab=b.dataset.gt;renderIsleMid(ds,e,mid);});
   /* 그래프 요소 공통 툴팁(data-tip) — 추이 막대·유지 곡선 점·산점도 점이 함께 쓴다 */
   mid.querySelectorAll("[data-tip]").forEach(el=>{
