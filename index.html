@@ -705,6 +705,15 @@
   /* 모든 섹션이 이 한 폭을 공유한다 — 개수에서 유도한 max-width가 인라인으로 들어온다.
      예전엔 카드만 좌측에 몰리고(고정 max 360px) 표·차트는 화면 전체를 써서 세로선이 어디에도 맞지 않았다 */
   .cmpm-in{margin:0 auto;width:100%}
+  /* 관심 소재 강조 — 카드·표 열 호버 시 차트의 해당 선/점만 굵게, 나머지는 물러난다 */
+  .cmpm-in path.cmp-ln{transition:stroke-width .12s,opacity .12s}
+  .cmpm-in circle.cmp-dot{transition:opacity .12s}
+  path.cmp-ln.cmp-hi{stroke-width:3.4;stroke-opacity:1}
+  circle.cmp-dot.cmp-hi{r:5}
+  path.cmp-ln.cmp-dim,circle.cmp-dot.cmp-dim{opacity:.16}
+  .cmpm-med.cmp-hi .isle-frame{box-shadow:inset 0 0 0 3px var(--cc,#E2DFD3)}
+  .cmpm-med.cmp-dim{opacity:.5}
+  .cmpg th.cmp-hi,.cmpg td.cmp-hi{background:var(--surface-2)}
   /* 미리보기 — 개수에서 정한 열 수로 접고(5~6개는 3열 2행), 프레임 높이도 같은 규칙에서 온다 */
   .cmpm-media{display:grid;gap:16px 14px;margin:2px 0 8px}
   .cmpm-med{min-width:0}
@@ -3666,7 +3675,11 @@ function creativeTrendHTML(ds,e){
       const w=String(r.date||"").slice(0,10);
       const v=String(r._g_perfLabel).trim().replace(/^--$/,"");
       if(_plW[w]==null||v)_plW[w]=v;}}
-  const hasPl=ws.some(w=>_plW[w]!==undefined);
+  /* 막대 밑 실적 — 실측이 없어도 추정 등급으로라도 매 주 채운다. 빈칸은 '성과 없음'으로 오독되고,
+     대강이라도 등급이 보여야 막대만 보고 판단할 수 있다. 구글 외 매체는 실측 라벨이 없으므로 추정으로 채운다 */
+  const _fbP=(typeof perfLabelOf==="function")?perfLabelOf(e):null;
+  const _fbLab=(_fbP&&_fbP.lab)||e._perfEst||"";
+  const hasPl=ws.some(w=>_plW[w]!==undefined)||!!_fbLab;
   /* viewBox를 렌더 폭(≈820)에 맞춰 배율 1로 둔다 — 좌표계가 작으면 SVG가 통째로 확대돼(실측 2.7배)
      글자·선이 타이포 스케일을 무시하고 커진다. 주가 많으면 폭 대신 슬롯을 좁혀 담는다(가로 스크롤 없음). */
   const W=820,pl=10,pr=10,pt=14;
@@ -3676,7 +3689,6 @@ function creativeTrendHTML(ds,e){
   const slot=iw/ws.length,xat=i=>pl+(i+0.5)*slot;
   const bw=Math.max(4,Math.min(22,slot*0.38)); /* 슬롯에 비례한 막대 — 주가 많아도 겹치지 않는다 */
   let s="";
-  let _prevLab=null; /* 같은 등급이 이어지면 생략하고 '바뀐 지점'에만 라벨을 찍는다 — 13주 내내 같은 글자가 반복되면 노이즈다 */
   ws.forEach((w,i)=>{const o=os[i],x=xat(i);
     const h=Math.max(2,(o.c/cmax)*ih);
     /* 주차 점수 표기·티어색 제거 — 점수는 내부 계산 전용, 화면엔 지표 원값만 */
@@ -3688,24 +3700,34 @@ function creativeTrendHTML(ds,e){
       /* 그 주의 실측 실적 라벨. 없는 주는 빈칸으로 두지 않고 소재 전체 추정 등급을 점선 밑줄로 표기 —
          "라벨이 없다"와 "성과가 없다"는 다른 뜻이라 빈칸이 오독을 만든다 */
       const act=_plW[w];
-      /* 그 주 실측 라벨이 없으면 빈칸으로 두지 않는다 — 소재의 현재 라벨(없으면 추정)을 점선으로 깐다.
-         "라벨이 없다"와 "성과가 없다"는 다른 뜻이라 빈칸이 오독을 만든다 */
-      const _fb=(typeof perfLabelOf==="function")?perfLabelOf(e):null;
-      const lab0=(act!==undefined&&act)?act:(act===undefined?((_fb&&_fb.lab)||e._perfEst||""):"보통");
-      const changed=lab0!==_prevLab;_prevLab=lab0;
-      if(lab0&&(changed||i===ws.length-1)){
+      const lab0=(act!==undefined&&act)?act:(act===undefined?_fbLab:"보통");
+      if(lab0){
         const est=!(act!==undefined&&act);
         const lab=PERF_LABEL_ALIAS[lab0]||lab0;
         const t=PERF_TIER[lab]||"m";
         const tc=t==="g2"?"var(--g2)":t==="g1"?"var(--g1)":t==="w1"?"var(--w1)":t==="w2"?"var(--w2)":"var(--mid)";
-        s+=`<text x="${x.toFixed(1)}" y="${H-6}" font-size="10" font-weight="${est?600:700}" fill="${tc}" fill-opacity="${est?0.6:1}" text-anchor="middle" data-tip="${escAttr((est?"<b>추정 실적</b> — 이 주의 리포트 실적 라벨이 없어 최근 확인된 등급을 표시(점선)":"구글 리포트 실측 실적")+"<br>등급이 바뀐 주와 마지막 주에만 표시합니다")}">${escHtml(lab.replace(/\s+/g,""))}</text>`;
+        s+=`<text x="${x.toFixed(1)}" y="${H-6}" font-size="10" font-weight="${est?600:700}" fill="${tc}" fill-opacity="${est?0.6:1}" text-anchor="middle" data-tip="${escAttr(est?"<b>추정 실적</b>(점선) — 이 주의 리포트 실적 라벨이 없어 최근 확인된 등급으로 대신 표시":"구글 리포트 실측 실적")}">${escHtml(lab.replace(/\s+/g,""))}</text>`;
         if(est)s+=`<line x1="${(x-14).toFixed(1)}" y1="${H-3.5}" x2="${(x+14).toFixed(1)}" y2="${H-3.5}" stroke="${tc}" stroke-width="1" stroke-dasharray="2 2" stroke-opacity="0.5"/>`;}}});
   for(const ln of lines){let p="",st=false,dots="";
     ws.forEach((w,i)=>{const v=ln.vals[i];if(v==null)return;
       const x=xat(i),y=pt+(1-v/ln.mx)*ih;
       p+=st?` L ${x.toFixed(1)} ${y.toFixed(1)}`:`M ${x.toFixed(1)} ${y.toFixed(1)}`;st=true;
       dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" fill="${ln.col}"/>`;});
-    s+=`<path d="${p}" fill="none" stroke="${ln.col}" stroke-width="2"${ln.dash?' stroke-dasharray="5 3"':''} stroke-opacity="0.95"/>${dots}`;}
+    s+=`<path d="${p}" fill="none" stroke="${ln.col}" stroke-width="2"${ln.dash?' stroke-dasharray="5 3"':''} stroke-opacity="0.95"/>${dots}`;
+    /* 최고·최저점만 수치를 적는다(모든 점에 붙이면 숫자가 선을 덮는다).
+       라벨을 위에 둘지 아래에 둘지는 그 주에서 이 선이 다른 선보다 위인지로 정한다 — 두 선이 교차해도 겹치지 않는다 */
+    const yOf=(o,i)=>o.vals[i]==null?null:pt+(1-o.vals[i]/o.mx)*ih;
+    let hi=null,lo=null;
+    ln.vals.forEach((v,i)=>{if(v==null)return;
+      if(!hi||v>hi.v)hi={i,v};
+      if(!lo||v<lo.v)lo={i,v};});
+    const marks=hi&&lo&&hi.i!==lo.i?[hi,lo]:(hi?[hi]:[]);
+    for(const mk of marks){
+      const x=xat(mk.i),y=yOf(ln,mk.i);
+      let above=true;
+      for(const o of lines){if(o===ln)continue;const oy=yOf(o,mk.i);if(oy!=null&&oy<y){above=false;break;}}
+      const ly=above?Math.max(pt+9,y-8):Math.min(H-pb-4,y+15);
+      s+=`<text x="${x.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="10" font-weight="750" fill="${ln.col}" paint-order="stroke" stroke="#FFFDF7" stroke-width="3" stroke-linejoin="round">${escHtml(ln.fmt(mk.v))}</text>`;}}
   /* 범례는 최소한으로: 주 수 · 색=지표 매핑 · 최신값. 비율·설명은 푸터/툴팁이 담당(중복 금지) */
   const leg=lines.map(ln=>`<span><i class="lgd" style="background:${ln.col}"></i>${ln.lab} <b>${ln.last!=null?ln.fmt(ln.last):"–"}</b></span>`).join(" ");
   return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · <i class="lgd" style="background:var(--karrot);opacity:.55"></i>광고비 ${leg}</span></div><div class="ispark-scroll"><svg class="ispark-svg" viewBox="0 0 ${W} ${H}">${s}</svg></div></div>`;}
@@ -4485,9 +4507,9 @@ function cmpAxesSVG(R){
     const ps=pts[j].filter(Boolean);
     if(!ps.length)return;
     let pth="";ps.forEach((p,k)=>{pth+=(k?" L":"M")+` ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;});
-    lines2+=`<path d="${pth}" fill="none" stroke="${col}" stroke-width="1.6" stroke-opacity="0.9" stroke-linejoin="round"/>`;
+    lines2+=`<path class="cmp-ln" data-ci="${en.i}" d="${pth}" fill="none" stroke="${col}" stroke-width="1.6" stroke-opacity="0.9" stroke-linejoin="round"/>`;
     pts[j].forEach((p,ci)=>{if(!p)return;const c=cols[ci];
-      dots+=`<circle class="cmp-dot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${col}" data-cv="${escAttr(c.d.lab+" "+c.d.fmt(c.raw[j]))}" data-cc="${col}"/>`;});});
+      dots+=`<circle class="cmp-dot" data-ci="${en.i}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${col}" data-cv="${escAttr(c.d.lab+" "+c.d.fmt(c.raw[j]))}" data-cc="${col}"/>`;});});
   /* 지표(열)마다 최고점 위·최저점 아래에만 수치 표기 — 작고 가볍게 */
   cols.forEach((c,ci)=>{
     const here=pts.map(ent=>ent[ci]).filter(Boolean);
@@ -4504,7 +4526,7 @@ function cmpGridHTML(R){
   /* 열이 많아지면 헤더 이름부터 줄여 표가 가로로 넘치지 않게 한다(넘치면 오른쪽 소재가 화면 밖으로 나간다) */
   const nmLen=ents.length>=7?8:(ents.length>=5?11:14);
   const head=order.map((j,rank)=>{const en=ents[j];const nm=displayNameOf(en.e);
-    return `<th style="color:${R.colorByList.get(en.i)}" title="${escAttr(nm)}">${rank+1}위 · ${escHtml(trunc(nm,nmLen))}</th>`;}).join("");
+    return `<th data-ci="${en.i}" style="color:${R.colorByList.get(en.i)}" title="${escAttr(nm)}">${rank+1}위 · ${escHtml(trunc(nm,nmLen))}</th>`;}).join("");
   const rows=defs.map(d=>{
     const vs=tots.map(t=>d.of(t));
     if(vs.every(v=>v==null))return "";
@@ -4515,7 +4537,7 @@ function cmpGridHTML(R){
     const second=sorted.length>=2?sorted[1]:null;
     const domi=best!=null&&second!=null&&second>0&&best>0&&(d.dir>0?best/second:second/best)>=1.5;
     const cells=order.map(j=>{const v=vs[j];const win=d.dir&&v!=null&&val.length>=2&&v===best;
-      return `<td class="num${win?" win":""}${win&&domi?" gold":""}">${v!=null?d.fmt(v):"–"}</td>`;}).join("");
+      return `<td class="num${win?" win":""}${win&&domi?" gold":""}" data-ci="${ents[j].i}">${v!=null?d.fmt(v):"–"}</td>`;}).join("");
     return `<tr><td class="l">${escHtml(d.lab)}${d.dir<0?" ↓":d.dir>0?" ↑":""}</td>${cells}</tr>`;}).join("");
   return `<div class="cmpg-wrap"><table class="cmpg"><thead><tr><th class="l">지표</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;}
 /* [추이] 지표별 바둑판 — 전 지표를 한눈에. 표시 구간은 '몇 개 이상의 소재가 함께 집행된 주'로 직접 고른다
@@ -4563,6 +4585,19 @@ function cmpTrendSectionHTML(R){
     return `<div class="cmp-trc"><h5>${escHtml(d.lab)}${d.dir<0?" ↓":d.dir>0?" ↑":""}</h5><svg viewBox="0 0 ${W2} ${H2}" style="width:100%;height:auto">${svg}${xlab(xat2,W2,H2,8)}</svg></div>`;}).filter(Boolean);
   if(!cells.length)return `<div class="fam-note">주간 값이 있는 지표가 없어요</div>`;
   return `<div class="cmp-trgrid">${cells.join("")}</div>`;}
+/* 관심 소재 강조 — 미리보기 카드나 표 열에 마우스를 올리면 차트에서 그 소재의 선·점만 굵어지고 나머지는 물러난다.
+   선이 얇아 여러 개가 겹칠 때 "지금 보는 게 어느 것인지"를 색만으로 찾기 어려웠다. */
+function cmpSetHi(root,ci){
+  root.querySelectorAll("[data-ci]").forEach(el=>{
+    const on=ci==null||String(el.dataset.ci)===String(ci);
+    el.classList.toggle("cmp-hi",ci!=null&&on);
+    el.classList.toggle("cmp-dim",ci!=null&&!on);});}
+function wireCmpHover(root){
+  let cur=null;
+  const set=ci=>{if(cur===ci)return;cur=ci;cmpSetHi(root,ci);};
+  root.querySelectorAll(".cmpm-med[data-ci], .cmpg th[data-ci], .cmpg td[data-ci]").forEach(el=>{
+    el.addEventListener("mouseenter",()=>set(el.dataset.ci));
+    el.addEventListener("mouseleave",()=>set(null));});}
 function renderCmpModal(){
   const m=$("#cmpModal");if(!m||m.hidden)return;
   const R=cmpRank();
@@ -4570,7 +4605,7 @@ function renderCmpModal(){
   const{ents,domPct,order,ds}=R;
   const meds=order.map((j,rank)=>{const en=ents[j];const url=previewUrlOf(en.e);const pv=url?assetPreview(url,en.e,true):"";
     const nm=displayNameOf(en.e),col=R.colorByList.get(en.i);
-    return `<div class="cmpm-med" style="--cc:${col}">
+    return `<div class="cmpm-med" data-ci="${en.i}" style="--cc:${col}">
       <div class="cmpm-medh"><span class="rank" style="background:${col};color:#fff">${rank+1}위</span>${en.c.locked?`<span class="lk">🔒</span>`:""}<span class="dp">${domPct[j]!=null?"우세도 "+Math.round(domPct[j]*100)+"%":""}</span></div>
       <div class="cmpm-medn" title="${escAttr(nm)}">${escHtml(nm)}</div>
       <button type="button" class="cmpm-medx" data-i="${en.i}" title="비교에서 빼기">✕</button>
@@ -4604,6 +4639,7 @@ function renderCmpModal(){
   m.querySelector(".cmpm-close").onclick=closeCmpModal;
   m.querySelectorAll(".cmpm-sectabs button[data-ct]").forEach(b=>b.onclick=()=>{cmpTab=b.dataset.ct;renderCmpModal();});
   m.querySelectorAll(".cmpm-medx").forEach(b=>b.onclick=()=>cmpRemove(+b.dataset.i));
+  wireCmpHover(m);
   const tm=m.querySelector(".cmp-trmin");if(tm)tm.onchange=()=>{cmpTrendMinN=+tm.value;renderCmpModal();};
   hideCmpDotTip();wireCmpDots(m);}
 document.addEventListener("keydown",ev=>{if(ev.key==="Escape"){const m=$("#cmpModal");if(m&&!m.hidden){closeCmpModal();ev.stopPropagation();}}},true);
