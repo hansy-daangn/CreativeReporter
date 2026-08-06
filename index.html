@@ -183,12 +183,16 @@
      읽기 전용 스냅샷(주간 갱신). 기존 토큰만 사용 — 막대는 굵기 얇게, 값은 항상 텍스트 병기(색만으로 전달 금지) */
   .umet-h{font-size:var(--fs-3);font-weight:700;color:var(--muted);margin:0 0 10px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
   .umet-h .n{font-size:var(--fs-1);font-weight:500;color:var(--faint)}
-  .umet-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
-  @media(max-width:1150px){.umet-cards{grid-template-columns:1fr 1fr}}
-  @media(max-width:760px){.umet-cards{grid-template-columns:1fr}}
+  /* 카드 열 수는 단계로만 바뀐다(3→2→1) — auto-fit로 두면 폭에 따라 매 순간 달라져 화면이 출렁인다 */
+  .umet-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+  @media(max-width:1150px){.umet-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:760px){.umet-cards{grid-template-columns:minmax(0,1fr)}}
   .umet-card{background:var(--surface);border:1px solid var(--surface-3);border-radius:var(--r-sm);padding:14px 16px;min-width:0}
   .umet-card .uc-k{font-size:var(--fs-2);color:var(--muted);font-weight:650;display:flex;align-items:center;gap:6px}
-  .umet-card .uc-k .uc-when{margin-left:auto;font-size:var(--fs-1);color:var(--faint);font-weight:500;white-space:nowrap}
+  /* 기준 시점은 제목 바로 옆에 붙인다 — margin-left:auto로 오른쪽 끝에 밀면 카드 폭만큼(240px) 떨어져
+     "무엇의 기준 시점인지" 연결이 끊긴다. 제목·물음표·시점이 한 덩어리여야 한다 */
+  .umet-card .uc-k .uc-when{font-size:var(--fs-1);color:var(--faint);font-weight:500;white-space:nowrap}
+  .uc-k .uc-when::before,.rst-h .uc-when::before{content:"·";margin-right:5px;color:var(--surface-3);font-weight:700}
   .uc-q{flex:0 0 auto;width:14px;height:14px;border-radius:50%;background:var(--surface-3);color:var(--muted);font-size:var(--fs-1);font-weight:800;display:inline-flex;align-items:center;justify-content:center;cursor:help;user-select:none}
   .umet-card .uc-big{display:flex;align-items:baseline;gap:7px;margin-top:7px;flex-wrap:wrap}
   .umet-card .uc-big b{font-size:var(--fs-5);font-weight:750;letter-spacing:-.02em}
@@ -226,8 +230,12 @@
      측정 방식을 모양으로 구분: ● 클릭 실측 · ○ 노출(뷰스루) 포함(빗금 밑판) — 액면 비교 금지를 시각으로 전달 */
   .rst{background:var(--surface);border:1px solid var(--surface-3);border-radius:var(--r-sm);padding:12px 16px 8px;margin-bottom:20px}
   .rst-h{font-size:var(--fs-2);font-weight:650;color:var(--muted);display:flex;align-items:center;gap:6px;margin-bottom:2px}
-  .rst-h .uc-when{margin-left:auto;font-size:var(--fs-1);color:var(--faint);font-weight:500}
-  .rst svg{display:block;width:100%;height:auto}
+  .rst-h .uc-when{font-size:var(--fs-1);color:var(--faint);font-weight:500} /* 위와 같은 이유 — 1036px 떨어져 있었다 */
+  /* 배율 고정 원칙 — SVG는 컨테이너가 좁아지면 통째로 축소돼 글자까지 작아진다.
+     viewBox 폭 기준 min-width를 걸어 배율을 0.9~1 사이로 묶고, 더 좁으면 가로 스크롤로 넘긴다.
+     (창 너비에 따라 폰트가 제멋대로 변하던 원인) */
+  .rst{overflow-x:auto}
+  .rst svg{display:block;width:100%;min-width:1080px;max-width:1200px;height:auto} /* viewBox 1200 기준 배율 0.9~1 */
   .rst .rst-lgd{font-size:var(--fs-1);color:var(--muted);display:flex;gap:15px;flex-wrap:wrap;margin-top:4px;padding-left:2px;align-items:center}
   .rst .rst-lgd span{display:inline-flex;align-items:center;gap:5px}
   .rst .rst-lgd i{display:inline-block;font-style:normal}
@@ -250,32 +258,46 @@
   .peer .us-h{margin-bottom:4px}
   .peer .us-sub:first-of-type{margin-top:2px;padding-top:0;border-top:0}
 
-  /* ── 상세 지표 행 문법 — [라벨 · 값 · 등급 · 위치 · 편차] 한 줄. 모든 블록이 같은 문법을 쓴다 ── */
-  /* 행을 2열로 흘려 넓은 폭을 쓴다 — 한 열이면 트랙만 길어지고 마커가 눈금에서 멀어진다 */
-  .mrows{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:0 26px;margin-top:5px}
+  /* ── 상세 지표 행 문법 — [라벨 값 등급 순위] 한 덩어리. 모든 블록이 같은 문법을 쓴다 ──
+     근접성 원칙: 한 지표에 속한 네 조각의 간격(8px)은 지표끼리의 간격(가로 34px·세로 행 구분선)보다
+     반드시 작아야 한다. 예전엔 라벨 열이 1fr이라 남는 폭을 전부 삼켜, 라벨과 그 라벨의 값 사이가
+     114~208px까지 벌어졌다(라벨 글자폭은 30~93px). 한 덩어리여야 할 것이 가장 멀리 떨어져 있었다. */
+  /* 행 폭은 내용에 맞춘 고정값(--mrow-w)이고, 남는 폭은 덩어리 '밖'으로 흘린다.
+     덩어리를 늘려 여백을 채우면 관계가 끊기고, 행마다 늘어난 양이 달라 열도 안 맞는다. */
+  /* 덩어리가 내용 폭(≈220px)까지 줄었으므로 넓은 창에선 3열이 들어간다 — 2열로 두면 카드 오른쪽 380px이 빈다.
+     3→2→1, 세 단계로만 접는다(auto-fit은 폭이 1px 변할 때마다 열 수가 바뀌어 레이아웃이 출렁인다) */
+  .mrows{display:grid;grid-template-columns:repeat(3,max-content);justify-content:start;gap:0 34px;margin-top:5px}
+  @media(max-width:1360px){.mrows{grid-template-columns:repeat(2,max-content)}}
+  @media(max-width:1080px){.mrows{grid-template-columns:max-content}}
   .mrows .us-sub,.mrows .us-life{grid-column:1/-1}
-  /* 지표 행 — 막대 없이 [라벨 … 값 · 등급 · 순위]. 판단에 쓰는 세 값을 오른쪽에 모아 한 번에 읽힌다.
-     라벨은 남는 폭을 차지해 값 블록과 시각적으로 분리되고(거리), 값·등급·순위는 붙어 한 덩어리로 보인다(근접). */
-  .mrow{display:grid;grid-template-columns:minmax(0,1fr) 58px 54px 52px;align-items:center;gap:8px;padding:4px 2px;font-size:var(--fs-1);min-width:0;border-radius:6px}
+  /* 라벨은 오른쪽 정렬 — 짧은 라벨("광고비" 30px)이든 긴 라벨("앱 접속(홈피드) 7일" 93px)이든
+     값 바로 8px 앞에서 끝난다. 왼쪽 정렬이면 라벨 길이만큼 값과의 거리가 제각각이 된다. */
+  /* 값·등급·순위 열은 내용 폭(auto)이다. 고정 폭에 오른쪽 정렬로 두면 짧은 값이 열 안에서 왼쪽에 빈틈을
+     남겨(예: "5,851"이 "4733.7만원"용 76px 열에 들어가면 48px), 라벨과 값 사이가 다시 벌어진다.
+     남는 폭은 덩어리 오른쪽 밖으로 흘려보내고, 내부 간격은 어떤 값이 와도 8px로 고정한다. */
+  .mrow{display:grid;grid-template-columns:auto auto auto auto;align-items:center;gap:8px;padding:4px 6px 4px 0;font-size:var(--fs-1);border-radius:6px}
   .mrow>*{min-width:0}
-  .mrow .mr-k{color:var(--muted);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .mrow .mr-v{font-size:var(--fs-2);font-weight:750;color:var(--ink);text-align:right;white-space:nowrap}
-  .mrow .mr-t{justify-self:center}
+  /* 라벨만 폭을 맞춰 오른쪽 정렬 — 짧은 라벨("광고비")이든 긴 라벨("앱 접속(홈피드) 7일")이든 값 바로 8px
+     앞에서 끝난다. 덕분에 라벨 오른쪽 끝과 값 왼쪽 끝, 두 줄의 정렬선이 생겨 행끼리도 눈으로 이어진다.
+     폭(--mrk-w)은 fitMrows()가 그 블록의 실제 라벨에서 잰다(고정값이면 짧은 블록에서 빈다) */
+  .mrow .mr-k{width:var(--mrk-w,auto);color:var(--muted);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+  .mrow .mr-v{font-size:var(--fs-2);font-weight:750;color:var(--ink);white-space:nowrap}
   .mrow .mr-t.sp{font-size:9.5px;padding:1px 6px;white-space:nowrap}
-  .mrow .mr-d{color:var(--faint);white-space:nowrap;text-align:right}
+  .mrow .mr-d{color:var(--faint);white-space:nowrap}
   .mrow:hover{background:var(--surface-2)}
   .mrow+.mrow{border-top:1px solid var(--surface-2)}
   /* 섹션 소제목 — 블록 안 구분 */
   .us-sub{font-size:var(--fs-1);font-weight:700;color:var(--muted);margin:9px 0 3px;padding-top:8px;border-top:1px solid var(--surface-2);display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
   .us-sub em{font-style:normal;font-weight:500;color:var(--faint)}
-  .us-life{display:block;width:100%;max-width:560px;height:auto;margin-top:3px}
+  /* viewBox 560 기준. max-width로 위를, min-width로 아래를 막아 배율을 0.84~1에 가둔다 —
+     상한이 없으면 넓은 창에서 글자만 커지고, 하한이 없으면 좁은 창에서 절반으로 쪼그라든다 */
+  .us-life{display:block;width:100%;min-width:470px;max-width:560px;height:auto;margin-top:3px}
   /* 소재 상세 — 실유저(주간) 블록: 그래프 탭 위 상시 노출 스트립 */
   .umet-strip{margin:0;padding:12px 14px;background:var(--surface);border:1px solid var(--surface-3);border-radius:10px;text-align:left}
   .umet-strip .us-h{font-size:var(--fs-2);font-weight:700;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
   .umet-strip .us-h .n{font-weight:500;color:var(--faint)}
   .umet-strip .us-h .uc-q{width:13px;height:13px}
   /* 상세 블록 확장 — 주차 추이 미니차트 · 소재별 유효 복귀 · 라이프사이클 */
-  .us-life{flex:1;min-width:0;display:block;height:auto;max-width:560px}
 
   svg.chart{display:block;overflow:visible;max-width:100%}
   .axis text{font-size:var(--fs-1);fill:var(--faint)} .gl{stroke:#E6E5DE;stroke-dasharray:2 3}
@@ -307,11 +329,6 @@
   .nrad-sub{font-size:var(--fs-1);color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
   .nrad-empty{font-size:var(--fs-2);color:var(--faint);background:var(--surface-2);border-radius:9px;padding:13px 11px;line-height:1.5}
   .nrad-foot{font-size:var(--fs-1);color:var(--faint);margin-top:8px;line-height:1.45}
-  .qhint{font-size:var(--fs-2);color:var(--faint);margin:0 0 6px}
-  .auto-insight{display:flex;flex-wrap:wrap;align-items:center;gap:7px 14px;margin:0 0 16px;padding:10px 14px;background:var(--surface-2);border:1px solid var(--surface-3);border-radius:10px;font-size:var(--fs-3);line-height:1.5}
-  .auto-insight .ai-tag{font-size:var(--fs-1);font-weight:800;letter-spacing:.4px;color:#fff;background:var(--karrot);padding:3px 8px;border-radius:6px;white-space:nowrap}
-  .auto-insight .ai-item{color:var(--muted)}
-  .auto-insight .ai-item b{color:var(--ink);font-weight:700}
   .qaxis{display:flex;align-items:center;gap:10px;margin-bottom:6px}
   .qaxis .qaxis-lab{font-size:var(--fs-1);color:var(--faint);font-weight:700;letter-spacing:.06em;text-transform:uppercase;width:34px;flex:0 0 auto}
   /* 효율 지도 컨트롤 바 — 필터(Live 단독 · Video/Image 세그먼트) + 보기·가로·세로 드롭다운을 한 줄로 */
@@ -626,7 +643,7 @@
   .ispark-h span{font-weight:500;color:var(--faint)}
   .ispark-h span b{font-weight:700;color:var(--muted)}
   .ispark-h .lgd{display:inline-block;width:7px;height:7px;border-radius:2px;margin:0 3px 0 7px;vertical-align:-0.5px}
-  .ispark-svg{width:100%;height:auto;display:block;direction:ltr}
+  .ispark-svg{width:100%;min-width:740px;max-width:820px;height:auto;display:block;direction:ltr} /* viewBox 820 기준 배율 0.9~1 유지 */
   /* 전 기간 추이 — 주가 많으면 가로 스크롤. direction:rtl 트릭으로 처음부터 오른쪽(최신 주)이 보인다 */
   .ispark-scroll{overflow-x:auto;direction:rtl} /* viewBox를 렌더 폭에 맞춘 뒤로는 넘칠 일이 없지만 좁은 화면 대비로 유지 */
   .ispk-b{cursor:pointer}.ispk-b:hover{fill-opacity:.85}
@@ -707,6 +724,15 @@
   /* 모든 섹션이 이 한 폭을 공유한다 — 개수에서 유도한 max-width가 인라인으로 들어온다.
      예전엔 카드만 좌측에 몰리고(고정 max 360px) 표·차트는 화면 전체를 써서 세로선이 어디에도 맞지 않았다 */
   .cmpm-in{margin:0 auto;width:100%}
+  /* 관심 소재 강조 — 카드·표 열 호버 시 차트의 해당 선/점만 굵게, 나머지는 물러난다 */
+  .cmpm-in path.cmp-ln{transition:stroke-width .12s,opacity .12s}
+  .cmpm-in circle.cmp-dot{transition:opacity .12s}
+  path.cmp-ln.cmp-hi{stroke-width:3.4;stroke-opacity:1}
+  circle.cmp-dot.cmp-hi{r:5}
+  path.cmp-ln.cmp-dim,circle.cmp-dot.cmp-dim{opacity:.16}
+  .cmpm-med.cmp-hi .isle-frame{box-shadow:inset 0 0 0 3px var(--cc,#E2DFD3)}
+  .cmpm-med.cmp-dim{opacity:.5}
+  .cmpg th.cmp-hi,.cmpg td.cmp-hi{background:var(--surface-2)}
   /* 미리보기 — 개수에서 정한 열 수로 접고(5~6개는 3열 2행), 프레임 높이도 같은 규칙에서 온다 */
   .cmpm-media{display:grid;gap:16px 14px;margin:2px 0 8px}
   .cmpm-med{min-width:0}
@@ -1257,15 +1283,7 @@
 
       <section class="card" id="tabAnalysis">
         <!-- 유저 실증 지표(umetrics) — MAU·페이드 기여·매체별 설치 기여 MAU·삭제율. 클라우드 데이터 있을 때만 표시 -->
-        <div id="umetWrap" hidden>
-          <div class="umet-h">실유저 · MAU 실증 <span class="n" id="umetUpd"></span></div>
-          <div class="umet-cards" id="umetCards"></div>
-          <div id="reengStrip"></div>
-          <div id="glabelBar"></div>
-        </div>
         <div class="keyrow" id="keyrow"></div>
-        <p class="qhint" id="qhint"></p>
-        <div class="auto-insight" id="autoInsight" style="display:none"></div>
         <div class="qbar">
           <div class="qbar-grp"><span class="qaxis-lab">필터</span>
             <button class="qfilt-live" id="qLiveBtn" type="button" title="라이브(최신 집행 주 광고비>0) 소재만">Live</button>
@@ -1289,6 +1307,12 @@
             <div id="trendWrap"><div class="sub-h" style="margin-top:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">주차별 추세 <span class="dtog" id="tmetTog"></span></div><div style="position:relative"><svg class="chart" id="trend"></svg></div><div class="leg" id="trendLeg"></div></div>
             <aside class="nrad" id="newRadar" hidden></aside>
           </div>
+        </div>
+        <div id="umetWrap" hidden>
+          <div class="umet-h">실유저 · MAU 실증 <span class="n" id="umetUpd"></span></div>
+          <div class="umet-cards" id="umetCards"></div>
+          <div id="reengStrip"></div>
+          <div id="glabelBar"></div>
         </div>
       </section>
 
@@ -2579,6 +2603,42 @@ function estimatePerfLabels(ds,rows,groupOf){
     const rctr=(ctr!=null&&s.ctrs.length>=3)?pr(s.ctrs,ctr):0.5;
     const S=PERF_EST.W_RV*pr(s.convs,o.v)+PERF_EST.W_CTR*rctr+PERF_EST.W_FV*(o.v/s.mxV)+PERF_EST.W_FC*(o.c/s.mxC);
     e._perfEst=S>=PERF_EST.HI?"매우 좋음":S<PERF_EST.LO?"낮음":"좋음";}}
+/* 주차별 추정 실적 — estimatePerfLabels와 같은 공식(PERF_EST)을 '그 주 데이터'에만 적용한다.
+   소재 전체 라벨을 모든 주에 복사하면 매 주 같은 글자가 찍혀 아무 정보가 없다.
+   코호트는 그 주에 함께 집행된 소재들이며, 구글은 같은 광고그룹 안에서만 비교한다(그룹 간 혼합 금지). */
+function weeklyPerfEst(ds,e,ws){
+  const out={};
+  if(!ds||!e||e._isGroup||!ws||!ws.length)return out;
+  const nameCol=ds.L.nameCol;
+  const wsSet=new Set(ws);
+  const pool0=(ds.agg||[]).filter(x=>x.score!=null);
+  if(pool0.length<3)return out;
+  const ck=perfConvKeyOf(pool0);
+  const useGroup=typeof groupOfFor==="function"&&!!groupOfFor(ds);
+  /* 한 번 순회로 주별 소재 집계 */
+  const byWeek=new Map();
+  for(const r of ds.data){
+    const w=String(r.date||"").slice(0,10);if(!wsSet.has(w))continue;
+    const nm=r[nameCol];if(nm==null||nm==="")continue;
+    let m=byWeek.get(w);if(!m){m=new Map();byWeek.set(w,m);}
+    let o=m.get(nm);if(!o){o={c:0,v:0,clk:0,imp:0,gid:null};m.set(nm,o);}
+    o.c+=num(r["비용"])||0;o.v+=num(r[ck])||0;o.clk+=num(r["클릭 수"])||0;o.imp+=num(r["노출 수"])||0;
+    if(!o.gid)o.gid=r._g_adGroupId||r._m_group||null;}
+  const pr=(vals,v)=>{let lo=0,hi=0;for(const x of vals){if(x<v)lo++;if(x<=v)hi++;}return vals.length?(lo+hi)/(2*vals.length):0.5;};
+  for(const w of ws){
+    const m=byWeek.get(w);if(!m)continue;
+    const me=m.get(e.name);if(!me||me.c<=0)continue;
+    let pool=[...m.values()].filter(o=>o.c>0);
+    if(useGroup&&me.gid){const g=pool.filter(o=>String(o.gid||"")===String(me.gid));if(g.length>=3)pool=g;}
+    if(pool.length<3)continue; /* 비교 대상이 없으면 추정하지 않는다(빈칸이 낫다) */
+    const convs=pool.map(o=>o.v),costs=pool.map(o=>o.c);
+    const ctrs=pool.filter(o=>o.imp>0).map(o=>o.clk/o.imp);
+    const mxV=Math.max(...convs)||1,mxC=Math.max(...costs)||1;
+    const ctr=(!(e._clkMix||e._impBad)&&me.imp>0)?me.clk/me.imp:null;
+    const rctr=(ctr!=null&&ctrs.length>=3)?pr(ctrs,ctr):0.5;
+    const S=PERF_EST.W_RV*pr(convs,me.v)+PERF_EST.W_CTR*rctr+PERF_EST.W_FV*(me.v/mxV)+PERF_EST.W_FC*(me.c/mxC);
+    out[w]=S>=PERF_EST.HI?"매우 좋음":S<PERF_EST.LO?"낮음":"좋음";}
+  return out;}
 function perfLabelOf(e){
   const act0=String(e._g_perfLabel||"").trim();
   const act=PERF_LABEL_ALIAS[act0]||act0;
@@ -2665,57 +2725,6 @@ function chipsHTML(t,e){
   return arr.filter(Boolean).join("");}
 /* key summary tiles */
 /* 자동 해석 — 현재 매체·기간 데이터에서 마케터가 먼저 볼 핵심을 문장으로 요약(최고 점수·획득단가 최저·포맷 우위) */
-function renderAutoInsight(ds){
-  const el=$("#autoInsight");if(!el)return;
-  const a=(ds&&ds.agg||[]).filter(e=>e&&!e._isGroup);
-  const scored=a.filter(e=>e.score!=null);
-  const specs=(typeof specsFor==="function")?specsFor(ds):null;const prim=specs&&specs[0];
-  if(scored.length<4||!prim){el.style.display="none";el.innerHTML="";return;}
-  const pk=prim.k,pLab=prim.lab,pdir=prim.dir||-1;
-  const won=v=>fmtSpecVal(pk,v); /* 대표 지표 성격에 맞춰 포맷(비율=%, ROAS=×, 그 외=₩) */
-  const nm=e=>escHtml(trunc(displayNameOf(e),22));
-  const out=[];
-  const top=scored.slice().sort((x,y)=>y.score-x.score)[0];
-  out.push(`<b>🏆 최고 점수</b> ${nm(top)} · <b>${Math.round(top.score*10)/10}점</b>${(top[pk]!=null&&isFinite(top[pk]))?` · ${pLab} ${won(top[pk])}`:""}`);
-  const withPk=scored.filter(e=>e[pk]!=null&&isFinite(e[pk]));
-  if(withPk.length>=4){
-    const best=withPk.slice().sort((x,y)=>pdir<0?x[pk]-y[pk]:y[pk]-x[pk])[0];
-    out.push(`<b>💰 ${pLab} ${pdir<0?"최저":"최고"}</b> ${nm(best)} · <b>${won(best[pk])}</b>`);
-    const med=arr=>{const s=arr.filter(v=>v!=null&&isFinite(v)).sort((x,y)=>x-y);return s.length?s[Math.floor(s.length/2)]:null;};
-    const vid=med(withPk.filter(e=>e.tags&&e.tags.fo==="영상").map(e=>e[pk]));
-    const img=med(withPk.filter(e=>e.tags&&e.tags.fo==="이미지").map(e=>e[pk]));
-    if(vid!=null&&img!=null&&vid>0&&img>0){const better=((pdir<0?Math.min(vid,img):Math.max(vid,img))===vid)?"영상":"이미지";const d=Math.round(Math.abs(vid-img)/Math.max(vid,img)*100);
-      if(d>=5)out.push(`<b>🎬 포맷</b> ${pLab} 중앙값 영상 ${won(vid)} · 이미지 ${won(img)} → <b>${better}</b>${better==="영상"?"이":"가"} ${d}% 효율적`);}
-  }
-  /* 유저 질 — D1 잔존율 최고(표본 30명 이상 소재가 4개 이상일 때만) */
-  const withRet=scored.filter(e=>e._q_retD1!=null&&(e._q_retD1Base||0)>=30);
-  if(withRet.length>=4){const bq=withRet.slice().sort((x,y)=>y._q_retD1-x._q_retD1)[0];
-    out.push(`<b>🧲 유저 질 최고</b> ${nm(bq)} · D1 잔존 <b>${fmtPct(bq._q_retD1)}</b> (표본 ${fmtInt(bq._q_retD1Base)}명)`);}
-  const medOf=arr=>{const s=arr.filter(v=>v!=null&&isFinite(v)).sort((x,y)=>x-y);return s.length?s[Math.floor(s.length/2)]:null;};
-  /* 광고비 = 머신러닝 신호(2026-07 회의 원칙) — 매체는 잘 나가는 소재에 예산을 몰아줌.
-     비용 1위는 위너 후보지만 반드시 eCPA 동반 확인: 비용↑ & 단가↑면 OFF 후보 */
-  if(withPk.length>=4&&pdir<0){
-    const byCost=withPk.filter(e=>(e.비용||0)>0).sort((x,y)=>(y.비용||0)-(x.비용||0));
-    const tc=byCost[0],medPk=medOf(withPk.map(e=>e[pk]));
-    if(tc&&medPk!=null&&medPk>0){
-      const bad=tc[pk]>medPk*1.15;
-      out.push(bad
-        ?`<b>💸 광고비 1위</b> ${nm(tc)} · ${pLab} ${won(tc[pk])} — 중앙값(${won(medPk)})보다 나쁨 → <b>OFF 후보</b>(비용↑·단가↑)`
-        :`<b>💸 광고비 1위</b> ${nm(tc)} · ${pLab} ${won(tc[pk])} → <b>위너 후보</b>(예산이 몰리는 소재 · 단가 양호)`);}}
-  /* 몰로코 사이즈 가이드(2026-07 회의 · 03 결정 로그 D8 저위험안) — 사이즈별 eCPA 중앙값이 매체 중앙값의
-     1.5배 이상(표본 3개↑)이면 '끌 지면·만들지 말 소재' 후보로 표시(예: 숏폼 대비 이미지 5만원 사례) */
-  if(a.some(e=>e._m_ctype)&&pk==="신규+재활성 eCPA"&&withPk.length>=8){
-    const medAll=medOf(withPk.map(e=>e[pk]));
-    if(medAll!=null&&medAll>0){
-      const bySize=new Map();
-      for(const e of withPk){const sz=e.tags&&e.tags.size;if(!sz)continue;let arr=bySize.get(sz);if(!arr){arr=[];bySize.set(sz,arr);}arr.push(e[pk]);}
-      const badSizes=[...bySize.entries()].map(([sz,arr])=>({sz,n:arr.length,med:medOf(arr)}))
-        .filter(o=>o.n>=3&&o.med!=null&&o.med>=medAll*1.5)
-        .sort((x,y)=>y.med-x.med).slice(0,3);
-      if(badSizes.length)out.push(`<b>🚫 사이즈 가이드</b> ${badSizes.map(o=>`${escHtml(o.sz)} eCPA ${won(o.med)} (매체 중앙값의 ${(o.med/medAll).toFixed(1)}배 · ${o.n}개)`).join(" · ")} → <b>끌 지면·만들지 말 소재 후보</b>`);}}
-  el.style.display="";
-  el.innerHTML=`<span class="ai-tag">자동 해석</span>`+out.map(s=>`<span class="ai-item">${s}</span>`).join("");
-}
 /* ═════ 유효 복귀 소재 산점 스트립(분석 탭) — "매체 평균 한 숫자"가 감추는 것을 소재 단위로 편다 ═════
    행=매체, x=유효 복귀 %(0~100), 세로 점선=자연 복귀 기준선. 점=소재/그룹(최신 주, 크기=되돌린 유저 수).
    측정 방식이 달라 매체 간 액면 비교가 불가함을 '모양'으로 전달: 클릭 실측=● 채운 점 · 뷰스루(노출) 포함=○ 빈 점+빗금 밑판.
@@ -3010,9 +3019,6 @@ function renderQuad(ds){const L=ds.L,svg=$("#quad");
     pts.sort((a,b)=>b.비용-a.비용);capped=pts.length>CAP;pts=pts.slice(0,CAP);
   }
   const dh=d=>d<0?"낮을수록 좋음":"높을수록 좋음";
-  $("#qhint").textContent=qDim
-    ?`효율 지도 — ${dimLab}별 집계(상하 10% 트림 평균) · 가로 ${xMet.lab}(${dh(xMet.dir)}), 세로 ${yMet.lab}(${dh(yMet.dir)}), 원 크기 광고비`
-    :`효율 지도 — 가로 ${xMet.lab}(${dh(xMet.dir)}), 세로 ${yMet.lab}(${dh(yMet.dir)}), 원 크기 광고비${capped?` · 광고비 상위 ${CAP}`:""} · 원 클릭하면 표에서 상세`;
   if(pts.length<(qDim?2:3)){svg.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="var(--faint)" font-size="12.5">지도를 그릴 데이터가 부족합니다</text>`;$("#qxv").textContent="";$("#qyv").innerHTML="";return;}
   const xs=pts.map(p=>p[qX]),ys=pts.map(p=>p[qY]);
   const xFull=Math.max(...xs)*1.1,yFull=Math.max(...ys)*1.1;
@@ -3738,7 +3744,10 @@ function creativeTrendHTML(ds,e){
       const w=String(r.date||"").slice(0,10);
       const v=String(r._g_perfLabel).trim().replace(/^--$/,"");
       if(_plW[w]==null||v)_plW[w]=v;}}
-  const hasPl=ws.some(w=>_plW[w]!==undefined);
+  /* 막대 밑 실적 — 실측이 없는 주는 '그 주 데이터로 새로 계산한' 추정 등급을 쓴다.
+     소재의 현재 라벨을 모든 주에 복사하면 같은 글자가 도배돼 아무 정보가 없다 */
+  const _estW=(typeof weeklyPerfEst==="function")?weeklyPerfEst(ds,e,ws):{};
+  const hasPl=ws.some(w=>_plW[w]!==undefined||_estW[w]!==undefined);
   /* viewBox를 렌더 폭(≈820)에 맞춰 배율 1로 둔다 — 좌표계가 작으면 SVG가 통째로 확대돼(실측 2.7배)
      글자·선이 타이포 스케일을 무시하고 커진다. 주가 많으면 폭 대신 슬롯을 좁혀 담는다(가로 스크롤 없음). */
   const W=820,pl=10,pr=10,pt=14;
@@ -3748,7 +3757,6 @@ function creativeTrendHTML(ds,e){
   const slot=iw/ws.length,xat=i=>pl+(i+0.5)*slot;
   const bw=Math.max(4,Math.min(22,slot*0.38)); /* 슬롯에 비례한 막대 — 주가 많아도 겹치지 않는다 */
   let s="";
-  let _prevLab=null; /* 같은 등급이 이어지면 생략하고 '바뀐 지점'에만 라벨을 찍는다 — 13주 내내 같은 글자가 반복되면 노이즈다 */
   ws.forEach((w,i)=>{const o=os[i],x=xat(i);
     const h=Math.max(2,(o.c/cmax)*ih);
     /* 주차 점수 표기·티어색 제거 — 점수는 내부 계산 전용, 화면엔 지표 원값만 */
@@ -3757,27 +3765,37 @@ function creativeTrendHTML(ds,e){
     s+=`<rect class="ispk-b" data-tip="${escAttr(tipTxt)}" x="${(x-bw/2).toFixed(1)}" y="${(H-pb-h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="var(--karrot)" fill-opacity="0.5"/>`;
     s+=`<text x="${x.toFixed(1)}" y="${H-(hasPl?20:6)}" font-size="10" fill="var(--faint)" text-anchor="middle">${w.slice(5,7)}/${w.slice(8,10)}</text>`;
     if(hasPl){
-      /* 그 주의 실측 실적 라벨. 없는 주는 빈칸으로 두지 않고 소재 전체 추정 등급을 점선 밑줄로 표기 —
-         "라벨이 없다"와 "성과가 없다"는 다른 뜻이라 빈칸이 오독을 만든다 */
+      /* 그 주의 실측 실적 라벨. 없는 주는 그 주 데이터로 계산한 추정 등급을 점선 밑줄로 표기 —
+         소재의 현재 라벨을 복사하면 같은 글자가 도배돼 주차 간 차이를 못 읽는다 */
       const act=_plW[w];
-      /* 그 주 실측 라벨이 없으면 빈칸으로 두지 않는다 — 소재의 현재 라벨(없으면 추정)을 점선으로 깐다.
-         "라벨이 없다"와 "성과가 없다"는 다른 뜻이라 빈칸이 오독을 만든다 */
-      const _fb=(typeof perfLabelOf==="function")?perfLabelOf(e):null;
-      const lab0=(act!==undefined&&act)?act:(act===undefined?((_fb&&_fb.lab)||e._perfEst||""):"보통");
-      const changed=lab0!==_prevLab;_prevLab=lab0;
-      if(lab0&&(changed||i===ws.length-1)){
-        const est=!(act!==undefined&&act);
+      const lab0=act?act:(_estW[w]||(act===undefined?"":"보통"));
+      if(lab0){
+        const est=!act;
         const lab=PERF_LABEL_ALIAS[lab0]||lab0;
         const t=PERF_TIER[lab]||"m";
         const tc=t==="g2"?"var(--g2)":t==="g1"?"var(--g1)":t==="w1"?"var(--w1)":t==="w2"?"var(--w2)":"var(--mid)";
-        s+=`<text x="${x.toFixed(1)}" y="${H-6}" font-size="10" font-weight="${est?600:700}" fill="${tc}" fill-opacity="${est?0.6:1}" text-anchor="middle" data-tip="${escAttr((est?"<b>추정 실적</b> — 이 주의 리포트 실적 라벨이 없어 최근 확인된 등급을 표시(점선)":"구글 리포트 실측 실적")+"<br>등급이 바뀐 주와 마지막 주에만 표시합니다")}">${escHtml(lab.replace(/\s+/g,""))}</text>`;
+        s+=`<text x="${x.toFixed(1)}" y="${H-6}" font-size="10" font-weight="${est?600:700}" fill="${tc}" fill-opacity="${est?0.6:1}" text-anchor="middle" data-tip="${escAttr(est?"<b>추정 실적</b>(점선) — 이 주의 리포트 라벨이 없어, 그 주 같은 코호트 소재들과 비교해 산출한 등급":"구글 리포트 실측 실적")}">${escHtml(lab.replace(/\s+/g,""))}</text>`;
         if(est)s+=`<line x1="${(x-14).toFixed(1)}" y1="${H-3.5}" x2="${(x+14).toFixed(1)}" y2="${H-3.5}" stroke="${tc}" stroke-width="1" stroke-dasharray="2 2" stroke-opacity="0.5"/>`;}}});
   for(const ln of lines){let p="",st=false,dots="";
     ws.forEach((w,i)=>{const v=ln.vals[i];if(v==null)return;
       const x=xat(i),y=pt+(1-v/ln.mx)*ih;
       p+=st?` L ${x.toFixed(1)} ${y.toFixed(1)}`:`M ${x.toFixed(1)} ${y.toFixed(1)}`;st=true;
       dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" fill="${ln.col}"/>`;});
-    s+=`<path d="${p}" fill="none" stroke="${ln.col}" stroke-width="2"${ln.dash?' stroke-dasharray="5 3"':''} stroke-opacity="0.95"/>${dots}`;}
+    s+=`<path d="${p}" fill="none" stroke="${ln.col}" stroke-width="2"${ln.dash?' stroke-dasharray="5 3"':''} stroke-opacity="0.95"/>${dots}`;
+    /* 최고·최저점만 수치를 적는다(모든 점에 붙이면 숫자가 선을 덮는다).
+       라벨을 위에 둘지 아래에 둘지는 그 주에서 이 선이 다른 선보다 위인지로 정한다 — 두 선이 교차해도 겹치지 않는다 */
+    const yOf=(o,i)=>o.vals[i]==null?null:pt+(1-o.vals[i]/o.mx)*ih;
+    let hi=null,lo=null;
+    ln.vals.forEach((v,i)=>{if(v==null)return;
+      if(!hi||v>hi.v)hi={i,v};
+      if(!lo||v<lo.v)lo={i,v};});
+    const marks=hi&&lo&&hi.i!==lo.i?[hi,lo]:(hi?[hi]:[]);
+    for(const mk of marks){
+      const x=xat(mk.i),y=yOf(ln,mk.i);
+      let above=true;
+      for(const o of lines){if(o===ln)continue;const oy=yOf(o,mk.i);if(oy!=null&&oy<y){above=false;break;}}
+      const ly=above?Math.max(pt+9,y-8):Math.min(H-pb-4,y+15);
+      s+=`<text x="${x.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="10" font-weight="750" fill="${ln.col}" paint-order="stroke" stroke="#FFFDF7" stroke-width="3" stroke-linejoin="round">${escHtml(ln.fmt(mk.v))}</text>`;}}
   /* 범례는 최소한으로: 주 수 · 색=지표 매핑 · 최신값. 비율·설명은 푸터/툴팁이 담당(중복 금지) */
   const leg=lines.map(ln=>`<span><i class="lgd" style="background:${ln.col}"></i>${ln.lab} <b>${ln.last!=null?ln.fmt(ln.last):"–"}</b></span>`).join(" ");
   return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · <i class="lgd" style="background:var(--karrot);opacity:.55"></i>광고비 ${leg}</span></div><div class="ispark-scroll"><svg class="ispark-svg" viewBox="0 0 ${W} ${H}">${s}</svg></div></div>`;}
@@ -4040,6 +4058,13 @@ function umRow(o){
     +`<b class="mr-v num">${escHtml(o.v)}</b>`
     +(t?`<span class="sp ${t.t==="g2"?"sp-g2":t.t==="g1"?"sp-g1":t.t==="w1"?"sp-w1":"sp-mid"} mr-t">${t.lab}</span>`:`<span class="mr-t"></span>`)
     +`<span class="mr-d">${rank}</span></div>`;}
+/* 라벨 열 폭을 그 블록에 실제로 있는 라벨의 최댓값으로 맞춘다.
+   고정 폭으로 두면 라벨이 모두 짧은 블록(광고비·실유저 = 30px)에서 열의 왼쪽 68px이 그냥 빈다.
+   라벨은 오른쪽 정렬이라 그 빈 곳이 덩어리 왼쪽에 생기고, 옆 덩어리와의 거리를 쓸데없이 벌린다. */
+function fitMrows(root){
+  (root||document).querySelectorAll(".mrows").forEach(m=>{
+    let w=0;m.querySelectorAll(".mr-k").forEach(k=>{w=Math.max(w,Math.ceil(k.scrollWidth));});
+    if(w>0)m.style.setProperty("--mrk-w",Math.min(w,120)+"px");});}
 /* 순위 표기 — 등급과 같은 기준(비교군 백분위)에서 뽑는다. 작을수록 상위 */
 function umRankTxt(tr){
   if(!tr||tr.pct==null)return "";
@@ -4636,9 +4661,9 @@ function cmpAxesSVG(R){
     const ps=pts[j].filter(Boolean);
     if(!ps.length)return;
     let pth="";ps.forEach((p,k)=>{pth+=(k?" L":"M")+` ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;});
-    lines2+=`<path d="${pth}" fill="none" stroke="${col}" stroke-width="1.6" stroke-opacity="0.9" stroke-linejoin="round"/>`;
+    lines2+=`<path class="cmp-ln" data-ci="${en.i}" d="${pth}" fill="none" stroke="${col}" stroke-width="1.6" stroke-opacity="0.9" stroke-linejoin="round"/>`;
     pts[j].forEach((p,ci)=>{if(!p)return;const c=cols[ci];
-      dots+=`<circle class="cmp-dot" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${col}" data-cv="${escAttr(c.d.lab+" "+c.d.fmt(c.raw[j]))}" data-cc="${col}"/>`;});});
+      dots+=`<circle class="cmp-dot" data-ci="${en.i}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${col}" data-cv="${escAttr(c.d.lab+" "+c.d.fmt(c.raw[j]))}" data-cc="${col}"/>`;});});
   /* 지표(열)마다 최고점 위·최저점 아래에만 수치 표기 — 작고 가볍게 */
   cols.forEach((c,ci)=>{
     const here=pts.map(ent=>ent[ci]).filter(Boolean);
@@ -4655,7 +4680,7 @@ function cmpGridHTML(R){
   /* 열이 많아지면 헤더 이름부터 줄여 표가 가로로 넘치지 않게 한다(넘치면 오른쪽 소재가 화면 밖으로 나간다) */
   const nmLen=ents.length>=7?8:(ents.length>=5?11:14);
   const head=order.map((j,rank)=>{const en=ents[j];const nm=displayNameOf(en.e);
-    return `<th style="color:${R.colorByList.get(en.i)}" title="${escAttr(nm)}">${rank+1}위 · ${escHtml(trunc(nm,nmLen))}</th>`;}).join("");
+    return `<th data-ci="${en.i}" style="color:${R.colorByList.get(en.i)}" title="${escAttr(nm)}">${rank+1}위 · ${escHtml(trunc(nm,nmLen))}</th>`;}).join("");
   const rows=defs.map(d=>{
     const vs=tots.map(t=>d.of(t));
     if(vs.every(v=>v==null))return "";
@@ -4666,7 +4691,7 @@ function cmpGridHTML(R){
     const second=sorted.length>=2?sorted[1]:null;
     const domi=best!=null&&second!=null&&second>0&&best>0&&(d.dir>0?best/second:second/best)>=1.5;
     const cells=order.map(j=>{const v=vs[j];const win=d.dir&&v!=null&&val.length>=2&&v===best;
-      return `<td class="num${win?" win":""}${win&&domi?" gold":""}">${v!=null?d.fmt(v):"–"}</td>`;}).join("");
+      return `<td class="num${win?" win":""}${win&&domi?" gold":""}" data-ci="${ents[j].i}">${v!=null?d.fmt(v):"–"}</td>`;}).join("");
     return `<tr><td class="l">${escHtml(d.lab)}${d.dir<0?" ↓":d.dir>0?" ↑":""}</td>${cells}</tr>`;}).join("");
   return `<div class="cmpg-wrap"><table class="cmpg"><thead><tr><th class="l">지표</th>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;}
 /* [추이] 지표별 바둑판 — 전 지표를 한눈에. 표시 구간은 '몇 개 이상의 소재가 함께 집행된 주'로 직접 고른다
@@ -4714,6 +4739,19 @@ function cmpTrendSectionHTML(R){
     return `<div class="cmp-trc"><h5>${escHtml(d.lab)}${d.dir<0?" ↓":d.dir>0?" ↑":""}</h5><svg viewBox="0 0 ${W2} ${H2}" style="width:100%;height:auto">${svg}${xlab(xat2,W2,H2,8)}</svg></div>`;}).filter(Boolean);
   if(!cells.length)return `<div class="fam-note">주간 값이 있는 지표가 없어요</div>`;
   return `<div class="cmp-trgrid">${cells.join("")}</div>`;}
+/* 관심 소재 강조 — 미리보기 카드나 표 열에 마우스를 올리면 차트에서 그 소재의 선·점만 굵어지고 나머지는 물러난다.
+   선이 얇아 여러 개가 겹칠 때 "지금 보는 게 어느 것인지"를 색만으로 찾기 어려웠다. */
+function cmpSetHi(root,ci){
+  root.querySelectorAll("[data-ci]").forEach(el=>{
+    const on=ci==null||String(el.dataset.ci)===String(ci);
+    el.classList.toggle("cmp-hi",ci!=null&&on);
+    el.classList.toggle("cmp-dim",ci!=null&&!on);});}
+function wireCmpHover(root){
+  let cur=null;
+  const set=ci=>{if(cur===ci)return;cur=ci;cmpSetHi(root,ci);};
+  root.querySelectorAll(".cmpm-med[data-ci], .cmpg th[data-ci], .cmpg td[data-ci]").forEach(el=>{
+    el.addEventListener("mouseenter",()=>set(el.dataset.ci));
+    el.addEventListener("mouseleave",()=>set(null));});}
 function renderCmpModal(){
   const m=$("#cmpModal");if(!m||m.hidden)return;
   const R=cmpRank();
@@ -4721,7 +4759,7 @@ function renderCmpModal(){
   const{ents,domPct,order,ds}=R;
   const meds=order.map((j,rank)=>{const en=ents[j];const url=previewUrlOf(en.e);const pv=url?assetPreview(url,en.e,true):"";
     const nm=displayNameOf(en.e),col=R.colorByList.get(en.i);
-    return `<div class="cmpm-med" style="--cc:${col}">
+    return `<div class="cmpm-med" data-ci="${en.i}" style="--cc:${col}">
       <div class="cmpm-medh"><span class="rank" style="background:${col};color:#fff">${rank+1}위</span>${en.c.locked?`<span class="lk">🔒</span>`:""}<span class="dp">${domPct[j]!=null?"우세도 "+Math.round(domPct[j]*100)+"%":""}</span></div>
       <div class="cmpm-medn" title="${escAttr(nm)}">${escHtml(nm)}</div>
       <button type="button" class="cmpm-medx" data-i="${en.i}" title="비교에서 빼기">✕</button>
@@ -4755,6 +4793,7 @@ function renderCmpModal(){
   m.querySelector(".cmpm-close").onclick=closeCmpModal;
   m.querySelectorAll(".cmpm-sectabs button[data-ct]").forEach(b=>b.onclick=()=>{cmpTab=b.dataset.ct;renderCmpModal();});
   m.querySelectorAll(".cmpm-medx").forEach(b=>b.onclick=()=>cmpRemove(+b.dataset.i));
+  wireCmpHover(m);
   const tm=m.querySelector(".cmp-trmin");if(tm)tm.onchange=()=>{cmpTrendMinN=+tm.value;renderCmpModal();};
   hideCmpDotTip();wireCmpDots(m);}
 document.addEventListener("keydown",ev=>{if(ev.key==="Escape"){const m=$("#cmpModal");if(m&&!m.hidden){closeCmpModal();ev.stopPropagation();}}},true);
@@ -4766,6 +4805,7 @@ function renderIsleMid(ds,e,mid){if(!mid)return;
   const cur=tabs.find(t=>t.k===ISLE.gtab)||tabs[0];
   /* 실유저(주간) 실증 블록 — 탭 위 상시 노출(탭 전환과 무관). 데이터 없으면 빈 문자열이라 미렌더 */
   mid.innerHTML=(peerRankHTML(ds,e)||"")+(umCohortHTML(ds,e)||"")+(gAssetHTML(ds,e)||"")+(tabs.length>1?`<div class="dtog gtabs">${tabs.map(t=>`<button data-gt="${t.k}" class="${t.k===cur.k?"on":""}">${t.lab}</button>`).join("")}</div>`:"")+`<div class="gtab-body">${cur.html}</div>`;
+  fitMrows(mid);
   mid.querySelectorAll(".gtabs button").forEach(b=>b.onclick=()=>{ISLE.gtab=b.dataset.gt;renderIsleMid(ds,e,mid);});
   /* 그래프 요소 공통 툴팁(data-tip) — 추이 막대·유지 곡선 점·산점도 점이 함께 쓴다 */
   mid.querySelectorAll("[data-tip]").forEach(el=>{
@@ -6087,7 +6127,7 @@ function show(ds){scope(ds);
   if(!tGroupByTouched&&tMarkView==="all"){
     const g=String(ds.media||"").startsWith("Google")&&ds.agg.some(e=>e._g_adGroupId);
     if(g!==tGroupBy){tGroupBy=g;if(g){tQuickFo=null;}}}
-  renderMediaSeg(ds);renderPeriodSeg();renderViewSeg();renderDataRange(ds);renderUmetCards(ds);renderKeyrow(ds);renderAutoInsight(ds);
+  renderMediaSeg(ds);renderPeriodSeg();renderViewSeg();renderDataRange(ds);renderUmetCards(ds);renderKeyrow(ds);
   requestAnimationFrame(()=>{renderQuad(ds);renderQuadTierLegend();
     renderTrend(ds);
     requestAnimationFrame(()=>{curDS=ds;renderQuickFo();renderTable(ds);renderAB(ds);});});}
