@@ -257,6 +257,14 @@
   .peer{padding:11px 13px;background:var(--surface);border:1px solid var(--surface-3);border-radius:10px;text-align:left}
   .peer .us-h{margin-bottom:4px}
   .peer .us-sub:first-of-type{margin-top:2px;padding-top:0;border-top:0}
+  /* 비교군 카드 — 가로 나란히. 카드 사이 간격(28px)이 카드 안 간격(4px)보다 확실히 커야 묶임이 읽힌다 */
+  .peer-cards{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:6px}
+  .peer-card{flex:1 1 300px;min-width:0;max-width:520px;padding-left:9px;border-left:2px solid var(--surface-3)}
+  .peer-ch{font-size:var(--fs-1);font-weight:700;color:var(--muted);display:flex;align-items:baseline;gap:6px;
+    flex-wrap:wrap;margin-bottom:3px}
+  .peer-ch em{font-style:normal;font-weight:500;color:var(--faint);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .peer-rows{display:grid;grid-template-columns:max-content;gap:0}
+  @media(max-width:900px){.peer-cards{gap:12px}.peer-card{flex:1 1 100%}}
 
   /* ── 상세 지표 행 문법 — [라벨 값 등급 순위] 한 덩어리. 모든 블록이 같은 문법을 쓴다 ──
      근접성 원칙: 한 지표에 속한 네 조각의 간격(8px)은 지표끼리의 간격(가로 34px·세로 행 구분선)보다
@@ -291,6 +299,8 @@
   .us-sub em{font-style:normal;font-weight:500;color:var(--faint)}
   /* viewBox 560 기준. max-width로 위를, min-width로 아래를 막아 배율을 0.84~1에 가둔다 —
      상한이 없으면 넓은 창에서 글자만 커지고, 하한이 없으면 좁은 창에서 절반으로 쪼그라든다 */
+  /* min-width는 max-content 그리드 안에서 차트가 쪼그라드는 것을 막는다(코호트 행이 없으면 열이 붕괴한다).
+     max-width는 viewBox 폭 — 그 이상 늘리면 글자까지 확대된다 */
   .us-life{display:block;width:100%;min-width:470px;max-width:560px;height:auto;margin-top:3px}
   /* 소재 상세 — 실유저(주간) 블록: 그래프 탭 위 상시 노출 스트립 */
   .umet-strip{margin:0;padding:12px 14px;background:var(--surface);border:1px solid var(--surface-3);border-radius:10px;text-align:left}
@@ -652,6 +662,10 @@
   .gtab-body{min-width:0}
   .gtab-body section+section{margin-top:16px}
   /* 영상 구간별 시청 유지 곡선 */
+  /* ⚠️ 작은 viewBox(300×104 등)를 width:100%로 늘리면 SVG가 통째로 2~3배 확대돼 글자·선이 타이포 스케일을
+     무시하고 커진다(.ispark-svg에서 겪은 것과 같은 문제). 각 차트가 자기 viewBox 폭을 max-width로 걸어
+     배율 1을 넘지 않게 하고, 남는 폭은 왼쪽 정렬로 둔다 */
+  .vb-why{display:block;font-style:normal;color:var(--faint);font-size:var(--fs-1);margin-top:1px}
   .vret-svg{width:100%;height:auto;display:block}
   .vret-svg .vp{cursor:help}
   .vret-cap{font-size:var(--fs-1);color:var(--faint);margin-top:5px;line-height:1.5}
@@ -707,7 +721,9 @@
   .ir-media{display:flex;flex-direction:column;gap:10px;min-width:0}
   .ir-mid{display:flex;flex-direction:column;gap:14px;min-width:0}
   .isle-frame{width:100%;height:280px;background:var(--surface-3);border-radius:12px;display:grid;place-items:center;overflow:hidden;position:relative}
-  .isle.ar-v .isle-frame{height:396px}
+  /* 세로형(9:16·4:5)은 **너비를 그대로 두고 높이만** 늘린다 — 열 폭은 오른쪽 지표 영역과 물려 있어 못 건드리지만
+     세로 길이는 자유롭다. 250px 폭에 9:16이면 444px가 원본 비율이라 그만큼 채워 준다(종전 396px는 위아래가 남았다) */
+  .isle.ar-v .isle-frame{height:444px}
   .isle.ar-h .isle-frame{height:250px}
   /* 미디어는 프레임 안에서 전체가 보이게 수납(세로형 위·아래 잘림 방지).
      프레임(position:relative·height 확정) 기준 절대배치 + margin:auto로 중앙 정렬 →
@@ -861,12 +877,29 @@
   .xm-conf.sim{background:var(--mid-f);color:var(--mid)}
   /* 추정 = 이름이 없어 그룹 계열·서비스·해상도로만 좁힌 후보. 확정과 확실히 구분되게 점선 */
   .xm-conf.guess{background:transparent;color:var(--faint);border:1px dashed var(--surface-3);font-weight:500}
+  /* 타매체 비교 — 상세보기 안에서 바로 펼치는 차이 줄 */
+  .xm-cmp{padding:2px 9px;border:1px solid var(--surface-3);border-radius:999px;background:var(--surface);
+    color:var(--muted);font-size:var(--fs-1);font-weight:650;cursor:pointer;white-space:nowrap;line-height:1.5}
+  .xm-cmp:hover{border-color:var(--muted);color:var(--ink)}
+  .xm-cmp.on{background:var(--karrot-f);border-color:var(--karrot);color:var(--karrot)}
+  .fam td:has(>.xm-cmp){text-align:right}
+  .xd-tr>td{background:var(--surface-2);padding:7px 10px !important}
+  .xd-row{display:flex;flex-wrap:wrap;gap:5px 8px;align-items:center;text-align:left;white-space:normal}
+  .xd{display:inline-flex;align-items:baseline;gap:4px;padding:1px 7px;border-radius:5px;
+    font-size:var(--fs-1);font-weight:700;background:var(--surface);border:1px solid var(--surface-3)}
+  .xd i{font-style:normal;font-weight:500;color:var(--faint)}
+  .xd.xd-up,.xd.xd-good{color:#1E6FD9}   /* 상대가 더 큼(좋음) = 파랑 */
+  .xd.xd-down,.xd.xd-bad{color:#D3453B}  /* 상대가 더 작음(나쁨) = 빨강 */
+  .xd.xd-eq{color:var(--faint);font-weight:600}
+  .xd-base{font-size:var(--fs-1);color:var(--faint);font-weight:500}
   .isle-load{font-size:var(--fs-3);color:var(--faint);padding:16px 4px}
   .asset-wrap{display:flex;flex-direction:column;gap:6px;width:100%;align-items:center;min-width:0}
   .asset-vid{width:100%;aspect-ratio:16/9;border-radius:8px;border:0;background:#000;max-width:100%}
   .asset-img{max-width:100%;max-height:310px;width:auto;height:auto;border-radius:8px;object-fit:contain;background:#fff}
-  .asset-src{font-size:var(--fs-1);color:var(--muted);word-break:break-all;text-align:center;max-width:100%}
-  .asset-src a{color:var(--muted)}
+  /* 원본 URL은 한 줄 말줄임 — 길이가 제각각이라 줄바꿈시키면 미디어 열이 통째로 늘어난다 */
+  .asset-src{font-size:var(--fs-1);color:var(--muted);text-align:center;max-width:100%;min-width:0;
+    display:flex;align-items:baseline;gap:4px;flex-wrap:wrap;justify-content:center}
+  .asset-src a{color:var(--muted);flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .tempty{padding:26px 14px;text-align:center;color:var(--muted);font-size:var(--fs-3)}
   .asset-err{font-size:var(--fs-2);color:var(--w2)}
   .asset-verr{font-size:var(--fs-2);color:var(--w2);text-align:center;padding:10px 4px}
@@ -875,7 +908,7 @@
   .sc-note{color:var(--w1);font-weight:800;margin-left:2px;cursor:help}
   .asset-err .mini{margin-left:6px;font-size:var(--fs-1);padding:2px 8px;border-radius:7px;border:1px solid #d8d7cf;background:var(--surface);color:var(--muted);cursor:pointer}
   .asset-err .mini:hover{color:var(--ink);border-color:var(--faint)}
-  .asset-src{font-size:var(--fs-1);color:var(--faint);text-align:center;word-break:break-all}
+  .asset-src{font-size:var(--fs-1);color:var(--faint);text-align:center;min-width:0}
   .asset-dim{display:inline-block;background:var(--surface-3);color:var(--muted);font-weight:700;font-size:var(--fs-1);padding:1px 7px;border-radius:5px;margin-right:6px;white-space:nowrap}
   .asset-dim.unver{background:transparent;color:var(--faint);font-weight:500;border:1px dashed var(--surface-3);padding:0 6px} /* 미검증 = 파일명 파싱값 */
   .asset-src a{color:var(--muted);text-decoration:none}
@@ -1966,17 +1999,15 @@ function displayNameOf(e){if(!e)return "";
   if(_ok!=null){
     if(Object.prototype.hasOwnProperty.call(NAME_PENDING,_ok)){if(NAME_PENDING[_ok]!=="")return NAME_PENDING[_ok];}
     else if(NAME_OVR[_ok]&&NAME_OVR[_ok]!=="")return NAME_OVR[_ok];}
-  {const un=unifiedNameOf(e);if(un)return un;} /* 1순위: 통합 키 _name — 구글 애셋 보고서의 진짜 이름 */
-  if(e._g_assetId){
-    const nm=gNameMap.asset&&gNameMap.asset[String(e._g_assetId)];if(nm)return nm; /* 2순위: 공식 애셋 이름(수동 매핑·배치) */
-    const oc=gOcrMap[String(e._g_assetId)];if(oc)return oc;                        /* 3순위: 이미지 OCR 텍스트(과거 배치분) */
-  }
-  {const an=(e._g_assetName||"").trim();if(an&&!/^https?:\/\//.test(an))return an;} /* 4순위: 리포트/루틴의 애셋 이름 — 신규 소재는 자동으로 이름이 생긴다 */
-  const u=e._g_url||e.name;
-  if(/youtube\.com|youtu\.be/.test(String(u||""))){const id=ytIdOf(u);if(id&&_ytTitles[id])return _ytTitles[id];}
+  {const un=unifiedNameOf(e);if(un)return un;} /* 1순위: 통합 키 _name — 전 매체 공통 표시 이름 */
+  {const an=(e._g_assetName||"").trim();if(an&&!/^https?:\/\//.test(an))return an;} /* 2순위: 같은 소스의 애셋 이름(백필 이전 행 대비) */
   return e.name;}
-/* 이 소재의 표시 이름이 OCR 추출값인지 (표에서 OCR 마크 표시용) */
-function isOcrName(e){return !!(e&&e._g_assetId&&!unifiedNameOf(e)&&!(gNameMap.asset&&gNameMap.asset[String(e._g_assetId)])&&gOcrMap[String(e._g_assetId)]);}
+/* OCR·유튜브 제목 이름 경로는 은퇴(2026-08-06).
+   _name 백필이 전 매체 100%(구글 7,557 · 몰로코 11,951 · 메타 929 · URL 이름 0건)가 되면서
+   OCR 추출 텍스트·공식 애셋 이름 매핑(gmap.asset)·유튜브 제목 조회는 전부 쓰이지 않는 경로가 됐다.
+   특히 유튜브 제목은 소재마다 noembed.com 왕복이 있어 지우는 편이 로딩에도 이득이다.
+   kv(`ocr`·`ytt`)는 서버에 남겨 두되 화면은 더 이상 읽지 않는다. */
+function isOcrName(){return false;}
 function extractNameMap(headers,data){
   const H=(headers||[]).map(h=>String(h).trim());
   const find=(...c)=>H.find(h=>c.includes(h));
@@ -2000,7 +2031,9 @@ function mergeNameMap(delta){
 async function fetchNameMapBundle(pw){
   /* 7개 키를 순차 왕복(≈7×RTT)하던 것이 로그인 체감 지연의 한 축 — 병렬로 한 번에. 실패는 키별 무시(종전과 동일) */
   const get=k=>sbRpc("cr_kv_get",{pw,key:k}).catch(()=>null);
-  const [gm,gi,oc,yt,no,so,gw,um]=await Promise.all([get("gmap"),get("ginfo"),get("ocr"),get("ytt"),get("nameovr"),get("svcovr"),get("gwstat"),get("umetrics")]);
+  /* ocr·ytt는 이름 경로 은퇴로 더 이상 읽지 않는다 — 부팅 왕복 2개 감소 */
+  const [gm,gi,no,so,gw,um]=await Promise.all([get("gmap"),get("ginfo"),get("nameovr"),get("svcovr"),get("gwstat"),get("umetrics")]);
+  const oc=null,yt=null;
   return {gm,gi,oc,yt,no,so,gw,um};}
 function applyNameMapBundle(b){
   if(!b)return;
@@ -2123,20 +2156,7 @@ function umLifeFor(ds,e){
 async function loadNameMap(pw){applyNameMapBundle(await fetchNameMapBundle(pw));}
 /* 모든 유튜브 소재 제목을 로드 직후 백그라운드 일괄 조회(동시 4) — 클릭 없이 자동 표시, kv(ytt)로 기기 간 공유 */
 let _yttRan=false;
-async function hydrateAllYtTitles(){
-  if(_yttRan)return;_yttRan=true;
-  const ids=new Set();
-  for(const k in DATASETS){const ds=DATASETS[k];
-    for(const r of ds.dataAll){const id=ytIdOf(r._g_url||r[ds.L.nameCol]);if(id&&_ytTitles[id]===undefined)ids.add(id);}}
-  const list=[...ids];if(!list.length)return;
-  const fresh={};
-  for(let i=0;i<list.length;i+=4){
-    const part=list.slice(i,i+4);
-    const rs=await Promise.all(part.map(fetchYtTitle));
-    rs.forEach((t,j)=>{if(t)fresh[part[j]]=t;});}
-  if(Object.keys(fresh).length){
-    refreshDisplayNames();
-    if(cloudPw&&canEdit)sbRpc("cr_kv_merge",{pw:cloudPw,key:"ytt",val:fresh,uploader:uploaderId||"unknown"}).catch(()=>{});}}
+/* hydrateAllYtTitles: 은퇴 — 표시 이름은 payload._name (외부 제목 조회 없음) */
 /* 유튜브 소재 제목 — noembed(CORS 허용)로 상세 열람 시에만 조회, 로컬 캐시.
    시작 시 캐시를 미리 올려 표·순위의 유튜브 URL 이름도 아는 제목으로 바로 표시 */
 const _ytTitles={};
@@ -3427,7 +3447,7 @@ function isleAr(el){const isle=el&&el.closest?el.closest(".isle"):null;if(!isle)
   applyIsleAr(isle,el.naturalWidth||el.videoWidth||0,el.naturalHeight||el.videoHeight||0);}
 /* 미리보기 — 고정 프레임(.isle-frame) 안에 비율 유지로 수납. 프레임 크기는 .isle의 ar-* 클래스가 결정 */
 function assetPreview(url,ent,noSrc){if(!url)return ""; /* noSrc=true → 원본 URL 줄 생략(비교 화면) */
-  const ocrM=isOcrName(ent)?`<span class="ocr-mark" title="이미지에서 자동 추출한 텍스트(OCR) — 공식 애셋 이름을 등록하면 대체됩니다">OCR</span>`:"";
+  const ocrM=""; /* OCR 이름 경로 은퇴 — 마크도 표시하지 않는다 */
   /* 해상도 = 미리보기 실측 캐시 우선, 없으면 리포트 표기·영상 표준 규격 환산(arDispOf) + 재생시간 */
   /* 유튜브는 MDIM(썸네일 측정치)을 쓰지 않는다 — 어떤 영상이든 같은 썸네일 규격이라 세로·가로가 뭉개진다.
      해상도 판단은 arDispOf(oar 실측 → 공식 방향) 한 곳으로 모은다 */
@@ -3823,7 +3843,7 @@ function videoRetentionHTML(ds,e){
       g+=`<circle class="vp" data-tip="${escAttr(tip)}" cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="3.4" fill="var(--karrot)" stroke="#fff" stroke-width="1.4"/><text x="${X(i).toFixed(1)}" y="${(Y(v)-7).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="650" fill="var(--ink)">${v.toFixed(0)}%</text><text x="${X(i).toFixed(1)}" y="${H-4.5}" text-anchor="middle" font-size="7.2" fill="var(--faint)">${l}</text>`;
       if(i&&drop>=1.5){const mx=(X(i-1)+X(i))/2,my=(Y(seq[i-1][1])+Y(v))/2+9;
         g+=`<text x="${mx.toFixed(1)}" y="${Math.min(H-pb-3,my).toFixed(1)}" text-anchor="middle" font-size="7.2" font-weight="${i===big?"800":"500"}" fill="${i===big?"var(--w2)":"var(--faint)"}">−${drop.toFixed(0)}%p</text>`;}});
-    s+=`<section><div class="ish">구간별 시청 유지 <span class="n">노출=100 기준 · 이탈 최대 구간 음영</span></div><svg class="vret-svg" viewBox="0 0 ${W} ${H}">${g}</svg><div class="vret-cap">최대 이탈: <b>${seq[big-1][0]}→${seq[big][0]} 구간 −${(seq[big-1][1]-seq[big][1]).toFixed(1)}%p</b> · ${src}</div></section>`;
+    s+=`<section><div class="ish">구간별 시청 유지 <span class="n">노출=100 기준 · 이탈 최대 구간 음영</span></div><svg class="vret-svg" viewBox="0 0 ${W} ${H}" style="max-width:${W}px">${g}</svg><div class="vret-cap">최대 이탈: <b>${seq[big-1][0]}→${seq[big][0]} 구간 −${(seq[big-1][1]-seq[big][1]).toFixed(1)}%p</b> · ${src}</div></section>`;
   }else if(e["영상 완주율"]!=null){
     const d=med!=null?(e["영상 완주율"]-med)*100:null;
     s+=`<section><div class="ish">영상 완주율 <span class="n">이 매체 리포트에는 25·50·75% 구간 데이터가 없습니다</span></div><div class="vret-big"><b class="num">${fmtPct(e["영상 완주율"])}</b><span>노출 대비 끝까지 본 비율</span></div>${d!=null?`<div class="vret-cap">같은 화면 영상 소재 ${cvals.length+1}개 중앙값 <b>${fmtPct(med)}</b> 대비 <b style="color:${d>=0?"var(--g1)":"var(--w2)"}">${d>=0?"+":""}${d.toFixed(1)}%p</b></div>`:""}</section>`;}
@@ -3847,7 +3867,7 @@ function videoRetentionHTML(ds,e){
       const x=xat(i),y=yat(v);last=v;
       p+=st?` L ${x.toFixed(1)} ${y.toFixed(1)}`:`M ${x.toFixed(1)} ${y.toFixed(1)}`;st=true;
       g+=`<circle class="vp" data-tip="${escAttr(`<b>${w.slice(5).replace("-","/")} 주</b><br>${wl.lab} ${fmtPct(v)}`)}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.3" fill="var(--g2)"/>`;});
-    s+=`<section><div class="ish">${wl.lab} 주차별 추이 <span class="n">${wl.help} · 최근 <b>${fmtPct(last)}</b></span></div><svg class="vret-svg" viewBox="0 0 ${W} ${H}"><path d="${p}" fill="none" stroke="var(--g2)" stroke-width="1.6"/>${g}</svg></section>`;}
+    s+=`<section><div class="ish">${wl.lab} 주차별 추이 <span class="n">${wl.help} · 최근 <b>${fmtPct(last)}</b></span></div><svg class="vret-svg" viewBox="0 0 ${W} ${H}" style="max-width:${W}px"><path d="${p}" fill="none" stroke="var(--g2)" stroke-width="1.6"/>${g}</svg></section>`;}
   return s;}
 /* 상세 '포지셔닝' — 타 소재 대비 위치를 '계정 내 위치(백분위)' 공간에 그린다.
    두 축 모두 광고비 가중 백분위(방향 보정, 0~100)라 지표를 무엇으로 골라도 오른쪽·위 = 좋음:
@@ -3916,7 +3936,7 @@ function positioningHTML(ds,e){
   g+=`<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="9.5" fill="none" stroke="var(--karrot)" stroke-opacity=".5" stroke-width="2"/>`+dot(me,"var(--karrot)",1,5.4,`stroke="#fff" stroke-width="1.6"`);
   g+=`<text x="${Math.max(pad.l+22,Math.min(W-pad.r-22,ex)).toFixed(1)}" y="${(ey>pad.t+34?ey-14:ey+23).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--karrot)">이 소재</text>`;
   const axRow=(lab,cls,cur)=>`<div class="pos-ax"><span>${lab}</span><div class="dtog ${cls}">${mets.map(m=>`<button data-m="${m.k}" class="${m.k===cur?"on":""}">${m.lab}</button>`).join("")}</div></div>`;
-  return `<section><div class="ish">타 소재 대비 포지셔닝 <span class="n">${xM.lab} <b>상위 ${topPct(me.x)}%</b> · ${yM.lab} <b>상위 ${topPct(me.y)}%</b></span></div>${axRow("가로","posx",xM.k)}${axRow("세로","posy",yM.k)}<svg class="iposc-svg" viewBox="0 0 ${W} ${H}">${g}</svg><div class="vret-cap">축 = 계정 내 위치(광고비 가중 백분위) · 십자선 = 중앙값, <b style="color:var(--g1)">+</b>쪽일수록 좋음 · 회색 비교군 ${nOther+nGrp+1}개${nGrp?` · <b style="color:var(--g2)">파랑</b> 같은 그룹 ${nGrp}개`:""} · 점 크기 광고비${e._isGroup?"":" · 점 클릭 = 해당 소재로 이동"}</div></section>`+bars;}
+  return `<section><div class="ish">타 소재 대비 포지셔닝 <span class="n">${xM.lab} <b>상위 ${topPct(me.x)}%</b> · ${yM.lab} <b>상위 ${topPct(me.y)}%</b></span></div>${axRow("가로","posx",xM.k)}${axRow("세로","posy",yM.k)}<svg class="iposc-svg" viewBox="0 0 ${W} ${H}" style="max-width:${W}px">${g}</svg><div class="vret-cap">축 = 계정 내 위치(광고비 가중 백분위) · 십자선 = 중앙값, <b style="color:var(--g1)">+</b>쪽일수록 좋음 · 회색 비교군 ${nOther+nGrp+1}개${nGrp?` · <b style="color:var(--g2)">파랑</b> 같은 그룹 ${nGrp}개`:""} · 점 크기 광고비${e._isGroup?"":" · 점 클릭 = 해당 소재로 이동"}</div></section>`+bars;}
 /* 같은 그룹 비교 — 이름들의 공통 접두를 '…'로 접고 달라지는 부분부터 표시 (토큰 경계에서 자름) */
 function prefixTrimmer(names){
   const list=names.filter(Boolean);
@@ -3933,11 +3953,23 @@ function prefixTrimmer(names){
    D1/D7 잔존율(vs 매체 중앙값) · 주차별 D1 잔존 추이 · 코호트 매출/ROAS D7 · 신규/재참여 구성 · 표본 신뢰 */
 function qualityHTML(ds,e){
   if(!e||(e._q_retD1==null&&e._q_afInstalls==null&&(e._q_reEng||0)<=0))return "";
+  /* 잔존율 두 개가 모두 표본 미달인데 매출·유입 구성도 없으면 보여줄 게 없다 — 탭을 만들지 않는다 */
+  {const b1=e._q_retD1Base||0,b7=e._q_retD7Base||0;
+   const hasRet=(e._q_retD1!=null&&b1>=10&&e._q_retD1>0)||(e._q_retD7!=null&&b7>=10&&e._q_retD7>0);
+   const hasRest=(e._q_roasD7!=null)||(e._q_afInstalls||0)>0||(e._q_reEng||0)>0||(e._q_reAtt||0)>0;
+   if(!hasRet&&!hasRest)return "";}
   const pool=(e._isGroup?(ds._aggGrpCache||[]):ds.agg).filter(p=>p.name!==e.name&&p._q_retD1!=null).map(p=>p._q_retD1).sort((a,b)=>a-b);
   const med=pool.length>=5?quantile(pool,0.5):null;
   const base1=e._q_retD1Base||0,base7=e._q_retD7Base||0;
+  /* 표본이 사실상 없는 값은 '0%'가 아니라 **데이터 없음**이다.
+     코호트 분모가 10명 미만이면 잔존율 한 명이 10%p를 흔들어 수치가 의미를 잃고,
+     0%는 "아무도 안 돌아왔다"가 아니라 대개 "아직 코호트가 안 잡혔다"이다. */
+  const Q_MIN_BASE=10;
+  const none=(lab,why)=>`<div class="vret-big"><b class="num" style="color:var(--faint)">–</b><span>${lab} · 데이터 없음<em class="vb-why">${escHtml(why)}</em></span></div>`;
   const stat=(lab,rate,base,cmp)=>{
-    if(rate==null)return `<div class="vret-big"><b class="num" style="color:var(--faint)">–</b><span>${lab} · 데이터 없음</span></div>`;
+    if(rate==null)return none(lab,"코호트 값이 아직 없어요");
+    if(!(base>=Q_MIN_BASE))return none(lab,`표본 ${fmtInt(base)}명 — ${Q_MIN_BASE}명 미만은 표시하지 않아요`);
+    if(rate===0)return none(lab,`표본 ${fmtInt(base)}명 중 재방문 0명 — 코호트 미집계일 가능성이 큽니다`);
     const d=cmp!=null?(rate-cmp)*100:null;
     return `<div class="vret-big"><b class="num">${fmtPct(rate)}</b><span>${lab} · 표본 ${fmtInt(base)}명${d!=null?` · 중앙값 대비 <b style="color:${d>=0?"var(--g1)":"var(--w2)"}">${d>=0?"+":""}${d.toFixed(1)}%p</b>`:""}</span></div>`;};
   let s=`<section><div class="ish">데려온 유저의 질 <span class="n">AppsFlyer 코호트 실측 · 설치 후 다시 돌아오는가</span></div>
@@ -3958,7 +3990,7 @@ function qualityHTML(ds,e){
     g+=`<path d="${ln}" fill="none" stroke="var(--g1)" stroke-width="2"/>`;
     seq.forEach(([w,v],i)=>{g+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="3" fill="var(--g1)" data-tip="${escAttr(`<b>${w.slice(5).replace("-","/")} 주</b><br>D1 잔존율 ${fmtPct(v)} · 표본 ${fmtInt(byW.get(w).b)}명`)}"/>`;});
     g+=`<text x="${pl-4}" y="${Y(vmax/1.15).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--faint)">${fmtPct(vmax/1.15)}</text>`;
-    s+=`<svg class="vret-svg" viewBox="0 0 ${W} ${H}">${g}</svg><div class="vret-cap">주차별 D1 잔존율 (표본 10명 이상 주만${med!=null?" · 점선 = 매체 중앙값":""})</div>`;}
+    s+=`<svg class="vret-svg" viewBox="0 0 ${W} ${H}" style="max-width:${W}px">${g}</svg><div class="vret-cap">주차별 D1 잔존율 (표본 10명 이상 주만${med!=null?" · 점선 = 매체 중앙값":""})</div>`;}
   /* 코호트 매출·유입 구성·표본 신뢰 */
   const parts=[];
   if(e._q_roasD7!=null)parts.push(`7일 코호트 매출 <b>${fmtWon(e._q_revD7)}</b> · ROAS D7 <b>${e._q_roasD7.toFixed(2)}×</b>`);
@@ -3967,7 +3999,7 @@ function qualityHTML(ds,e){
   if(e._q_reEng)comp.push(`재참여 <b>${fmtInt(e._q_reEng)}</b>${e._q_cpReEng?` (단가 ${fmtWon(e._q_cpReEng)})`:""}`);
   if(e._q_reAtt)comp.push(`재어트리뷰션 <b>${fmtInt(e._q_reAtt)}</b>`);
   if(comp.length)parts.push("유입 구성: "+comp.join(" · "));
-  if(base1>0&&base1<30)parts.push(`<b style="color:var(--w1)">표본 적음</b> — D1 코호트 ${fmtInt(base1)}명뿐이라 잔존율 변동이 큽니다 (참고용)`);
+  if(base1>=Q_MIN_BASE&&base1<30)parts.push(`<b style="color:var(--w1)">표본 적음</b> — D1 코호트 ${fmtInt(base1)}명뿐이라 잔존율 변동이 큽니다 (참고용)`);
   if(parts.length)s+=`<div class="vret-cap" style="margin-top:6px">${parts.join("<br>")}</div>`;
   return s+`</section>`;}
 /* ═════ 비교군 내 위치 — 같은 광고그룹 / 같은 서비스에서 이 소재의 수준 ═════
@@ -3991,7 +4023,9 @@ function peerRankHTML(ds,e){
     if(g.length>=4&&(!groups.length||g.length!==groups[0].list.length))groups.push({lab:"같은 서비스",sub:svc,list:g});}
   if(!groups.length){const g=pool;if(g.length>=6)groups.push({lab:"이 매체 전체",sub:String(ds.media||""),list:g});}
   if(!groups.length)return "";
-  let body="";
+  /* 비교군을 **가로로 나란히** 놓는다. 세로로 쌓으면 '광고비 ₩3,408,000'이 어느 비교군의 값인지 헷갈린다
+     — 근접성 원리: 한 비교군의 제목과 그 지표 행들을 하나의 카드로 묶고, 카드끼리는 간격으로 떼어 놓는다. */
+  const cards=[];
   for(const g of groups){
     const cells=[["비용","광고비",v=>fmtKRW(v)+"원"],[rk,"실유저",v=>fmtInt(v)]].map(([k,lab,fmt])=>{
       const vs=g.list.map(p=>+p[k]).filter(v=>v!=null&&isFinite(v));
@@ -4001,11 +4035,12 @@ function peerRankHTML(ds,e){
       return umRow({k:lab,v:fmt(v),tr:t,rank:umRankTxt(t),
         tip:`<b>${g.lab}(${g.list.length}개) · ${lab}</b><br>이 소재 ${fmt(v)}${t.pct!=null?` — <b>상위 ${Math.max(1,Math.round(100-t.pct))}%</b>`:""}`
           +`<br>비교군 중앙값 ${fmt(t.med)}`});}).join("");
-    if(cells)body+=`<div class="us-sub">${escHtml(g.lab)} <em>${escHtml(g.sub)} · ${g.list.length}개</em></div>${cells}`;}
-  if(!body)return "";
+    if(!cells)continue;
+    cards.push(`<div class="peer-card"><div class="peer-ch">${escHtml(g.lab)}<em>${escHtml(g.sub)} · ${g.list.length}개</em></div><div class="peer-rows">${cells}</div></div>`);}
+  if(!cards.length)return "";
   return `<div class="peer">
-    <div class="us-h">비교군 내 위치<span class="uc-q" data-tip="${escAttr(`<b>또래 대비 위치</b><br>같은 광고그룹·같은 서비스 소재들 사이에서 이 소재가 어디쯤인지.<br>광고비 = 예산이 얼마나 몰렸나(머신러닝 신호) · 실유저 = 실제로 몇 명을 데려왔나.<br>둘 다 상위면 위너, 광고비만 상위면 재검토 대상.<br>눈금(가운데)이 비교군 중앙값이고 마커가 오른쪽일수록 상위.`)}">?</span><span class="n">기간·매체 기준</span></div>
-    <div class="mrows">${body}</div></div>`;}
+    <div class="us-h">비교군 내 위치<span class="uc-q" data-tip="${escAttr(`<b>또래 대비 위치</b><br>같은 광고그룹·같은 서비스 소재들 사이에서 이 소재가 어디쯤인지.<br>광고비 = 예산이 얼마나 몰렸나(머신러닝 신호) · 실유저 = 실제로 몇 명을 데려왔나.<br>둘 다 상위면 위너, 광고비만 상위면 재검토 대상.<br>눈금(가운데)이 비교군 중앙값이고 마커가 오른쪽일수록 상위.<br><b>각 카드 안의 수치는 그 비교군 기준</b>입니다.`)}">?</span><span class="n">기간·매체 기준</span></div>
+    <div class="peer-cards">${cards.join("")}</div></div>`;}
 /* ═════ 소재 상세 — 실유저(주간) ═════
    설계 원칙(2026-08-05 재설계):
    ① 모든 지표를 같은 행 문법으로 읽는다 — [라벨 · 값 · 등급 · 위치 · 편차].
@@ -4178,25 +4213,61 @@ function umCohortHTML(ds,e){
         tip:`<b>${md(o.w)} 주 유효 복귀 ${o.pct.toFixed(1)}%</b><br>되돌린 유저 ${fmtInt(o.n)}명 중 유효 복귀 ${fmtInt(o.valid)}명${o.cpv!=null?`<br>유효 복귀 1명당 ₩${fmtInt(o.cpv)}`:""}${NB!=null?`<br>자연 복귀 기준선 ${NB.toFixed(1)}% 대비 ${o.pct>=NB?"+":""}${(o.pct-NB).toFixed(1)}%p`:""}<br>소재 값은 같은 매체 안에서 비교하세요`});}).join("");
     reengHtml=`<div class="us-sub">유효 복귀 <em>자연 기준선 ${NB!=null?NB.toFixed(1)+"%":"—"} 대비</em></div>${rs}`;}
   /* 라이프사이클 — 개시→최근 스팬, 피크▲, 최대 증액↑ */
+  /* ── 수명 — 주간 광고비 곡선으로 ──
+     종전엔 일자 막대에 화살표만 얹어 "몇 배 늘었고 높은 상태를 얼마나 유지했나"가 전혀 안 보였다.
+     실제 주간 광고비를 그려 ① 언제 시작해 언제까지 갔는지(가로) ② 얼마나 크게 붙었는지(세로)
+     ③ 고소진(매체 상위 25%)을 몇 주나 유지했는지(음영 구간) ④ 피크·최대 증액이 어디였는지를 한 그림에 담는다. */
   let lifeHtml="";
   if(lf){
-    const t0=Date.parse(lf.f),t1=Date.parse(lf.l);
-    if(isFinite(t0)&&isFinite(t1)&&t1>=t0){
+    const wa=weeklyAggOf(ds,e,true); /* 기간 필터 무시 — 수명은 이 소재가 가진 전 주차 */
+    const ws=wa.ws,cs=wa.os.map(o=>o.c||0);
+    if(ws.length>=2&&cs.some(c=>c>0)){
       const lc=UMET.lifecycle;let maxL="";
       for(const k in lc){if(k==="basis")continue;const v=lc[k];if(v&&v.l&&v.l>maxL)maxL=v.l;}
       const ongoing=lf.l===maxL;
-      const W=560,H=48,pl=12,pr=12,base_y=28,iw=W-pl-pr;
-      const X=d=>{const t=Date.parse(d);return pl+(t1===t0?iw/2:(t-t0)/(t1-t0)*iw);};
-      let g=`<line x1="${pl}" y1="${base_y}" x2="${W-pr}" y2="${base_y}" stroke="var(--surface-3)" stroke-width="4" stroke-linecap="round"/>`;
-      g+=`<line x1="${pl}" y1="${base_y}" x2="${W-pr}" y2="${base_y}" stroke="var(--mid)" stroke-width="4" stroke-linecap="round" data-tip="${escAttr(`<b>집행 ${fmtInt(lf.wks)}주</b> · ${md(lf.f)} ~ ${md(lf.l)}${ongoing?" (진행중)":""}<br>누적 광고비 ${fmtKRW(lf.tot)}원${lf.hi?`<br>고소진 유지 ${fmtInt(lf.hi)}주(매체 상위 25% 이상)`:""}`)}"/>`;
-      if(lf.rw&&isFinite(+lf.rx)){const x=X(lf.rw);
-        g+=`<path d="M ${x.toFixed(1)} ${base_y-5} L ${x.toFixed(1)} ${base_y-12}" stroke="var(--g2)" stroke-width="1.8"/><path d="M ${(x-3.4).toFixed(1)} ${base_y-9.5} L ${x.toFixed(1)} ${base_y-13.5} L ${(x+3.4).toFixed(1)} ${base_y-9.5}" fill="none" stroke="var(--g2)" stroke-width="1.8" data-tip="${escAttr(`<b>최대 증액 ×${(+lf.rx).toFixed(1)}</b> · ${md(lf.rw)} 주<br>직전 주 대비 주간 광고비 증가 배수`)}"/>`;
-        g+=`<text x="${x.toFixed(1)}" y="${base_y-16}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--g2)">×${(+lf.rx).toFixed(1)}</text>`;}
-      if(lf.pk_w){const x=X(lf.pk_w);
-        g+=`<path d="M ${x.toFixed(1)} ${base_y+5} L ${(x-3.6).toFixed(1)} ${base_y+11} L ${(x+3.6).toFixed(1)} ${base_y+11} Z" fill="var(--karrot)" data-tip="${escAttr(`<b>피크 주간 광고비 ${fmtKRW(lf.pk)}원</b> · ${md(lf.pk_w)} 주`)}"/>`;}
-      g+=`<circle cx="${(W-pr).toFixed(1)}" cy="${base_y}" r="3.6" fill="${ongoing?"#35B979":"var(--faint)"}" data-tip="${escAttr(ongoing?"진행중 — 최신 주에도 집행":`중단 — 마지막 집행 ${md(lf.l)} 주`)}"/>`;
-      g+=`<text x="${pl}" y="${H-3}" font-size="10" fill="var(--faint)">${md(lf.f)}</text><text x="${W-pr}" y="${H-3}" text-anchor="end" font-size="10" fill="var(--faint)">${md(lf.l)}</text>`;
-      lifeHtml=`<div class="us-sub">수명 <em>${fmtInt(lf.wks)}주 · 누적 ${fmtKRW(lf.tot)}원</em></div><svg class="us-life" viewBox="0 0 ${W} ${H}">${g}</svg>`;}}
+      /* 고소진 경계 = 이 매체 소재들의 '주간 광고비' 상위 25%(p75) — lf.hi(고소진 주 수)와 같은 잣대 */
+      const allW=[];
+      for(const r of (ds.dataAll||ds.data||[])){const c=num(r["비용"]);if(c!=null&&c>0)allW.push(c);}
+      const hiCut=allW.length>=8?quantile(allW.slice().sort((a,b)=>a-b),0.75):null;
+      const W=560,H=112,pl=14,pr=14,pt=26,pb=20,iw=W-pl-pr,ih=H-pt-pb;
+      const mx=Math.max(...cs)*1.14||1;
+      const X=i=>pl+(ws.length===1?iw/2:i/(ws.length-1)*iw);
+      const Y=v=>pt+(1-v/mx)*ih;
+      const pkI=cs.indexOf(Math.max(...cs));
+      let g="";
+      /* 고소진 밴드 — 경계선 위쪽을 통째로 옅게 칠해 '높은 상태'가 면적으로 읽히게 */
+      if(hiCut!=null&&hiCut<mx){
+        g+=`<rect x="${pl}" y="${pt}" width="${iw}" height="${(Y(hiCut)-pt).toFixed(1)}" fill="var(--karrot)" fill-opacity="0.05"/>`;
+        g+=`<line x1="${pl}" y1="${Y(hiCut).toFixed(1)}" x2="${W-pr}" y2="${Y(hiCut).toFixed(1)}" stroke="var(--karrot)" stroke-width="1" stroke-dasharray="3 3" stroke-opacity="0.55" data-tip="${escAttr(`<b>고소진 경계 ${fmtKRW(hiCut)}원/주</b><br>이 매체 소재들의 주간 광고비 상위 25% 지점 — 이 선 위에 머문 구간이 '크게 밀어준' 기간입니다`)}"/>`;
+        g+=`<text x="${W-pr}" y="${(Y(hiCut)-3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--karrot)" fill-opacity="0.8">상위 25%</text>`;}
+      /* 광고비 곡선 + 면 */
+      let ln="";ws.forEach((w,i)=>{ln+=(i?" L":"M")+` ${X(i).toFixed(1)} ${Y(cs[i]).toFixed(1)}`;});
+      g+=`<path d="${ln} L ${X(ws.length-1).toFixed(1)} ${(H-pb).toFixed(1)} L ${X(0).toFixed(1)} ${(H-pb).toFixed(1)} Z" fill="var(--karrot)" fill-opacity="0.14"/>`;
+      g+=`<path d="${ln}" fill="none" stroke="var(--karrot)" stroke-width="2" stroke-linejoin="round"/>`;
+      /* 주마다 얇은 호버 타깃 — 값은 툴팁으로만(선 위에 숫자를 얹으면 곡선이 안 보인다) */
+      ws.forEach((w,i)=>{
+        const up=i>0&&cs[i-1]>0?cs[i]/cs[i-1]:null;
+        g+=`<rect x="${(X(i)-iw/ws.length/2).toFixed(1)}" y="${pt}" width="${(iw/ws.length).toFixed(1)}" height="${ih}" fill="transparent" data-tip="${escAttr(`<b>${md(w)} 주</b><br>주간 광고비 ${fmtKRW(cs[i])}원`+(up?`<br>직전 주 대비 ×${up.toFixed(2)}`:"")+(hiCut!=null?`<br>${cs[i]>=hiCut?"고소진 구간":"평시 구간"}`:""))}"/>`;});
+      /* 최대 증액 — 그 주 지점에 세로 눈금 + ×N */
+      if(lf.rw&&isFinite(+lf.rx)){
+        const ri=ws.indexOf(String(lf.rw).slice(0,10));
+        if(ri>=0){const x=X(ri);
+          g+=`<line x1="${x.toFixed(1)}" y1="${Y(cs[ri]).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(H-pb).toFixed(1)}" stroke="var(--g2)" stroke-width="1.2" stroke-dasharray="2 2"/>`;
+          g+=`<circle cx="${x.toFixed(1)}" cy="${Y(cs[ri]).toFixed(1)}" r="3" fill="var(--g2)"/>`;
+          g+=`<text x="${x.toFixed(1)}" y="${Math.max(11,Y(cs[ri])-8).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="750" fill="var(--g2)" paint-order="stroke" stroke="#FFFDF7" stroke-width="3" stroke-linejoin="round" data-tip="${escAttr(`<b>최대 증액 ×${(+lf.rx).toFixed(1)}</b> · ${md(lf.rw)} 주<br>직전 주 대비 주간 광고비 증가 배수`)}">×${(+lf.rx).toFixed(1)}</text>`;}}
+      /* 피크 — 값까지 적어 준다(가장 궁금한 한 숫자) */
+      {const x=X(pkI),y=Y(cs[pkI]);
+       g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.6" fill="var(--karrot)" stroke="#FFFDF7" stroke-width="1.4"/>`;
+       const anch=pkI===0?"start":(pkI===ws.length-1?"end":"middle");
+       g+=`<text x="${x.toFixed(1)}" y="${Math.max(10,y-9).toFixed(1)}" text-anchor="${anch}" font-size="10" font-weight="800" fill="var(--karrot)" paint-order="stroke" stroke="#FFFDF7" stroke-width="3" stroke-linejoin="round" data-tip="${escAttr(`<b>피크 ${fmtKRW(cs[pkI])}원</b> · ${md(ws[pkI])} 주`)}">피크 ${fmtKRW(cs[pkI])}</text>`;}
+      /* 끝점 상태 — 진행중이면 초록 점 */
+      g+=`<circle cx="${X(ws.length-1).toFixed(1)}" cy="${Y(cs[ws.length-1]).toFixed(1)}" r="3.2" fill="${ongoing?"#35B979":"var(--faint)"}" data-tip="${escAttr(ongoing?"진행중 — 최신 주에도 집행":`중단 — 마지막 집행 ${md(lf.l)} 주`)}"/>`;
+      g+=`<text x="${pl}" y="${H-5}" font-size="10" fill="var(--faint)">${md(ws[0])}</text>`;
+      g+=`<text x="${W-pr}" y="${H-5}" text-anchor="end" font-size="10" fill="var(--faint)">${md(ws[ws.length-1])}${ongoing?" · 진행중":""}</text>`;
+      const hiN=lf.hi?+lf.hi:(hiCut!=null?cs.filter(c=>c>=hiCut).length:0);
+      const sub=[`${fmtInt(ws.length)}주`,`누적 ${fmtKRW(lf.tot||cs.reduce((a,b)=>a+b,0))}원`];
+      if(hiN)sub.push(`고소진 ${fmtInt(hiN)}주`);
+      lifeHtml=`<div class="us-sub">수명 <em>${escHtml(sub.join(" · "))}</em></div><svg class="us-life" viewBox="0 0 ${W} ${H}" style="max-width:${W}px">${g}</svg>`;}}
   if(!rowsHtml.length&&!svcHtml&&!reengHtml&&!lifeHtml)return "";
   const n=+((c&&c.n)||0);
   const hdr=[];
@@ -4475,53 +4546,93 @@ function crossMediaMatches(ds,e){
       /* 같은 유형+해상도만 — 다른 포맷·해상도는 타매체 성과 비교에 방해.
          픽셀을 둘 다 알면 정확 비교, 아니면 화면비 클래스(가로/세로/정사각 — 유튜브는 oEmbed 비율)로 비교 */
       const oFo=(o.tags&&o.tags.fo)||null,oAi=arInfoOf(o);
-      if(myFo&&oFo&&myFo!==oFo)continue;
-      if(myAi&&oAi){
-        /* 영상은 화면에 보이는 값(표준 규격)과 같은 잣대로 비교한다 — 매체마다 서빙 트랜스코딩 크기가
-           달라(구글 1080×1920 vs 몰로코 640×1136) 픽셀을 그대로 대면 같은 영상도 안 잡힌다 */
-        if(myFo==="영상"||oFo==="영상"){if(myAi.cls!==oAi.cls)continue;}
-        else if(myAi.exact&&oAi.exact){if(myAi.w!==oAi.w||myAi.h!==oAi.h)continue;}
-        else if(myAi.cls!==oAi.cls)continue;}
       let conf=null,why="";
       const oU=previewUrlOf(o),oYt=ytIdOf(o._g_url||oU||o.name);
+      /* ── 강한 신호는 포맷·해상도 게이트를 건너뛴다 ──
+         같은 소재가 매체마다 다른 규격으로 나가는 게 정상이다(실측: `Nocommissioin_mom 720x720`(구글)
+         ↔ `Nocommissioin_mom 1200 x 628`(몰로코)). 해상도가 다르다고 막으면 정작 찾고 싶은 짝이 사라진다.
+         포맷도 마찬가지 — `video_X`와 `img_X`는 같은 소재의 영상/이미지 버전이다. */
       if(myYt&&oYt&&myYt===oYt){conf=2;why="같은 유튜브 영상";}
       else if(myU&&oU&&myU===oU){conf=2;why="같은 소재 파일(URL 일치)";}
-      else{
-        if(myHash&&oU&&!oYt){const oh=DHASH[oU];
-          if(oh===undefined){if(o.tags&&o.tags.fo==="이미지")pend++;}
-          else if(oh){const d=dhashHam(myHash,oh);const oAr=_arOf(o);
-            const arOk=myAr==null||oAr==null||Math.abs(myAr-oAr)/myAr<=0.12;
-            if(d<=6&&arOk){conf=2;why=`동일 이미지(지문 차이 ${d}/64)`;}}}
-        if(conf==null&&myTok.size>=2){
-          const oTok=nameTokensOf(o);
-          if(myKey===[...oTok].sort().join("|")){conf=2;why="소재명 일치";}
-          else{const s=nameSim(myTok,oTok);
-            if(s>=0.6&&(mySvc==null||(svcOf(o)||null)===mySvc))(conf=1,why=`이름 유사 ${Math.round(s*100)}%${mySvc?" · 같은 서비스":""}`);}}
-        /* 이름으로 못 잇는 영상 — 같은 그룹 계열의 영상으로 좁혀 '추정'으로만 제시.
-           해상도·포맷은 위 게이트에서 이미 걸렀고, 여기서 서비스까지 같아야 후보가 된다 */
-        if(conf==null&&myGrpMap&&myFo==="영상"&&(o.tags&&o.tags.fo)==="영상"&&mySvc&&(svcOf(o)||null)===mySvc){
+      else if(myHash&&oU&&!oYt&&DHASH[oU]){
+        const d=dhashHam(myHash,DHASH[oU]);const oAr=_arOf(o);
+        const arOk=myAr==null||oAr==null||Math.abs(myAr-oAr)/myAr<=0.12;
+        if(d<=6&&arOk){conf=2;why=`동일 이미지(지문 차이 ${d}/64)`;}}
+      if(conf==null&&myHash&&oU&&!oYt&&DHASH[oU]===undefined&&oFo==="이미지")pend++;
+      if(conf==null&&myTok.size>=2&&myKey===[...nameTokensOf(o)].sort().join("|")){
+        conf=2;why=`소재명 일치${(myFo&&oFo&&myFo!==oFo)?` (${oFo} 버전)`:""}${(myAi&&oAi&&arDispOf(o)&&arDispOf(e)!==arDispOf(o))?` · ${arDispOf(o)}`:""}`;}
+      if(conf==null){
+        /* ── 약한 신호(이름 유사·그룹 다리)는 포맷·해상도가 맞을 때만 ── */
+        if(myFo&&oFo&&myFo!==oFo)continue;
+        if(myAi&&oAi){
+          /* 영상은 화면에 보이는 값(표준 규격)과 같은 잣대로 — 매체마다 서빙 트랜스코딩 크기가 다르다 */
+          if(myFo==="영상"||oFo==="영상"){if(myAi.cls!==oAi.cls)continue;}
+          else if(myAi.cls!==oAi.cls)continue;}
+        if(myTok.size>=2){
+          const s=nameSim(myTok,nameTokensOf(o));
+          if(s>=0.6&&(mySvc==null||(svcOf(o)||null)===mySvc))(conf=1,why=`이름 유사 ${Math.round(s*100)}%${mySvc?" · 같은 서비스":""}`);}
+        /* 이름으로 못 잇는 영상 — 같은 그룹 계열의 영상으로 좁혀 '추정'으로만 제시 */
+        if(conf==null&&myGrpMap&&myFo==="영상"&&oFo==="영상"&&mySvc&&(svcOf(o)||null)===mySvc){
           const n=myGrpMap.get(ch+" "+_xmGrpOf(o));
-          if(n)conf=0,why=`같은 그룹 계열(연결된 이미지 ${n}개) · 서비스·해상도 일치 — 이름으로는 못 이어 추정`;}}
+          if(n)conf=0,why=`같은 그룹 계열(연결된 이미지 ${n}개) · 서비스·화면비 일치 — 이름으로는 못 이어 추정`;}}
       if(conf!=null)list.push({ch,e:o,conf,why});}}
   /* 확실한 신호(동일·유사)가 하나라도 있으면 '추정'은 버린다 — 추정은 이름으로 못 이을 때의 대안이지 보완재가 아니다 */
   const solid=list.filter(x=>x.conf>=1);
   const out=solid.length?solid:list;
   out.sort((a,b)=>b.conf-a.conf||(b.e.비용||0)-(a.e.비용||0));
   return{list:out.slice(0,8),pend,chs:pools.length};}
+/* 타매체 비교 지표 — 이 소재(기준)와 저 매체 소재의 차이를 '+/−'로만 보여준다.
+   새 창·새 뷰로 보내지 않고 상세보기 안에서 바로 읽히게: 광고비 +455만원 / eCPA −₩120 같은 한 줄.
+   ⚠️ 매체 간 절대 비교가 위험한 지표(eCPA·설치 단가 등 귀속 단위가 다른 것)는 넣지 않는다 —
+   광고비·노출·클릭처럼 매체가 같은 방식으로 세는 것과, 그 안에서 나온 비율(CTR·CPM)만 쓴다. */
+const XM_CMP=[
+  {k:"비용",lab:"광고비",fmt:v=>fmtKRW(v)+"원",dir:0},
+  {k:"노출 수",lab:"노출",fmt:v=>fmtInt(v),dir:0},
+  {k:"클릭 수",lab:"클릭",fmt:v=>fmtInt(v),dir:0},
+  {k:"CTR",lab:"CTR",fmt:v=>fmtPct(v),dir:1,pct:1},
+  {k:"CPM",lab:"CPM",fmt:v=>fmtWon(v),dir:-1},
+  {k:"CPC",lab:"CPC",fmt:v=>fmtWon(v),dir:-1},
+];
+/* 차이 한 칸 — 값이 크면 파랑(+), 작으면 빨강(−). dir<0(단가)은 색을 뒤집는다(싼 쪽이 좋음) */
+function xmDeltaHTML(me,other){
+  const cells=XM_CMP.map(d=>{
+    const a=+me[d.k],b=+other[d.k];
+    if(a==null||b==null||!isFinite(a)||!isFinite(b))return "";
+    const diff=b-a;
+    if(!isFinite(diff))return "";
+    const same=Math.abs(diff)<(d.pct?0.00005:0.5);
+    const good=d.dir===0?null:(d.dir>0?diff>0:diff<0);
+    const cls=same?"xd-eq":(good===null?(diff>0?"xd-up":"xd-down"):(good?"xd-good":"xd-bad"));
+    const sign=diff>0?"+":"−";
+    const body=same?"동일":sign+(d.pct?`${Math.abs(diff*100).toFixed(2)}%p`:d.fmt(Math.abs(diff)));
+    return `<span class="xd ${cls}" title="${escAttr(`${d.lab} — 이 소재 ${d.fmt(a)} · 상대 ${d.fmt(b)}`)}"><i>${escHtml(d.lab)}</i>${escHtml(body)}</span>`;
+  }).filter(Boolean).join("");
+  return cells?`<div class="xd-row">${cells}<span class="xd-base">기준 = 지금 보고 있는 소재</span></div>`:`<div class="xd-row"><span class="xd-base">비교할 공통 지표가 없어요</span></div>`;}
 function crossBlockHTML(ds,e){
   const{list,pend,chs}=crossMediaMatches(ds,e);
   if(!chs)return ""; /* 다른 매체 자체가 없으면(단일 매체·임시 분석) 블록을 그리지 않는다 */
   const body=list.length
-    ?`<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">매체 / 이름</th><th>판정</th><th>광고비</th><th>실적</th></tr></thead><tbody>`+
-      list.map(m=>{const dn=displayNameOf(m.e);
-        return `<tr class="hoverable xgo" data-ch="${escAttr(m.ch)}" data-nm="${escAttr(m.e.name)}" data-preview="${escAttr(previewUrlOf(m.e))}" data-label="${escAttr(trunc(dn,40))}" title="${escAttr(m.why+" — 클릭하면 그 매체의 이 소재로 이동")}"><td class="l"><span class="xm-media">${escHtml(String(m.ch))}</span> ${escHtml(trunc(dn,28))}</td><td><span class="xm-conf ${m.conf===2?"same":m.conf===1?"sim":"guess"}">${m.conf===2?"동일":m.conf===1?"유사":"추정"}</span></td><td class="num">${fmtKRW(m.e.비용)}원</td><td>${perfPillHTML(m.e)}</td></tr>`;}).join("")+
+    ?`<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">매체 / 이름</th><th>판정</th><th>광고비</th><th>비교</th></tr></thead><tbody>`+
+      list.map((m,i)=>{const dn=displayNameOf(m.e);
+        return `<tr class="hoverable xgo" data-ch="${escAttr(m.ch)}" data-nm="${escAttr(m.e.name)}" data-i="${i}" data-preview="${escAttr(previewUrlOf(m.e))}" data-label="${escAttr(trunc(dn,40))}" title="${escAttr(m.why+" — 클릭하면 그 매체의 이 소재로 이동")}"><td class="l"><span class="xm-media">${escHtml(String(m.ch))}</span> ${escHtml(trunc(dn,28))}</td><td><span class="xm-conf ${m.conf===2?"same":m.conf===1?"sim":"guess"}">${m.conf===2?"동일":m.conf===1?"유사":"추정"}</span></td><td class="num">${fmtKRW(m.e.비용)}원</td>`
+          +`<td><button type="button" class="xm-cmp" data-i="${i}" aria-expanded="false" title="이 상세보기 안에서 지표 차이를 바로 펼쳐 봅니다">비교하기</button></td></tr>`
+          +`<tr class="xd-tr" data-i="${i}" hidden><td colspan="4">${xmDeltaHTML(e,m.e)}</td></tr>`;}).join("")+
       `</tbody></table></div></div>`
     :`<div class="fam-note">다른 매체에서 같은 유형·해상도의 같은/유사 소재를 찾지 못했어요${pend?` — 이미지 지문 ${pend}개 계산 중이에요`:""}</div>`;
   return `<div class="ish">타매체 성과</div>${body}`;}
 function wireCrossBlock(scopeEl,ds){
+  /* 비교하기 — 그 자리에서 차이 줄만 펼친다(새 창·뷰 전환 없음). 행 클릭(매체 이동)과는 분리 */
+  scopeEl.querySelectorAll("button.xm-cmp").forEach(btn=>{
+    btn.addEventListener("click",ev=>{ev.stopPropagation();hideTip();
+      const row=scopeEl.querySelector(`tr.xd-tr[data-i="${btn.dataset.i}"]`);if(!row)return;
+      const on=row.hasAttribute("hidden");
+      row.toggleAttribute("hidden",!on);
+      btn.setAttribute("aria-expanded",on?"true":"false");
+      btn.classList.toggle("on",on);
+      btn.textContent=on?"접기":"비교하기";});});
   scopeEl.querySelectorAll("tr.xgo").forEach(tr=>{
     tr.style.cursor="pointer";
-    tr.addEventListener("click",ev=>{ev.stopPropagation();hideTip();crossGo(tr.dataset.ch,tr.dataset.nm);});
+    tr.addEventListener("click",ev=>{if(ev.target.closest(".xm-cmp"))return;ev.stopPropagation();hideTip();crossGo(tr.dataset.ch,tr.dataset.nm);});
     const url=tr.dataset.preview;if(!url)return;
     tr.addEventListener("mouseenter",ev=>{const h=assetPreviewTipHTML(url,tr.dataset.label||"");if(h)showTip(h,ev.clientX,ev.clientY,true);});
     tr.addEventListener("mousemove",ev=>{if(tip.style.opacity!=="0")placeTip(ev.clientX,ev.clientY);});
@@ -4948,7 +5059,7 @@ function fillIsland(ds,e,inner){const L=ds.L;
   if(_vv)_vv.addEventListener("loadedmetadata",()=>isleAr(_vv));
   /* 유튜브 소재면 제목을 조회해 화면 곳곳의 URL 이름을 실제 제목으로 교체 (미디어 위 중복 배너 없음) */
   const _ytid=ytIdOf(previewUrlOf(e));
-  if(_ytid&&_ytTitles[_ytid]===undefined)fetchYtTitle(_ytid).then(t=>{if(t)refreshDisplayNames();});
+  /* 유튜브 제목 조회 없음 — 표시 이름은 payload._name */
   inner.querySelectorAll(".fam tr[data-nm]").forEach(tr=>{
     const nm=tr.dataset.nm,url=tr.dataset.preview,lab=tr.dataset.label||"";
     tr.style.cursor="pointer";
@@ -5443,7 +5554,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
       if(ptr)ptr.classList.add("exp","pinned");}
     placePins();
     if(_isleStale)refillPins(ds);}
-  hydrateYtNames();}
+}
 /* 행을 화면 맨 위로 — 애니메이션 없이 즉시. 상단 고정 헤더(툴바) 높이만큼 빼서 행이 가리지 않게 한다 */
 function scrollRowToTop(tr){
   if(!tr)return;
@@ -5470,17 +5581,7 @@ function refreshDisplayNames(){
   if(typeof refreshCrossBlock==="function")refreshCrossBlock();}
 /* 표에 보이는 유튜브 URL 이름은 영상 제목을 자동 조회해 교체 (동시 4개, 캐시는 영구) */
 let _hydSeq=0;
-async function hydrateYtNames(){
-  if(!curDS)return;const seq=++_hydSeq;
-  const ids=[];
-  $$("#table tbody tr.row").forEach(tr=>{const nm=tr.getAttribute("data-name")||"";const ent=findRow(curDS,nm);if(!ent)return;
-    const id=ytIdOf(ent._g_url||nm);
-    if(id&&_ytTitles[id]===undefined&&ids.indexOf(id)<0)ids.push(id);});
-  let got=false;
-  for(let i=0;i<ids.length&&seq===_hydSeq;i+=4){
-    const part=await Promise.all(ids.slice(i,i+4).map(fetchYtTitle));
-    if(part.some(Boolean))got=true;}
-  if(got&&seq===_hydSeq)refreshDisplayNames();}
+/* hydrateYtNames: 은퇴 — 표시 이름은 payload._name (외부 제목 조회 없음) */
 /* 표의 현재 필터·검색·정렬이 적용된 전체 행 순서 — 표 렌더·페이지 계산·상세 이전/다음 내비가 공유 */
 function orderedRowsForTable(ds){
   let rows=getRowsForTable(ds);
@@ -5904,7 +6005,7 @@ function loadCloudRows(rows){
      나중에 그려져 보였음). 탭과 무관하게 표를 다시 그려 마크를 채운다(숨은 표 재렌더는 값싼 작업). */
   loadMarks().then(()=>{renderViewSeg();if(active&&DATASETS[active])renderTable(DATASETS[active]);});
   setTimeout(openDeepLink,700);
-  setTimeout(()=>{hydrateAllYtTitles().catch(()=>{});},1200);
+  /* 유튜브 제목 일괄 조회 중단 — 이름은 payload._name이 전부 갖고 있다(외부 왕복 제거) */
   setTimeout(()=>{prehashAllImages().catch(()=>{});},4000); /* 이미지 지문(dHash) 백그라운드 수집 — 매체 간 동일 소재 판정용 */
   setTimeout(()=>{hydrateYtAspects().catch(()=>{});},4500);} /* 유튜브 화면비 실측(썸네일 레터박스) 백그라운드 수집 */
 /* #ad= 딥링크 — 공유받은 링크로 접속하면 해당 소재 상세를 바로 연다 (최초 로드 후 1회).
@@ -7482,6 +7583,22 @@ function CR_SELFTEST(){
      [labs.includes("전환수"),labs.includes("모든 전환"),labs.includes("전환 가치")],[true,true,true]);}
   t("_g_labelAsOf 없으면 관측일 없이 등급만",
     /기준\)/.test(gAssetHTML(null,{name:"a",_gaSeen:1,_g_perfLabel:"좋음"})),false);
+  /* ── 타매체 매칭: 강한 신호는 포맷·해상도 게이트를 건너뛴다 ── */
+  {const g={name:"Nocommissioin_mom 720x720.png",_name:"Nocommissioin_mom 720x720.png",_g_assetType:"이미지",
+      _g_url:"https://tpc/1",_g_adGroupId:"G1",_res:"720x720",_g_resSrc:"asset_name",tags:{fo:"이미지",ve:"중고거래"},
+      "비용":7600000,"노출 수":1900000,"클릭 수":34200,CTR:0.018,CPM:4000,CPC:222};
+   const m={name:"Nocommissioin_mom 1200 x 628.png",_name:"Nocommissioin_mom 1200 x 628.png",_m_ctype:"IMAGE",
+      _m_url:"https://cdn/m1.png",_m_group:"M1",_res:"1200x628",tags:{fo:"이미지",ve:"중고거래"},
+      "비용":4000000,"노출 수":2000000,"클릭 수":50000,CTR:0.025,CPM:2000,CPC:80};
+   const ds={media:"Google",aggAll:[g],agg:[g],aggByChannel:new Map([["Google",{aggAll:[g]}],["Moloco",{aggAll:[m]}]])};
+   const prev=dsMode;dsMode="channeled";
+   const hit=crossMediaMatches(ds,g).list;
+   dsMode=prev;
+   t("해상도가 달라도 소재명이 같으면 동일로 잡는다",[hit.length,hit[0]&&hit[0].conf],[1,2]);
+   const d=xmDeltaHTML(g,m);
+   t("광고비가 낮으면 빨강(−), 노출이 많으면 파랑(+)",
+     [/xd-down[^>]*>[^<]*<i>광고비<\/i>−/.test(d),/xd-up[^>]*>[^<]*<i>노출<\/i>\+/.test(d)],[true,true]);
+   t("단가는 낮은 쪽이 좋음으로 색이 뒤집힌다",/xd-good[^>]*>[^<]*<i>CPM<\/i>−/.test(d),true);}
   const msg=out.length?`CR_SELFTEST: ${pass}건 통과 · ${out.length}건 실패\n`+out.join("\n"):`CR_SELFTEST: ${pass}건 전부 통과 ✅`;
   (out.length?console.error:console.log)(msg);
   return{pass,fail:out.length,detail:out};}
