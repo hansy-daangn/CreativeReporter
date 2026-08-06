@@ -701,20 +701,21 @@
   .cmpb-clear{border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:9px 18px;background:transparent;color:#DEDACF;font-weight:750;cursor:pointer;font-size:var(--fs-3)}
   .cmpb-clear:hover{color:#fff;border-color:rgba(255,255,255,.5)}
   .cmp-modal{position:fixed;inset:0;z-index:1000;background:#FFFDF7} /* 비교는 전체 화면 — 작은 플로팅 창 대신 화면을 다 쓴다 */
-  .cmpm{background:#FFFDF7;width:100%;height:100%;overflow:auto;padding:18px 24px 20px}
-  @media(min-width:1700px){.cmpm-chartwrap{max-width:1600px}} /* 초광폭에서 차트만 과하게 커지는 것 방지 */
-  /* A/B 소재 미리보기 — 프레임 안에 contain으로 수납(잘림 금지), 세로 소재도 온전히 보이게 충분한 높이 */
-  .cmpm-media{display:flex;gap:12px;margin:2px 0 4px;overflow-x:auto;padding-bottom:4px}
-  .cmpm-med{flex:1 1 0;min-width:180px;max-width:360px}
-  .cmpm-med .isle-frame{height:240px;border-radius:12px;box-shadow:inset 0 0 0 2px var(--cc,#E2DFD3)}
-  .cmpm-media.n2 .cmpm-med .isle-frame{height:340px}
-  .cmpm-media.n3 .cmpm-med .isle-frame{height:290px}
-  .cmpm-medh{display:flex;align-items:center;gap:6px;font-size:var(--fs-2);margin:0 0 5px;min-width:0}
+  .cmpm{background:#FFFDF7;width:100%;height:100%;overflow:auto;padding:18px 24px 28px}
+  /* 모든 섹션이 이 한 폭을 공유한다 — 개수에서 유도한 max-width가 인라인으로 들어온다.
+     예전엔 카드만 좌측에 몰리고(고정 max 360px) 표·차트는 화면 전체를 써서 세로선이 어디에도 맞지 않았다 */
+  .cmpm-in{margin:0 auto;width:100%}
+  /* 미리보기 — 개수에서 정한 열 수로 접고(5~6개는 3열 2행), 프레임 높이도 같은 규칙에서 온다 */
+  .cmpm-media{display:grid;gap:16px 14px;margin:2px 0 8px}
+  .cmpm-med{min-width:0}
+  .cmpm-med .isle-frame{height:var(--cmp-frame-h,240px);border-radius:12px;box-shadow:inset 0 0 0 2px var(--cc,#E2DFD3)}
+  .cmpm-medh{display:flex;align-items:center;gap:6px;font-size:var(--fs-1);margin:0 0 3px;min-width:0}
   .cmpm-medh .rank{flex:0 0 auto;font-weight:800;font-size:var(--fs-1);padding:1px 7px;border-radius:999px;background:var(--surface-3);color:var(--muted)}
-  .cmpm-medh b{flex:0 0 auto;font-size:var(--fs-3)}
-  .cmpm-medh .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:650;color:var(--ink)}
-  .cmpm-medh .dp{flex:0 0 auto;margin-left:auto;font-size:var(--fs-1);color:var(--faint);font-weight:650}
-  @media(max-width:700px){.cmpm-media{flex-wrap:nowrap}.cmpm-med{min-width:200px}.cmpb-slot{max-width:170px}}
+  .cmpm-medh .lk{flex:0 0 auto}
+  .cmpm-medh .dp{flex:0 0 auto;margin-left:auto;color:var(--faint);font-weight:650}
+  /* 이름은 한 줄을 통째로 쓴다 — 순위·우세도와 같은 줄에 두면 좁은 카드에서 이름부터 잘린다 */
+  .cmpm-medn{font-size:var(--fs-2);font-weight:650;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 0 6px}
+  @media(max-width:700px){.cmpm-media{grid-template-columns:repeat(2,minmax(0,1fr))!important}.cmpb-slot{max-width:170px}}
   .cmpm-h{display:flex;align-items:center;gap:10px;margin-bottom:10px;min-width:0}
   .cmpm-name{font-weight:800;font-size:var(--fs-3);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .cmpm-name .n{font-weight:600;font-size:var(--fs-2);color:var(--faint);margin-left:6px}
@@ -740,7 +741,7 @@
   .cmpm-sectabs .n{margin-left:6px}
   .cmpm-sectabs .n{font-weight:600;font-size:var(--fs-2);color:var(--faint)}
   .cmpm-med{position:relative}
-  .cmpm-medx{position:absolute;top:26px;right:6px;z-index:5;width:22px;height:22px;border:0;border-radius:50%;background:rgba(20,19,15,.5);color:#fff;font-size:var(--fs-2);cursor:pointer;display:grid;place-items:center;line-height:1}
+  .cmpm-medx{position:absolute;top:52px;right:8px;z-index:5;width:22px;height:22px;border:0;border-radius:50%;background:rgba(20,19,15,.5);color:#fff;font-size:var(--fs-2);cursor:pointer;display:grid;place-items:center;line-height:1}
   .cmpm-medx:hover{background:rgba(20,19,15,.82)}
   .cmp-trmin{border:1px solid #E2DFD3;background:#fff;border-radius:999px;padding:4px 10px;font:inherit;font-size:var(--fs-2);font-weight:700;color:var(--muted);cursor:pointer;margin-left:2px}
   .cmp-trmin:focus{outline:2px solid var(--karrot);outline-offset:1px}
@@ -4466,7 +4467,7 @@ function cmpAxesSVG(R){
   if(!cols.length)return `<div class="fam-note">겹쳐 볼 지표 값이 부족해요</div>`;
   /* 좌우 풀폭 — 뷰박스 폭을 실제 표시 폭에 맞춰(1:1) 잡는다. 고정 폭을 늘려 그리면 글자·여백까지
      통째로 확대돼 전체 화면에서 우스꽝스럽게 커지므로, 폭만 키우고 글자 크기는 그대로 둔다 */
-  const availW=Math.max(560,Math.min(1600,(window.innerWidth||900)-52));
+  const availW=Math.max(560,Math.round(R.contentW||Math.min(1600,(window.innerWidth||900)-52)));
   const PL=18,PR=18,PT=22,PB=48,H=232,W=Math.round(availW),CW=(W-PL-PR)/cols.length,ih=H-PT-PB; /* 높이는 고정(차트가 화면을 지배하지 않게) */
   const xAt=c=>PL+c*CW+CW/2;
   let g=`<line x1="${PL}" y1="${H-PB}" x2="${W-PR}" y2="${H-PB}" stroke="#ECE9DE" stroke-width="1"/>`;
@@ -4500,8 +4501,10 @@ function cmpAxesSVG(R){
   return `<div class="cmpm-chartwrap"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:560px;height:auto">${g}${lines2}${dots}${vals}</svg></div>`;}
 function cmpGridHTML(R){
   const{ents,tots,defs,order}=R;
+  /* 열이 많아지면 헤더 이름부터 줄여 표가 가로로 넘치지 않게 한다(넘치면 오른쪽 소재가 화면 밖으로 나간다) */
+  const nmLen=ents.length>=7?8:(ents.length>=5?11:14);
   const head=order.map((j,rank)=>{const en=ents[j];const nm=displayNameOf(en.e);
-    return `<th style="color:${R.colorByList.get(en.i)}" title="${escAttr(nm)}">${rank+1}위 · ${escHtml(trunc(nm,14))}</th>`;}).join("");
+    return `<th style="color:${R.colorByList.get(en.i)}" title="${escAttr(nm)}">${rank+1}위 · ${escHtml(trunc(nm,nmLen))}</th>`;}).join("");
   const rows=defs.map(d=>{
     const vs=tots.map(t=>d.of(t));
     if(vs.every(v=>v==null))return "";
@@ -4568,9 +4571,20 @@ function renderCmpModal(){
   const meds=order.map((j,rank)=>{const en=ents[j];const url=previewUrlOf(en.e);const pv=url?assetPreview(url,en.e,true):"";
     const nm=displayNameOf(en.e),col=R.colorByList.get(en.i);
     return `<div class="cmpm-med" style="--cc:${col}">
-      <div class="cmpm-medh"><span class="rank" style="background:${col};color:#fff">${rank+1}위</span>${en.c.locked?" 🔒":""}<span class="nm" title="${escAttr(nm)}">${escHtml(trunc(nm,26))}</span><span class="dp">${domPct[j]!=null?"우세도 "+Math.round(domPct[j]*100)+"%":""}</span></div>
+      <div class="cmpm-medh"><span class="rank" style="background:${col};color:#fff">${rank+1}위</span>${en.c.locked?`<span class="lk">🔒</span>`:""}<span class="dp">${domPct[j]!=null?"우세도 "+Math.round(domPct[j]*100)+"%":""}</span></div>
+      <div class="cmpm-medn" title="${escAttr(nm)}">${escHtml(nm)}</div>
       <button type="button" class="cmpm-medx" data-i="${en.i}" title="비교에서 빼기">✕</button>
       ${pv||'<div class="fam-note">미리보기가 없는 소재예요</div>'}</div>`;}).join("");
+  /* 레이아웃 규칙 — 개수 하나에서 열 수·콘텐츠 폭·프레임 높이를 모두 유도한다.
+     5~6개는 한 줄에 욱여넣지 않고 3열 2행으로 접어 카드가 읽을 만한 크기를 지킨다.
+     차트도 이 폭을 그대로 써야 축소·확대 없이 1:1로 그려진다(폭을 모르면 화면 폭을 가정하게 되고 그만큼 어긋난다) */
+  const n=ents.length;
+  const cols=n<=4?n:(n<=6?3:4);
+  const maxW=cols===1?520:cols===2?880:cols===3?1200:1460;
+  /* 두 줄로 접힐 땐 프레임을 낮춘다 — 안 그러면 미리보기가 첫 화면을 다 먹고 정작 비교할 지표가 밀려난다 */
+  const rows=Math.ceil(n/cols);
+  const frameH=Math.round((cols<=2?380:cols===3?300:240)/(rows>1?1.35:1));
+  R.contentW=Math.min(maxW,Math.max(560,(window.innerWidth||1200)-52));
   /* 탭이 곧 섹션 제목 — '개요/추이' 세그먼트를 따로 두지 않고 제목 자리에서 전환.
      추이 탭의 드롭다운은 본문이 실제 적용한 값을 표시해야 해 본문을 먼저 만든다 */
   const inner=cmpTab==="tr"?cmpTrendSectionHTML(R):cmpAxesSVG(R)+cmpGridHTML(R);
@@ -4579,10 +4593,12 @@ function renderCmpModal(){
   const secTabs=`<div class="cmpm-sectabs"><button type="button" data-ct="ov" class="${cmpTab==="ov"?"on":""}">주요 지표</button><button type="button" data-ct="tr" class="${cmpTab==="tr"?"on":""}">주차별 추이</button>${cmpTab==="ov"?`<span class="n">높을수록 좋아요 · 수치에 비례하게 보여줘요</span>`:trMin}</div>`;
   const body=secTabs+inner;
   m.innerHTML=`<div class="cmpm" role="dialog" aria-modal="true" aria-label="소재 비교">
-    <div class="cmpm-h"><span class="cmpm-name">소재 비교 <b>${ents.length}</b>개 <span class="n">전체 기간 · 우세순</span></span>
-      <button type="button" class="cmpm-close" title="닫기 (Esc)">✕</button></div>
-    <div class="cmpm-media n${Math.min(ents.length,4)}">${meds}</div>
-    ${body}
+    <div class="cmpm-in" style="max-width:${maxW}px;--cmp-frame-h:${frameH}px">
+      <div class="cmpm-h"><span class="cmpm-name">소재 비교 <b>${n}</b>개 <span class="n">전체 기간 · 우세순</span></span>
+        <button type="button" class="cmpm-close" title="닫기 (Esc)">✕</button></div>
+      <div class="cmpm-media" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${meds}</div>
+      ${body}
+    </div>
   </div>`;
   m.onclick=ev=>{if(ev.target===m)closeCmpModal();};
   m.querySelector(".cmpm-close").onclick=closeCmpModal;
