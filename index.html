@@ -808,6 +808,8 @@
   .xm-conf{display:inline-block;font-size:var(--fs-1);padding:1px 7px;border-radius:999px;font-weight:700}
   .xm-conf.same{background:var(--g2-f);color:var(--g2)}
   .xm-conf.sim{background:var(--mid-f);color:var(--mid)}
+  /* 추정 = 이름이 없어 그룹 계열·서비스·해상도로만 좁힌 후보. 확정과 확실히 구분되게 점선 */
+  .xm-conf.guess{background:transparent;color:var(--faint);border:1px dashed var(--surface-3);font-weight:500}
   .isle-load{font-size:var(--fs-3);color:var(--faint);padding:16px 4px}
   .asset-wrap{display:flex;flex-direction:column;gap:6px;width:100%;align-items:center;min-width:0}
   .asset-vid{width:100%;aspect-ratio:16/9;border-radius:8px;border:0;background:#000;max-width:100%}
@@ -4189,7 +4191,7 @@ function umCohortHTML(ds,e){
    이미지 지문은 CORS 허용 프록시(wsrv.nl 9×8 리사이즈)로 브라우저에서 직접 계산 — 광고 CDN 원본은 CORS가 없어
    캔버스가 오염되므로 반드시 프록시 경유. 결과는 localStorage(cr_dhash)에 영구 캐시(재방문 시 즉시). */
 const DHASH=(()=>{try{return JSON.parse(localStorage.getItem("cr_dhash")||"{}");}catch(_){return{};}})();
-let _dhashDirty=false,_dhashTimer=null;
+let _dhashDirty=false,_dhashTimer=null,_dhashGen=0;
 function dhashSave(){if(!_dhashDirty)return;_dhashDirty=false;try{localStorage.setItem("cr_dhash",JSON.stringify(DHASH));}catch(_){}}
 function dhashHam(a,b){let d=0;for(let i=0;i<16;i++){let x=parseInt(a[i],16)^parseInt(b[i],16);x=x-((x>>1)&5);d+=(x&3)+((x>>2)&3);}return d;}
 function computeDhash(url){
@@ -4197,7 +4199,7 @@ function computeDhash(url){
   const px=`https://wsrv.nl/?url=${encodeURIComponent(url)}&w=9&h=8&fit=fill&output=jpg`;
   return new Promise(res=>{
     const im=new Image();im.crossOrigin="anonymous";
-    const done=h=>{DHASH[url]=h;_dhashDirty=true;res(h);};
+    const done=h=>{DHASH[url]=h;_dhashDirty=true;_dhashGen++;res(h);}; /* gen = 그룹 다리 캐시 무효화용 */
     const to=setTimeout(()=>done(null),12000);
     im.onload=()=>{clearTimeout(to);
       try{const c=document.createElement("canvas");c.width=9;c.height=8;
@@ -4232,7 +4234,11 @@ async function prehashAllImages(){ /* 백그라운드 이미지 지문 채우기
   dhashSave();refreshCrossBlock();}
 function nameTokensOf(e){
   if(e._nmTok)return e._nmTok;
-  let s=String(displayNameOf(e)||e.name||"").toLowerCase();
+  const dn=String(displayNameOf(e)||e.name||"");
+  /* URL은 이름이 아니다 — `youtube.com/watch`처럼 공통 토큰만 남아 서로 다른 영상이 '소재명 일치'로 묶인다.
+     이름이 아직 없는 소재는 이름 매칭을 포기하고 아래 그룹 다리(xmGroupBridge)로 넘긴다 */
+  if(/^https?:\/\//.test(dn))return e._nmTok=new Set();
+  let s=dn.toLowerCase();
   s=s.replace(/\.(mp4|png|jpe?g|gif|webp|mov|webm)\b/g,"");
   s=s.replace(/\d{3,4}\s*[x×]\s*\d{3,4}/g,"");            /* 해상도 */
   s=s.replace(/\b20\d{2}[-._]?\d{1,2}[-._]?\d{1,2}\b/g,""); /* 날짜 */
@@ -4268,32 +4274,34 @@ function arFromPayload(e){
   return{w,h,r,cls:r>1.05?"가로":r<0.95?"세로":"정사각",exact:false,oriOnly:true,src:"par"};}
 function arInfoOf(e){
   const P=resFromPayload(e);
-  /* 애셋 이름 규격·ffprobe 실측은 어떤 추정보다 앞선다 */
-  if(P&&(P.src==="gname"||P.src==="mreal"))return P;
+  /* ⚠️ payload의 _res는 사이트의 어떤 추정보다도 앞선다.
+     사이트가 자체적으로 만들던 값(유튜브 썸네일 레터박스 실측 oar · '방향' 문자열 재해석 · 파일명 정규식)은
+     오판이 많아 폐기 대상이고, 그것을 바로잡으려고 외부에서 검증해 넣어 준 값이 _res다.
+     _res가 있으면 그 줄에서 판단이 끝난다 — 아래 폴백들은 _res가 아직 없는 행을 위한 것이다. */
+  if(P)return P;
+  /* _ar만 온 행(비율은 검증됐고 픽셀은 아직) — 이것도 외부 검증값이라 사이트 추정보다 앞선다 */
+  const A=arFromPayload(e);
+  if(A)return A;
+  /* ── 여기부터는 _res·_ar가 아직 없는 행을 위한 폴백(종전 로직 그대로) ── */
   const u=previewUrlOf(e);
-  /* 유튜브는 oar 실측(실제 캔버스 픽셀)이 최우선 — 신고값·방향 클래스보다 정밀 */
   const ytid=ytIdOf(e._g_url||u||e.name);
   const ya=ytid&&YTAR[ytid];
   if(ya&&ya[0]>100)return{w:ya[0],h:ya[1],r:ya[0]/ya[1],cls:ya[0]/ya[1]>1.05?"가로":ya[0]/ya[1]<0.95?"세로":"정사각",exact:true,oriOnly:false,src:"oar"};
   if(ytid){
-    /* 유튜브 소재는 아래 폴백(썸네일 측정치·리포트 표기)을 쓰지 않는다 — 썸네일은 어떤 영상이든
+    /* 유튜브 소재는 썸네일 측정치·리포트 표기를 폴백으로도 쓰지 않는다 — 썸네일은 어떤 영상이든
        같은 규격(120×90 등)이라 세로·가로·정사각이 한 값으로 뭉개진다. 보고서 '방향'만 허용하고,
-       그것도 없으면 미확정으로 남겨 oar 실측이 도착할 때 채운다(추측 금지). */
-    if(P)return P; /* 보고서 '방향'에서 배치가 환산해 둔 규격 — 방향 문자열 재해석보다 정확 */
+       그것도 없으면 미확정으로 남겨 _res나 oar 실측이 도착할 때 채운다(추측 금지). */
     const o=String(e._g_orientation||"");
     if(/세로/.test(o))return{w:9,h:16,r:9/16,cls:"세로",exact:false,oriOnly:true,src:"ori"};
     if(/정사각|정방/.test(o))return{w:1,h:1,r:1,cls:"정사각",exact:false,oriOnly:true,src:"ori"};
     if(/가로/.test(o))return{w:16,h:9,r:16/9,cls:"가로",exact:false,oriOnly:true,src:"ori"};
-    {const A=arFromPayload(e);if(A)return A;}
     if(ya)return{w:ya[0],h:ya[1],r:ya[0]/ya[1],cls:ya[0]/ya[1]>1.05?"가로":ya[0]/ya[1]<0.95?"세로":"정사각",exact:false,oriOnly:false,src:"oar"};
     return null;}
   /* 메타는 해상도 데이터가 없다 — 소재명에 박힌 숫자를 해상도로 읽지 않는다(추측 금지) */
   const sz=mediaKindOf(e)==="meta"?"":((e.tags&&e.tags.size)||e._m_res||"");
   const m=String(sz).match(/(\d+)\s*[x×]\s*(\d+)/i);
   let w=0,h=0,exact=true,oriOnly=false,src="decl";
-  if(m&&e._szMeas){w=+m[1];h=+m[2];src="mdim";} /* 미리보기 metadata 실측으로 이미 교체된 값 */
-  else if(P)return P;                            /* 통합 키 _res — 출처(_g_resSrc·_m_resReal)까지 아는 값 */
-  else if(m){w=+m[1];h=+m[2];}
+  if(m){w=+m[1];h=+m[2];if(e._szMeas)src="mdim";}
   else{const d=u&&(typeof MDIM!=="undefined")&&MDIM[u];
     if(d&&d.w&&d.h){w=d.w;h=d.h;src="mdim";}
     else{
@@ -4302,9 +4310,7 @@ function arInfoOf(e){
       if(/세로/.test(ori)){w=9;h=16;exact=false;oriOnly=true;src="ori";}
       else if(/정사각|정방/.test(ori)){w=1;h=1;exact=false;oriOnly=true;src="ori";}
       else if(/가로/.test(ori)){w=16;h=9;exact=false;oriOnly=true;src="ori";}
-      else{const A=arFromPayload(e);
-        if(A)return A;
-        if(ya){w=ya[0];h=ya[1];exact=false;src="oar";}}}} /* oar 404=가로 확정(16:9 표준) */
+      else if(ya){w=ya[0];h=ya[1];exact=false;src="oar";}}} /* oar 404=가로 확정(16:9 표준) */
   if(!(w>0&&h>0))return null;
   const r=w/h;
   return{w,h,r,cls:r>1.05?"가로":r<0.95?"세로":"정사각",exact,oriOnly,src};}
@@ -4338,6 +4344,34 @@ function arDispTitle(e){const ai=arInfoOf(e);if(!ai)return "";
     return `구글 공식 '방향'으로 확인한 ${ai.cls} 영상 — 표준 규격(${stdVidDim(ai.cls)})으로 표기`;
   return "화면비만 확인됨";}
 function _arOf(e){const ai=arInfoOf(e);return ai?ai.r:null;}
+/* ═════ 그룹 다리 — 이름 없는 영상을 잇는 우회로 ═════
+   구글 영상은 아직 이름이 URL인 것이 많아 이름 매칭이 통하지 않는다. 대신 **같은 그룹 안의 이미지**를 쓴다:
+   내 그룹의 이미지가 저쪽 그룹의 이미지와 지문(dHash)까지 같으면 두 그룹은 같은 캠페인 계열로 본다.
+   그 다리를 놓은 뒤 [같은 그룹 계열 + 같은 서비스 + 같은 해상도 + 영상] 조건으로 후보를 좁힌다.
+   확정이 아니므로 '동일'(2)·'유사'(1)와 구분되는 **'추정'(0)** 등급으로만 내보낸다.
+   ⚠️ 이 다리는 이름이 생기면 자연히 밀려난다 — 이름 매칭이 먼저 걸리면 여기까지 오지 않는다. */
+const _xmGrpOf=x=>String((x&&(x._g_adGroupId||x._m_group))||"")||null;
+let _xmbCache=null,_xmbKey="";
+function xmGroupBridge(ds){
+  const key=(ds&&ds.media||"")+"|"+_dhashGen+"|"+_xmPools(ds).length;
+  if(_xmbCache&&_xmbKey===key)return _xmbCache;
+  const imgsOf=arr=>{const o=[];
+    for(const x of arr||[]){
+      if(x._isGroup||!(x.tags&&x.tags.fo==="이미지"))continue;
+      const g=_xmGrpOf(x),u=previewUrlOf(x);if(!g||!u||ytIdOf(u))continue;
+      const h=DHASH[u];if(!h)continue;
+      o.push({g,u,h});}
+    return o;};
+  const mine=imgsOf(ds&&(ds.aggAll||ds.agg));
+  const bridge=new Map(); /* `${ch} ${내 그룹}` → Map(저쪽 그룹 → 근거 이미지 수) */
+  if(mine.length)for(const{ch,list}of _xmPools(ds)){
+    const theirs=imgsOf(list);
+    if(!theirs.length)continue;
+    for(const a of mine)for(const b of theirs){
+      if(a.u!==b.u&&dhashHam(a.h,b.h)>6)continue;
+      const k=ch+" "+a.g;let m=bridge.get(k);if(!m)bridge.set(k,m=new Map());
+      m.set(b.g,(m.get(b.g)||0)+1);}}
+  _xmbKey=key;return _xmbCache=bridge;}
 function crossMediaMatches(ds,e){
   if(e._isGroup)return{list:[],pend:0,chs:0};
   const pools=_xmPools(ds);
@@ -4347,6 +4381,12 @@ function crossMediaMatches(ds,e){
   const myTok=nameTokensOf(e),myKey=[...myTok].sort().join("|");
   const mySvc=svcOf(e)||null,myAr=_arOf(e),myAi=arInfoOf(e);
   const myFo=(e.tags&&e.tags.fo)||null;
+  /* 이름이 아직 URL인 소재만 그룹 다리를 쓴다 — 이름이 생기면 이 경로는 저절로 꺼진다 */
+  const myGrp=_xmGrpOf(e);
+  const myGrpMap=(myGrp&&myTok.size===0)?(()=>{
+    const B=xmGroupBridge(ds),out=new Map();
+    for(const{ch}of pools){const m=B.get(ch+" "+myGrp);if(m)for(const[g,n]of m)out.set(ch+" "+g,n);}
+    return out.size?out:null;})():null;
   let pend=(myU&&!myYt&&myHash===undefined&&e.tags&&e.tags.fo==="이미지")?1:0;
   const list=[];
   for(const{ch,list:pool}of pools){
@@ -4373,7 +4413,11 @@ function crossMediaMatches(ds,e){
           const oTok=nameTokensOf(o);
           if(myKey===[...oTok].sort().join("|")){conf=2;why="소재명 일치";}
           else{const s=nameSim(myTok,oTok);
-            if(s>=0.6&&(mySvc==null||(svcOf(o)||null)===mySvc))(conf=1,why=`이름 유사 ${Math.round(s*100)}%${mySvc?" · 같은 서비스":""}`);}}}
+            if(s>=0.6&&(mySvc==null||(svcOf(o)||null)===mySvc))(conf=1,why=`이름 유사 ${Math.round(s*100)}%${mySvc?" · 같은 서비스":""}`);}}
+        /* 이름이 없어 위 경로가 전부 막힌 영상 — 같은 그룹 계열의 영상으로 좁혀 '추정'으로만 제시 */
+        if(conf==null&&myGrpMap&&myFo==="영상"&&(o.tags&&o.tags.fo)==="영상"&&mySvc&&(svcOf(o)||null)===mySvc){
+          const n=myGrpMap.get(ch+" "+_xmGrpOf(o));
+          if(n)conf=0,why=`같은 그룹 계열(연결된 이미지 ${n}개) · 서비스·해상도 일치 — 이름이 없어 추정`;}}
       if(conf!=null)list.push({ch,e:o,conf,why});}}
   list.sort((a,b)=>b.conf-a.conf||(b.e.비용||0)-(a.e.비용||0));
   return{list:list.slice(0,8),pend,chs:pools.length};}
@@ -4383,7 +4427,7 @@ function crossBlockHTML(ds,e){
   const body=list.length
     ?`<div class="fam-wrap"><div class="fam"><table><thead><tr><th class="l">매체 / 이름</th><th>판정</th><th>광고비</th><th>실적</th></tr></thead><tbody>`+
       list.map(m=>{const dn=displayNameOf(m.e);
-        return `<tr class="hoverable xgo" data-ch="${escAttr(m.ch)}" data-nm="${escAttr(m.e.name)}" data-preview="${escAttr(previewUrlOf(m.e))}" data-label="${escAttr(trunc(dn,40))}" title="${escAttr(m.why+" — 클릭하면 그 매체의 이 소재로 이동")}"><td class="l"><span class="xm-media">${escHtml(String(m.ch))}</span> ${escHtml(trunc(dn,28))}</td><td><span class="xm-conf ${m.conf===2?"same":"sim"}">${m.conf===2?"동일":"유사"}</span></td><td class="num">${fmtKRW(m.e.비용)}원</td><td>${perfPillHTML(m.e)}</td></tr>`;}).join("")+
+        return `<tr class="hoverable xgo" data-ch="${escAttr(m.ch)}" data-nm="${escAttr(m.e.name)}" data-preview="${escAttr(previewUrlOf(m.e))}" data-label="${escAttr(trunc(dn,40))}" title="${escAttr(m.why+" — 클릭하면 그 매체의 이 소재로 이동")}"><td class="l"><span class="xm-media">${escHtml(String(m.ch))}</span> ${escHtml(trunc(dn,28))}</td><td><span class="xm-conf ${m.conf===2?"same":m.conf===1?"sim":"guess"}">${m.conf===2?"동일":m.conf===1?"유사":"추정"}</span></td><td class="num">${fmtKRW(m.e.비용)}원</td><td>${perfPillHTML(m.e)}</td></tr>`;}).join("")+
       `</tbody></table></div></div>`
     :`<div class="fam-note">다른 매체에서 같은 유형·해상도의 같은/유사 소재를 찾지 못했어요${pend?` — 이미지 지문 ${pend}개 계산 중이에요`:""}</div>`;
   return `<div class="ish">타매체 성과</div>${body}`;}
@@ -5170,7 +5214,9 @@ function refreshDisplayNames(){
   $$("#table tbody tr.row").forEach(tr=>{const nm=tr.getAttribute("data-name");const ent=findRow(curDS,nm);if(!ent)return;
     const sp=tr.querySelector(".nm-text");if(!sp||sp.classList.contains("editing"))return;
     const dn=trunc(displayNameOf(ent),60);
-    if(sp.textContent!==dn){sp.textContent=dn;const tx=tr.querySelector(".ntxt");if(tx&&dn!==nm)tx.title=nm;}});}
+    if(sp.textContent!==dn){sp.textContent=dn;const tx=tr.querySelector(".ntxt");if(tx&&dn!==nm)tx.title=nm;
+      ent._nmTok=null;}}); /* 이름이 늦게 도착하면 토큰 캐시를 버려 타매체 매칭이 새 이름으로 다시 걸리게 한다 */
+  if(typeof refreshCrossBlock==="function")refreshCrossBlock();}
 /* 표에 보이는 유튜브 URL 이름은 영상 제목을 자동 조회해 교체 (동시 4개, 캐시는 영구) */
 let _hydSeq=0;
 async function hydrateYtNames(){
@@ -7121,6 +7167,21 @@ function CR_SELFTEST(){
   t("메타 · 해상도 데이터 없음(이름에서 추측 금지)",
     src({name:"maugrowth_fleamarket_1080x1080",tags:{size:"1080×1080"}}),null);
   t("_res 없고 _ar만 → 비율만",src({_g_assetType:"이미지",_ar:"9:16"}),[9,16,"par",false]);
+  /* _res는 사이트 자체 추정(oar 실측·'방향' 문자열·파일명 정규식)을 전부 눌러야 한다 — 그게 이 키의 존재 이유 */
+  {const id="ZZselftestZZ";const had=Object.prototype.hasOwnProperty.call(YTAR,id),old=YTAR[id];
+   YTAR[id]=[1920,1080];
+   const e={_g_assetType:"YouTube 동영상",_g_url:"https://www.youtube.com/watch?v="+id,name:"https://www.youtube.com/watch?v="+id,
+     _res:"1080x1920",_ar:"9:16",_g_resSrc:"orientation",_g_orientation:"가로 모드"};
+   t("_res가 oar 실측·'방향' 문자열보다 앞선다",src(e),[1080,1920,"gori",false]);
+   t("_res 없으면 종전 oar 실측으로 폴백",src({_g_assetType:"YouTube 동영상",_g_url:e._g_url,name:e.name}),[1920,1080,"oar",false]);
+   if(had)YTAR[id]=old;else delete YTAR[id];}
+  t("_res가 파일명 정규식(tags.size)보다 앞선다",
+    src({_m_ctype:"VIDEO",_res:"640x640",_m_resReal:"640x640",tags:{size:"1080×1080"},_m_res:"1080x1080"}),[640,640,"mreal",false]);
+  /* ── 타매체 매칭 ── */
+  t("이름이 URL이면 토큰을 만들지 않는다(서로 다른 영상이 '소재명 일치'로 묶이던 문제)",
+    nameTokensOf({name:"https://www.youtube.com/watch?v=AAA"}).size,0);
+  t("진짜 이름이 있으면 토큰이 생긴다",
+    nameTokensOf({name:"https://www.youtube.com/watch?v=AAA",_name:"안 입는 옷들 당근으로 정리하고"}).size>0,true);
   t("_res 없음 · 아무 단서 없음 → 미확정",src({_g_assetType:"이미지"}),null);
   t("잘못된 _res 문자열은 무시",resFromPayload({_m_ctype:"IMAGE",_res:"가로형"}),null);
   /* ── 구글 애셋 보고서 블록 ── */
