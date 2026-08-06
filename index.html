@@ -163,6 +163,8 @@
   .lcard.gold .chip,.lcard.bad .chip{background:rgba(255,255,255,.55)}
   .chip.fo{background:var(--surface-3);color:var(--muted)} .lcard.gold .chip.fo,.lcard.bad .chip.fo{background:rgba(255,255,255,.6)}
   .chip.warn{background:rgba(240,165,0,.16);color:#c07a00;font-weight:650;cursor:help}
+  /* 미검증 해상도(몰로코 파일명 파싱값) — 실측과 구분되게 회색으로 낮춘다 */
+  .chip.res-unver{background:transparent;color:var(--faint);border:1px dashed var(--surface-3);padding:1px 7px}
   .lfoot{display:flex;align-items:center;gap:9px;margin-top:1px}
   .lfoot .sp{flex:0 0 auto;font-size:var(--fs-3);padding:2px 8px}
   .lreason{font-size:var(--fs-2);color:var(--muted);line-height:1.38} .lreason b{color:var(--ink);font-weight:650}
@@ -822,6 +824,7 @@
   .asset-err .mini:hover{color:var(--ink);border-color:var(--faint)}
   .asset-src{font-size:var(--fs-1);color:var(--faint);text-align:center;word-break:break-all}
   .asset-dim{display:inline-block;background:var(--surface-3);color:var(--muted);font-weight:700;font-size:var(--fs-1);padding:1px 7px;border-radius:5px;margin-right:6px;white-space:nowrap}
+  .asset-dim.unver{background:transparent;color:var(--faint);font-weight:500;border:1px dashed var(--surface-3);padding:0 6px} /* 미검증 = 파일명 파싱값 */
   .asset-src a{color:var(--muted);text-decoration:none}
   .asset-src a:hover{color:var(--karrot);text-decoration:underline}
   .g-extra{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
@@ -1879,24 +1882,49 @@ function assetStatusChip(e){
 function liveBadge(ds,e){if(!ds||standaloneMode||!ds.liveWeek)return "";
   const lv=e._isGroup?(e._members||[]).some(m=>m._live):e._live;
   return lv?`<span class="lvb" title="라이브 — 최신 집행 주(${String(ds.liveWeek).slice(5).replace("-","/")})에 광고비가 집행된 소재" aria-label="라이브"></span>`:"";}
-/* 화면 표시용 이름 — 구글 애셋은 URL/ID 대신 매핑된 실제 애셋 이름을, 유튜브 소재는 캐시된 영상 제목을 우선 표시.
-   내부 식별 키(data-name, 저장, 병합)는 항상 원본 name을 그대로 쓴다 */
+/* ═════ 통합 키(_name·_res·_ar) — 외부 배치가 payload에 채우는 전 매체 공통 표기값 ═════
+   @typedef {Object} UnifiedKeys
+   @property {string} [_name]      표시용 소재 이름. 구글=애셋 이름(영상 제목 / 이미지 원본 파일명) · 몰로코·메타=ad_name
+   @property {string} [_res]       해상도 표기 "1080x1920" 형식
+   @property {string} [_ar]        비율 "16:9" | "1:1" | "9:16"
+   @property {"asset_name"|"orientation"} [_g_resSrc]  구글 _res의 출처 — asset_name(애셋 이름에 박힌 실제 규격, 가장 정확) / orientation(보고서 '방향' 열)
+   @property {string} [_m_resReal] 몰로코 ffprobe 실측(실제 서빙 파일). 있으면 _res는 검증된 값 — 없으면 파일명 파싱값(미검증)
+   @property {string} [_m_resName] 몰로코 파일명에 적힌 값. _m_resReal과 달라도 정상(몰로코가 업로드본을 트랜스코딩)
+   @property {number} [_g_assetInstalls]    구글이 이 애셋까지 귀속시킨 설치 — 광고그룹 합계의 일부(≈3%)
+   @property {number} [_g_inAppActions]     인앱 액션 **이벤트 수**(유저 수 아님)
+   @property {number} [_g_viewThroughConv]  조회연결 전환 **이벤트 수**(유저 수 아님)
+   @property {string} [_g_assetState]       애셋 상태(구 _g_assetStatus)
+   ad_name은 DB 조인 키로만 쓰고 화면에는 노출하지 않는다 — _name이 없을 때만 폴백한다. */
+/* 이 소재의 매체 계열 — 해상도 신뢰도 규칙이 매체마다 다르다(구글·몰로코=출처 있음, 메타=데이터 없음).
+   ds.media를 못 받는 호출 지점이 많아 payload 키 존재로 판별한다 */
+function mediaKindOf(e){
+  if(!e)return "";
+  if(e._g_assetType||e._g_url||e._g_assetId||e._g_adGroupId||e._g_resSrc||e._g_orientation)return "google";
+  if(e._m_ctype||e._m_url||e._m_res||e._m_group||e._m_resReal||e._m_resName)return "moloco";
+  return "meta";}
+/* payload의 _name (URL이면 이름이 아니므로 무시 — 구글 백필 이전 행은 _name에 확장소재 URL이 그대로 들어 있다) */
+function unifiedNameOf(e){
+  const n=String((e&&e._name)||"").trim();
+  return (n&&!/^https?:\/\//.test(n))?n:"";}
+/* 화면 표시용 이름 — payload의 _name이 유일한 출처. 없을 때만 기존 폴백(공식 매핑·OCR·유튜브 제목)을 쓰고,
+   그것마저 없으면 ad_name 원본. 내부 식별 키(data-name, 저장, 병합)는 항상 원본 name을 그대로 쓴다 */
 function displayNameOf(e){if(!e)return "";
   if(e._isGroup)return groupPrettyName(e.name); /* 그룹 행은 분절형 이름으로 표시 */
   const _ok=nameOvrKey(e); /* 0순위: 관리자가 손으로 바꾼 이름(편집 중이면 미저장분 우선, ''=기본명 복원) */
   if(_ok!=null){
     if(Object.prototype.hasOwnProperty.call(NAME_PENDING,_ok)){if(NAME_PENDING[_ok]!=="")return NAME_PENDING[_ok];}
     else if(NAME_OVR[_ok]&&NAME_OVR[_ok]!=="")return NAME_OVR[_ok];}
+  {const un=unifiedNameOf(e);if(un)return un;} /* 1순위: 통합 키 _name — 구글 애셋 보고서의 진짜 이름 */
   if(e._g_assetId){
-    const nm=gNameMap.asset&&gNameMap.asset[String(e._g_assetId)];if(nm)return nm; /* 1순위: 공식 애셋 이름(수동 매핑·배치) */
-    const oc=gOcrMap[String(e._g_assetId)];if(oc)return oc;                        /* 2순위: 이미지 OCR 텍스트(과거 배치분) */
+    const nm=gNameMap.asset&&gNameMap.asset[String(e._g_assetId)];if(nm)return nm; /* 2순위: 공식 애셋 이름(수동 매핑·배치) */
+    const oc=gOcrMap[String(e._g_assetId)];if(oc)return oc;                        /* 3순위: 이미지 OCR 텍스트(과거 배치분) */
   }
-  {const an=(e._g_assetName||"").trim();if(an&&!/^https?:\/\//.test(an))return an;} /* 3순위: 리포트/루틴의 애셋 이름 — 신규 소재는 자동으로 이름이 생긴다 */
+  {const an=(e._g_assetName||"").trim();if(an&&!/^https?:\/\//.test(an))return an;} /* 4순위: 리포트/루틴의 애셋 이름 — 신규 소재는 자동으로 이름이 생긴다 */
   const u=e._g_url||e.name;
   if(/youtube\.com|youtu\.be/.test(String(u||""))){const id=ytIdOf(u);if(id&&_ytTitles[id])return _ytTitles[id];}
   return e.name;}
 /* 이 소재의 표시 이름이 OCR 추출값인지 (표에서 OCR 마크 표시용) */
-function isOcrName(e){return !!(e&&e._g_assetId&&!(gNameMap.asset&&gNameMap.asset[String(e._g_assetId)])&&gOcrMap[String(e._g_assetId)]);}
+function isOcrName(e){return !!(e&&e._g_assetId&&!unifiedNameOf(e)&&!(gNameMap.asset&&gNameMap.asset[String(e._g_assetId)])&&gOcrMap[String(e._g_assetId)]);}
 function extractNameMap(headers,data){
   const H=(headers||[]).map(h=>String(h).trim());
   const find=(...c)=>H.find(h=>c.includes(h));
@@ -2126,13 +2154,19 @@ function aggregate(data,L){const map=new Map();
     if(!map.has(nm))map.set(nm,{name:nm,비용:0,"노출 수":0,"클릭 수":0,"어트리뷰션 수":0,"활성 유저 수":0});
     const e=map.get(nm);for(const c of["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수"]){const v=num(r[c]);if(v!=null)e[c]+=v;}
     const _cv=num(r["비용"]);if(_cv!=null&&_cv>0){if(!e._wkSet)e._wkSet=new Set();e._wkSet.add(r.date);}
-    for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_statusReason","_g_url","_g_assetId","_g_assetName","_g_orientation","_g_adGroupId","_g_campaignId","_m_url","_m_ctype","_m_res","_m_group","_q_campaign","_svc"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
+    for(const k of["_g_assetStatus","_g_assetType","_g_status","_g_level","_g_statusReason","_g_url","_g_assetId","_g_assetName","_g_orientation","_g_adGroupId","_g_campaignId","_m_url","_m_ctype","_m_res","_m_group","_q_campaign","_svc",
+      /* 구글 애셋 보고서 기반 통합 키(전 매체 공통) — 이름·해상도는 더 이상 URL·파일명에서 만들지 않는다. UNIFIED_KEYS 주석 참고 */
+      "_name","_res","_ar","_g_resSrc","_m_resReal","_m_resName","_g_assetState"]){if(r[k]!==undefined&&!e[k])e[k]=r[k];}
     /* 실적(_g_perfLabel)은 매주 바뀌는 스냅샷 — 첫 값이 아니라 '가장 최근 주' 값을 유지. 키가 있었는데 값이 빈 경우('-')도 _plSeen으로 구분(표시 안 함 ↔ 추정 대상).
        더 새로운 주는 빈 값('-')이라도 채택해 옛 라벨을 지운다(강등·라벨 회수 반영) · 같은 주에선 비어있지 않은 값이 우선(다중 애드그룹 행) */
     if(r._g_perfLabel!==undefined){e._plSeen=1;const _pl=String(r._g_perfLabel).trim().replace(/^--$/,"");
       const _pd=String(r.date||"");
       if(e._plDate==null||_pd>e._plDate||(_pd===e._plDate&&_pl)){e._g_perfLabel=_pl;e._plDate=_pd;}}
-    for(const k of["_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue","_m_installs","신규+재활성 유저 수","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100","_q_retD1Base","_q_retD1Users","_q_retD7Base","_q_retD7Users","_q_revD0","_q_revD7","_q_afInstalls","_q_reAtt","_q_reEng"]){const v=num(r[k]);if(v!=null)e[k]=(e[k]||0)+v;}
+    for(const k of["_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue","_m_installs","신규+재활성 유저 수","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100","_q_retD1Base","_q_retD1Users","_q_retD7Base","_q_retD7Users","_q_revD0","_q_revD7","_q_afInstalls","_q_reAtt","_q_reEng",
+      /* 구글 애셋 보고서 건수 3종 — 전부 '이벤트 수'이지 유저 수가 아니다(라벨 주의). 주차 합산이 맞는 값 */
+      "_g_assetInstalls","_g_inAppActions","_g_viewThroughConv"]){const v=num(r[k]);if(v!=null)e[k]=(e[k]||0)+v;}
+    /* 값이 0인 것과 키 자체가 없는 것을 구분 — 없으면 블록을 통째로 숨긴다(0으로 채우지 않는다) */
+    if(r._g_assetInstalls!==undefined||r._g_inAppActions!==undefined||r._g_viewThroughConv!==undefined)e._gaSeen=1;
   }
   const arr=[...map.values()].map(e=>{e.CPC=e["클릭 수"]>0?e.비용/e["클릭 수"]:null;e.CTR=e["노출 수"]>0?e["클릭 수"]/e["노출 수"]:null;e.CPM=e["노출 수"]>0?e.비용/e["노출 수"]*1000:null;e.eCPI=e["어트리뷰션 수"]>0?e.비용/e["어트리뷰션 수"]:null;e["활성 유저 eCPA"]=e["활성 유저 수"]>0?e.비용/e["활성 유저 수"]:null;
     if((e._vcrDen||0)>0)e["영상 완주율"]=e._vcrNum/e._vcrDen;
@@ -2606,7 +2640,9 @@ function chipsHTML(t,e){
   /* 해상도 칩 — 매체·포맷(영상/이미지) 불문 항상 표시: 실측 픽셀 우선, 영상은 화면비→표준 규격 환산(arDispOf).
      영상/이미지 칩은 제거 — 포맷 구분·필터는 툴바 비디오/이미지 버튼이 담당 */
   const _res=(e&&!e._isGroup)?(arDispOf(e)||""):(t.size||"");
-  const resChip=_res&&`<span class="chip" data-ck="res" data-cv="${escAttr(_res)}" title="${escAttr(((e&&!e._isGroup)?arDispTitle(e):"")||"해상도")} · 클릭 = ${escAttr(_res)}만 보기">${escHtml(_res)}</span>`;
+  /* 미검증(몰로코 파일명 파싱값)은 회색으로 낮춰 표시 — 실측값과 같은 무게로 읽히면 안 된다 */
+  const _resUn=!!(e&&!e._isGroup&&(arInfoOf(e)||{}).unver);
+  const resChip=_res&&`<span class="chip${_resUn?" res-unver":""}" data-ck="res" data-cv="${escAttr(_res)}" title="${escAttr(((e&&!e._isGroup)?arDispTitle(e):"")||"해상도")} · 클릭 = ${escAttr(_res)}만 보기">${escHtml(_res)}</span>`;
   const arr=[veChip,anomChip,t.nat==="네이티브"&&mk("nat","네이티브"),resChip];
   if(e&&e._isGroup){
     /* 그룹 행: 이름 분절 칩 — 접두(Google UA 등)·날짜·수식어. 서비스(ve)는 위 공통 경로로 이미 표시 */
@@ -3436,8 +3472,9 @@ function assetPreview(url,ent,noSrc){if(!url)return ""; /* noSrc=true → 원본
   const dm=(!_ytPv)&&(typeof MDIM!=="undefined")&&MDIM[url];
   const dimRes=(dm&&dm.w&&dm.h)?`${dm.w}×${dm.h}`:(ent?arDispOf(ent):"");
   const dimTip=(dm&&dm.w&&dm.h)?"실측 해상도":(ent?arDispTitle(ent):"");
+  const dimUn=!(dm&&dm.w&&dm.h)&&!!(ent&&(arInfoOf(ent)||{}).unver); /* 파일명 파싱값(미검증) — 실측과 구분 */
   const dimTxt=[dimRes,dm&&dm.dur?`⏱ ${fmtDur(dm.dur)}`:""].filter(Boolean).join(" · ");
-  const dimLine=`<span class="asset-dim" title="${escAttr(dimTip)}">${escHtml(dimTxt)}</span>`; /* 값이 비어도 스팬 유지 — 실측 도착 시 제자리 갱신용 */
+  const dimLine=`<span class="asset-dim${dimUn?" unver":""}" title="${escAttr(dimTip)}">${escHtml(dimTxt)}</span>`; /* 값이 비어도 스팬 유지 — 실측 도착 시 제자리 갱신용 */
   const srcLine=(note)=>noSrc?"":`<div class="asset-src">${ocrM}${dimLine}${note?escHtml(note)+" · ":""}<a href="${escAttr(safeUrl(url))}" target="_blank" rel="noopener">${escHtml(trunc(url,60))}</a></div>`;
   const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{6,})/);
   if(yt)return `<div class="isle-frame"><iframe class="asset-yt" src="https://www.youtube.com/embed/${yt[1]}" frameborder="0" allow="encrypted-media" allowfullscreen></iframe></div>${srcLine()}`;
@@ -3510,6 +3547,39 @@ function scorePosHTML(ds,e){const S=ds.S;
   if(!rows)return"";
   /* 계산식·가중치·원점수는 노출하지 않는다(암산 강요 금지) — 지표별 위치 막대만, 2열로 세로 최소화. 산정 방식은 푸터에 */
   return `<section class="ipos"><div class="ish">지표별 계정 내 위치 <span class="n">50=계정 평균 · 길수록 좋음</span></div><div class="sb">${rows}</div></section>`;}
+/* ═════ 구글 애셋 보고서 지표 — 소재 상세(구글 소재 전용) ═════
+   애셋 보고서에만 있는 값이라 다른 매체와 같은 열에 놓지 않는다(귀속 단위가 다름).
+   ⚠️ 세 가지 오독 위험이 있어 라벨·주석을 반드시 붙인다.
+     ① _g_assetInstalls — 구글이 '애셋까지' 귀속시킨 설치만. 광고그룹 실제 설치의 약 3% 수준이라 절대 수치로 읽으면 안 된다.
+     ② _g_inAppActions · _g_viewThroughConv — 이벤트 수다. '활성 유저'·'신규 유저' 같은 유저 라벨 금지.
+     ③ 비율 4종(비용/설치·전환율·1,000회 노출당 설치·CTR·평균 CPC)은 payload에 값이 오지 않는다.
+        선택 기간 합산 카운트에서 그대로 나눠 만든다 — 한 주치 비율을 여러 주 소재에 붙이면 틀리기 때문.
+        CTR·CPC는 이미 신뢰성 게이트(CTR_PLAUSIBLE_MAX)를 통과한 e.CTR·e.CPC를 그대로 쓴다. */
+const GA_INSTALL_NOTE="애셋까지 귀속된 설치만 집계됩니다(광고그룹 합계의 일부). 소재 간 비교용으로 보세요.";
+function gAssetHTML(ds,e){
+  if(!e||e._isGroup||!e._gaSeen)return ""; /* 키 자체가 없으면 블록을 통째로 숨긴다 — 0%·'-'로 채우지 않는다 */
+  const cells=[];
+  const add=(k,v,tip)=>{if(v!=null&&v!=="")cells.push(`<div class="gi-r" ${tip?`title="${escAttr(tip)}"`:""}><span class="gi-k">${escHtml(k)}</span><b class="gi-v num">${escHtml(v)}</b></div>`);};
+  const inst=e._g_assetInstalls,cost=e.비용||0,imp=e["노출 수"]||0,clk=e["클릭 수"]||0;
+  const has=v=>v!=null&&isFinite(v);
+  if(has(inst)){
+    add("설치(애셋 귀속)",fmtInt(inst),GA_INSTALL_NOTE);
+    if(inst>0&&cost>0)add("비용/설치",fmtWon(cost/inst),"광고비 ÷ 애셋 귀속 설치 · "+GA_INSTALL_NOTE);
+    if(clk>0)add("전환율(설치)",fmtPct(inst/clk),"애셋 귀속 설치 ÷ 클릭 · "+GA_INSTALL_NOTE);
+    if(imp>0)add("1,000회 노출당 설치",(inst/imp*1000).toFixed(2),"애셋 귀속 설치 ÷ 노출 × 1,000 · "+GA_INSTALL_NOTE);}
+  if(e.CTR!=null)add("클릭률(CTR)",fmtPct(e.CTR),"클릭 ÷ 노출 (선택 기간 합산)");
+  if(e.CPC!=null)add("평균 CPC",fmtWon(e.CPC),"광고비 ÷ 클릭 (선택 기간 합산)");
+  if(has(e._g_inAppActions))add("인앱 액션",fmtInt(e._g_inAppActions),"인앱 액션 이벤트 수입니다 — 유저 수가 아닙니다(한 유저가 여러 번 발생시킬 수 있어요).");
+  if(has(e._g_viewThroughConv))add("조회연결 전환",fmtInt(e._g_viewThroughConv),"조회연결 전환 이벤트 수입니다 — 유저 수가 아닙니다.");
+  const st=String(e._g_assetState||e._g_assetStatus||"").trim();
+  if(st)add("애셋 상태",st);
+  const pl=String(e._g_perfLabel||"").trim();
+  if(pl)add("실적 등급",pl,"구글이 매긴 실적 등급 — 매주 갱신되는 스냅샷이라 가장 최근 주 값입니다");
+  if(!cells.length)return "";
+  const wk=e._wkCnt?`${e._wkCnt}주 합산`:"선택 기간 합산";
+  return `<section><div class="ish">구글 애셋 보고서 <span class="n">${escHtml(wk)} · 애셋 귀속 기준</span>
+      <span class="uc-q" data-tip="${escAttr(`<b>귀속 단위가 다릅니다</b><br>${GA_INSTALL_NOTE}<br>몰로코·메타의 어트리뷰션(설치)과 같은 열에 놓고 비교하지 마세요.<br><b>인앱 액션·조회연결 전환은 이벤트 수</b>입니다 — 유저 수가 아닙니다.`)}">?</span></div>
+    <div class="gi-grid">${cells.join("")}</div></section>`;}
 /* 소재(또는 그룹)의 주차별 광고비·핵심지표 미니 차트 — 상세 뷰 미리보기 아래 표시.
    막대=광고비(투입). 선은 매체 데이터에 맞춰 자동 선택, 각 선은 자체 최대값으로 정규화(모양=추세, 절대값은 범례 최신값·호버).
    선 = 그 매체의 점수 반영 지표(가중치 상위 3) — 점수 미반영 지표는 그리지 않는다. 데이터 없는 지표 자동 제외 */
@@ -4174,7 +4244,32 @@ function nameSim(a,b){if(!a.size||!b.size)return 0;let n=0;for(const x of a)if(b
    유튜브는 구글 공식 '방향'(_g_orientation) 우선, 없으면 레터박스 실측(YTAR, 표준비 스냅·불확실=모름) */
 const _RATIOS=[["16:9",16/9],["9:16",9/16],["1:1",1],["4:3",4/3],["3:4",3/4],["4:5",4/5],["2:3",2/3]];
 function ratioLabel(r){let best=null,bd=1e9;for(const[lab,v]of _RATIOS){const d=Math.abs(r-v)/v;if(d<bd){bd=d;best=lab;}}return bd<=0.06?best:null;}
+/* payload 통합 키 _res(+출처) 해석 — 매체별 신뢰도가 다르므로 src를 함께 돌려준다.
+     gname  구글 · 애셋 이름에 박힌 실제 규격 (가장 정확)
+     gori   구글 · 보고서 '방향' 열 기반 (정확)
+     mreal  몰로코 · ffprobe 실측 = 실제 서빙 파일 (몰로코는 업로드본을 트랜스코딩하므로 640 계열이 정상. 1080으로 보정 금지)
+     mfile  몰로코 · 파일명 파싱값, 미검증 → 회색 처리
+   메타는 이 키가 없고 해상도 데이터 자체가 없다 — 이름에서 추측해 채우지 않는다. */
+function resFromPayload(e){
+  const m=String((e&&e._res)||"").match(/^\s*(\d+)\s*[x×]\s*(\d+)\s*$/i);
+  if(!m)return null;
+  const w=+m[1],h=+m[2];if(!(w>0&&h>0))return null;
+  const kind=mediaKindOf(e);
+  const src=kind==="moloco"?(e._m_resReal?"mreal":"mfile")
+    :kind==="google"?(e._g_resSrc==="asset_name"?"gname":"gori"):"decl";
+  const r=w/h;
+  return{w,h,r,cls:r>1.05?"가로":r<0.95?"세로":"정사각",exact:true,oriOnly:false,src,unver:src==="mfile"};}
+/* _ar만 있고 _res가 없는 행(비율은 알지만 픽셀은 모름) — 화면비 클래스만 준다 */
+function arFromPayload(e){
+  const a=String((e&&e._ar)||"").match(/^\s*(\d+)\s*:\s*(\d+)\s*$/);
+  if(!a)return null;
+  const w=+a[1],h=+a[2];if(!(w>0&&h>0))return null;
+  const r=w/h;
+  return{w,h,r,cls:r>1.05?"가로":r<0.95?"세로":"정사각",exact:false,oriOnly:true,src:"par"};}
 function arInfoOf(e){
+  const P=resFromPayload(e);
+  /* 애셋 이름 규격·ffprobe 실측은 어떤 추정보다 앞선다 */
+  if(P&&(P.src==="gname"||P.src==="mreal"))return P;
   const u=previewUrlOf(e);
   /* 유튜브는 oar 실측(실제 캔버스 픽셀)이 최우선 — 신고값·방향 클래스보다 정밀 */
   const ytid=ytIdOf(e._g_url||u||e.name);
@@ -4182,27 +4277,34 @@ function arInfoOf(e){
   if(ya&&ya[0]>100)return{w:ya[0],h:ya[1],r:ya[0]/ya[1],cls:ya[0]/ya[1]>1.05?"가로":ya[0]/ya[1]<0.95?"세로":"정사각",exact:true,oriOnly:false,src:"oar"};
   if(ytid){
     /* 유튜브 소재는 아래 폴백(썸네일 측정치·리포트 표기)을 쓰지 않는다 — 썸네일은 어떤 영상이든
-       같은 규격(120×90 등)이라 세로·가로·정사각이 한 값으로 뭉개진다. 공식 '방향'만 허용하고,
+       같은 규격(120×90 등)이라 세로·가로·정사각이 한 값으로 뭉개진다. 보고서 '방향'만 허용하고,
        그것도 없으면 미확정으로 남겨 oar 실측이 도착할 때 채운다(추측 금지). */
+    if(P)return P; /* 보고서 '방향'에서 배치가 환산해 둔 규격 — 방향 문자열 재해석보다 정확 */
     const o=String(e._g_orientation||"");
     if(/세로/.test(o))return{w:9,h:16,r:9/16,cls:"세로",exact:false,oriOnly:true,src:"ori"};
     if(/정사각|정방/.test(o))return{w:1,h:1,r:1,cls:"정사각",exact:false,oriOnly:true,src:"ori"};
     if(/가로/.test(o))return{w:16,h:9,r:16/9,cls:"가로",exact:false,oriOnly:true,src:"ori"};
+    {const A=arFromPayload(e);if(A)return A;}
     if(ya)return{w:ya[0],h:ya[1],r:ya[0]/ya[1],cls:ya[0]/ya[1]>1.05?"가로":ya[0]/ya[1]<0.95?"세로":"정사각",exact:false,oriOnly:false,src:"oar"};
     return null;}
-  const sz=(e.tags&&e.tags.size)||e._m_res||"";
+  /* 메타는 해상도 데이터가 없다 — 소재명에 박힌 숫자를 해상도로 읽지 않는다(추측 금지) */
+  const sz=mediaKindOf(e)==="meta"?"":((e.tags&&e.tags.size)||e._m_res||"");
   const m=String(sz).match(/(\d+)\s*[x×]\s*(\d+)/i);
   let w=0,h=0,exact=true,oriOnly=false,src="decl";
-  if(m){w=+m[1];h=+m[2];if(e._szMeas)src="mdim";}
+  if(m&&e._szMeas){w=+m[1];h=+m[2];src="mdim";} /* 미리보기 metadata 실측으로 이미 교체된 값 */
+  else if(P)return P;                            /* 통합 키 _res — 출처(_g_resSrc·_m_resReal)까지 아는 값 */
+  else if(m){w=+m[1];h=+m[2];}
   else{const d=u&&(typeof MDIM!=="undefined")&&MDIM[u];
     if(d&&d.w&&d.h){w=d.w;h=d.h;src="mdim";}
     else{
-      /* 구글 공식 '방향'(주간 루틴 수집) — oar 실측 없을 때의 화면비 클래스 */
+      /* 구글 보고서 '방향'(주간 루틴 수집) — oar 실측 없을 때의 화면비 클래스 */
       const ori=String(e._g_orientation||"");
       if(/세로/.test(ori)){w=9;h=16;exact=false;oriOnly=true;src="ori";}
       else if(/정사각|정방/.test(ori)){w=1;h=1;exact=false;oriOnly=true;src="ori";}
       else if(/가로/.test(ori)){w=16;h=9;exact=false;oriOnly=true;src="ori";}
-      else if(ya){w=ya[0];h=ya[1];exact=false;src="oar";}}} /* oar 404=가로 확정(16:9 표준) */
+      else{const A=arFromPayload(e);
+        if(A)return A;
+        if(ya){w=ya[0];h=ya[1];exact=false;src="oar";}}}} /* oar 404=가로 확정(16:9 표준) */
   if(!(w>0&&h>0))return null;
   const r=w/h;
   return{w,h,r,cls:r>1.05?"가로":r<0.95?"세로":"정사각",exact,oriOnly,src};}
@@ -4224,6 +4326,11 @@ function arDispOf(e){ /* 해상도 표시 — ① 실측 픽셀 ② 영상은 �
   const rl=ratioLabel(ai.r);return ai.cls+(rl?" "+rl:"");}
 /* 해상도 출처 툴팁 — 실측인지 표준 규격 환산인지 숨기지 않고 밝힌다 */
 function arDispTitle(e){const ai=arInfoOf(e);if(!ai)return "";
+  if(ai.src==="gname")return "구글 애셋 이름에 명시된 실제 규격 — 애셋 보고서 기준(가장 정확)";
+  if(ai.src==="gori")return "구글 애셋 보고서 '방향' 열 기준 규격";
+  if(ai.src==="mreal")return `몰로코 실제 서빙 파일 실측(ffprobe)${e&&e._m_resName&&e._m_resName!==e._res?` — 파일명 표기는 ${e._m_resName}이지만 몰로코가 트랜스코딩해 실제 서빙본은 이 크기입니다`:""}`;
+  if(ai.src==="mfile")return "몰로코 파일명에 적힌 값 — 실측으로 검증되지 않았습니다";
+  if(ai.src==="par")return "보고서 비율 기준 — 픽셀 해상도는 확인되지 않았습니다";
   if(ai.src==="oar")return ai.exact?"실측 해상도 — 유튜브 원본 캔버스(oar 썸네일) 실측":"유튜브 실측(가로 확정) — 표준 규격(1920×1080)으로 표기";
   if(ai.src==="mdim")return "실측 해상도 — 영상 파일 메타데이터 측정"+(e&&e._szDecl?` (리포트 표기 ${e._szDecl}와 달라 실측값 우선)`:"");
   if(ai.exact)return "리포트 표기 해상도";
@@ -4614,7 +4721,7 @@ function renderIsleMid(ds,e,mid){if(!mid)return;
   const ph=positioningHTML(ds,e);if(ph)tabs.push({k:"pos",lab:"포지셔닝",html:ph});
   const cur=tabs.find(t=>t.k===ISLE.gtab)||tabs[0];
   /* 실유저(주간) 실증 블록 — 탭 위 상시 노출(탭 전환과 무관). 데이터 없으면 빈 문자열이라 미렌더 */
-  mid.innerHTML=(peerRankHTML(ds,e)||"")+(umCohortHTML(ds,e)||"")+(tabs.length>1?`<div class="dtog gtabs">${tabs.map(t=>`<button data-gt="${t.k}" class="${t.k===cur.k?"on":""}">${t.lab}</button>`).join("")}</div>`:"")+`<div class="gtab-body">${cur.html}</div>`;
+  mid.innerHTML=(peerRankHTML(ds,e)||"")+(umCohortHTML(ds,e)||"")+(gAssetHTML(ds,e)||"")+(tabs.length>1?`<div class="dtog gtabs">${tabs.map(t=>`<button data-gt="${t.k}" class="${t.k===cur.k?"on":""}">${t.lab}</button>`).join("")}</div>`:"")+`<div class="gtab-body">${cur.html}</div>`;
   mid.querySelectorAll(".gtabs button").forEach(b=>b.onclick=()=>{ISLE.gtab=b.dataset.gt;renderIsleMid(ds,e,mid);});
   /* 그래프 요소 공통 툴팁(data-tip) — 추이 막대·유지 곡선 점·산점도 점이 함께 쓴다 */
   mid.querySelectorAll("[data-tip]").forEach(el=>{
@@ -4636,7 +4743,8 @@ function fillIsland(ds,e,inner){const L=ds.L;
   inner.classList.remove("ar-v","ar-h","ar-s");
   const _pu=previewUrlOf(e);
   if(ytIdOf(_pu))inner.classList.add("ar-h");
-  else{const _res=e._m_res&&String(e._m_res).match(/(\d+)\s*[x×]\s*(\d+)/i);
+  else{/* 통합 키 _res(실측·보고서 기준) 우선, 없으면 종전대로 몰로코 리포트 표기값 */
+    const _res=String(e._res||e._m_res||"").match(/(\d+)\s*[x×]\s*(\d+)/i);
     if(_res)applyIsleAr(inner,+_res[1],+_res[2]);else inner.classList.add("ar-s");}
   const sideMedia=e._isGroup?((gwStatHTML(e)||"")+(groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group))||"")):preview; /* 그룹은 정확 소스+보고서 정보가 미디어 자리 */
   const leftCol=(sideMedia||"")+(_xmh?`<div class="xmedia-wrap">${_xmh}</div>`:"");
@@ -5377,8 +5485,10 @@ async function sbRpc(fn,body,opt){
     const err=new Error(msg);err.status=res.status;throw err;}
   return res.json();}
 /* 저장 페이로드: (매체, 주 시작일, 소재) 그레인으로 원본 수치 합산 — 파생 지표는 로드시 재계산 */
-const SAVE_NUM_KEYS=["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수","_m_installs","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100","_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue","_q_retD1Base","_q_retD1Users","_q_retD7Base","_q_retD7Users","_q_revD0","_q_revD7","_q_afInstalls","_q_reAtt","_q_reEng"];
-const SAVE_STR_KEYS=["_m_url","_m_ctype","_m_res","_m_group","_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_assetName","_g_orientation","_g_adGroupId","_g_campaignId","_g_perfLabel","_q_campaign"];
+const SAVE_NUM_KEYS=["비용","노출 수","클릭 수","어트리뷰션 수","활성 유저 수","신규+재활성 유저 수","_m_installs","_vcrNum","_vcrDen","_v25","_v50","_v75","_v95","_v100","_g_interactions","_g_trueViews","_g_conversions","_g_firstOpen","_g_home","_g_allConv","_g_convValue","_q_retD1Base","_q_retD1Users","_q_retD7Base","_q_retD7Users","_q_revD0","_q_revD7","_q_afInstalls","_q_reAtt","_q_reEng","_g_assetInstalls","_g_inAppActions","_g_viewThroughConv"];
+const SAVE_STR_KEYS=["_m_url","_m_ctype","_m_res","_m_group","_g_assetStatus","_g_assetType","_g_status","_g_level","_g_url","_g_assetId","_g_assetName","_g_orientation","_g_adGroupId","_g_campaignId","_g_perfLabel","_q_campaign",
+  /* 통합 키(외부 배치가 채움) — 클라우드에서 읽은 행을 다시 저장할 때 유실되지 않도록 왕복 보존 */
+  "_name","_res","_ar","_g_resSrc","_m_resReal","_m_resName","_g_assetState","_svc"];
 const ACE_MARK="​"; /* 같은 확장소재 URL이 AEO·ACE 캠페인에 함께 쓰이면 DB UNIQUE(채널,주,이름)가 한 행으로 붕괴돼
    지표가 섞이고 한쪽 서브채널로만 귀속된다. 마이그레이션과 동일하게 ACE 행 ad_name 끝에 zero-width space를
    붙여 두 유형을 별개 행으로 저장(로드 시 _g_campaignId로 AEO/ACE 분리, _g_url은 깨끗해 미리보기 영향 없음). */
@@ -6988,6 +7098,46 @@ else cloudBooting=false;
 const _origSetActive2=setActive;setActive=function(k){_origSetActive2(k);updateLandingVisibility();};
 const _origResetAll=resetAll;resetAll=function(){_origResetAll();updateLandingVisibility();};
 _qxRange.paint();_qyRange.paint();
+/* ═════ 자체 점검 — 통합 키(_name·_res·_ar) 분기 ═════
+   빌드 도구가 없는 단일 HTML이라 테스트 러너 대신 페이지에 심는다. `?selftest=1`로 열거나 콘솔에서 CR_SELFTEST().
+   가장 위험한 것은 "키가 없을 때 0·'-'로 채워지는" 회귀라, 부재 분기를 중심으로 덮는다. */
+function CR_SELFTEST(){
+  const out=[];let pass=0;
+  const t=(name,got,want)=>{const ok=JSON.stringify(got)===JSON.stringify(want);
+    if(ok)pass++;else out.push(`✗ ${name}\n   got  ${JSON.stringify(got)}\n   want ${JSON.stringify(want)}`);};
+  const src=e=>{const a=arInfoOf(e);return a?[a.w,a.h,a.src,!!a.unver]:null;};
+  /* ── 이름 ── */
+  t("_name 없음 → ad_name 폴백",displayNameOf({name:"ad_x"}),"ad_x");
+  t("_name = URL(백필 이전) → 이름으로 쓰지 않음",displayNameOf({name:"ad_x",_name:"https://youtube.com/watch?v=a"}),"ad_x");
+  t("_name 있음 → _name",displayNameOf({name:"https://youtube.com/watch?v=a",_name:"안 입는 옷들 당근으로"}),"안 입는 옷들 당근으로");
+  t("_name이 _g_assetName·OCR보다 우선",displayNameOf({name:"u",_name:"진짜이름",_g_assetName:"다른이름"}),"진짜이름");
+  t("그룹은 분절 표시명 유지",displayNameOf({_isGroup:true,name:"maugrowth_realty_2509"}),groupPrettyName("maugrowth_realty_2509"));
+  /* ── 해상도 출처 ── */
+  t("구글 · 애셋 이름 규격",src({_g_assetType:"이미지",_res:"720x720",_g_resSrc:"asset_name"}),[720,720,"gname",false]);
+  t("구글 · 보고서 방향",src({_g_assetType:"동영상",_res:"1080x1920",_g_resSrc:"orientation"}),[1080,1920,"gori",false]);
+  t("몰로코 · ffprobe 실측(640 계열을 1080으로 보정하지 않음)",
+    src({_m_ctype:"VIDEO",_res:"640x640",_m_resReal:"640x640",_m_resName:"1080x1080"}),[640,640,"mreal",false]);
+  t("몰로코 · 파일명 파싱값은 미검증",src({_m_ctype:"IMAGE",_res:"1200x628"}),[1200,628,"mfile",true]);
+  t("메타 · 해상도 데이터 없음(이름에서 추측 금지)",
+    src({name:"maugrowth_fleamarket_1080x1080",tags:{size:"1080×1080"}}),null);
+  t("_res 없고 _ar만 → 비율만",src({_g_assetType:"이미지",_ar:"9:16"}),[9,16,"par",false]);
+  t("_res 없음 · 아무 단서 없음 → 미확정",src({_g_assetType:"이미지"}),null);
+  t("잘못된 _res 문자열은 무시",resFromPayload({_m_ctype:"IMAGE",_res:"가로형"}),null);
+  /* ── 구글 애셋 보고서 블록 ── */
+  t("_gaSeen 없으면 블록 자체를 렌더하지 않음",gAssetHTML(null,{name:"a",비용:1000,"클릭 수":10}),"");
+  t("그룹 행에는 렌더하지 않음",gAssetHTML(null,{_isGroup:true,_gaSeen:1,_g_assetInstalls:5}),"");
+  {const h=gAssetHTML(null,{name:"a",_gaSeen:1,_g_assetInstalls:0,비용:5000,"노출 수":1000,"클릭 수":0,CTR:null,CPC:null});
+   t("설치 0 → 설치 줄은 남고 분모 0인 파생 줄은 숨김",
+     [/설치\(애셋 귀속\)/.test(h),/비용\/설치/.test(h),/전환율\(설치\)/.test(h)],[true,false,false]);}
+  {const h=gAssetHTML(null,{name:"a",_gaSeen:1,_g_assetInstalls:1178,_g_inAppActions:210310,_g_viewThroughConv:1,비용:1999016,"노출 수":100,"클릭 수":10});
+   const labs=[...h.matchAll(/class="gi-k">([^<]*)</g)].map(x=>x[1]);
+   /* 화면에 보이는 라벨(툴팁 아님)에 '유저'가 들어가면 이벤트 수를 유저 수로 오독하게 된다 */
+   t("인앱 액션·조회연결 전환에 유저 라벨을 붙이지 않음",
+     [labs.includes("인앱 액션"),labs.includes("조회연결 전환"),labs.some(x=>/유저/.test(x))],[true,true,false]);}
+  const msg=out.length?`CR_SELFTEST: ${pass}건 통과 · ${out.length}건 실패\n`+out.join("\n"):`CR_SELFTEST: ${pass}건 전부 통과 ✅`;
+  (out.length?console.error:console.log)(msg);
+  return{pass,fail:out.length,detail:out};}
+try{if(/[?&]selftest=1/.test(location.search))CR_SELFTEST();}catch(_){}
 </script>
 </body>
 </html>

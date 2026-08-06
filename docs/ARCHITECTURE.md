@@ -47,7 +47,7 @@
 - **UNIQUE(channel, week_start, ad_name)** — 같은 매체·주차·소재는 한 번만. 재업로드 중복은 DB 레벨에서 무시된다.
 - **payload가 JSONB인 이유**: 매체마다 지표 스키마가 다르고(메타 ~14종, 몰로코 ~20종, 구글 ~15종) 새 지표가 계속 생긴다. 컬럼 분리 시 대부분 NULL인 25+ 컬럼과 지표 추가 때마다 DDL 변경이 필요해진다. 사이트는 행 전체를 통째로 읽어 브라우저에서 집계하므로 컬럼 단위 쿼리 이점도 없다. 식별·필터 키(channel/week_start/ad_name/업로더)는 정식 컬럼으로 분리되어 있고, 자주 보는 수치는 generated column으로 노출한다 — "쿼리는 컬럼, 내용물은 JSONB" 하이브리드.
 
-payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수, 활성 유저 수, 신규+재활성 유저 수, _m_installs, _vcrNum, _vcrDen(완주율 분자/분모), _v25~_v100(동영상 25/50/75/95/100% 구간별 재생수 — 있으면), _g_interactions, _g_trueViews, _g_conversions, _g_allConv, _g_convValue` + **유저 질(AF 코호트)** `_q_retD1Base/_q_retD1Users, _q_retD7Base/_q_retD7Users(D1·D7 잔존 코호트 분모/분자), _q_revD0/_q_revD7(코호트 매출 KRW), _q_afInstalls(AF 신규 설치), _q_reAtt(재어트리뷰션), _q_reEng(재참여)` + 문자열 `_m_url, _m_ctype, _m_res, _m_group, _q_campaign, _g_assetStatus, _g_assetType, _g_status, _g_level, _g_url, _g_assetId, _g_adGroupId, _g_campaignId`
+payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수, 활성 유저 수, 신규+재활성 유저 수, _m_installs, _vcrNum, _vcrDen(완주율 분자/분모), _v25~_v100(동영상 25/50/75/95/100% 구간별 재생수 — 있으면), _g_interactions, _g_trueViews, _g_conversions, _g_allConv, _g_convValue` + **유저 질(AF 코호트)** `_q_retD1Base/_q_retD1Users, _q_retD7Base/_q_retD7Users(D1·D7 잔존 코호트 분모/분자), _q_revD0/_q_revD7(코호트 매출 KRW), _q_afInstalls(AF 신규 설치), _q_reAtt(재어트리뷰션), _q_reEng(재참여)` + 문자열 `_m_url, _m_ctype, _m_res, _m_group, _q_campaign, _g_assetStatus, _g_assetType, _g_status, _g_level, _g_url, _g_assetId, _g_adGroupId, _g_campaignId` + **통합 키(외부 배치가 채움 · 전 매체 공통)** `_name`(표시 이름), `_res`(해상도), `_ar`(비율), `_g_resSrc`(구글 해상도 출처 `asset_name`|`orientation`), `_m_resReal`/`_m_resName`(몰로코 ffprobe 실측 / 파일명 표기), `_svc`(서비스 분류) + **구글 애셋 보고서 건수** `_g_assetInstalls`(애셋 귀속 설치), `_g_inAppActions`·`_g_viewThroughConv`(**이벤트 수** — 유저 수 아님), `_g_assetState`(애셋 상태) — 5·6-1·6-2절 참고
 
 ### 유저 질(AF 코호트) 데이터 — 주간 통합 소재 리포트
 - **출처**: 수퍼셋 크리에이티브 대시보드 dataset 내보내기(`week_start,channel,creative_name,…,cost_krw,…,ret_d1_*,cohort_revenue_*,af_installs,re_engagements,video_play_*`). 몰로코(`moloco_int`)+메타(`Facebook Ads`)가 한 파일.
@@ -180,11 +180,15 @@ payload 필드(합집합): `비용, 노출 수, 클릭 수, 어트리뷰션 수,
 `displayNameOf(entity)` 우선순위:
 
 1. **그룹 행** → `groupPrettyName`: 이름을 `_`로 분절해 `중고거래·shortform·2601` 형태로. `maugrowth`는 상수 접두라 생략, 그 앞의 다른 접두(`Google UA` 등)만 표시. 서비스 토큰은 한글 사전(VERTICALS: fleamarket→중고거래, realty→부동산, jobs→알바 …)으로 변환.
-2. **공식 애셋 이름** — `gmap.asset[항목ID]` (이름 매핑 CSV 또는 이미지 매칭 배치가 채움)
-3. **OCR 이름** — `ocr[항목ID]` (이미지 속 광고 카피, `OCR` 마크 부착 — 과거 배치분 폴백)
-4. **리포트 애셋 이름** — `payload._g_assetName` (2026-07-31: 주간 루틴 [3]이 애셋 스프레드시트의 '애셋 이름'을 같은 키로 저장, 수동 드롭 리포트에 '애셋 이름' 열이 있어도 파싱·저장. **신규 소재는 이걸로 자동으로 이름이 생기므로 OCR 배치를 새로 돌릴 필요가 없다** — 실측: 이미지 애셋 231개 중 225개가 OCR 이름 의존이라 `ocr` kv는 과거분 폴백으로 유지)
-5. **유튜브 제목** — `ytt[영상ID]` (로드 직후 전 소재 자동 조회·kv 공유)
-6. 원문 (data-name·저장·병합 키는 항상 원문 유지, hover 시 원문 툴팁)
+2. **관리자 수동 이름** — `nameovr[매체+원본명]` (`/namechange` 편집분이 항상 최우선)
+3. **통합 키 `payload._name`** — 전 매체 공통 표시 이름. 구글=애셋 이름(영상 제목 / 이미지 원본 파일명), 몰로코·메타=`ad_name`. **소재 이름은 이 키가 유일한 출처이고, `ad_name`은 DB 조인 키로만 쓴다**(`unifiedNameOf` — `_name`이 URL이면 백필 이전 행이므로 이름으로 취급하지 않고 아래로 넘긴다).
+4. **공식 애셋 이름** — `gmap.asset[항목ID]` (이름 매핑 CSV 또는 이미지 매칭 배치가 채움)
+5. **OCR 이름** — `ocr[항목ID]` (이미지 속 광고 카피, `OCR` 마크 부착 — 과거 배치분 폴백. `_name`이 있으면 OCR 마크를 붙이지 않는다)
+6. **리포트 애셋 이름** — `payload._g_assetName` (2026-07-31: 주간 루틴 [3]이 애셋 스프레드시트의 '애셋 이름'을 같은 키로 저장, 수동 드롭 리포트에 '애셋 이름' 열이 있어도 파싱·저장. **신규 소재는 이걸로 자동으로 이름이 생기므로 OCR 배치를 새로 돌릴 필요가 없다** — 실측: 이미지 애셋 231개 중 225개가 OCR 이름 의존이라 `ocr` kv는 과거분 폴백으로 유지)
+7. **유튜브 제목** — `ytt[영상ID]` (로드 직후 전 소재 자동 조회·kv 공유)
+8. 원문 (data-name·저장·병합 키는 항상 원문 유지, hover 시 원문 툴팁)
+
+> **`_name` 백필 현황(2026-08-06 실측)**: 구글 7,499행 중 진짜 이름이 든 행은 96행뿐(고유 소재 804개 중 96개)이고 나머지는 `_name`에 확장소재 URL이 그대로 들어 있다. 화면은 이미 `_name`을 1순위로 읽으므로 **백필이 진행되는 만큼 자동으로 이름이 바뀐다** — 화면 수정은 필요 없다. 몰로코 11,951행·메타 929행은 `_name`=`ad_name`으로 전량 채워져 있다.
 
 ### 오프라인 이름 보강 배치 (2026-07-31부로 신규분 불필요 — 과거분 폴백만 유지)
 > **은퇴 공지**: 주간 루틴 [3]이 애셋 스프레드시트의 '애셋 이름'을 `payload._g_assetName`으로 자동 저장하고 화면이 이를 표시 폴백으로 쓰므로, **신규 소재에 OCR 배치를 다시 돌릴 필요가 없다**. 아래 배치는 루틴 도입 전 소재(이미지 애셋 231개 중 225개가 `ocr` kv 의존, 2026-07-31 실측)의 이름을 지키는 폴백으로만 남는다 — `ocr` kv(12KB)는 삭제하지 말 것.
@@ -285,7 +289,36 @@ Score = 100 × (0.50·E + 0.50·R)          ← 효율:규모 = 50:50 (회의 �
 
 - **차단**: `mdimSet`은 유튜브 썸네일 호스트(`i.ytimg.com`·`img.youtube.com`) URL과 120×90 값을 저장하지 않는다.
 - **정화**: 부팅 시 `cr_mdim`에서 과거 버전이 남긴 오염(유튜브 URL 키·썸네일 규격 값)을 **매 로드 제거**한다. 1회 플래그를 쓰면 플래그가 먼저 박힌 뒤 유입된 오염을 놓친다.
-- **단일 경로**: 유튜브 소재의 해상도는 `arInfoOf`에서 **oar 실측(`YTAR`) → 구글 공식 '방향'** 순으로만 판단하고, 썸네일 측정치·리포트 표기는 폴백으로도 쓰지 않는다(둘 다 없으면 미확정으로 남겨 실측 도착 때 채운다). 미리보기 소스 줄(`assetPreview`/`refreshIsleDim`)과 그룹 목록도 같은 규칙을 따른다.
+- **단일 경로**: 유튜브 소재의 해상도는 `arInfoOf`에서 **oar 실측(`YTAR`) → 통합 키 `_res` → 구글 보고서 '방향'** 순으로만 판단하고, 썸네일 측정치·리포트 표기는 폴백으로도 쓰지 않는다(전부 없으면 미확정으로 남겨 실측 도착 때 채운다). 미리보기 소스 줄(`assetPreview`/`refreshIsleDim`)과 그룹 목록도 같은 규칙을 따른다.
+
+### 6-1. 해상도 통합 키 `_res`·`_ar`와 출처 표기
+
+해상도를 **파일명에서 정규식으로 긁거나 추정하지 않는다**. 외부 배치가 매체별로 검증한 값을 `payload._res`(`"1080x1920"`)·`payload._ar`(`"9:16"`)에 넣어 주고, 화면은 그 값과 **출처**를 함께 보여준다(`resFromPayload` → `arInfoOf` → `arDispOf`/`arDispTitle`).
+
+| 매체 | `arInfoOf().src` | 판별 | 표시 |
+|---|---|---|---|
+| 구글 | `gname` | `_g_resSrc="asset_name"` — 애셋 이름에 박힌 실제 규격 | 가장 정확 · oar 실측보다도 우선 |
+| 구글 | `gori` | `_g_resSrc="orientation"` — 보고서 '방향' 열 | 정확 |
+| 몰로코 | `mreal` | `_m_resReal` 존재 — ffprobe 실측(실제 서빙 파일) | 정확 · **640 계열이 정상**이므로 1080으로 보정하지 않는다. `_m_resName`(파일명 표기)과 달라도 정상이며 툴팁이 그 차이를 설명한다 |
+| 몰로코 | `mfile` | `_m_resReal` 없음 — 파일명 파싱값 | 미검증 → 칩·배지를 **회색 점선**으로 낮춤(`.chip.res-unver`/`.asset-dim.unver`) |
+| 메타 | — | 데이터 없음 | **표시하지 않는다.** 소재명에 박힌 숫자를 해상도로 읽지 않는다(`mediaKindOf(e)==="meta"`면 이름 파싱 경로를 차단 — 실측: 메타 고유 소재 231개 중 이름에 크기가 든 것은 0개라 손실 없음) |
+
+`_res`가 없고 `_ar`만 있으면 비율만 아는 것이므로 화면비 클래스(`src="par"`)로만 쓴다. 우선순위 전체: `gname`·`mreal` > oar 실측 > 미리보기 metadata 실측(`_szMeas`) > `_res`(`gori`/`mfile`) > 리포트 표기 > MDIM > 보고서 '방향' 문자열 > `_ar`.
+
+### 6-2. 구글 애셋 보고서 지표 (`gAssetHTML`)
+
+구글 소재 상세에만 붙는 블록. `payload._g_assetInstalls`·`_g_inAppActions`·`_g_viewThroughConv` 중 **키가 하나라도 있었을 때만**(`_gaSeen`) 렌더하고, 없으면 0%·`-`로 채우지 않고 블록을 통째로 숨긴다.
+
+- **`_g_assetInstalls`(설치 · 애셋 귀속)** — 구글이 *애셋까지* 귀속시킨 설치만 집계된다. 합계가 광고그룹 실제 설치의 **약 3%**(실측 2.6%)라 절대 수치로 읽으면 오독이다. 모든 파생 줄에 "애셋까지 귀속된 설치만 집계됩니다(광고그룹 합계의 일부). 소재 간 비교용으로 보세요." 주석이 붙는다. **몰로코·메타의 어트리뷰션과 같은 열에 놓고 비교하지 않는다** — 귀속 단위가 다르다.
+- **`_g_inAppActions`·`_g_viewThroughConv`는 이벤트 수**다. '활성 유저 수'·'신규 유저 수' 같은 유저 라벨을 붙이지 않는다(자체 점검이 `.gi-k` 라벨에 '유저'가 없음을 검증한다). ⚠️ 단, 구글 CSV 파서는 역사적으로 `인앱 액션`→`활성 유저 수`, `조회연결 전환`→`신규+재활성 유저 수` 컬럼에 싣고 있어 **표 헤더의 그 두 이름은 여전히 이벤트 수**다(표 전체·채점 스키마가 걸려 있어 이 패치에서 손대지 않음 — 별도 과제).
+- **비율 4종(비용/설치·전환율(설치)·1,000회 노출당 설치·CTR·평균 CPC)은 payload에 오지 않는다.** 한 주치 비율을 여러 주 소재에 붙이면 틀리므로 **선택 기간 합산 카운트에서 그대로 나눠** 만든다. CTR·CPC는 이미 신뢰성 게이트(`CTR_PLAUSIBLE_MAX`)를 통과한 `e.CTR`·`e.CPC`를 재사용해 물리 불가값이 이 블록으로 새지 않게 한다.
+- **`_g_assetState`(애셋 상태)** — DB에 아직 없어 기존 `_g_assetStatus`(사용 설정됨/삭제됨)로 폴백한다. `_g_perfLabel`(실적 등급)은 가장 최근 주 값.
+
+> 실측 근거: `전환수 = 설치 + 인앱 액션`이 정확히 성립한다(YouTube `V0H6FVV1VZk` 1,178 + 210,310 = 211,488 · 이미지 `keyword-Basket_720x720` 1 + 1,308 = 1,309).
+
+### 6-3. 자체 점검 `CR_SELFTEST()`
+
+빌드 도구가 없는 단일 HTML이라 러너 대신 페이지에 심었다. `index.html?selftest=1`로 열거나 콘솔에서 `CR_SELFTEST()`. **키가 없을 때 0·`-`로 채워지는 회귀**를 주 표적으로 이름 5건·해상도 8건·구글 블록 4건을 덮는다.
 
 ## 7. 소재 상세 화면 구성 (2026-08-05 개편)
 
