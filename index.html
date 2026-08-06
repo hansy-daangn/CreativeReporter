@@ -684,7 +684,19 @@
   .isle-row>td{padding:0!important;background:var(--surface-2);border-bottom:1px solid #E6E5DE}
   /* 상세(B안): 히어로 [미디어 | 점수·진단·추이 | 같은 그룹] + 하단 지표 위치 2열.
      미디어 프레임은 소재 비율에 따라 3종(ar-v 세로 / ar-s 정방 / ar-h 가로)으로 폭·높이 전환 */
-  .isle{position:sticky;left:0;box-sizing:border-box;padding:20px;min-width:0}
+  .isle{position:sticky;left:0;box-sizing:border-box;padding:20px 20px 44px;min-width:0}
+  /* 상세 고정(핀) — 좌측 하단. 고정하면 다른 소재를 열어도 아래에 남아 위아래로 비교된다 */
+  .isle-pinbtn{position:absolute;left:20px;bottom:12px;display:inline-flex;align-items:center;gap:5px;
+    padding:4px 10px;border:1px solid var(--surface-3);border-radius:999px;background:var(--surface);
+    color:var(--muted);font-size:var(--fs-1);font-weight:650;cursor:pointer;line-height:1.4}
+  .isle-pinbtn:hover{color:var(--ink);border-color:var(--muted)}
+  .isle-pinbtn svg{transform:rotate(0deg);transition:transform .12s}
+  .isle-pinbtn.on{background:var(--karrot-f);border-color:var(--karrot);color:var(--karrot)}
+  .isle-pinbtn.on svg{transform:rotate(-35deg)}
+  .isle-row td{position:relative}
+  /* 고정된 상세는 왼쪽에 세로 띠를 둬서 활성 상세와 한눈에 구분 */
+  .isle-row.isle-pin .isle{border-left:3px solid var(--karrot);background:linear-gradient(90deg,var(--karrot-f),transparent 180px)}
+  #table tbody tr.row.pinned>td:first-child{box-shadow:inset 3px 0 0 var(--karrot)}
   /* 한 줄 3열: [미리보기 | 주차별 추이+지표별 위치(세로) | 같은 그룹 비교] — 모바일은 중요도 순 스택 */
   /* 상세 2열 — [미리보기 + 타매체 성과] | [실증·그래프]. 그룹 내 비교 목록은 '비교군 내 위치'가 대신한다 */
   .isle-row2{display:grid;gap:26px;align-items:start;grid-template-columns:300px minmax(0,1fr)}
@@ -776,6 +788,19 @@
   .cmp-trgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px 16px}
   .cmp-trc h5{font-size:var(--fs-2);font-weight:800;margin:0 0 3px;color:var(--ink)}
   .cmpm-chartwrap{overflow-x:auto}
+  /* 주차별 추이 지표 선택 칩 */
+  .ispk-pick{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 6px}
+  .ispk-chip{padding:2px 8px;border:1px solid var(--surface-3);border-radius:999px;background:transparent;
+    color:var(--faint);font-size:var(--fs-1);font-weight:600;cursor:pointer;line-height:1.5}
+  .ispk-chip.sc{color:var(--muted)}
+  .ispk-chip:hover{border-color:var(--muted);color:var(--ink)}
+  .ispk-chip.on{background:var(--karrot-f);border-color:var(--karrot);color:var(--karrot)}
+  .cmp-radar{display:block;width:100%;max-width:620px;height:auto;margin:0 auto}
+  .cmp-radar-note{font-size:var(--fs-1);color:var(--faint);text-align:center;margin:-4px 0 6px}
+  polygon.cmp-ln,polyline.cmp-ln{transition:stroke-width .12s,opacity .12s,fill-opacity .12s}
+  polygon.cmp-ln.cmp-hi,polyline.cmp-ln.cmp-hi{stroke-width:3.4;stroke-opacity:1}
+  polygon.cmp-ln.cmp-hi{fill-opacity:.2}
+  polygon.cmp-ln.cmp-dim,polyline.cmp-ln.cmp-dim{opacity:.16}
   .cmp-dot{transform-box:fill-box;transform-origin:center;transition:transform .15s ease;cursor:pointer}
   .cmp-dot.hov{transform:scale(1.45)}
   .cmp-dottip{position:fixed;z-index:1300;transform:translate(-50%,-100%);padding:4px 11px;border-radius:999px;
@@ -1311,7 +1336,6 @@
         <div id="umetWrap" hidden>
           <div class="umet-h">실유저 · MAU 실증 <span class="n" id="umetUpd"></span></div>
           <div class="umet-cards" id="umetCards"></div>
-          <div id="reengStrip"></div>
           <div id="glabelBar"></div>
         </div>
       </section>
@@ -1486,8 +1510,10 @@ function refreshIsleDim(){
   if(/youtube\.com|youtu\.be/i.test(String(url||"")))return; /* 유튜브는 썸네일 측정치를 쓰지 않는다(oar 실측 전용) */
   const d=url&&MDIM[url];if(!d)return;
   const el=document.querySelector(".isle .asset-dim");if(!el)return;
-  const res=(d.w&&d.h)?`${d.w}×${d.h}`:arDispOf(e); /* 실측 도착 전엔 기존(표기·환산) 값 유지 */
-  if(d.w&&d.h)el.title="실측 해상도";
+  /* 영상은 실측이 도착해도 표준 규격 표기를 유지한다(arDispOf가 단일 창구) — 이미지만 실측으로 채운다 */
+  const res=(d.w&&d.h&&!isVideoEnt(e))?`${d.w}×${d.h}`:arDispOf(e);
+  el.title=(d.w&&d.h&&!isVideoEnt(e))?"실측 해상도":(arDispTitle(e)||"해상도");
+  el.classList.toggle("unver",!(d.w&&d.h&&!isVideoEnt(e))&&!!(arInfoOf(e)||{}).unver);
   el.textContent=[res,d.dur?`⏱ ${fmtDur(d.dur)}`:""].filter(Boolean).join(" · ");}
 function fmtDur(s){s=Math.round(s||0);if(!s)return"";return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
 /* 직접 영상 URL 소재의 metadata를 지연·스로틀(동시 2·상한 240)로 백그라운드 수집 — 접속 직후 아님 */
@@ -2725,79 +2751,8 @@ function chipsHTML(t,e){
   return arr.filter(Boolean).join("");}
 /* key summary tiles */
 /* 자동 해석 — 현재 매체·기간 데이터에서 마케터가 먼저 볼 핵심을 문장으로 요약(최고 점수·획득단가 최저·포맷 우위) */
-/* ═════ 유효 복귀 소재 산점 스트립(분석 탭) — "매체 평균 한 숫자"가 감추는 것을 소재 단위로 편다 ═════
-   행=매체, x=유효 복귀 %(0~100), 세로 점선=자연 복귀 기준선. 점=소재/그룹(최신 주, 크기=되돌린 유저 수).
-   측정 방식이 달라 매체 간 액면 비교가 불가함을 '모양'으로 전달: 클릭 실측=● 채운 점 · 뷰스루(노출) 포함=○ 빈 점+빗금 밑판.
-   몰로코 내부 3배 격차(수수료 소구 61~64% vs 대형 영상 20~22%)가 이 화면에서 처음 보인다. */
-function renderReengStrip(ds){
-  const host=$("#reengStrip");if(!host)return;
-  const re=umLatest(/^reeng_w(\d{2})(\d{2})$/);
-  if(!re||!re.val.touch_all_campaign){host.innerHTML="";return;}
-  const tac=re.val.touch_all_campaign,mg=re.val.maugrowth||{},cpv=re.val.costPerValidReturn_krw||{};
-  const NB=isFinite(+re.val.naturalBaseline_pct)?+re.val.naturalBaseline_pct:null;
-  const curCh=umChOf(ds&&ds.media);
-  /* 소재별 값(최신 주) — 매체 행 안에서만 비교되는 편차 점 */
-  const rb=UMET&&UMET.reeng_byCreative,dotsBy=new Map();
-  if(rb&&rb.weeks&&typeof rb.weeks==="object"){
-    const latest=new Map();
-    for(const w of Object.keys(rb.weeks).filter(w=>/^\d{4}-\d{2}-\d{2}$/.test(w)).sort()){
-      const o=rb.weeks[w];if(!o||typeof o!=="object")continue;
-      for(const k in o){const v=o[k];if(v&&typeof v==="object"&&isFinite(+v.pct))latest.set(k,{n:+v.n,valid:+v.valid,pct:+v.pct,cpv:isFinite(+v.cpv)?+v.cpv:null,w});}}
-    for(const[k,v]of latest){const i=k.indexOf("|");if(i<0)continue;
-      const m=k.slice(0,i);let a=dotsBy.get(m);if(!a){a=[];dotsBy.set(m,a);}a.push({name:k.slice(i+1),...v});}}
-  /* 매체 행 — 클릭 접촉 복귀율(같은 잣대) 내림차순 */
-  const rows=["Meta","Google","Moloco"].map(m=>{
-    const t=tac[m]||{};
-    const clk=isFinite(+t.click_pct)?+t.click_pct:null;
-    const imp=isFinite(+t.imp_pct)?+t.imp_pct:null;
-    return {m,clk,imp,mg:mg[m]||null,cpv:isFinite(+cpv[m])?+cpv[m]:null,
-      dots:(dotsBy.get(m)||[]).sort((a,b)=>a.pct-b.pct)};})
-    .filter(r=>r.clk!=null).sort((a,b)=>b.clk-a.clk);
-  if(!rows.length){host.innerHTML="";return;}
-  const maxN=Math.max(...rows.flatMap(r=>r.dots.map(d=>d.n)),1);
-  /* viewBox 폭을 실제 렌더 폭에 맞춰 배율≈1.0으로 둔다 — 그래야 font-size 선언값이 화면 px과 같아
-     타이포 스케일(--fs-*)과 어긋나지 않는다(760 좌표계일 땐 1.6배 확대돼 글자가 크게 보였음) */
-  const W=1200,pl=76,pr=66,top=24,rowH=48,iw=W-pl-pr;
-  const H=top+rows.length*rowH+8;
-  const X=p=>pl+Math.max(0,Math.min(100,p))/100*iw;
-  let g="";
-  for(const t of[0,25,50,75,100]){const x=X(t);
-    g+=`<line x1="${x}" y1="${top-4}" x2="${x}" y2="${H-6}" stroke="var(--surface-2)" stroke-width="1"/>`;
-    g+=`<text x="${x}" y="${top-10}" text-anchor="middle" font-size="10" fill="var(--faint)">${t}%</text>`;}
-  rows.forEach((r,ri)=>{
-    const y0=top+ri*rowH,barY=y0+7,barH=13,dotY=y0+34;
-    if(r.m===curCh)g+=`<rect x="1" y="${y0+1}" width="${W-2}" height="${rowH-4}" rx="7" fill="var(--karrot-f)" opacity="0.4"/>`;
-    const mtip=`<b>${r.m}</b> — 클릭 접촉 유저의 복귀 <b>${r.clk.toFixed(1)}%</b>(같은 잣대)`
-      +(r.imp!=null?`<br>노출까지 인정 시 ${r.imp.toFixed(1)}%${r.imp-r.clk>3?` — 클릭 대비 +${(r.imp-r.clk).toFixed(1)}%p 부풀려짐`:" — 클릭과 거의 같음"}`:"<br>노출(뷰스루) 기여 0건 — 전부 클릭")
-      +(r.mg?`<br>재관여(maugrowth) 캠페인: 되돌린 ${fmtInt(+r.mg.users)}명 중 ${fmtInt(+r.mg.valid)}명 = ${(+r.mg.pct).toFixed(1)}%`:"")
-      +(r.cpv!=null?` · 복귀당 ₩${fmtInt(r.cpv)}(재관여 기준)`:"");
-    g+=`<text x="${pl-12}" y="${barY+11}" text-anchor="end" font-size="12.5" font-weight="700" fill="var(--ink)" data-tip="${escAttr(mtip)}" style="cursor:help">${r.m}</text>`;
-    /* 노출까지 인정 시 — 클릭 막대 뒤 연한 연장(고스트) */
-    if(r.imp!=null&&r.imp>r.clk){
-      g+=`<rect x="${X(0)}" y="${barY}" width="${(X(r.imp)-X(0)).toFixed(1)}" height="${barH}" rx="3" fill="var(--g2)" opacity="0.16" data-tip="${escAttr(`<b>${r.m} — 노출까지 인정하면 ${r.imp.toFixed(1)}%</b><br>스쳐 지나간 노출도 기여로 세는 경우. 클릭 실측은 ${r.clk.toFixed(1)}%`)}"/>`;
-      g+=`<line x1="${X(r.imp).toFixed(1)}" y1="${barY-2}" x2="${X(r.imp).toFixed(1)}" y2="${barY+barH+2}" stroke="var(--g2)" stroke-width="1.5" opacity="0.5"/>`;
-      g+=`<text x="${(X(r.imp)+6).toFixed(1)}" y="${barY+barH-2}" font-size="10" fill="var(--faint)">${r.imp.toFixed(1)}%</text>`;}
-    /* 클릭 접촉 = 같은 잣대(주인공) */
-    g+=`<rect x="${X(0)}" y="${barY}" width="${Math.max(2,X(r.clk)-X(0)).toFixed(1)}" height="${barH}" rx="3" fill="var(--g2)" data-tip="${escAttr(mtip)}"/>`;
-    g+=`<text x="${(X(r.clk)+(r.imp!=null&&r.imp>r.clk?0:6)).toFixed(1)}" y="${barY+barH-2.5}" ${r.imp!=null&&r.imp>r.clk?`text-anchor="end" fill="#fff" dx="-5"`:`fill="var(--ink)"`} font-size="12.5" font-weight="750">${r.clk.toFixed(1)}%</text>`;
-    /* 소재 편차 — 이 매체 행 안에서만 비교 */
-    r.dots.forEach(d=>{
-      const rr=3.5+Math.sqrt(d.n/maxN)*6;
-      const disp=r.m==="Google"?groupPrettyName(d.name.replace(/^\[그룹\]\s*/,"")):d.name;
-      const tip=`<b>${escHtml(trunc(disp,42))}</b><br>유효 복귀 <b>${d.pct.toFixed(1)}%</b> · 되돌린 ${fmtInt(d.n)}명 중 ${fmtInt(d.valid)}명`
-        +(d.cpv!=null?` · 1명당 ₩${fmtInt(d.cpv)}`:"")
-        +`<br>같은 매체 안에서 비교하세요(소재 단위는 매체 어트리뷰션 그대로)`;
-      const go=(r.m!=="Google")?` data-go="1" data-ch="${escAttr(r.m)}" data-nm="${escAttr(d.name)}" style="cursor:pointer"`:"";
-      g+=`<circle cx="${X(d.pct).toFixed(1)}" cy="${dotY}" r="${rr.toFixed(1)}" fill="var(--g2)" fill-opacity="0.5" stroke="var(--surface)" stroke-width="1.2" data-tip="${escAttr(tip)}"${go}/>`;});});
-  if(NB!=null){const x=X(NB);
-    g+=`<line x1="${x}" y1="${top-4}" x2="${x}" y2="${H-6}" stroke="var(--ink)" stroke-width="1.4" stroke-dasharray="4 3" opacity="0.75" data-tip="${escAttr(`<b>자연 복귀 기준선 ${NB.toFixed(1)}%</b><br>광고 없이도 스스로 돌아오는 비율 — 이 선을 넘는 만큼이 광고의 몫`)}"/>`;
-    g+=`<text x="${x}" y="${top-10}" text-anchor="middle" font-size="10" font-weight="750" fill="var(--ink)">자연 ${NB.toFixed(0)}%</text>`;}
-  host.innerHTML=`<div class="rst">
-    <div class="rst-h">유효 복귀 — 클릭 접촉 기준<span class="uc-q" data-tip="${escAttr(`<b>같은 잣대 = 클릭으로 접촉한 유저의 복귀율</b><br>매체마다 기여 인정 방식이 달라(노출만 스쳐도 기여로 세는 매체가 있음) 액면 비교가 불가했던 것을, 클릭 접촉 하나로 통일해 비교합니다.<br>연한 연장 막대 = 노출까지 인정했을 때의 값.<br>점 = 소재별 편차(재관여 캠페인 기준) — 같은 매체 행 안에서만 비교.<br>정확한 증분 판별은 홀드아웃 실험 필요(이 실측이 그 근거).`)}">?</span><span class="uc-when">${+re.m[1]}/${+re.m[2]} 주</span></div>
-    <svg viewBox="0 0 ${W} ${H}">${g}</svg>
-    <div class="rst-lgd"><span><i class="lg-bar"></i>클릭 접촉(같은 잣대)</span><span><i class="lg-ghost"></i>노출까지 인정 시</span><span><i class="lg-dot"></i>소재별 · 크기=되돌린 유저</span><span><i class="lg-nb"></i>자연 복귀 기준선</span></div>
-  </div>`;
-  host.querySelectorAll("[data-go]").forEach(el=>{el.addEventListener("click",()=>{hideTip();crossGo(el.dataset.ch,el.dataset.nm);});});}
+/* 유효 복귀 매체 비교 스트립은 제거(2026-08-06) — 메타가 다른 잣대로 집계돼 매체 간 같은 척도 비교가
+   성립하지 않아 데이터의 실효성이 무너졌다. 소재 상세의 '유효 복귀'(같은 매체 안 비교)는 그대로 유지한다. */
 function md2(w){return String(w||"").slice(5,7).replace(/^0/,"")+"/"+String(w||"").slice(8,10).replace(/^0/,"");}
 /* 구글 실적 라벨 × 주간 비용 스택바 — 구글 매체 선택 시에만. 비용의 89%가 좋음·인기순에 몰려있음이 한눈에 */
 function renderGlabelBar(ds){
@@ -2819,7 +2774,7 @@ function renderGlabelBar(ds){
     <div class="glb-bar">${segs}</div>
     <div class="glb-lgd">${lgd}</div>
   </div>`;}
-/* ═════ 유저 실증 지표 카드(분석 탭 상단) — A. MAU와 페이드 기여 · B. 매체별 MAU(설치 기여) · C. 설치 대비 삭제 ═════
+/* ═════ 유저 실증 지표 카드(분석 탭 상단) — 매체별 MAU(설치 기여) · 설치 대비 삭제 ═════
    전 매체 공통 스냅샷(월간·28일 실측)이라 아래 기간·매체 필터와 무관 — 현재 매체 행만 주황으로 강조해 맥락을 잇는다.
    막대는 식별을 색이 아니라 라벨·값 텍스트로 전달(막대는 크기 비교 보조). UMET 없거나 파일 임시 분석이면 통째 숨김 */
 function renderUmetCards(ds){
@@ -2830,26 +2785,9 @@ function renderUmetCards(ds){
   const nInt=v=>(v!=null&&isFinite(+v))?Math.round(+v).toLocaleString("ko-KR"):"–";
   const nPct=v=>(v!=null&&isFinite(+v))?(+v).toFixed(1)+"%":"–";
   const cards=[];
-  /* A. 공식 MAU × 페이드 터치 비중 — mau_official_*(공식) + mau_*(3매체 터치 활성, 기여치≠증분치) */
-  const mo=umLatest(/^mau_official_(\d{4})_(\d{2})$/);
-  const ma=umLatest(/^mau_(\d{4})_(\d{2})$/); /* mau_official_·mau_hoian_은 뒤가 숫자가 아니라 비매칭 */
-  if(mo&&mo.val.kr_total!=null){
-    const share=+mo.val.paid_touch_share_pct;
-    const touch=ma&&ma.val.active_total!=null?+ma.val.active_total:null;
-    const attr=ma&&ma.val.attributed_total!=null?+ma.val.attributed_total:null;
-    const rows=(ma?MEDIA.map(c=>({c,v:+ma.val[c]||0})).filter(r=>r.v>0):[]).sort((a,b)=>b.v-a.v);
-    const mx=rows.length?rows[0].v:0;
-    const tip=`<b>MAU와 페이드 기여</b><br>${escHtml(mo.val.note||"")}<br>출처: ${escHtml(mo.val.source||"umetrics")}`
-      +(attr!=null?`<br>매체 합산 ${nInt(attr)}명은 매체 간 중복 터치 포함 — 중복 제거 ${nInt(touch)}명`:"")
-      +`<br><b>기여 유저 중 실방문 — 광고로 늘어난 수(증분)가 아님</b>`;
-    cards.push(`<div class="umet-card">
-      <div class="uc-k">MAU와 페이드 기여<span class="uc-q" data-tip="${escAttr(tip)}" title="자세한 기준은 마우스를 올려 확인">?</span><span class="uc-when">${+mo.m[2]}월 실측</span></div>
-      <div class="uc-big"><b class="num">${nInt(mo.val.kr_total)}</b><span>전사 공식 MAU</span></div>
-      <div class="uc-share" title="${escAttr(`이 중 페이드 터치 활성 ${nPct(share)}`)}"><i style="width:${Math.max(0,Math.min(100,share||0)).toFixed(1)}%"></i>${(()=>{const ho=umLatest(/^mau_hoian_(\d{4})_(\d{2})$/);const hp=ho&&isFinite(+ho.val.paid_touch_share_pct)?+ho.val.paid_touch_share_pct:null;
-        return hp!=null?`<u style="left:${Math.min(99,hp).toFixed(1)}%" data-tip="${escAttr(`<b>보조 눈금 — 회원 동일계열 기준 ${hp.toFixed(1)}%</b><br>${escHtml(String(ho.val.basis||""))}<br>세 MAU 정의는 합산·혼용 금지`)}"></u>`:"";})()}</div>
-      <div class="uc-sub">페이드 터치 활성 <b class="num">${nInt(touch)}</b> · <b>${nPct(share)}</b> — 기여 유저 중 실방문(증분 아님)</div>
-      ${rows.length?`<div class="uc-rows">${rows.map(r=>`<div class="uc-row${r.c===curCh?" cur":""}" title="${escAttr(`${r.c} 기여 유저 중 ${+mo.m[2]}월 실방문 ${nInt(r.v)}명 — 기여치이지 증분치 아님`)}"><span class="ur-l">${r.c}</span><span class="ur-b"><i style="width:${(r.v/mx*100).toFixed(1)}%"></i></span><span class="ur-v num">${nInt(r.v)}</span></div>`).join("")}</div>`:""}
-    </div>`);}
+  /* A(MAU와 페이드 기여) 카드는 제거(2026-08-06) — 매체별 기여 유저 수를 나란히 세웠는데 메타가
+     다른 잣대로 집계돼 같은 척도 비교가 아니게 됐다. 잘못 읽힐 바에 안 보여주는 편이 낫다.
+     mau_official_*·mau_*·mau_hoian_* kv는 화면에서 더 이상 읽지 않는다. */
   /* B. 매체별 MAU(설치 기여 기준) — sessions_mau_* : '설치를 데려온 매체' 기준 28일 방문 + WAU/MAU 고착도 */
   const sm=umLatest(/^sessions_mau_(\d{8})$/);
   if(sm){
@@ -2879,7 +2817,6 @@ function renderUmetCards(ds){
   wrap.hidden=false;
   const upd=$("#umetUpd");if(upd)upd.textContent=`umetrics · ${UMET.updated||"?"} 갱신 · 유저 단위 실증(읽기 전용)`;
   host.innerHTML=cards.join("");
-  renderReengStrip(ds);
   renderGlabelBar(ds);
   wrap.querySelectorAll("[data-tip]").forEach(el=>{
     el.addEventListener("mousemove",ev=>showTip(el.dataset.tip||"",ev.clientX,ev.clientY));
@@ -3478,9 +3415,11 @@ function assetPreview(url,ent,noSrc){if(!url)return ""; /* noSrc=true → 원본
      해상도 판단은 arDispOf(oar 실측 → 공식 방향) 한 곳으로 모은다 */
   const _ytPv=/youtube\.com|youtu\.be/i.test(String(url||""));
   const dm=(!_ytPv)&&(typeof MDIM!=="undefined")&&MDIM[url];
-  const dimRes=(dm&&dm.w&&dm.h)?`${dm.w}×${dm.h}`:(ent?arDispOf(ent):"");
-  const dimTip=(dm&&dm.w&&dm.h)?"실측 해상도":(ent?arDispTitle(ent):"");
-  const dimUn=!(dm&&dm.w&&dm.h)&&!!(ent&&(arInfoOf(ent)||{}).unver); /* 파일명 파싱값(미검증) — 실측과 구분 */
+  /* 영상은 실측 픽셀보다 표준 규격 표기가 우선 — 화면 어디서나 같은 값이 보이게 arDispOf 한 곳으로 모은다 */
+  const _useMeas=!!(dm&&dm.w&&dm.h)&&!(ent&&isVideoEnt(ent));
+  const dimRes=_useMeas?`${dm.w}×${dm.h}`:(ent?arDispOf(ent):"");
+  const dimTip=_useMeas?"실측 해상도":(ent?arDispTitle(ent):"");
+  const dimUn=!_useMeas&&!!(ent&&(arInfoOf(ent)||{}).unver); /* 파일명 파싱값(미검증) — 실측과 구분 */
   const dimTxt=[dimRes,dm&&dm.dur?`⏱ ${fmtDur(dm.dur)}`:""].filter(Boolean).join(" · ");
   const dimLine=`<span class="asset-dim${dimUn?" unver":""}" title="${escAttr(dimTip)}">${escHtml(dimTxt)}</span>`; /* 값이 비어도 스팬 유지 — 실측 도착 시 제자리 갱신용 */
   const srcLine=(note)=>noSrc?"":`<div class="asset-src">${ocrM}${dimLine}${note?escHtml(note)+" · ":""}<a href="${escAttr(safeUrl(url))}" target="_blank" rel="noopener">${escHtml(trunc(url,60))}</a></div>`;
@@ -3696,6 +3635,13 @@ const WK_METRIC={ /* 채점 키 → 주차 값 계산 (weeklyAggOf 합계 기반
     "영상 완주율":{fmt:fmtPct,of:o=>o.vd>0?o.vn/o.vd:null},
     "_q_retD1":{fmt:fmtPct,of:o=>o.rB>0?o.rU/o.rB:null},
   };
+/* 주차별 추이에 어떤 선을 그릴지 — null이면 자동(점수 반영 지표 상위 3개).
+   사용자가 칩으로 고르면 그 지표만 그린다. 상세를 닫아도 유지돼 소재를 옮겨도 같은 잣대로 본다. */
+let ISLE_TREND_KEYS=null;
+const TREND_NU_KEY="__nu"; /* 실증 신규 실유저(umetrics) — WK_METRIC이 아니라 별도 소스라 예약 키 */
+function trendLabOf(k){
+  if(k===TREND_NU_KEY)return "신규 실유저";
+  return (MET_META[k]&&MET_META[k].lab)||k;}
 function creativeTrendHTML(ds,e){
   const all=weeklyAggOf(ds,e);
   /* 선택 기간 안의 모든 주를 표시(13주 자름 폐지) — 주가 많으면 가로 스크롤(최신이 먼저 보이게 오른쪽 정렬) */
@@ -3715,28 +3661,52 @@ function creativeTrendHTML(ds,e){
     if(e._clkMix&&(sp.k==="CTR"||sp.k==="CPC"))return false;
     return true;});
   const wPct=w=>{const p=w*100;return p%1?p.toFixed(1):String(Math.round(p));};
-  const LINE_COLS=["var(--c2)","var(--g2)","var(--w1)"];
-  const lines=[];const tipSpecs=[];
+  const LINE_COLS=["var(--c2)","var(--g2)","var(--w1)","var(--karrot)","var(--mid)"];
+  /* ── 그릴 수 있는 지표를 전부 모은다(점수 반영 여부와 무관) ──
+     데이터가 쌓일수록 볼 수 있는 지표가 늘어나므로, 자동 3개로 고정하지 않고 칩으로 직접 고를 수 있게 한다.
+     자동(기본)은 종전대로 '점수 반영 지표 상위 3개' — 아무것도 안 골랐을 때의 안전한 출발점 */
+  const scoreKeys=new Set(specs.map(sp=>sp.k));
+  const pool=[]; /* [{k,lab,fmt,vals,scored}] */
   for(const sp of specs){
     const wm=WK_METRIC[sp.k];if(!wm)continue;
     const vals=os.map(wm.of);
     if(vals.filter(v=>v!=null).length<2)continue;
-    tipSpecs.push({lab:sp.lab,w:sp.w,fmt:wm.fmt,vals}); /* 툴팁엔 점수 반영 지표 전부 */
-    if(lines.length>=3)continue; /* 선은 상위 3개만 (가독성) */
-    const mx=Math.max(...vals.filter(v=>v!=null))*1.12||1;
-    let last=null;for(let i=vals.length-1;i>=0;i--)if(vals[i]!=null){last=vals[i];break;}
-    lines.push({lab:sp.lab,w:sp.w,col:LINE_COLS[lines.length],fmt:wm.fmt,vals,mx,last});}
+    pool.push({k:sp.k,lab:sp.lab,w:sp.w,fmt:wm.fmt,vals,scored:true});}
+  for(const k in WK_METRIC){
+    if(scoreKeys.has(k))continue;
+    if(e._impBad&&_impRateSet.has(k))continue;              /* 노출 과소집계로 무효화된 비율 지표는 제외 */
+    if(e._clkMix&&(k==="CTR"||k==="CPC"))continue;
+    if(MET_META[k]&&MET_META[k].videoOnly&&((e.tags&&e.tags.fo)||"")!=="영상")continue;
+    const wm=WK_METRIC[k];
+    const vals=os.map(wm.of);
+    if(vals.filter(v=>v!=null).length<2)continue;
+    pool.push({k,lab:trendLabOf(k),w:0,fmt:wm.fmt,vals,scored:false});}
   /* 실증 신규 실유저(umetrics) — 별도 차트를 두지 않고 같은 주차 축에 얹는다.
      소재당 몇 주치만 있는 부분 데이터라 선은 값이 있는 구간만 이어진다 */
   {const _tr=(typeof umTrendFor==="function")?umTrendFor(ds,e):null;
     if(_tr&&_tr.weeks.length){
       const m=new Map(_tr.weeks.filter(o=>o.nu!=null).map(o=>[o.w,o.nu]));
-      if(m.size>=2){
-        const vals=ws.map(w=>m.has(w)?m.get(w):null);
-        const mx=Math.max(...m.values())*1.12||1;
-        let last=null;for(let i=vals.length-1;i>=0;i--)if(vals[i]!=null){last=vals[i];break;}
-        tipSpecs.push({lab:"신규 실유저",w:0,fmt:fmtInt,vals});
-        lines.push({lab:"신규 실유저",w:0,col:"var(--g1)",fmt:fmtInt,vals,mx,last,dash:1});}}}
+      if(m.size>=2)pool.push({k:TREND_NU_KEY,lab:"신규 실유저",w:0,fmt:fmtInt,
+        vals:ws.map(w=>m.has(w)?m.get(w):null),scored:false,dash:1});}}
+  if(!pool.length)return "";
+  /* 툴팁엔 점수 반영 지표 전부 — 선으로 안 그린 것도 값은 읽힌다 */
+  const tipSpecs=pool.filter(p=>p.scored).map(p=>({lab:p.lab,w:p.w,fmt:p.fmt,vals:p.vals}));
+  const sel=Array.isArray(ISLE_TREND_KEYS)?ISLE_TREND_KEYS.filter(k=>pool.some(p=>p.k===k)):null;
+  const chosen=(sel&&sel.length)
+    ?pool.filter(p=>sel.includes(p.k)).slice(0,5)
+    :pool.filter(p=>p.scored).slice(0,3).concat(pool.filter(p=>p.k===TREND_NU_KEY)); /* 자동 = 종전 동작 */
+  const lines=chosen.map((p,i)=>{
+    const nn=p.vals.filter(v=>v!=null);
+    const mx=Math.max(...nn)*1.12||1;
+    let last=null;for(let j=p.vals.length-1;j>=0;j--)if(p.vals[j]!=null){last=p.vals[j];break;}
+    /* 선으로 그린 지표는 툴팁에도 반드시 들어가야 한다(점수 미반영 지표를 골랐을 때) */
+    if(!tipSpecs.some(t=>t.lab===p.lab))tipSpecs.push({lab:p.lab,w:p.w,fmt:p.fmt,vals:p.vals});
+    return {lab:p.lab,w:p.w,col:LINE_COLS[i%LINE_COLS.length],fmt:p.fmt,vals:p.vals,mx,last,dash:p.dash};});
+  /* 지표 선택 칩 — 켜진 것만 선으로 그린다. '자동'은 점수 반영 상위 3개로 되돌린다 */
+  const onSet=new Set(chosen.map(p=>p.k));
+  const picker=`<div class="ispk-pick"><button type="button" class="ispk-chip${sel&&sel.length?"":" on"}" data-tk="__auto">자동</button>`
+    +pool.map(p=>`<button type="button" class="ispk-chip${onSet.has(p.k)&&sel&&sel.length?" on":""}${p.scored?" sc":""}" data-tk="${escAttr(p.k)}" title="${escAttr((MET_META[p.k]&&MET_META[p.k].desc)||p.lab)}${p.scored?" · 점수 반영 지표":""}">${escHtml(p.lab)}</button>`).join("")
+    +`</div>`;
   /* 주별 실적 라벨(구글 실측 — 그 주 리포트의 실적 값) — 날짜 밑 한 줄로 추이를 라벨과 함께 읽는다 */
   const _plW={};
   if(!e._isGroup){const _nc=ds.L.nameCol;
@@ -3798,7 +3768,7 @@ function creativeTrendHTML(ds,e){
       s+=`<text x="${x.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="10" font-weight="750" fill="${ln.col}" paint-order="stroke" stroke="#FFFDF7" stroke-width="3" stroke-linejoin="round">${escHtml(ln.fmt(mk.v))}</text>`;}}
   /* 범례는 최소한으로: 주 수 · 색=지표 매핑 · 최신값. 비율·설명은 푸터/툴팁이 담당(중복 금지) */
   const leg=lines.map(ln=>`<span><i class="lgd" style="background:${ln.col}"></i>${ln.lab} <b>${ln.last!=null?ln.fmt(ln.last):"–"}</b></span>`).join(" ");
-  return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · <i class="lgd" style="background:var(--karrot);opacity:.55"></i>광고비 ${leg}</span></div><div class="ispark-scroll"><svg class="ispark-svg" viewBox="0 0 ${W} ${H}">${s}</svg></div></div>`;}
+  return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · <i class="lgd" style="background:var(--karrot);opacity:.55"></i>광고비 ${leg}</span></div>${picker}<div class="ispark-scroll"><svg class="ispark-svg" viewBox="0 0 ${W} ${H}">${s}</svg></div></div>`;}
 /* 상세 '영상 시청' — 어디까지 많이 보고 어디서 이탈했는지 (영상 소재만).
    구간 도달 곡선 데이터 우선순위: ① 소재 자체 구간별 재생수(_v25~_v100 ÷ 노출, 선택 기간)
    ② 구글 광고그룹 보고서 누적 퍼널 v25~v100(소재별 데이터가 없어 그룹 단위임을 캡션에 명시).
@@ -4349,14 +4319,43 @@ function stdVidDim(cls){const v=VID_STD[cls];return v?v[0]+"×"+v[1]:"";}
 function isVideoEnt(e){if(!e)return false;
   if(e.tags&&e.tags.fo)return e.tags.fo==="영상";
   const u=previewUrlOf(e);return !!(ytIdOf(e._g_url||u||e.name)||(u&&isVideoUrl(u)));}
-function arDispOf(e){ /* 해상도 표시 — ① 실측 픽셀 ② 영상은 화면비→표준 해상도 ③ 그 외 화면비 표기 */
+/* 해상도 표시.
+   ⚠️ **영상은 화면비만 보고 무조건 표준 규격으로 표기한다** — 실측 픽셀이 있어도 마찬가지다(2026-08-06 확정).
+   광고 영상은 가로 1920×1080 · 정사각 1080×1080 · 세로 1080×1920 세 규격으로만 제작되는데,
+   매체가 서빙용으로 트랜스코딩하면 몰로코처럼 640×360·640×640 같은 값이 잡힌다(유튜브 캔버스 실측도 마찬가지).
+   그건 '이 소재가 어떤 규격으로 만들어졌나'라는 질문의 답이 아니고, 같은 소재가 매체마다 다른 해상도로 보여
+   해상도 필터·타매체 매칭이 갈라진다. 그래서 영상은 서빙 실측값을 버리고 제작 규격으로 통일해 보여준다.
+   이미지는 1200×628·720×720처럼 규격이 실제로 갈리므로 실측·표기값을 그대로 쓴다. */
+function arDispOf(e){
   const ai=arInfoOf(e);if(!ai)return "";
-  if(ai.exact)return ai.w+"×"+ai.h;
   if(isVideoEnt(e)){const s=stdVidDim(ai.cls);if(s)return s;}
+  if(ai.exact)return ai.w+"×"+ai.h;
   if(ai.oriOnly)return ai.cls;
   const rl=ratioLabel(ai.r);return ai.cls+(rl?" "+rl:"");}
+/* 이 소재의 표시 해상도가 실측값을 표준 규격으로 바꿔 놓은 경우인지 — 툴팁에서 원래 값을 밝히기 위해 */
+function stdSwapOf(e){
+  const ai=arInfoOf(e);if(!ai||!isVideoEnt(e))return null;
+  const s=stdVidDim(ai.cls);if(!s)return null;
+  const raw=ai.exact?ai.w+"×"+ai.h:"";
+  return (raw&&raw!==s)?{std:s,raw}:null;}
+/* 화면비를 무엇으로 판정했는지 한 마디로 */
+function arSrcLabel(ai){
+  return ai.src==="gname"?"구글 애셋 이름 규격"
+    :ai.src==="gori"?"구글 보고서 '방향' 열"
+    :ai.src==="mreal"?"몰로코 서빙 파일 실측(ffprobe)"
+    :ai.src==="mfile"?"몰로코 파일명 표기(미검증)"
+    :ai.src==="par"?"보고서 비율"
+    :ai.src==="oar"?"유튜브 캔버스 실측"
+    :ai.src==="mdim"?"미리보기 metadata 실측"
+    :ai.src==="ori"?"보고서 '방향'":"리포트 표기";}
 /* 해상도 출처 툴팁 — 실측인지 표준 규격 환산인지 숨기지 않고 밝힌다 */
 function arDispTitle(e){const ai=arInfoOf(e);if(!ai)return "";
+  /* 영상은 표준 규격으로 통일해 표기한다 — 실측값을 감추지 않고 툴팁에서 밝힌다 */
+  if(isVideoEnt(e)&&stdVidDim(ai.cls)){
+    const sw=stdSwapOf(e);
+    return `${ai.cls} 영상 — 제작 표준 규격(${stdVidDim(ai.cls)})으로 표기합니다`
+      +(sw?` · 실측 ${sw.raw}(매체가 서빙용으로 트랜스코딩한 크기)`:"")
+      +` · 판정 근거: ${arSrcLabel(ai)}`;}
   if(ai.src==="gname")return "구글 애셋 이름에 명시된 실제 규격 — 애셋 보고서 기준(가장 정확)";
   if(ai.src==="gori")return "구글 애셋 보고서 '방향' 열 기준 규격";
   if(ai.src==="mreal")return `몰로코 실제 서빙 파일 실측(ffprobe)${e&&e._m_resName&&e._m_resName!==e._res?` — 파일명 표기는 ${e._m_resName}이지만 몰로코가 트랜스코딩해 실제 서빙본은 이 크기입니다`:""}`;
@@ -4422,7 +4421,10 @@ function crossMediaMatches(ds,e){
       const oFo=(o.tags&&o.tags.fo)||null,oAi=arInfoOf(o);
       if(myFo&&oFo&&myFo!==oFo)continue;
       if(myAi&&oAi){
-        if(myAi.exact&&oAi.exact){if(myAi.w!==oAi.w||myAi.h!==oAi.h)continue;}
+        /* 영상은 화면에 보이는 값(표준 규격)과 같은 잣대로 비교한다 — 매체마다 서빙 트랜스코딩 크기가
+           달라(구글 1080×1920 vs 몰로코 640×1136) 픽셀을 그대로 대면 같은 영상도 안 잡힌다 */
+        if(myFo==="영상"||oFo==="영상"){if(myAi.cls!==oAi.cls)continue;}
+        else if(myAi.exact&&oAi.exact){if(myAi.w!==oAi.w||myAi.h!==oAi.h)continue;}
         else if(myAi.cls!==oAi.cls)continue;}
       let conf=null,why="";
       const oU=previewUrlOf(o),oYt=ytIdOf(o._g_url||oU||o.name);
@@ -4633,48 +4635,73 @@ function openCmpModal(){
 /* [개요] 지표축 비례 겹침 차트 — 지표를 가로로 나열하고 각 지표를 0(아래)→최고(위) '세로' 선형축으로.
    소재마다 지표 열에 점을 찍고 좌→우로 이어 꺾은선으로 겹친다. 미니멀: 축 눈금·설명 없이
    각 지표의 최고점 위·최저점 아래에만 실제 수치를 쓴다. 색·순서는 cmpRank의 순위 기준 */
+/* [주요 지표] 오각형(레이더) — 지표축을 원형으로 돌려 소재별 '모양'을 한눈에 비교한다.
+   평행좌표(세로축 나열)는 축이 늘어날수록 선이 지그재그로 얽혀 누가 어떤 성격인지 안 읽혔다.
+   레이더는 면적·치우침이 바로 보여서 "이 소재는 효율형/규모형" 같은 판단이 빠르다.
+   · 축은 최대 5개(오각형) — defs가 더 많으면 소재 간 차이가 큰 순서로 5개를 고른다.
+   · 각 축은 그 축 최대값=바깥 테두리로 정규화하고, 단가류(dir<0)는 역수로 뒤집어 **항상 바깥쪽=좋음**.
+   · 값이 없는 축은 중심(0)으로 떨어뜨리지 않고 그 소재의 다각형에서 건너뛴다(0으로 채우면 없는 값이 최악으로 읽힌다). */
+const CMP_RADAR_MAX=5;
 function cmpAxesSVG(R){
   const{ents,tots,defs}=R;
-  const cols=defs.map(d=>{
+  let cols=defs.map(d=>{
     const raw=tots.map(t=>d.of(t));
-    const eff=raw.map(v=>v==null?null:(d.dir<0?(v>0?1/v:null):v)); /* 단가류 → 효율(역수): 위=우세·비율 보존 */
+    const eff=raw.map(v=>v==null?null:(d.dir<0?(v>0?1/v:null):v)); /* 단가류 → 효율(역수): 바깥=우세·비율 보존 */
     const mx=Math.max(...eff.filter(v=>v!=null).concat([0]));
     return {d,raw,eff,mx};}).filter(c=>c.mx>0&&c.eff.filter(v=>v!=null).length>=2);
   if(!cols.length)return `<div class="fam-note">겹쳐 볼 지표 값이 부족해요</div>`;
-  /* 좌우 풀폭 — 뷰박스 폭을 실제 표시 폭에 맞춰(1:1) 잡는다. 고정 폭을 늘려 그리면 글자·여백까지
-     통째로 확대돼 전체 화면에서 우스꽝스럽게 커지므로, 폭만 키우고 글자 크기는 그대로 둔다 */
-  const availW=Math.max(560,Math.round(R.contentW||Math.min(1600,(window.innerWidth||900)-52)));
-  const PL=18,PR=18,PT=22,PB=48,H=232,W=Math.round(availW),CW=(W-PL-PR)/cols.length,ih=H-PT-PB; /* 높이는 고정(차트가 화면을 지배하지 않게) */
-  const xAt=c=>PL+c*CW+CW/2;
-  let g=`<line x1="${PL}" y1="${H-PB}" x2="${W-PR}" y2="${H-PB}" stroke="#ECE9DE" stroke-width="1"/>`;
-  cols.forEach((c,ci)=>{const x=xAt(ci);
-    g+=`<line x1="${x.toFixed(1)}" y1="${PT}" x2="${x.toFixed(1)}" y2="${H-PB}" stroke="#F0EEE6" stroke-width="1"/>`;
-    const lab=c.d.lab+(c.d.dir<0?" ↓":c.d.dir>0?" ↑":"");
-    const words=lab.split(" ");
-    const lines=(lab.length>10&&words.length>1)?[words.slice(0,-2).join(" ")||words[0],words.slice(words.length>2?-2:-1).join(" ")]:[lab];
-    lines.forEach((t,li)=>{g+=`<text x="${x.toFixed(1)}" y="${H-PB+25+li*10}" font-size="10" font-weight="650" fill="var(--muted)" text-anchor="middle">${escHtml(t)}</text>`;});});
-  const pts=ents.map((en,j)=>cols.map((c,ci)=>{const v=c.eff[j];return v==null?null:{x:xAt(ci),y:PT+(1-v/c.mx)*ih,j};}));
-  let lines2="",dots="",vals="";
-  /* 그리기 순서 = 우세 역순(1위가 맨 위에 얹힘) — 호버는 "지표 값"만(미니멀) */
+  /* 축이 6개 이상이면 '소재 간 차이가 큰' 축부터 5개 — 다 같은 값인 축은 오각형 모양에 정보를 못 준다 */
+  if(cols.length>CMP_RADAR_MAX){
+    const spread=c=>{const v=c.eff.filter(x=>x!=null).map(x=>x/c.mx);
+      return v.length<2?0:Math.max(...v)-Math.min(...v);};
+    cols=cols.slice().sort((a,b)=>spread(b)-spread(a)).slice(0,CMP_RADAR_MAX);
+    /* 원래 지표 순서를 유지해야 매번 축 자리가 바뀌지 않는다 */
+    cols.sort((a,b)=>defs.indexOf(a.d)-defs.indexOf(b.d));}
+  const N=cols.length;
+  /* 정사각에 가까운 고정 좌표계 — 폭을 화면만큼 늘리면 원이 가운데 점처럼 작아지고 양옆이 텅 빈다.
+     대신 폭 상한을 두고 가운데 정렬한다(글자 크기는 좌표계와 함께 고정돼 확대되지 않는다) */
+  const W=620,H=376,cx=W/2,cy=178;
+  const Rr=118;
+  /* 12시 방향에서 시작해 시계방향 */
+  const ang=i=>-Math.PI/2+i*2*Math.PI/N;
+  const at=(i,t)=>[cx+Math.cos(ang(i))*Rr*t,cy+Math.sin(ang(i))*Rr*t];
+  const poly=t=>cols.map((_,i)=>at(i,t).map(v=>v.toFixed(1)).join(",")).join(" ");
+  let g="";
+  /* 눈금 고리 — 25/50/75/100% */
+  for(const t of[0.25,0.5,0.75,1])
+    g+=`<polygon points="${poly(t)}" fill="none" stroke="${t===1?"#E5E2D8":"#F0EEE6"}" stroke-width="1"/>`;
+  cols.forEach((c,i)=>{const[x,y]=at(i,1);
+    g+=`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#F0EEE6" stroke-width="1"/>`;});
+  /* 소재별 다각형 — 우세 역순으로 그려 1위가 맨 위에 얹힌다 */
+  let shapes="",dots="";
   [...R.order].reverse().forEach(j=>{
     const en=ents[j],col=R.colorByList.get(en.i)||CMP_GRAY;
-    const ps=pts[j].filter(Boolean);
-    if(!ps.length)return;
-    let pth="";ps.forEach((p,k)=>{pth+=(k?" L":"M")+` ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;});
-    lines2+=`<path class="cmp-ln" data-ci="${en.i}" d="${pth}" fill="none" stroke="${col}" stroke-width="1.6" stroke-opacity="0.9" stroke-linejoin="round"/>`;
-    pts[j].forEach((p,ci)=>{if(!p)return;const c=cols[ci];
-      dots+=`<circle class="cmp-dot" data-ci="${en.i}" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${col}" data-cv="${escAttr(c.d.lab+" "+c.d.fmt(c.raw[j]))}" data-cc="${col}"/>`;});});
-  /* 지표(열)마다 최고점 위·최저점 아래에만 수치 표기 — 작고 가볍게 */
-  cols.forEach((c,ci)=>{
-    const here=pts.map(ent=>ent[ci]).filter(Boolean);
-    if(here.length<2)return;
-    let hi=here[0],lo=here[0];
-    for(const p of here){if(p.y<hi.y)hi=p;if(p.y>lo.y)lo=p;}
-    if(hi===lo)return;
-    const colOf=p=>R.colorByList.get(ents[p.j].i)||CMP_GRAY;
-    vals+=`<text x="${hi.x.toFixed(1)}" y="${(hi.y-8).toFixed(1)}" font-size="10" font-weight="700" fill="${colOf(hi)}" text-anchor="middle">${escHtml(c.d.fmt(c.raw[hi.j]))}</text>`;
-    vals+=`<text x="${lo.x.toFixed(1)}" y="${(lo.y+14).toFixed(1)}" font-size="10" font-weight="700" fill="${colOf(lo)}" text-anchor="middle">${escHtml(c.d.fmt(c.raw[lo.j]))}</text>`;});
-  return `<div class="cmpm-chartwrap"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:560px;height:auto">${g}${lines2}${dots}${vals}</svg></div>`;}
+    const ps=cols.map((c,i)=>{const v=c.eff[j];return v==null?null:at(i,Math.max(0.04,v/c.mx));});
+    const have=ps.filter(Boolean).length;
+    if(!have)return;
+    const pts=ps.filter(Boolean).map(p=>p.map(v=>v.toFixed(1)).join(",")).join(" ");
+    /* 값이 3개 이상이면 면(다각형), 2개면 선분 — 면적으로 우열이 읽히게 */
+    shapes+=have>=3
+      ?`<polygon class="cmp-ln" data-ci="${en.i}" points="${pts}" fill="${col}" fill-opacity="0.10" stroke="${col}" stroke-width="1.8" stroke-opacity="0.9" stroke-linejoin="round"/>`
+      :`<polyline class="cmp-ln" data-ci="${en.i}" points="${pts}" fill="none" stroke="${col}" stroke-width="1.8" stroke-opacity="0.9"/>`;
+    ps.forEach((p,i)=>{if(!p)return;const c=cols[i];
+      dots+=`<circle class="cmp-dot" data-ci="${en.i}" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="${col}" data-cv="${escAttr(c.d.lab+" "+c.d.fmt(c.raw[j]))}" data-cc="${col}"/>`;});});
+  /* 축 라벨 = [지표명] + [그 축 1등 값] 두 줄. 한 덩어리로 쌓아 두면 서로 절대 겹치지 않는다
+     (전에는 값이 꼭짓점 옆, 이름이 그 바깥이라 좌우 축에서 두 글자가 포개졌다). */
+  let vals="";
+  cols.forEach((c,i)=>{
+    const[lx,ly]=at(i,1.13);
+    const anch=Math.abs(lx-cx)<8?"middle":(lx>cx?"start":"end");
+    const lab=c.d.lab+(c.d.dir<0?" ↓":c.d.dir>0?" ↑":"");
+    let best=null;
+    ents.forEach((_,j)=>{const v=c.eff[j];if(v==null)return;if(!best||v>best.v)best={v,j};});
+    const up=ly<cy-4; /* 위쪽 축은 이름 → 값 순서로 위로 쌓고, 아래쪽 축은 아래로 쌓는다 */
+    const y0=up?ly-13:ly+11;
+    vals+=`<text x="${lx.toFixed(1)}" y="${y0.toFixed(1)}" font-size="10" font-weight="650" fill="var(--muted)" text-anchor="${anch}">${escHtml(lab)}</text>`;
+    if(best){const col=R.colorByList.get(ents[best.j].i)||CMP_GRAY;
+      vals+=`<text x="${lx.toFixed(1)}" y="${(y0+11).toFixed(1)}" font-size="10" font-weight="750" fill="${col}" text-anchor="${anch}">${escHtml(c.d.fmt(c.raw[best.j]))}</text>`;}});
+  return `<div class="cmpm-chartwrap"><svg class="cmp-radar" viewBox="0 0 ${W} ${H}">${g}${shapes}${dots}${vals}</svg>`
+    +`<div class="cmp-radar-note">축 = 지표 · <b>바깥쪽일수록 좋음</b>(단가는 뒤집어 정렬) · 축마다 최고값을 테두리로 정규화 — 축 간 크기는 비교하지 마세요</div></div>`;}
 function cmpGridHTML(R){
   const{ents,tots,defs,order}=R;
   /* 열이 많아지면 헤더 이름부터 줄여 표가 가로로 넘치지 않게 한다(넘치면 오른쪽 소재가 화면 밖으로 나간다) */
@@ -4733,9 +4760,10 @@ function cmpTrendSectionHTML(R){
       series[j].forEach((v,i)=>{if(v==null)return;
         const x=xat2(i),y=pt2+(1-v/mx)*ih2;
         p+=st?` L ${x.toFixed(1)} ${y.toFixed(1)}`:`M ${x.toFixed(1)} ${y.toFixed(1)}`;st=true;
-        dots+=`<circle class="cmp-dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.4" fill="${col}" data-cv="${escAttr(weeksTip(i)+" · "+d.fmt(v))}" data-cc="${col}"/>`;});
+        dots+=`<circle class="cmp-dot" data-ci="${en.i}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.4" fill="${col}" data-cv="${escAttr(weeksTip(i)+" · "+d.fmt(v))}" data-cc="${col}"/>`;});
       if(!st)return;
-      svg+=`<path d="${p}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round"/>`+dots;});
+      /* 주요 지표 차트와 같은 강조 규칙(cmp-ln/data-ci) — 카드에 마우스를 올리면 여기 선도 같이 굵어진다 */
+      svg+=`<path class="cmp-ln" data-ci="${en.i}" d="${p}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round"/>`+dots;});
     return `<div class="cmp-trc"><h5>${escHtml(d.lab)}${d.dir<0?" ↓":d.dir>0?" ↑":""}</h5><svg viewBox="0 0 ${W2} ${H2}" style="width:100%;height:auto">${svg}${xlab(xat2,W2,H2,8)}</svg></div>`;}).filter(Boolean);
   if(!cells.length)return `<div class="fam-note">주간 값이 있는 지표가 없어요</div>`;
   return `<div class="cmp-trgrid">${cells.join("")}</div>`;}
@@ -4807,6 +4835,18 @@ function renderIsleMid(ds,e,mid){if(!mid)return;
   mid.innerHTML=(peerRankHTML(ds,e)||"")+(umCohortHTML(ds,e)||"")+(gAssetHTML(ds,e)||"")+(tabs.length>1?`<div class="dtog gtabs">${tabs.map(t=>`<button data-gt="${t.k}" class="${t.k===cur.k?"on":""}">${t.lab}</button>`).join("")}</div>`:"")+`<div class="gtab-body">${cur.html}</div>`;
   fitMrows(mid);
   mid.querySelectorAll(".gtabs button").forEach(b=>b.onclick=()=>{ISLE.gtab=b.dataset.gt;renderIsleMid(ds,e,mid);});
+  /* 주차별 추이 지표 선택 — 고른 지표는 소재를 옮겨도 유지된다(같은 잣대로 이어 보기) */
+  mid.querySelectorAll(".ispk-chip[data-tk]").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.tk;
+    if(k==="__auto")ISLE_TREND_KEYS=null;
+    else{const cur=Array.isArray(ISLE_TREND_KEYS)?ISLE_TREND_KEYS.slice():[];
+      const i=cur.indexOf(k);
+      if(i>=0)cur.splice(i,1);else cur.push(k);
+      ISLE_TREND_KEYS=cur.length?cur:null;}
+    renderIsleMid(ds,e,mid);
+    for(const p of ISLE_PINS){const pe=findRow(ds,p.name),pm=p.node&&p.node.querySelector(".ir-mid");
+      if(pe&&pm)renderIsleMid(ds,pe,pm);} /* 고정본도 같은 지표로 맞춘다 — 안 그러면 나란히 둔 의미가 없다 */
+  });
   /* 그래프 요소 공통 툴팁(data-tip) — 추이 막대·유지 곡선 점·산점도 점이 함께 쓴다 */
   mid.querySelectorAll("[data-tip]").forEach(el=>{
     el.addEventListener("mousemove",ev=>showTip(el.dataset.tip||"",ev.clientX,ev.clientY));
@@ -4832,8 +4872,13 @@ function fillIsland(ds,e,inner){const L=ds.L;
     if(_res)applyIsleAr(inner,+_res[1],+_res[2]);else inner.classList.add("ar-s");}
   const sideMedia=e._isGroup?((gwStatHTML(e)||"")+(groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group))||"")):preview; /* 그룹은 정확 소스+보고서 정보가 미디어 자리 */
   const leftCol=(sideMedia||"")+(_xmh?`<div class="xmedia-wrap">${_xmh}</div>`:"");
-  inner.innerHTML=`<div class="isle-row2${leftCol?"":" nomedia"}">${leftCol?`<div class="ir-media">${leftCol}</div>`:""}<div class="ir-mid"></div></div>`;
+  /* 좌측 하단 옷핀 — 이 상세를 고정해 다른 소재와 위아래로 나란히 본다 */
+  const _pinned=pinIndexOf(e.name,(ds&&ds.media)||"")>=0;
+  inner.innerHTML=`<div class="isle-row2${leftCol?"":" nomedia"}">${leftCol?`<div class="ir-media">${leftCol}</div>`:""}<div class="ir-mid"></div></div>`
+    +`<button type="button" class="isle-pinbtn${_pinned?" on":""}" aria-pressed="${_pinned}" data-nm="${escAttr(e.name)}" title="${_pinned?"고정 해제 — 이 상세를 닫습니다":"이 상세를 고정 — 다른 소재를 열어도 아래에 남습니다"}"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M9.6 1.2 14.8 6.4l-1.1 1.1-1.2-.4-2.6 2.6.5 2.4-1.1 1.1-3.2-3.2-3.9 3.9-.7-.7 3.9-3.9L2.2 6.1l1.1-1.1 2.4.5L8.3 2.9l-.4-1.2 1.1-1.1z" fill="currentColor"/></svg><span>${_pinned?"고정됨":"고정"}</span></button>`;
   renderIsleMid(ds,e,inner.querySelector(".ir-mid"));
+  {const pb=inner.querySelector(".isle-pinbtn");
+   if(pb)pb.onclick=ev=>{ev.stopPropagation();togglePin(ds,e.name);};}
   const _xw=inner.querySelector(".xmedia-wrap");
   if(_xw)wireCrossBlock(_xw,ds);
   /* 비교(A/B) 버튼 — 미디어 프레임 좌상단 오버레이 (그룹 상세는 미디어 프레임이 없어 제외) */
@@ -4864,22 +4909,28 @@ function fillIsland(ds,e,inner){const L=ds.L;
     const u=tr.dataset.preview||"";
     const ytid=ytIdOf(u);
     if(ytid){ /* 유튜브 — oar 실측 도착 시 실제 캔버스 크기(비가로) 또는 표준 16:9(가로)로 채움 */
+      /* 영상은 실측 픽셀이 나와도 제작 표준 규격으로 표기한다(arDispOf와 같은 규칙) */
       const fill=()=>{const ya=YTAR[ytid];if(!ya)return false;
-        if(ya[0]>100){cell.textContent=ya[0]+"×"+ya[1];
-          cell.title="실측 해상도 — 유튜브 원본 캔버스(oar 썸네일) 실측";return true;}
         const r=ya[0]/ya[1];
         const cls=r>1.05?"가로":r<0.95?"세로":"정사각";
         const s=stdVidDim(cls);
         if(!s)return false;
         cell.textContent=s;
-        cell.title=`유튜브 실측(${cls} 확정) — 표준 규격(${s})으로 표기`;
+        cell.title=`${cls} 영상 — 제작 표준 규격(${s})으로 표기`
+          +(ya[0]>100&&ya[0]+"×"+ya[1]!==s?` · 실측 ${ya[0]}×${ya[1]}(유튜브 캔버스)`:"");
         return true;};
       if(!fill())probeYtAspect(ytid).then(()=>{fill();});
       return;}
     const med=tr.querySelector(".tthumb video, .tthumb img");if(!med)return;
     const upd=()=>{const d=u&&(typeof MDIM!=="undefined")&&MDIM[u];
       const w=(d&&d.w)||med.videoWidth||med.naturalWidth||0,h2=(d&&d.h)||med.videoHeight||med.naturalHeight||0;
-      if(w>1&&h2>1)cell.textContent=w+"×"+h2;};
+      if(!(w>1&&h2>1))return;
+      /* 영상이면 실측을 그대로 쓰지 않고 표준 규격으로 환산 — 서빙 트랜스코딩 크기(640 계열)가 새지 않게 */
+      const isVid=med.tagName==="VIDEO"||/\.(mp4|mov|webm|m4v)(\?|$)/i.test(u);
+      const r=w/h2,cls=r>1.05?"가로":r<0.95?"세로":"정사각";
+      const std=isVid?stdVidDim(cls):"";
+      cell.textContent=std||(w+"×"+h2);
+      cell.title=std?`${cls} 영상 — 제작 표준 규격(${std})으로 표기${std!==w+"×"+h2?` · 실측 ${w}×${h2}`:""}`:"실측 해상도";};
     if(med.tagName==="VIDEO"){if(med.readyState>=1)upd();else med.addEventListener("loadedmetadata",upd);}
     else{if(med.complete&&med.naturalWidth)upd();else med.addEventListener("load",upd);}});}
 /* 상세 이전/다음 — 표의 현재 필터·정렬 순서를 그대로 따라 이동 (페이지 경계 자동 처리) */
@@ -4900,20 +4951,85 @@ function navIsland(delta){if(!curDS)return;
     if(ISLE.name!==nm)toggleIsland(curDS,nm,tr); /* 이미 그 소재면 다시 토글(닫힘) 금지 — 이동 전용 */
     if(_isleNavTo===nm)_isleNavTo=null;
     (document.querySelector(".isle-row")||tr).scrollIntoView({behavior:"smooth",block:"center"});});}
-function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-row");const wasOpen=ISLE.name===name;
-  if(existing)existing.remove();$$("#table tbody tr.exp").forEach(t=>t.classList.remove("exp"));
-  if(wasOpen){ISLE.name=null;try{history.replaceState(null,"",location.pathname+location.search);}catch(_){}
-    /* 상세가 열려 있는 동안 실측 치수가 도착해 미룬 표 갱신이 있으면, 닫는 시점에 한 번 반영(사이즈 칩) */
-    if(_mdimDeferred){_mdimDeferred=false;if(curDS&&mainTab==="table")renderTable(curDS);}
-    return;}
-  const e=findRow(ds,name);if(!e)return;ISLE.name=name;
-  try{history.replaceState(null,"","#ad="+encodeURIComponent(name)+"&ch="+encodeURIComponent(ds.media||""));}catch(_){}
+/* 상세(isle) 내용이 '어떤 데이터 맥락'에서 만들어졌는지 — 기간·매체·레벨이 바뀌면 내용을 다시 만들어야 한다.
+   표를 다시 그릴 때 상세 DOM을 통째로 보존·재삽입하는 최적화가 있어서, 이 서명이 없으면
+   기간을 바꿔도 주차별 추이·비교군 위치가 이전 기간 그대로 남는다(2026-08-06 수정). */
+function isleCtxSig(ds){
+  return [dsKeyOf(ds)||"",(ds&&ds.media)||"",periodN,customWeeks,periodFrom||"",periodTo||""].join("|");}
+let _isleSig="";
+/* ═════ 상세 고정(핀) — 상세보기를 여러 개 띄워 위아래로 비교 ═════
+   상세 좌측 하단 옷핀을 누르면 그 상세가 '고정'된다. 이후 다른 소재의 상세를 열면
+   고정된 상세들이 **활성 상세 바로 아래에** 차례로 붙어, 스크롤 없이 나란히 읽힌다.
+   고정 노드는 표를 다시 그려도 파괴되지 않도록 JS 참조로 들고 있다가 재삽입한다.
+   기간이 바뀌면 고정된 상세도 새 기간으로 다시 만든다(활성 상세와 같은 규칙). */
+let ISLE_PINS=[]; /* [{name, media, node}] — node는 <tr class="isle-row isle-pin"> */
+function pinIndexOf(name,media){return ISLE_PINS.findIndex(p=>p.name===name&&p.media===media);}
+/* 고정 상세들을 활성 상세(없으면 표 끝) 바로 아래에 순서대로 배치 */
+function placePins(){
+  const tbody=document.querySelector("#table tbody");if(!tbody)return;
+  let after=tbody.querySelector(".isle-row:not(.isle-pin)");
+  for(const p of ISLE_PINS){
+    if(!p.node)continue;
+    if(after&&after.nextSibling!==p.node)tbody.insertBefore(p.node,after.nextSibling);
+    else if(!after&&p.node.parentNode!==tbody)tbody.appendChild(p.node);
+    after=p.node;}
+  syncPinCols();}
+function syncPinCols(){
+  const n=document.querySelectorAll("#table thead th").length;
+  if(!n)return;
+  for(const p of ISLE_PINS){const td=p.node&&p.node.querySelector("td");if(td)td.colSpan=n;}}
+/* 핀 토글 — 활성 상세를 고정으로 승격하거나, 고정을 해제한다 */
+function togglePin(ds,name){
+  const media=(ds&&ds.media)||"";
+  const i=pinIndexOf(name,media);
+  if(i>=0){ /* 해제 */
+    const p=ISLE_PINS[i];ISLE_PINS.splice(i,1);
+    if(p.node&&p.node.parentNode)p.node.parentNode.removeChild(p.node);
+    const tr=[...document.querySelectorAll("#table tbody tr.row")].find(t=>t.getAttribute("data-name")===name);
+    if(tr&&ISLE.name!==name)tr.classList.remove("exp","pinned");
+    toast("고정을 해제했어요");return;}
+  if(ISLE.name!==name)return; /* 활성 상세만 고정할 수 있다 */
+  const row=document.querySelector(".isle-row:not(.isle-pin)");if(!row)return;
+  row.classList.add("isle-pin");
+  ISLE_PINS.push({name,media,node:row});
+  const tr=[...document.querySelectorAll("#table tbody tr.row")].find(t=>t.getAttribute("data-name")===name);
+  if(tr)tr.classList.add("pinned");
+  ISLE.name=null; /* 고정으로 넘겼으니 활성 상세는 비운다 — 다음 소재를 열면 이 위에 붙는다 */
+  markPinBtn(row,true);
+  placePins();
+  toast("상세를 고정했어요 · 다른 소재를 열면 바로 아래에 함께 보여요");}
+function markPinBtn(scope,on){
+  const b=scope&&scope.querySelector(".isle-pinbtn");if(!b)return;
+  b.classList.toggle("on",!!on);
+  b.setAttribute("aria-pressed",on?"true":"false");
+  b.title=on?"고정 해제 — 이 상세를 닫습니다":"이 상세를 고정 — 다른 소재를 열어도 아래에 남습니다";}
+/* 고정된 상세들의 내용을 현재 기간으로 다시 만든다 */
+function refillPins(ds){
+  for(const p of ISLE_PINS){
+    const e=findRow(ds,p.name);const inner=p.node&&p.node.querySelector(".isle");
+    if(!e||!inner){continue;}
+    fillIsland(ds,e,inner);}}
+/* 상세 행을 만들어 붙인다 (여닫기 판단 없이 '연다'만) — toggleIsland와 기간 변경 후 재생성이 공유 */
+function mountIsland(ds,name,tr){
+  const e=findRow(ds,name);if(!e)return null;
+  ISLE.name=name;_isleSig=isleCtxSig(ds);
   tr.classList.add("exp");const row=document.createElement("tr");row.className="isle-row";
   const td=document.createElement("td");td.colSpan=tableCols(ds.L,ds).filter(c=>!c.sub||tExp.has(c.grp)).length;const inner=document.createElement("div");inner.className="isle";
   td.appendChild(inner);row.appendChild(td);tr.parentNode.insertBefore(row,tr.nextSibling);
   const sc=document.querySelector(".tbl-scroll");inner.style.width=(sc?sc.clientWidth:1000)+"px";
   inner.innerHTML=`<div class="isle-load">불러오는 중…</div>`;
-  requestAnimationFrame(()=>{if(ISLE.name===name)fillIsland(ds,e,inner);});}
+  if(ISLE_PINS.length)placePins(); /* 고정본을 새 활성 상세 바로 아래로 다시 모은다 */
+  requestAnimationFrame(()=>{if(ISLE.name===name)fillIsland(ds,e,inner);});
+  return row;}
+function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-row:not(.isle-pin)");const wasOpen=ISLE.name===name;
+  if(existing)existing.remove();$$("#table tbody tr.exp:not(.pinned)").forEach(t=>t.classList.remove("exp"));
+  if(wasOpen){ISLE.name=null;try{history.replaceState(null,"",location.pathname+location.search);}catch(_){}
+    /* 상세가 열려 있는 동안 실측 치수가 도착해 미룬 표 갱신이 있으면, 닫는 시점에 한 번 반영(사이즈 칩) */
+    if(_mdimDeferred){_mdimDeferred=false;if(curDS&&mainTab==="table")renderTable(curDS);}
+    return;}
+  if(!findRow(ds,name))return;
+  try{history.replaceState(null,"","#ad="+encodeURIComponent(name)+"&ch="+encodeURIComponent(ds.media||""));}catch(_){}
+  mountIsland(ds,name,tr);}
 /* 표 컬럼 — 성격이 같은 지표는 그룹으로 묶고, 기본은 대표(lead) 컬럼만.
    대표 컬럼 헤더의 +를 누르면 하위(sub) 지표가 펼쳐진다. 점수·이름은 항상 표시 */
 /* 표 컬럼 — 매체별로 '점수에 중요한 순서'의 MECE 상위 카테고리(대표 컬럼)로 구성.
@@ -5170,11 +5286,18 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
   const _gal=$("#gallery"),_tblEl=$("#table");
   if(tGallery){if(_tblEl)_tblEl.style.display="none";if(_gal){_gal.hidden=false;renderGallery(ds,_gal);}return;}
   if(_tblEl)_tblEl.style.display="";if(_gal&&!_gal.hidden){_gal.hidden=true;_gal.innerHTML="";}
-  /* 열려 있던 상세(isle)는 DOM 노드를 그대로 보존해 재렌더 후 다시 붙인다 — fillIsland 재실행/재렌더 루프 없이 열린 상태 유지 */
-  const _isleName=ISLE.name,_keepIsle=_isleName?tbody.querySelector(".isle-row"):null;
+  /* 열려 있던 상세(isle)는 DOM 노드를 그대로 보존해 재렌더 후 다시 붙인다 — fillIsland 재실행/재렌더 루프 없이 열린 상태 유지.
+     단 기간·매체가 바뀌었으면(_isleStale) 보존이 곧 '옛 기간 화면을 그대로 보여주는' 버그가 되므로 내용을 다시 만든다 */
+  const _isleName=ISLE.name;
+  const _isleStale=!!_isleName&&_isleSig!==isleCtxSig(ds);
+  const _keepIsle=(_isleName&&!_isleStale)?tbody.querySelector(".isle-row"):null;
   const cols=allCols.filter(c=>!c.sub||tExp.has(c.grp));
   renderFilters(ds); /* 서비스·제작자 드롭다운 옵션·유효성 먼저 확정 → 아래 필터링과 어긋나지 않게 */
   const rows=orderedRowsForTable(ds);
+  /* 기간이 바뀌면 정렬 순서가 달라져 보던 소재가 다른 페이지로 밀린다 — 상세를 닫지 말고 그 페이지로 따라간다.
+     (사용자가 직접 페이지를 넘긴 경우엔 _isleStale이 아니므로 종전대로 상세가 닫힌다) */
+  if(_isleStale){const _gi=rows.findIndex(r=>r.name===_isleName);
+    if(_gi>=0)tPage=Math.floor(_gi/PAGE_SIZE)+1;}
   const totalRows=rows.length;
   /* '소재' 제목행에 현재 필터(라이브·비디오·이미지 등) 반영 소재 수를 함께 표기 — 매체 드롭다운의 고정 숫자보다 정확 */
   thead.innerHTML="<tr>"+cols.map(c=>{const sorted=tState.sort===c.k,arr=sorted?(tState.dir<0?"▼":"▲"):"";
@@ -5245,8 +5368,36 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
   /* 보존해 둔 상세 노드를 여전히 보이는 소재 행 아래 다시 삽입(내용 재생성 없음). 안 보이면 상세는 닫힌다 */
   if(_isleName){const rtr=[...tbody.querySelectorAll("tr.row")].find(t=>t.getAttribute("data-name")===_isleName);
     if(rtr&&_keepIsle){rtr.classList.add("exp");const td=_keepIsle.querySelector("td");if(td)td.colSpan=cols.length;rtr.parentNode.insertBefore(_keepIsle,rtr.nextSibling);}
+    else if(rtr&&_isleStale){
+      /* 기간이 바뀌었다 — 새 기간 데이터로 내용을 다시 만들고, 보던 소재를 화면 맨 위에 즉시 고정한다.
+         스크롤 애니메이션은 넣지 않는다(순서가 재배치되는 순간 화면이 흐르면 어지럽다 — '그 자리에 그대로 있던 것처럼') */
+      mountIsland(ds,_isleName,rtr);
+      scrollRowToTop(rtr);}
     else ISLE.name=null;}
+  /* 고정(핀)해 둔 상세들은 표를 다시 그려도 살아남아 활성 상세 아래에 다시 붙는다.
+     기간이 바뀌었으면 고정본도 새 기간으로 다시 만든다 — 활성 상세만 갱신하면 옆에 옛 값이 남아 더 헷갈린다 */
+  if(ISLE_PINS.length){
+    /* 표에 그 소재 행이 남아 있으면 펼침 표시를 되살린다(정렬·필터로 사라졌으면 상세만 아래에 남는다) */
+    for(const p of ISLE_PINS){
+      const ptr=[...tbody.querySelectorAll("tr.row")].find(t=>t.getAttribute("data-name")===p.name);
+      if(ptr)ptr.classList.add("exp","pinned");}
+    placePins();
+    if(_isleStale)refillPins(ds);}
   hydrateYtNames();}
+/* 행을 화면 맨 위로 — 애니메이션 없이 즉시. 상단 고정 헤더(툴바) 높이만큼 빼서 행이 가리지 않게 한다 */
+function scrollRowToTop(tr){
+  if(!tr)return;
+  const doIt=()=>{
+    const r=tr.getBoundingClientRect();
+    const head=document.querySelector("#table thead");
+    const off=(head?head.getBoundingClientRect().height:0)+12;
+    const y=r.top+window.pageYOffset-off;
+    const prev=document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior="auto"; /* CSS smooth가 걸려 있어도 무시 */
+    window.scrollTo(0,Math.max(0,y));
+    document.documentElement.style.scrollBehavior=prev;};
+  doIt();
+  requestAnimationFrame(doIt);} /* 상세가 붙으면서 위 콘텐츠 높이가 바뀔 수 있어 한 프레임 뒤 재보정 */
 /* 유튜브 제목이 캐시에 도착하면 다시 그리지 않고 화면의 URL 이름만 제자리 갱신 */
 function refreshDisplayNames(){
   if(!curDS)return;
@@ -7215,6 +7366,19 @@ function CR_SELFTEST(){
    t("_res가 oar 실측·'방향' 문자열보다 앞선다",src(e),[1080,1920,"gori",false]);
    t("_res 없으면 종전 oar 실측으로 폴백",src({_g_assetType:"YouTube 동영상",_g_url:e._g_url,name:e.name}),[1920,1080,"oar",false]);
    if(had)YTAR[id]=old;else delete YTAR[id];}
+  /* 영상은 서빙 실측이 아니라 제작 표준 규격으로 통일 표기 — 매체마다 값이 갈리면 필터·매칭이 쪼개진다 */
+  const vid=(res,extra)=>arDispOf(Object.assign({_m_ctype:"VIDEO",tags:{fo:"영상"},_res:res,_m_resReal:res},extra||{}));
+  t("몰로코 영상 640×640 → 정사각 표준 1080×1080",vid("640x640"),"1080×1080");
+  t("몰로코 영상 640×360 → 가로 표준 1920×1080",vid("640x360"),"1920×1080");
+  t("몰로코 영상 360×640 → 세로 표준 1080×1920",vid("360x640"),"1080×1920");
+  t("이미지는 실제 규격 그대로",arDispOf({_m_ctype:"IMAGE",tags:{fo:"이미지"},_res:"1200x628"}),"1200×628");
+  t("영상 표준 표기여도 실측값은 툴팁에 남긴다",
+    (stdSwapOf({_m_ctype:"VIDEO",tags:{fo:"영상"},_res:"640x640",_m_resReal:"640x640"})||{}).raw,"640×640");
+  /* 기간이 바뀌면 상세 내용을 다시 만들어야 한다 — 서명이 같으면 옛 기간 화면이 그대로 남는다 */
+  {const ds={media:"Moloco"};const a=isleCtxSig(ds);
+   const keep=periodN;periodN=(periodN==="4"?"13":"4");
+   const b=isleCtxSig(ds);periodN=keep;
+   t("기간이 바뀌면 상세 컨텍스트 서명도 바뀐다",a!==b,true);}
   t("_res가 파일명 정규식(tags.size)보다 앞선다",
     src({_m_ctype:"VIDEO",_res:"640x640",_m_resReal:"640x640",tags:{size:"1080×1080"},_m_res:"1080x1080"}),[640,640,"mreal",false]);
   /* ── 타매체 매칭 ── */
