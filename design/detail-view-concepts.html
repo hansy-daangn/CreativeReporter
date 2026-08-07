@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>상세보기 시안 v2 — C 골격 3변주 · 당근 소재분석툴</title>
+<title>상세보기 확정안 — C3 판정 레일 · 당근 소재분석툴</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
 <style>
@@ -145,6 +145,22 @@
   @media(max-width:1100px){.c2 .cmp2{grid-template-columns:1fr}}
 
   /* ── C3 · 판정 레일: 점수·진단·KPI 히어로(스파크 내장) + 미니 2열 ── */
+  /* r-top(점수·등급·진단) 폐지 — 이름·등급은 표 행에 이미 있고, 점수는 화면에서 쓰지 않는다.
+     진단 문장도 아래 KPI 히어로가 같은 말을 더 정확히 하므로 중복이었다. 남길 것은 조작 버튼뿐. */
+  .c3 .r-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px;min-width:0}
+  .c3 .r-bar .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    font-size:var(--fs-2);font-weight:700;color:var(--muted)}
+  .c3 .r-bar .navr{flex:0 0 auto}
+  /* 수명·시청유지를 가로로 — 세로형 소재에서 상세가 세로로 길어지는 것을 막는다 */
+  /* 고정 2열 — auto-fit이면 영상이 없는 소재(그래프 1개)에서 수명 곡선이 전폭으로 늘어나
+     같은 화면인데 소재마다 그래프 크기가 달라진다. 폭은 소재와 무관하게 일정해야 비교가 된다. */
+  .c3 .r-charts{display:grid;grid-template-columns:repeat(2,minmax(0,300px));justify-content:start;gap:6px 24px;margin-bottom:14px}
+  @media(max-width:900px){.c3 .r-charts{grid-template-columns:minmax(0,1fr)}}
+  .c3 .r-charts .st-blk{min-width:0}
+  .c3 .r-charts svg{max-width:100%!important}
+  /* 호버하면 그 지점 값이 뜬다(네이티브 title) — 점도 같이 커져 어디를 짚었는지 보인다 */
+  .hz{cursor:default}
+  .hz:hover .hd{opacity:1}
   .c3 .r-top{display:flex;align-items:flex-start;gap:16px;margin-bottom:6px}
   .c3 .r-verdict{display:flex;align-items:center;gap:12px;flex:0 0 auto}
   .c3 .r-verdict .n{font-size:34px;font-weight:800;letter-spacing:-.035em;line-height:1}
@@ -204,7 +220,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1 class="doc-h">상세보기 시안 v2 — C 골격 확정, 레일 3변주</h1>
+  <h1 class="doc-h">상세보기 확정안 — C3 · 판정 레일 <small>(C1·C2는 채택 후 정리, git 이력에 남아 있음)</small></h1>
   <p class="doc-s">좌측 미디어 스테이지 + 우측 데이터 레일(C 골격)은 고정하고, <b>레일의 골격 자체</b>를 세 방향으로 다르게 설계했습니다. 매체 세그먼트(구글 AEO · 구글 ACE · 몰로코)를 눌러 같은 규칙의 렌더링을 확인하세요. 수치는 검증용 예시 데이터입니다.</p>
   <div class="fb">
     <div><b>✓ 1</b><span>영상 소재는 <b>영상 시청 유지</b>를 수명 곡선 바로 아래에 — 좌측 스테이지가 미디어·수명·시청을 한 열로 담습니다.</span></div>
@@ -215,69 +231,16 @@
 
   <nav class="cnav" id="cnav">
     <a href="#c1" class="on">C1 · 원장 레일</a>
-    <a href="#c2">C2 · 이열 레일</a>
     <a href="#c3">C3 · 판정 레일</a>
     <a href="#fin">비교 · 추천</a>
   </nav>
 
-  <!-- ═════ C1 ═════ -->
-  <section class="concept" id="c1">
-    <div class="c-head"><span class="c-badge">C1</span><h2>원장 레일</h2><span class="c-tag">한 열로 정독 — 성과→실증→구분선→비교가 하나의 세로 흐름</span></div>
-    <p class="c-sum">레일 전체가 <b>단일 원장</b>입니다. 성과와 실증이 같은 행 문법으로 이어지고, 등급 칩을 유지해 훑을 때 좋고 나쁨이 칩 색으로도 잡힙니다. 위에서 아래로 한 번 읽으면 끝나는, 세 안 중 가장 종이 리포트에 가까운 구조.</p>
-    <div class="mseg" data-c="1"><button class="on" data-m="aeo">구글 AEO</button><button data-m="ace">구글 ACE</button><button data-m="moloco">몰로코</button></div>
-    <div class="stage-out">
-      <div class="stage-hd"><div class="stage-cap">상세보기 <i id="cap1"></i>· 표의 행을 펼친 상태</div>
-      <div class="fake-row"><b>▾</b> <span>표 행 (소재 목록의 현재 행 — 클릭으로 여닫음)</span></div></div>
-      <div id="mk1"></div>
-    </div>
-    <div class="judge">
-      <div class="judge-h"><b>적대자 채점</b><span>10점 만점 · 피드백 반영 후 재채점</span></div>
-      <table>
-        <tr><td class="crit">가독성</td><td class="c">9</td><td class="note">행 문법 하나, 정렬선 네 줄(라벨·값·스파크·상위%)이 원장 전체를 관통.</td></tr>
-        <tr><td class="crit">공간 활용</td><td class="c">8</td><td class="note">한 열이라 세로로 가장 길다. 대신 스테이지의 남는 세로를 수명·시청 곡선이 채워 좌우 높이가 맞는다.</td></tr>
-        <tr><td class="crit">계층·위계</td><td class="c">9</td><td class="note">이름·점수 → 진단 → 원장 → 비교의 단선 위계. 등급 칩이 행 사이 강약을 만든다.</td></tr>
-        <tr><td class="crit">미니멀리즘</td><td class="c">9</td><td class="note">탭 0 · 소제목 0 · 칩은 등급만. 구분선 단 하나.</td></tr>
-        <tr><td class="crit">직관·간결</td><td class="c">9</td><td class="note">"어디를 눌러야 하지?"가 없는 구조 — 전부 한 화면에 이미 있다.</td></tr>
-        <tr><td class="crit">톤앤매너</td><td class="c">10</td><td class="note">기존 등급 칩·타이포 스케일 그대로.</td></tr>
-      </table>
-      <div class="cut"><b>라운드에서 잘려나간 것</b><ul>
-        <li>성과/실증 사이 마이크로 캡션 — 라벨이 자기설명적이라 캡션 없이 여백+헤어라인으로 충분하다고 판정. 코호트 기준 정보는 ⓘ로.</li>
-        <li>비교 행의 스파크 빈 칸 — 다섯 열을 억지로 채우지 않고 값이 두 열을 쓰게 해 왼쪽 정렬선만 유지.</li>
-      </ul></div>
-    </div>
-  </section>
 
-  <!-- ═════ C2 ═════ -->
-  <section class="concept" id="c2">
-    <div class="c-head"><span class="c-badge">C2</span><h2>이열 레일</h2><span class="c-tag">성과 | 실증 나란히 — 등급 칩까지 걷어낸 최소 잉크, 한 화면 스캔</span></div>
-    <p class="c-sum">레일을 <b>성과(매체 리포트)와 실증(유저 단위)의 두 열</b>로 나란히 세웁니다. 등급 칩도 제거하고 값의 색과 상위%만 남긴 <b>최소 잉크</b> 버전 — 스크롤 없이 첫 화면에서 모든 지표와 비교가 끝납니다. 세로가 짧고 가로를 쓰는, 스캔에 최적화된 구조.</p>
-    <div class="mseg" data-c="2"><button class="on" data-m="aeo">구글 AEO</button><button data-m="ace">구글 ACE</button><button data-m="moloco">몰로코</button></div>
-    <div class="stage-out">
-      <div class="stage-hd"><div class="stage-cap">상세보기 <i id="cap2"></i>· 표의 행을 펼친 상태</div>
-      <div class="fake-row"><b>▾</b> <span>표 행 (소재 목록의 현재 행 — 클릭으로 여닫음)</span></div></div>
-      <div id="mk2"></div>
-    </div>
-    <div class="judge">
-      <div class="judge-h"><b>적대자 채점</b><span>10점 만점 · 피드백 반영 후 재채점</span></div>
-      <table>
-        <tr><td class="crit">가독성</td><td class="c">9</td><td class="note">열 하나가 좁아 시선 이동이 짧다. 칩이 없어도 값 색+상위%로 판단이 선다.</td></tr>
-        <tr><td class="crit">공간 활용</td><td class="c">10</td><td class="note">세 안 중 상세 높이 최소 — 목록으로 돌아가는 스크롤 비용이 가장 적다.</td></tr>
-        <tr><td class="crit">계층·위계</td><td class="c">8</td><td class="note">좌=매체가 말하는 성과, 우=유저가 증명한 실증 — 열 자체가 의미를 갖는다. 다만 히어로급 강조점은 없다.</td></tr>
-        <tr><td class="crit">미니멀리즘</td><td class="c">10</td><td class="note">칩 0 · 탭 0 · 소제목 0. 잉크가 가장 적은 안.</td></tr>
-        <tr><td class="crit">직관·간결</td><td class="c">9</td><td class="note">비교도 같은 2열로 이어져 문법 전환이 없다.</td></tr>
-        <tr><td class="crit">톤앤매너</td><td class="c">10</td><td class="note">색·타이포·간격 전부 기존 토큰.</td></tr>
-      </table>
-      <div class="cut"><b>라운드에서 잘려나간 것</b><ul>
-        <li>등급 칩 — 값 색이 이미 등급을 말한다. 색약 대비는 상위% 텍스트가 담당(색만으로 전달 금지 원칙 유지).</li>
-        <li>두 열 위 큰 제목 — 열 첫머리의 한 줄짜리 옅은 캡션(성과·실증 기준)으로 축소. 이것마저 없애면 "왼쪽/오른쪽이 뭐가 다르지"가 생겨 남김.</li>
-      </ul></div>
-    </div>
-  </section>
 
   <!-- ═════ C3 ═════ -->
   <section class="concept" id="c3">
-    <div class="c-head"><span class="c-badge">C3</span><h2>판정 레일</h2><span class="c-tag">점수·진단·대표지표 3슬롯이 히어로 — 스파크라인이 KPI 안으로</span></div>
-    <p class="c-sum">A안의 '판정 우선' DNA를 C 골격에 이식한 안. <b>점수(34px)·진단·대표지표 3슬롯</b>이 레일 상단을 지배하고, KPI 슬롯 안에 스파크라인이 내장돼 "지금 좋은가 + 좋아지는 중인가"가 첫 시선에서 끝납니다. 나머지 지표는 촘촘한 2열 미니 원장으로 물러납니다.</p>
+    <div class="c-head"><span class="c-badge">C3</span><h2>판정 레일</h2><span class="c-tag">대표지표 3슬롯이 히어로 — 수명·시청유지는 상단 가로 2열</span></div>
+    <p class="c-sum">레일 상단의 점수·등급·진단 블록을 걷어낸 안. 이름·등급은 표 행에 이미 있고 점수는 쓰지 않으며, 진단 문장이 하던 말은 아래 <b>KPI 히어로 3슬롯</b>이 더 정확히 한다. 비운 자리에 <b>수명·시청유지를 가로 2열</b>로 올려 세로형 소재에서도 상세 높이가 늘지 않는다. 두 그래프는 호버로 구간 값을 읽고, 시청유지는 <b>유독 큰 이탈 구간 하나만</b> 표시한다.</p>
     <div class="mseg" data-c="3"><button class="on" data-m="aeo">구글 AEO</button><button data-m="ace">구글 ACE</button><button data-m="moloco">몰로코</button></div>
     <div class="stage-out">
       <div class="stage-hd"><div class="stage-cap">상세보기 <i id="cap3"></i>· 표의 행을 펼친 상태</div>
@@ -287,33 +250,21 @@
     <div class="judge">
       <div class="judge-h"><b>적대자 채점</b><span>10점 만점 · 피드백 반영 후 재채점</span></div>
       <table>
-        <tr><td class="crit">가독성</td><td class="c">9</td><td class="note">첫 시선은 판정, 둘째 시선은 KPI 추이, 셋째가 세부 — 읽는 순서가 강제된다.</td></tr>
+        <tr><td class="crit">가독성</td><td class="c">9</td><td class="note">첫 시선은 수명·시청유지, 둘째가 KPI 히어로, 셋째가 세부 — 읽는 순서가 강제된다.</td></tr>
         <tr><td class="crit">공간 활용</td><td class="c">9</td><td class="note">미니 2열이 세부 지표를 압축해 히어로에 쓴 공간을 회수.</td></tr>
-        <tr><td class="crit">계층·위계</td><td class="c">10</td><td class="note">34px 점수 → 23px KPI → 11.5px 세부의 3단 크기 위계가 정보 중요도와 일치. 세 안 중 위계가 가장 또렷.</td></tr>
-        <tr><td class="crit">미니멀리즘</td><td class="c">8</td><td class="note">히어로가 쓰는 잉크만큼 C2보다 무겁다 — 의도된 트레이드오프.</td></tr>
-        <tr><td class="crit">직관·간결</td><td class="c">10</td><td class="note">"밀까 말까"에 3초 안에 답한다. KPI 스파크가 방향까지 같이 답한다.</td></tr>
-        <tr><td class="crit">톤앤매너</td><td class="c">9</td><td class="note">34px는 기존 스케일(23px) 위의 예외 1개 — 화면에 하나꼴 히어로 원칙 안에서 허용.</td></tr>
+        <tr><td class="crit">계층·위계</td><td class="c">10</td><td class="note">23px KPI → 11.5px 세부의 2단 크기 위계. 점수를 걷어내며 히어로가 하나로 줄어 위계가 더 또렷해졌다.</td></tr>
+        <tr><td class="crit">미니멀리즘</td><td class="c">8</td><td class="note">점수·진단 블록을 걷어내 상단 잉크가 줄었다. 남은 무게는 KPI 히어로 하나뿐.</td></tr>
+        <tr><td class="crit">직관·간결</td><td class="c">10</td><td class="note">"밀까 말까"에 3초 안에 답한다. 시청유지의 이탈 표시가 "왜"까지 답한다.</td></tr>
+        <tr><td class="crit">톤앤매너</td><td class="c">9</td><td class="note">기존 스케일(23px)을 넘는 예외가 사라졌다 — 34px 점수를 걷어낸 결과.</td></tr>
       </table>
       <div class="cut"><b>라운드에서 잘려나간 것</b><ul>
-        <li>KPI 슬롯의 중앙값 서브라인 — 스파크가 들어오면서 한 슬롯에 정보 4개는 과밀. 중앙값은 ⓘ 툴팁으로.</li>
-        <li>진단 문장 강조 배경띠 — 점수가 이미 히어로인데 배경띠까지 있으면 강조가 둘. 민글로 회귀.</li>
+        <li>KPI 슬롯의 중앙값 서브라인 — 한 슬롯에 정보 4개는 과밀. 중앙값은 호버 툴팁으로.</li>
+        <li>진단 문장 자체 — KPI 히어로가 같은 말을 더 정확히 한다(2026-08-07 피드백).</li>
       </ul></div>
     </div>
   </section>
 
   <!-- ═════ 비교 · 추천 ═════ -->
-  <section class="final" id="fin">
-    <h2>세 변주 비교 · 추천</h2>
-    <table>
-      <tr><th></th><th>C1 · 원장 레일</th><th>C2 · 이열 레일</th><th>C3 · 판정 레일</th></tr>
-      <tr><td>레일 골격</td><td>단일 세로 원장</td><td>성과 | 실증 2열</td><td>판정 히어로 + 미니 2열</td></tr>
-      <tr><td>등급 표기</td><td>칩 + 값 색</td><td>값 색 + 상위%만</td><td>KPI는 색, 세부는 색+%</td></tr>
-      <tr><td>읽기 방식</td><td>정독 (위→아래 한 번)</td><td>스캔 (한 화면에 전부)</td><td>판정 → 필요시 세부</td></tr>
-      <tr><td>상세 높이</td><td>김</td><td>최소</td><td>중간</td></tr>
-      <tr><td>어울리는 순간</td><td>소재 하나를 깊게 뜯을 때</td><td>여러 소재를 빠르게 돌 때</td><td>증액/중단 결정을 내릴 때</td></tr>
-    </table>
-    <p class="reco"><b>추천은 C2.</b> 이번 피드백의 방향(칩 제거 · 소제목 제거 · 스파크의 시각 우선순위 낮추기)이 전부 "잉크를 줄이고 한 화면에서 끝내라"를 가리키는데, C2가 그 종착점입니다. ←/→로 소재를 돌며 보는 실제 사용 패턴에도 상세 높이 최소가 유리합니다. 결정 속도가 더 중요하면 C3 — C2 골격에 C3의 KPI 히어로만 얹는 절충도 구현 난도 없이 가능합니다.</p>
-  </section>
 </div>
 
 <script>
@@ -345,7 +296,7 @@ aeo:{
     {k:"알바 서비스 · 28개",v:"실유저 상위 18%",tier:"g1",rank:"광고비 상위 33%"},
     {k:"몰로코 · 같은 소재",v:"eCPA −₩120",tier:"g2",rank:"광고비 −455만원"},
     {k:"메타 · 같은 소재",v:"광고비 +455만원",tier:"m",rank:""}],
-  life:{cap:"수명 · 8주 · 누적 6,160만원",sp:[3,4,6,7,9,11,10,12]},
+  life:{wk:8,hi:5,tot:"6,160만원",sp:[3,4,6,7,9,11,10,12]},
   video:{pts:[100,68,41,28,19]},
   gmore:"구글 애셋 세부 · 6"},
 ace:{
@@ -371,7 +322,7 @@ ace:{
     {k:"ACE_브랜딩_홈 · 9개",v:"실유저 상위 39%",tier:"m",rank:"광고비 상위 18%"},
     {k:"브랜딩 · 17개",v:"실유저 상위 47%",tier:"m",rank:"광고비 상위 24%"},
     {k:"구글 AEO · 같은 소재",v:"CPM −₩310",tier:"g2",rank:""}],
-  life:{cap:"수명 · 8주 · 누적 7,960만원",sp:[5,6,8,9,9,10,11,11]},
+  life:{wk:8,hi:6,tot:"7,960만원",sp:[5,6,8,9,9,10,11,11]},
   video:{pts:[100,74,52,37,26]},
   gmore:"구글 애셋 세부 · 6"},
 moloco:{
@@ -399,7 +350,7 @@ moloco:{
     {k:"홈피드 서비스 · 21개",v:"실유저 상위 28%",tier:"g1",rank:"광고비 상위 42%"},
     {k:"구글 AEO · 같은 소재",v:"광고비 +455만원",tier:"m",rank:""},
     {k:"메타 · 같은 소재",v:"eCPA +₩240",tier:"w2",rank:""}],
-  life:{cap:"수명 · 7주 · 누적 3,140만원 · 종료",sp:[3,5,6,7,8,7,5,0]},
+  life:{wk:7,hi:3,tot:"3,140만원",ended:1,sp:[3,5,6,7,8,7,5,0]},
   video:null,
   gmore:null}
 };
@@ -428,17 +379,38 @@ function lifeSVG(sp,W,H){
   const pk=sp.indexOf(Math.max(...sp));
   g+=`<circle cx="${X(pk)}" cy="${Y(sp[pk])}" r="2.8" fill="var(--karrot)"/>`;
   g+=`<circle cx="${X(n-1)}" cy="${Y(sp[n-1])}" r="2.6" fill="${sp[n-1]>0?"#35B979":"var(--faint)"}"/>`;
+  /* 주별 호버 — 넓은 투명 띠를 얹어 정확히 겨누지 않아도 값이 뜨게 한다 */
+  const bw=(W-2*p)/(n-1);
+  sp.forEach((v,i)=>{
+    g+=`<g class="hz"><rect x="${(X(i)-bw/2).toFixed(1)}" y="0" width="${bw.toFixed(1)}" height="${H}" fill="transparent"/>`
+      +`<title>${i+1}주차 · 주간 광고비 ${v.toLocaleString()}백만원${i===pk?" · 피크":""}</title>`
+      +`<circle class="hd" cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="3.4" fill="var(--karrot)" opacity="0"/></g>`;});
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto">${g}</svg>`;
 }
 /* 영상 시청 유지(스테이지 · 수명 바로 아래) */
 function vretSVG(pts,W,H){
-  W=W||300;H=H||76;const pl=8,pr=8,pt=10,pb=16,iw=W-pl-pr,ih=H-pt-pb;
-  const labs=["0%","25%","50%","75%","100%"];
+  W=W||300;H=H||76;const pl=8,pr=8,pt=14,pb=10,iw=W-pl-pr,ih=H-pt-pb;
+  const SEG=["0→25%","25→50%","50→75%","75→100%"];
   const X=i=>pl+i*iw/(pts.length-1),Y=v=>pt+(1-v/100)*ih;
   let ln="";pts.forEach((v,i)=>{ln+=(i?" L":"M")+` ${X(i).toFixed(1)} ${Y(v).toFixed(1)}`;});
   let g=`<path d="${ln} L ${X(pts.length-1)} ${H-pb} L ${X(0)} ${H-pb} Z" fill="var(--g1)" fill-opacity="0.1"/><path d="${ln}" fill="none" stroke="var(--g1)" stroke-width="1.7"/>`;
-  pts.forEach((v,i)=>{g+=`<circle cx="${X(i)}" cy="${Y(v)}" r="2.2" fill="var(--g1)"/><text x="${X(i)}" y="${H-4}" text-anchor="middle" font-size="8.5" fill="var(--faint)">${labs[i]}</text>`;});
-  g+=`<text x="${X(pts.length-1)}" y="${(Y(pts[pts.length-1])-6).toFixed(1)}" text-anchor="end" font-size="10" font-weight="750" fill="var(--g1)">완주 ${pts[pts.length-1]}%</text>`;
+  /* 구간별 이탈폭 — 어디서 빠지는지가 핵심이라 '유독 큰 한 곳'만 적는다.
+     기준: 최대 이탈이 평균 이탈의 1.5배 이상이면서 15%p 이상. 고르게 빠지면 아무것도 적지 않는다
+     (전 구간에 숫자를 붙이면 '어디가 문제인가'라는 질문에 답하지 못한다). */
+  const drop=pts.slice(1).map((v,i)=>pts[i]-v);
+  const mxD=Math.max(...drop),avg=drop.reduce((a,b)=>a+b,0)/drop.length,di=drop.indexOf(mxD);
+  const notable=mxD>=15&&mxD>=avg*1.5;
+  pts.forEach((v,i)=>{g+=`<circle cx="${X(i)}" cy="${Y(v)}" r="2.2" fill="var(--g1)"/>`;});
+  /* 구간 호버 — 라벨을 지운 대신 값은 호버로 전부 읽힌다 */
+  drop.forEach((dv,i)=>{
+    g+=`<g class="hz"><rect x="${X(i).toFixed(1)}" y="0" width="${(X(i+1)-X(i)).toFixed(1)}" height="${H}" fill="transparent"/>`
+      +`<title>${SEG[i]} 구간 · 도달 ${pts[i]}% → ${pts[i+1]}% · 이탈 ${dv}%p</title></g>`;});
+  if(notable){
+    /* 구간 중앙보다 살짝 오른쪽·아래 — 정중앙에 두면 급락 구간에서 시작 점과 겹친다 */
+    const mx1=X(di)+(X(di+1)-X(di))*0.66, my=(Y(pts[di])+Y(pts[di+1]))/2+5;
+    g+=`<line x1="${X(di).toFixed(1)}" y1="${Y(pts[di]).toFixed(1)}" x2="${X(di+1).toFixed(1)}" y2="${Y(pts[di+1]).toFixed(1)}" stroke="var(--w1)" stroke-width="2.4"/>`;
+    g+=`<text x="${mx1.toFixed(1)}" y="${Math.max(9,my-7).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--w1)" paint-order="stroke" stroke="#FFFDF7" stroke-width="3" stroke-linejoin="round">이탈 ${mxD}%p</text>`;}
+  /* 차트 안 '완주 N%'는 뺐다 — 캡션이 이미 같은 값을 말한다. 한 화면에 같은 숫자를 두 번 쓰지 않는다 */
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto">${g}</svg>`;
 }
 /* 미디어 목업 */
@@ -451,10 +423,28 @@ function phHTML(d){
     :`<div class="cap">${d.media==="구글 ACE"?"당근 10년, 동네의 시간":"동네 알바, 오늘 바로"}<small>당근에서 검색</small></div>`;
   return `<div class="ph ${d.ar}"><div class="bg" style="${grad}"></div>${cap}${d.fo==="영상"?'<div class="play"></div>':""}${d.dur?`<div class="dur num">${d.dur}</div>`:""}</div>`;
 }
-/* 수명 · (영상이면 그 아래) 시청 유지 — 스테이지(C1·C3)와 레일 3열(C2)이 공유 */
+/* 수명 · 시청 유지 — 가로로 나란히. 세로형 소재에선 스테이지가 이미 높아, 이 둘까지 세로로
+   쌓으면 상세 전체가 화면을 넘긴다. 캡션은 라벨("수명") 대신 **정보**를 싣는다 —
+   "수명 · 8주 · 누적 6,160만원"에서 '수명'은 그림이 이미 말하고 있어 글자만 차지한다. */
+function lifeCap(L){
+  const parts=[`총 ${L.wk}주`];
+  if(L.hi)parts.push(`<span title="주간 광고비가 매체 상위 25%였던 주">👍 ${L.hi}주</span>`);
+  parts.push(`누적 ${L.tot}`);
+  if(L.ended)parts.push(`<em>종료</em>`);
+  return parts.join(" · ");
+}
+function vretCap(pts){
+  const drop=pts.slice(1).map((v,i)=>pts[i]-v);
+  const mx=Math.max(...drop),avg=drop.reduce((a,b)=>a+b,0)/drop.length;
+  const SEG=["0→25%","25→50%","50→75%","75→100%"];
+  const parts=[`완주 ${pts[pts.length-1]}%`];
+  if(mx>=15&&mx>=avg*1.5)parts.push(`최대 이탈 ${SEG[drop.indexOf(mx)]}`);
+  else parts.push(`<em>고른 이탈</em>`);
+  return parts.join(" · ");
+}
 function chartsHTML(d,W){
-  return `<div class="st-blk"><div class="microcap">${d.life.cap}</div>${lifeSVG(d.life.sp,W,62)}</div>
-    ${d.video?`<div class="st-blk"><div class="microcap">영상 시청 유지 <em>· 구간별 도달</em></div>${vretSVG(d.video.pts,W,76)}</div>`:""}`;
+  return `<div class="st-blk"><div class="microcap">${lifeCap(d.life)}</div>${lifeSVG(d.life.sp,W,62)}</div>
+    ${d.video?`<div class="st-blk"><div class="microcap">${vretCap(d.video.pts)}</div>${vretSVG(d.video.pts,W,76)}</div>`:""}`;
 }
 /* 스테이지 — 미디어 · 메타 한 줄 (+옵션: 수명·시청 곡선) */
 function stageHTML(d,noCharts){
@@ -470,50 +460,7 @@ const nameHTML=d=>`<div class="r-name">${d.live?'<span class="livedot" title="�
 const footHTML=d=>d.gmore?`<div class="r-foot"><button class="more">${d.gmore.split(" · ")[0]} <i>${d.gmore.split(" · ")[1]}</i> ▾</button></div>`:"";
 
 /* ═════ C1 · 원장 레일 ═════ */
-function render1(d){
-  const lr=o=>`<div class="lr hv"><span class="k">${o.k}</span><b class="v num" style="color:${TIERC[o.tier]}">${o.v}</b>${o.sp?spk(o.sp):"<span></span>"}<span class="chip-slot">${spChip(o.tier)}</span><span class="r">${o.rank||""}</span></div>`;
-  const cmp=o=>`<div class="lr cmp hv" title="${CMP_TIP.replace(/&#10;/g,"\n")}"><span class="k" title="${o.k}">${o.k}</span><b class="v num" style="color:${TIERC[o.tier]}">${o.v}</b><span class="chip-slot"></span><span class="r">${o.rank||""}</span></div>`;
-  return `<div class="cc c1" style="--stw:340px">
-  ${stageHTML(d)}
-  <div class="rail">
-    <div class="r-top">
-      <div class="r-id">${nameHTML(d)}<div class="r-diag">${d.diag.join(" ")}</div></div>
-      <div class="r-score"><div class="n num" style="color:${TIERC[d.tier]}">${d.score}</div>${spChip(d.tier)}</div>
-      ${navBtns}
-    </div>
-    ${d.perf.map(lr).join("")}
-    <div class="gapline" title="${d.cohortCap} — ${COHORT_TIP}"></div>
-    ${d.cohort.map(lr).join("")}
-    <hr class="divider">
-    ${d.cmp.map(cmp).join("")}
-    ${footHTML(d)}
-  </div>
-</div>`;}
-
 /* ═════ C2 · 이열 레일 ═════ */
-function render2(d){
-  const lr=o=>`<div class="lr hv"><span class="k">${o.k}</span><b class="v num" style="color:${TIERC[o.tier]}">${o.v}</b>${o.sp?spk(o.sp,80):"<span></span>"}<span class="r">${o.rank||""}</span></div>`;
-  const cmp=o=>`<div class="lr cmp hv" title="${CMP_TIP.replace(/&#10;/g,"\n")}"><span class="k" title="${o.k}">${o.k}</span><b class="v num" style="color:${TIERC[o.tier]}">${o.v}</b><span class="r">${o.rank||""}</span></div>`;
-  const half=Math.ceil(d.cmp.length/2);
-  return `<div class="cc c2" style="--stw:300px">
-  ${stageHTML(d,true)}
-  <div class="rail">
-    <div class="r-top">${d.live?'<span class="livedot" title="라이브"></span>':""}<span class="nm" style="font-size:var(--fs-4);font-weight:760;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.name}</span><span class="sp ${spCls(d.tier)}">${d.score} · ${d.tierLab}</span>${navBtns}</div>
-    <div class="r-diag">${d.diag.join(" ")}</div>
-    <div class="cols">
-      <div><div class="colcap">매체 리포트 · 최근 8주</div>${d.perf.map(lr).join("")}</div>
-      <div><div class="colcap">${d.cohortCap}<span class="q" title="${COHORT_TIP}">?</span></div>${d.cohort.map(lr).join("")}</div>
-      <div class="chartcol">${chartsHTML(d,180)}</div>
-    </div>
-    <hr class="divider">
-    <div class="cmp2">
-      <div>${d.cmp.slice(0,half).map(cmp).join("")}</div>
-      <div>${d.cmp.slice(half).map(cmp).join("")}</div>
-    </div>
-    ${footHTML(d)}
-  </div>
-</div>`;}
-
 /* ═════ C3 · 판정 레일 ═════ */
 function render3(d){
   const kpiLabels=new Set(d.kpi.map(k=>k.k));
@@ -523,13 +470,10 @@ function render3(d){
   const cmp=o=>`<div class="lr cmp hv" title="${CMP_TIP.replace(/&#10;/g,"\n")}"><span class="k" title="${o.k}">${o.k}</span><b class="v num" style="color:${TIERC[o.tier]}">${o.v}</b><span class="r">${o.rank||""}</span></div>`;
   const chalf=Math.ceil(d.cmp.length/2);
   return `<div class="cc c3" style="--stw:340px">
-  ${stageHTML(d)}
+  ${stageHTML(d,1)}
   <div class="rail">
-    <div class="r-top">
-      <div class="r-verdict"><span class="n num" style="color:${TIERC[d.tier]}">${d.score}</span>${spChip(d.tier)}</div>
-      <div class="r-id">${nameHTML(d)}<div class="r-diag">${d.diag.join(" ")}</div></div>
-      ${navBtns}
-    </div>
+    <div class="r-bar">${d.live?'<span class="livedot" title="라이브"></span>':""}<span class="nm">${d.name}</span>${navBtns}</div>
+    <div class="r-charts">${chartsHTML(d,300)}</div>
     <div class="kpis">
       ${d.kpi.map(k=>`<div class="kpi hv" title="${k.med}"><div class="role">${k.role} · ${k.k}</div><div class="kv"><b class="num" style="color:${TIERC[k.tier]}">${k.v}</b><small>${k.rank}</small></div>${spk(k.sp,118,24)}</div>`).join("")}
     </div>
@@ -547,8 +491,8 @@ function render3(d){
 </div>`;}
 
 /* ═════ 마운트 + 매체 전환 ═════ */
-const R={1:render1,2:render2,3:render3};
-const CUR={1:"aeo",2:"aeo",3:"aeo"};
+const R={3:render3};
+const CUR={3:"aeo"};
 function mount(c){
   const d=M[CUR[c]];
   document.getElementById("mk"+c).innerHTML=R[c](d);
@@ -560,7 +504,7 @@ document.querySelectorAll(".mseg").forEach(seg=>{
     CUR[seg.dataset.c]=b.dataset.m;mount(seg.dataset.c);
   });
 });
-[1,2,3].forEach(mount);
+[3].forEach(mount);
 
 const secs=[...document.querySelectorAll(".concept, .final")];
 const links=[...document.querySelectorAll("#cnav a")];
