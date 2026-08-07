@@ -263,9 +263,18 @@
   .peer .us-h{margin-bottom:4px}
   .peer .us-sub:first-of-type{margin-top:2px;padding-top:0;border-top:0}
   /* 비교군 카드 — 가로 나란히. 카드 사이 간격(28px)이 카드 안 간격(4px)보다 확실히 커야 묶임이 읽힌다 */
-  .peer-cards{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:6px}
-  .peer-card{flex:1 1 300px;min-width:0;max-width:520px;padding-left:9px;border-left:2px solid var(--surface-3)}
-  .peer-card.xm{border-left-color:var(--karrot)} /* 전매체 카드 — 잣대가 다름(광고비만)을 색으로 구분 */
+  /* 비교군 2×2 — 행=무엇과 비교(광고그룹/서비스), 열=어디까지(이 매체/전 매체).
+     카드 4장을 흘려보내면 폭에 따라 3+1로 접혀 짝이 되는 두 칸이 떨어져 놓인다. 행렬은 그 짝을 고정한다. */
+  .peer-mx{display:grid;grid-template-columns:max-content minmax(0,1fr) minmax(0,1fr);gap:2px 22px;margin-top:8px;align-items:start}
+  .peer-mx.one{grid-template-columns:max-content minmax(0,1fr)}
+  .pm-h{font-size:var(--fs-1);font-weight:700;color:var(--muted);padding:0 0 4px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:5px}
+  .pm-r{font-size:var(--fs-1);font-weight:700;color:var(--ink);white-space:nowrap;padding:10px 0 0;align-self:start}
+  .peer-cell{padding:6px 0 8px 10px;border-left:2px solid var(--surface-3);min-width:0}
+  .peer-cell.xm{border-left-color:var(--karrot)} /* 전매체 열 — 잣대가 다름(광고비만)을 색으로 구분 */
+  .peer-cell.empty{color:var(--faint);font-size:var(--fs-1);padding-top:12px;border-left-style:dashed}
+  .peer-sub{font-size:var(--fs-1);color:var(--faint);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  @media(max-width:900px){.peer-mx,.peer-mx.one{grid-template-columns:minmax(0,1fr)}
+    .pm-h{display:none}.pm-r{padding-top:14px}.peer-cell{margin-bottom:2px}}
   .peer-ch{font-size:var(--fs-1);font-weight:700;color:var(--muted);display:flex;align-items:baseline;gap:6px;
     flex-wrap:wrap;margin-bottom:3px}
   .peer-ch em{font-style:normal;font-weight:500;color:var(--faint);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -284,6 +293,17 @@
   @media(max-width:1360px){.mrows{grid-template-columns:repeat(2,max-content)}}
   @media(max-width:1080px){.mrows{grid-template-columns:max-content}}
   .mrows .us-sub,.mrows .us-life{grid-column:1/-1}
+  /* 지표 행은 왼쪽에서 필요한 만큼만 쓰고, 남는 오른쪽에 요약 도형을 둔다.
+     종전엔 행이 3열까지만 차서 오른쪽이 그냥 비었다 — 정보가 많은 블록일수록 더 크게 비었다. */
+  .us-body{display:flex;align-items:flex-start;gap:10px 30px;flex-wrap:wrap}
+  .us-body>.mrows{flex:1 1 auto;min-width:0;margin-top:0}
+  .us-viz{flex:0 0 auto;margin-top:2px}
+  .us-vh{font-size:var(--fs-1);color:var(--muted);font-weight:650;margin-bottom:2px}
+  .us-vh em{font-style:normal;color:var(--faint);font-weight:500;margin-left:5px}
+  .rdr{display:block;overflow:visible}
+  .rdr circle{cursor:default}
+  /* 좁은 화면에선 도형이 행 아래로 — 옆으로 밀리면서 행이 두 줄로 깨지는 것보다 낫다 */
+  @media(max-width:820px){.us-viz{margin:6px auto 0}}
   /* 라벨은 오른쪽 정렬 — 짧은 라벨("광고비" 30px)이든 긴 라벨("앱 접속(홈피드) 7일" 93px)이든
      값 바로 8px 앞에서 끝난다. 왼쪽 정렬이면 라벨 길이만큼 값과의 거리가 제각각이 된다. */
   /* 값·등급·순위 열은 내용 폭(auto)이다. 고정 폭에 오른쪽 정렬로 두면 짧은 값이 열 안에서 왼쪽에 빈틈을
@@ -298,6 +318,13 @@
   .mrow .mr-v{font-size:var(--fs-2);font-weight:750;color:var(--ink);white-space:nowrap}
   .mrow .mr-t.sp{font-size:9.5px;padding:1px 6px;white-space:nowrap}
   .mrow .mr-d{color:var(--faint);white-space:nowrap}
+  /* 등급 색을 값과 이름까지 — 등급 칩에만 색이 있으면 "상위 4%"를 읽어야 좋고 나쁨을 안다.
+     값이 주인공(진한 색), 이름은 같은 색을 옅게 깔아 행이 한 덩어리로 읽히게 한다.
+     '보통'(m)은 색을 주지 않는다 — 중간까지 물들면 색이 신호가 아니라 배경이 된다. */
+  .mrow.t-g2 .mr-v{color:var(--g2)}   .mrow.t-g2 .mr-k{color:var(--g2);opacity:.72}
+  .mrow.t-g1 .mr-v{color:var(--g1)}   .mrow.t-g1 .mr-k{color:var(--g1);opacity:.72}
+  .mrow.t-w1 .mr-v{color:var(--w1)}   .mrow.t-w1 .mr-k{color:var(--w1);opacity:.72}
+  .mrow.t-w2 .mr-v{color:var(--w2)}   .mrow.t-w2 .mr-k{color:var(--w2);opacity:.72}
   .mrow:hover{background:var(--surface-2)}
   .mrow+.mrow{border-top:1px solid var(--surface-2)}
   /* 섹션 소제목 — 블록 안 구분 */
@@ -4018,10 +4045,10 @@ function peerRankHTML(ds,e){
   const groups=[];
   if(gid){const g=pool.filter(p=>String(p._g_adGroupId||p._m_group||"")===String(gid));
     if(g.length>=4){const raw=e._m_group?gid:adGroupLabel(gid);
-      groups.push({lab:"같은 광고그룹",sub:raw?trunc(groupPrettyName(raw),22):("그룹 "+String(gid).slice(-4)),list:g});}}
+      groups.push({scope:"grp",realm:"in",lab:"같은 광고그룹",sub:raw?trunc(groupPrettyName(raw),22):("그룹 "+String(gid).slice(-4)),list:g});}}
   if(svc){const g=pool.filter(p=>svcOf(p)===svc);
-    if(g.length>=4&&(!groups.length||g.length!==groups[0].list.length))groups.push({lab:"같은 서비스",sub:svc,list:g});}
-  if(!groups.length){const g=pool;if(g.length>=6)groups.push({lab:"이 매체 전체",sub:String(ds.media||""),list:g});}
+    if(g.length>=4&&(!groups.length||g.length!==groups[0].list.length))groups.push({scope:"svc",realm:"in",lab:"같은 서비스",sub:svc,list:g});}
+  if(!groups.length){const g=pool;if(g.length>=6)groups.push({scope:"all",realm:"in",lab:"이 매체 전체",sub:String(ds.media||""),list:g});}
   /* ── 전 매체 비교군 (2026-08-06) ──
      ⚠️ 매체를 넘으면 유저·전환 지표는 귀속 단위가 달라 못 섞는다 — **광고비만** 비교한다(costOnly).
      그리고 타매체 인덱스(aggAll)는 전체 기간 합산이라, 이쪽 값도 전체 기간 인덱스에서 다시 찾아
@@ -4042,35 +4069,61 @@ function peerRankHTML(ds,e){
       if(linked.length){
         const mine=myPoolFull.filter(p=>String(p._g_adGroupId||p._m_group||"")===String(gid));
         const g=mine.concat(linked);
-        if(g.length>=4)groups.push({lab:"전매체 같은 광고그룹",sub:`타매체 ${linked.length}개 합류`,list:g,costOnly:true,me:meFull});}}
+        if(g.length>=4)groups.push({scope:"grp",realm:"x",lab:"전매체 같은 광고그룹",sub:`타매체 ${linked.length}개 합류`,list:g,costOnly:true,me:meFull});}}
     if(svc){
       const x=[];
       for(const{list}of xPools)for(const p of list){if(p&&!p._isGroup&&(p.비용||0)>0&&svcOf(p)===svc)x.push(p);}
       if(x.length){
         const g=myPoolFull.filter(p=>svcOf(p)===svc).concat(x);
-        if(g.length>=4)groups.push({lab:"전매체 같은 서비스",sub:`${svc} · 타매체 ${x.length}개`,list:g,costOnly:true,me:meFull});}}}
+        if(g.length>=4)groups.push({scope:"svc",realm:"x",lab:"전매체 같은 서비스",sub:`${svc} · 타매체 ${x.length}개`,list:g,costOnly:true,me:meFull});}}}
   if(!groups.length)return "";
-  /* 비교군을 **가로로 나란히** 놓는다. 세로로 쌓으면 '광고비 ₩3,408,000'이 어느 비교군의 값인지 헷갈린다
-     — 근접성 원리: 한 비교군의 제목과 그 지표 행들을 하나의 카드로 묶고, 카드끼리는 간격으로 떼어 놓는다. */
-  const cards=[];
-  for(const g of groups){
-    /* 전매체 카드는 광고비만 — 유저·전환은 매체마다 귀속이 달라 한 줄에 세우는 순간 거짓 비교가 된다 */
+  /* ── 2×2 행렬로 놓는다 (2026-08-07) ──
+     비교군 4종은 사실 **두 축의 조합**이다: 무엇과 비교하나(광고그룹 / 서비스) × 어디까지 보나(이 매체 / 전 매체).
+     종전엔 이걸 카드 4장으로 흘려보내 화면 폭에 따라 3+1, 2+2로 제멋대로 접혔고, 그래서 "같은 광고그룹"과
+     "전매체 같은 광고그룹"이 서로 멀어져 정작 비교해야 할 두 값이 떨어져 놓이는 일이 생겼다.
+     행=비교 대상, 열=매체 범위로 고정하면 좌우로 읽으면 '매체를 넓히면 어떻게 달라지나',
+     위아래로 읽으면 '그룹 안에서 vs 서비스 안에서'가 각각 한 줄로 읽힌다. */
+  const cellOf=g=>{
+    /* 전매체는 광고비만 — 유저·전환은 매체마다 귀속이 달라 한 줄에 세우는 순간 거짓 비교가 된다 */
     const specs2=g.costOnly?[["비용","광고비",v=>fmtKRW(v)+"원"]]:[["비용","광고비",v=>fmtKRW(v)+"원"],[rk,"실유저",v=>fmtInt(v)]];
     const me=g.me||e;
-    const cells=specs2.map(([k,lab,fmt])=>{
+    return specs2.map(([k,lab,fmt])=>{
       const vs=g.list.map(p=>+p[k]).filter(v=>v!=null&&isFinite(v));
       const v=+me[k];
       const t=umTrack(vs,v,1);
       if(!t)return "";
       return umRow({k:lab,v:fmt(v),tr:t,rank:umRankTxt(t),
         tip:`<b>${g.lab}(${g.list.length}개) · ${lab}</b><br>이 소재 ${fmt(v)}${t.pct!=null?` — <b>상위 ${Math.max(1,Math.round(100-t.pct))}%</b>`:""}`
-          +`<br>비교군 중앙값 ${fmt(t.med)}`});}).join("");
+          +`<br>비교군 중앙값 ${fmt(t.med)}`});}).join("");};
+  const cards=[];
+  for(const g of groups){
+    const cells=cellOf(g);
     if(!cells)continue;
-    cards.push(`<div class="peer-card${g.costOnly?" xm":""}"><div class="peer-ch">${escHtml(g.lab)}<em>${escHtml(g.sub)} · ${g.list.length}개</em>${g.costOnly?`<span class="uc-q" data-tip="${escAttr("<b>전 매체 비교 — 광고비만</b><br>유저·전환 지표는 매체마다 귀속 단위가 달라 비교에서 제외합니다.<br>전체 기간 합산 기준(타매체 데이터가 전체 기간 인덱스라 잣대를 맞춤).<br>같은 광고그룹 판정 = 이름이 똑같은 이미지 소재로 이어진 그룹 계열.")}">?</span>`:""}</div><div class="peer-rows">${cells}</div></div>`);}
+    cards.push({g,cells});}
   if(!cards.length)return "";
+  const HEAD_TIP=escAttr(`<b>또래 대비 위치</b><br>같은 광고그룹·같은 서비스 소재들 사이에서 이 소재가 어디쯤인지.<br>광고비 = 예산이 얼마나 몰렸나(머신러닝 신호) · 실유저 = 실제로 몇 명을 데려왔나.<br>둘 다 상위면 위너, 광고비만 상위면 재검토 대상.<br><b>각 칸의 수치는 그 비교군 기준</b>입니다.`);
+  const XM_TIP=escAttr("<b>전 매체 비교 — 광고비만</b><br>유저·전환 지표는 매체마다 귀속 단위가 달라 비교에서 제외합니다.<br>전체 기간 합산 기준(타매체 데이터가 전체 기간 인덱스라 잣대를 맞춤).<br>같은 광고그룹 판정 = 이름이 똑같은 이미지 소재로 이어진 그룹 계열.");
+  const at=(sc,rl)=>cards.find(c=>c.g.scope===sc&&c.g.realm===rl)||null;
+  const SCOPES=[["grp","같은 광고그룹"],["svc","같은 서비스"],["all","이 매체 전체"]].filter(([sc])=>at(sc,"in")||at(sc,"x"));
+  const hasX=cards.some(c=>c.g.realm==="x");
+  /* 열이 하나(전매체 비교군이 아예 없음)면 행렬이 아니라 그냥 목록이다 — 헤더를 붙이면 빈 열만 늘어난다 */
+  const cell=(c,xm)=>c?`<div class="peer-cell${xm?" xm":""}"><div class="peer-sub">${escHtml(c.g.sub)} · ${c.g.list.length}개</div><div class="peer-rows">${c.cells}</div></div>`
+                 :`<div class="peer-cell empty${xm?" xm":""}">비교할 소재가 부족해요</div>`;
+  let grid;
+  if(hasX){
+    grid=`<div class="peer-mx">
+      <div class="pm-h"></div>
+      <div class="pm-h">이 매체 안</div>
+      <div class="pm-h">전 매체<span class="uc-q" data-tip="${XM_TIP}">?</span></div>
+      ${SCOPES.map(([sc,lab])=>`<div class="pm-r">${escHtml(lab)}</div>${cell(at(sc,"in"),0)}${cell(at(sc,"x"),1)}`).join("")}
+    </div>`;
+  }else{
+    grid=`<div class="peer-mx one">
+      ${SCOPES.map(([sc,lab])=>`<div class="pm-r">${escHtml(lab)}</div>${cell(at(sc,"in"),0)}`).join("")}
+    </div>`;}
   return `<div class="peer">
-    <div class="us-h">비교군 내 위치<span class="uc-q" data-tip="${escAttr(`<b>또래 대비 위치</b><br>같은 광고그룹·같은 서비스 소재들 사이에서 이 소재가 어디쯤인지.<br>광고비 = 예산이 얼마나 몰렸나(머신러닝 신호) · 실유저 = 실제로 몇 명을 데려왔나.<br>둘 다 상위면 위너, 광고비만 상위면 재검토 대상.<br>눈금(가운데)이 비교군 중앙값이고 마커가 오른쪽일수록 상위.<br><b>각 카드 안의 수치는 그 비교군 기준</b>입니다.`)}">?</span><span class="n">기간·매체 기준</span></div>
-    <div class="peer-cards">${cards.join("")}</div></div>`;}
+    <div class="us-h">비교군 내 위치<span class="uc-q" data-tip="${HEAD_TIP}">?</span><span class="n">${hasX?"가로로 읽으면 매체를 넓혔을 때의 변화":"기간·매체 기준"}</span></div>
+    ${grid}</div>`;}
 /* ═════ 소재 상세 — 실유저(주간) ═════
    설계 원칙(2026-08-05 재설계):
    ① 모든 지표를 같은 행 문법으로 읽는다 — [라벨 · 값 · 등급 · 위치 · 편차].
@@ -4105,11 +4158,42 @@ function umRow(o){
   /* 막대를 그리지 않는다 — 마커 하나의 위치로는 좋고 나쁨이 가늠되지 않는다는 것이 실사용 결론.
      판단에 필요한 건 값·등급·순위 세 가지이고, 셋을 오른쪽에 붙여 한 번에 읽히게 한다(근접성). */
   const rank=o.rank||"";
-  return `<div class="mrow"${o.tip?` data-tip="${escAttr(o.tip)}"`:""}>`
+  /* 값·이름에도 등급 색을 입힌다 — 등급 칩에만 색이 있으면 "상위 4%"를 읽어야 좋고 나쁨을 알 수 있다.
+     값이 색을 가지면 훑기만 해도 "이 소재는 CPC가 좋은 편"이 바로 들어온다.
+     이름은 같은 색을 옅게(투명도) — 행 전체가 한 덩어리로 읽히되 값이 주인공인 위계를 유지한다. */
+  const tc=t?` t-${t.t}`:"";
+  return `<div class="mrow${tc}"${o.tip?` data-tip="${escAttr(o.tip)}"`:""}>`
     +`<span class="mr-k">${escHtml(o.k)}</span>`
     +`<b class="mr-v num">${escHtml(o.v)}</b>`
     +(t?`<span class="sp ${t.t==="g2"?"sp-g2":t.t==="g1"?"sp-g1":t.t==="w1"?"sp-w1":"sp-mid"} mr-t">${t.lab}</span>`:`<span class="mr-t"></span>`)
     +`<span class="mr-d">${rank}</span></div>`;}
+const TIER_COL={g2:"var(--g2)",g1:"var(--g1)",m:"var(--mid)",w1:"var(--w1)",w2:"var(--w2)"};
+/* ── 요약 레이더 — 지표가 3개 이상인 블록의 남는 오른쪽 공간에 ──
+   축 하나 = 지표 하나. 중심이 최하위, 바깥 테두리가 최상위, **가운데 굵은 고리가 비교군 중앙값(50%)**이다.
+   그래서 "고리 밖으로 나간 축 = 또래보다 잘하는 것"이 글자를 읽지 않아도 모양으로 들어온다.
+   꼭짓점 색은 그 지표의 등급색이라, 행에 붙은 색과 도형의 색이 같은 뜻으로 이어진다.
+   viewBox를 실제 렌더 폭과 같게 둬야 배율 1이 유지된다(§10 화면 배율 규칙). */
+function radarHTML(items){
+  const it=(items||[]).filter(o=>o&&o.pct!=null&&isFinite(o.pct)).slice(0,8);
+  if(it.length<3)return "";
+  const W=236,H=178,cx=W/2,cy=H/2-4,R=52;
+  const N=it.length,ang=i=>-Math.PI/2+i*2*Math.PI/N;
+  const P=(i,r)=>[cx+Math.cos(ang(i))*R*r,cy+Math.sin(ang(i))*R*r];
+  const poly=fr=>it.map((o,i)=>P(i,fr(o)).map(n=>n.toFixed(1)).join(",")).join(" ");
+  let s="";
+  for(const r of[0.25,0.5,0.75,1])
+    s+=`<polygon points="${poly(()=>r)}" fill="none" stroke="${r===0.5?"var(--muted)":"var(--surface-2)"}" stroke-width="${r===0.5?1.2:1}"${r===0.5?' stroke-dasharray="4 3" stroke-opacity="0.55"':""}/>`;
+  for(let i=0;i<N;i++){const[x,y]=P(i,1);
+    s+=`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--surface-2)" stroke-width="1"/>`;}
+  const rOf=o=>Math.max(0.07,Math.min(1,o.pct/100)); /* 0%도 점이 보이게 최소 반지름 */
+  s+=`<polygon points="${poly(rOf)}" fill="var(--karrot)" fill-opacity="0.13" stroke="var(--karrot)" stroke-width="1.6" stroke-opacity="0.7"/>`;
+  it.forEach((o,i)=>{const[x,y]=P(i,rOf(o));
+    s+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.6" fill="${TIER_COL[o.tier]||"var(--mid)"}" stroke="#FFFDF7" stroke-width="1.5"`
+      +` data-tip="${escAttr(`<b>${escHtml(o.lab)}</b>${o.val?`<br>${escHtml(o.val)}`:""}<br>비교군 중 상위 ${Math.max(1,Math.round(100-o.pct))}%`)}"/>`;});
+  it.forEach((o,i)=>{const[x,y]=P(i,1.3),a=ang(i);
+    const anc=Math.abs(Math.cos(a))<0.34?"middle":(Math.cos(a)>0?"start":"end");
+    s+=`<text x="${x.toFixed(1)}" y="${(y+3.2).toFixed(1)}" font-size="9.5" font-weight="600" text-anchor="${anc}" fill="var(--muted)">${escHtml(o.lab)}</text>`;});
+  return `<svg class="rdr" viewBox="0 0 ${W} ${H}" style="width:${W}px;max-width:100%" role="img" aria-label="지표별 또래 대비 위치">${s}</svg>`;}
 /* 라벨 열 폭을 그 블록에 실제로 있는 라벨의 최댓값으로 맞춘다.
    고정 폭으로 두면 라벨이 모두 짧은 블록(광고비·실유저 = 30px)에서 열의 왼쪽 68px이 그냥 빈다.
    라벨은 오른쪽 정렬이라 그 빈 곳이 덩어리 왼쪽에 생기고, 옆 덩어리와의 거리를 쓸데없이 벌린다. */
@@ -4133,6 +4217,27 @@ function umFromLookup(sm,kind){
     const blk=UMET[mm[1]];
     if(blk&&blk.creatives&&typeof blk.creatives==="object")return{val:blk,m:[mm[0],mm[2],mm[3]]};}
   return null;}
+/* 화면 용어 — 맥락 없이 읽어도 뜻이 통하게. 값의 정의를 바꾸는 게 아니라 부르는 말만 바꾼다.
+   CPC·CPA·CTR·CPM처럼 업계에 이미 있는 말은 건드리지 않는다(풀어 쓰면 오히려 못 알아본다).
+   대상은 이 화면 안에서만 통하던 말 — "앱 접속(홈피드) 7일", "재방문 7일" 같은 것들. */
+const SVC7_LAB={
+  "앱 접속(홈피드)":"홈피드",
+  "홈피드":"홈피드",
+  "재방문":"앱 재방문",
+  "공통":"앱 재방문",
+  "중고거래":"중고거래",
+  "알바":"알바 탭",
+  "모임":"모임 탭",
+  "부동산":"부동산 탭",
+  "중고차":"중고차 탭",
+  "비즈니스":"비즈니스 탭",
+  "브랜딩":"홈피드"};
+/* "알바" → "알바 탭 접속" · "앱 접속(홈피드)" → "홈피드 접속". 모르는 말이 와도 괄호만 떼고 '접속'을 붙인다 */
+function svc7Lab(s){
+  const t=String(s||"").trim();
+  const base=SVC7_LAB[t]||t.replace(/\s*\([^)]*\)/g,"").trim();
+  if(!base)return t;
+  return /(접속|방문)$/.test(base)?base:base+" 접속";}
 /* ── 서비스별 7일 도달(svc7 = 신규 설치 코호트 · svcRe7 = 몰로코 재관여) ──
    소재의 _svc에 맞는 주지표 하나 + 앱 접속(홈피드) + 재방문만 보여준다. 서비스가 다른 소재끼리 비교 금지라
    비교는 같은 서비스의 전체 평균(peer_baseline_svc7)과만 한다(svcRe7은 분모가 달라 참고선 금지). */
@@ -4187,30 +4292,36 @@ function umCohortHTML(ds,e){
   const pool=k=>{const a=[];if(wb)for(const v of wb.cohort.values()){const x=+v[k];if(isFinite(x))a.push(x);}return a;};
   const wkLab=hit?md(hit.week)+" 주":"";
   const rowsHtml=[];
+  /* 레이더용 수집 — 행을 만들 때 같은 자리에서 모은다(따로 다시 계산하면 행과 도형이 어긋난다) */
+  const rad=[];
+  const radPush=(lab,t,val)=>{if(t&&t.pct!=null&&t.tier)rad.push({lab,pct:t.pct,tier:t.tier.t,val});};
   /* 규모 — 신규 실유저도 '많은 건지'를 같은 주 코호트 분포로 판정 */
   if(hit&&hit.news!=null){
     const np=[];if(wb)for(const v of wb.news.values()){const x=+v;if(isFinite(x))np.push(x);}
     const t=umTrack(np,hit.news,1);
+    radPush("신규 유저",t,fmtInt(hit.news)+"명");
     rowsHtml.push(umRow({k:"신규 실유저",v:fmtInt(hit.news),tr:t,rank:umRankTxt(t),
       tip:`<b>신규 실유저 ${fmtInt(hit.news)}명</b><br>${wkLab} 설치 코호트${t&&t.med!=null?`<br>같은 주 코호트 중앙값 ${fmtInt(t.med)}명 — 눈금 위치`:""}<br>${base}`}));}
   /* 질 — 값·등급·중앙값 대비 편차 */
-  const pctRow=(key,lab,extra)=>{
+  const pctRow=(key,lab,extra,radLab)=>{
     const v=+c[key];if(!isFinite(v))return;
     const p=pool(key),t=umTrack(p,v,1);
     const d=t&&t.med!=null?v-t.med:null;
+    radPush(radLab||lab,t,v.toFixed(1)+"%");
     rowsHtml.push(umRow({k:lab,v:v.toFixed(1)+"%",tr:t,rank:umRankTxt(t),
       tip:`<b>${lab} ${v.toFixed(1)}%</b>${extra?`<br>${extra}`:""}${t&&t.med!=null?`<br>같은 주 코호트 중앙값 ${t.med.toFixed(1)}% (${d>=0?"+":""}${d.toFixed(1)}%p)`:""}<br>${base}`}));};
-  pctRow("d1","익일 재방문","설치 다음 날 실제 방문한 비율");
-  pctRow("d7","7일 내 재방문","설치 후 7일 안에 다시 방문한 비율");
-  pctRow("habit4","습관 형성 4일+","첫 주 4일 이상 방문 — 습관 형성 신호");
+  pctRow("d1","다음날 재방문","설치 다음 날 실제로 다시 온 비율","다음날 재방문");
+  pctRow("d7","7일 내 재방문","설치 후 7일 안에 다시 온 비율","7일 재방문");
+  pctRow("habit4","첫 주 4일 이상 방문","첫 주에 4일 넘게 온 비율 — 습관이 붙었다는 신호","첫주 4일+");
   /* 서비스 도달이 있으면 그 블록이 홈피드·중고거래를 담당하므로 코호트의 같은 항목은 접는다(중복 방지) */
-  if(!sv){pctRow("home7","홈피드 7일","7일 내 홈피드 방문 비율");pctRow("flea7","중고거래 7일","7일 내 중고거래 방문 비율");}
+  if(!sv){pctRow("home7","홈피드 접속","7일 안에 홈피드를 본 비율","홈피드");pctRow("flea7","중고거래 접속","7일 안에 중고거래를 본 비율","중고거래");}
   if(tr&&tr.d30){
     const dk=Object.keys(UMET||{}).find(k=>new RegExp("^d30_w"+tr.d30.w.slice(5,7)+tr.d30.w.slice(8,10)+"$").test(k));
     const dp=[];if(dk)for(const v of umNMap(UMET[dk]).values()){const x=+(v&&v.d30w);if(isFinite(x))dp.push(x);}
     const t=umTrack(dp,tr.d30.d30w,1);
     const d=t&&t.med!=null?tr.d30.d30w-t.med:null;
-    rowsHtml.push(umRow({k:"D30 주간 방문",v:tr.d30.d30w.toFixed(1)+"%",tr:t,rank:umRankTxt(t),
+    radPush("설치 한 달 뒤",t,tr.d30.d30w.toFixed(1)+"%");
+    rowsHtml.push(umRow({k:"설치 한 달 뒤 방문",v:tr.d30.d30w.toFixed(1)+"%",tr:t,rank:umRankTxt(t),
       tip:`<b>D30(주간 방문) ${tr.d30.d30w.toFixed(1)}%</b><br>${md(tr.d30.w)} 주 설치 코호트의 4주차(d0+25~31) 방문율 · 표본 ${fmtInt(tr.d30.n)}명${t&&t.med!=null?`<br>같은 주 코호트 중앙값 ${t.med.toFixed(1)}%${d!=null?` (${d>=0?"+":""}${d.toFixed(1)}%p)`:""}`:""}<br>${base}`}));}
   /* 서비스 도달 — 소재의 _svc에 맞는 주지표 + 홈피드 + 재방문. 비교는 같은 서비스 전체 평균과만 */
   let svcHtml="";
@@ -4225,14 +4336,16 @@ function umCohortHTML(ds,e){
       const ref=t?t.med:null;
       const refLab=sv.basis==="svc7"?"같은 서비스 소재 중앙값":"같은 복귀 기준 소재 중앙값";
       const dtxt=ref!=null?`${r.v>=ref?"+":""}${(r.v-ref).toFixed(1)}%p`:"";
-      return umRow({k:r.label+" 7일",v:r.v.toFixed(1)+"%",tr:t,rank:umRankTxt(t),
-        tip:`<b>${r.label} 7일 ${r.v.toFixed(1)}%</b><br>기준: ${sv.basisLabel} · 코호트 n=${fmtInt(sv.n)}`
+      const _lab=svc7Lab(r.label);
+      radPush(_lab.replace(/\s*접속$/,""),t,r.v.toFixed(1)+"%");
+      return umRow({k:_lab,v:r.v.toFixed(1)+"%",tr:t,rank:umRankTxt(t),
+        tip:`<b>${_lab} ${r.v.toFixed(1)}%</b> — 설치 후 7일 안에 여기까지 온 비율<br>기준: ${sv.basisLabel} · 코호트 n=${fmtInt(sv.n)}`
           +(ref!=null?`<br>${refLab} ${ref.toFixed(2)}%${dtxt?` (${dtxt})`:""}`:"")
           +(t&&t.pct!=null?`<br>같은 기준 소재 중 상위 ${Math.max(1,Math.round(100-t.pct))}%`:"")
           +(sv.basis==="svc7"&&b!=null?`<br>참고: 같은 서비스 전체 평균 ${b.toFixed(2)}%`:"")
           +(sv.basis==="svcRe7"?`<br>재관여 기준이라 신규 설치 평균과는 섞지 않는다(분모가 다름)`:"")
-          +(r.primary?`<br><b>이 소재의 서비스(${escHtml(sv.svcLabel)}) 주지표</b>`:"")});}).join("");
-    svcHtml=`<div class="us-sub">서비스 도달 <em>${escHtml(sv.svcLabel)} · ${escHtml(sv.basisLabel)} · n=${fmtInt(sv.n)}</em></div>${rs}`;}
+          +(r.primary?`<br><b>이 소재의 서비스(${escHtml(svc7Lab(sv.svcLabel))}) 주지표</b>`:"")});}).join("");
+    svcHtml=`<div class="us-sub">7일 내 서비스 접속 <em>${escHtml(svc7Lab(sv.svcLabel))} 기준 · ${escHtml(sv.basisLabel)} · n=${fmtInt(sv.n)}</em></div>${rs}`;}
   /* 유효 복귀(재관여) — 자연 복귀 기준선을 중앙에 둔 같은 문법의 행 */
   let reengHtml="";
   if(re){
@@ -4242,7 +4355,7 @@ function umCohortHTML(ds,e){
           tier:umTierOf(Math.max(0,Math.min(100,50+(o.pct-NB)/NB*50)),1)};})():null;
       return umRow({k:md(o.w)+" 주",v:o.pct.toFixed(1)+"%",tr:t,rank:o.cpv!=null?`₩${fmtInt(o.cpv)}`:"",
         tip:`<b>${md(o.w)} 주 유효 복귀 ${o.pct.toFixed(1)}%</b><br>되돌린 유저 ${fmtInt(o.n)}명 중 유효 복귀 ${fmtInt(o.valid)}명${o.cpv!=null?`<br>유효 복귀 1명당 ₩${fmtInt(o.cpv)}`:""}${NB!=null?`<br>자연 복귀 기준선 ${NB.toFixed(1)}% 대비 ${o.pct>=NB?"+":""}${(o.pct-NB).toFixed(1)}%p`:""}<br>소재 값은 같은 매체 안에서 비교하세요`});}).join("");
-    reengHtml=`<div class="us-sub">유효 복귀 <em>자연 기준선 ${NB!=null?NB.toFixed(1)+"%":"—"} 대비</em></div>${rs}`;}
+    reengHtml=`<div class="us-sub">되돌아온 유저 중 실제로 쓴 비율 <em>광고 없이도 돌아왔을 비율 ${NB!=null?NB.toFixed(1)+"%":"—"} 대비</em></div>${rs}`;}
   /* 라이프사이클 — 개시→최근 스팬, 피크▲, 최대 증액↑ */
   /* ── 수명 — 주간 광고비 곡선으로 ──
      종전엔 일자 막대에 화살표만 얹어 "몇 배 늘었고 높은 상태를 얼마나 유지했나"가 전혀 안 보였다.
@@ -4328,9 +4441,13 @@ function umCohortHTML(ds,e){
   const nmol=(umIndex()&&umIndex().byWeek.get(umIndex().weeks[0])||{}).noteMoloco||"";
   if(umChOf(ds&&ds.media)==="Moloco"&&nmol)tip+=`<br>${escHtml(nmol)}`;
   if(hit&&hit.ch==="Moloco"&&hit.news==null&&nmol)hdr.push("신규 없음 정상(재관여 전담)");
+  /* 지표가 3개 이상 모였을 때만 — 2개짜리 삼각형은 도형이라기보다 선이라 읽히지 않는다 */
+  const _rd=radarHTML(rad);
+  const _radar=_rd?`<div class="us-viz"><div class="us-vh">한눈에 보기 <em>점선 = 또래 중간 · 바깥일수록 좋음</em></div>${_rd}</div>`:"";
   return `<div class="umet-strip">
     <div class="us-h">실유저(주간)<span class="uc-q" data-tip="${escAttr(tip)}" title="유저 단위 실증 — 마우스를 올려 기준 확인">?</span><span class="n">${hdr.map(escHtml).join(" · ")}</span></div>
-    <div class="mrows">${rowsHtml.join("")}${svcHtml}${reengHtml}${noUm}${lifeHtml}</div>
+    <div class="us-body"><div class="mrows">${rowsHtml.join("")}${svcHtml}${reengHtml}${noUm}</div>${_radar}</div>
+    ${lifeHtml?`<div class="mrows">${lifeHtml}</div>`:""}
   </div>`;}
 /* ═════ 교차 매체 동일/유사 소재 탐지 ═════
    "이 소재가 다른 매체에선 어떤가"를 보기 위해, 신호 강한 순서로 매칭한다:
@@ -5533,6 +5650,10 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
   const _isleName=ISLE.name;
   const _isleStale=!!_isleName&&_isleSig!==isleCtxSig(ds);
   const _keepIsle=(_isleName&&!_isleStale)?tbody.querySelector(".isle-row"):null;
+  /* 기간을 바꿀 때 상세가 '보던 그 자리'에 그대로 남게 — 재렌더 직전의 화면상 위치를 기억해 둔다.
+     맨 위로 끌어올리면(종전) 정렬이 바뀐 것도 아닌데 화면이 통째로 뛰어 어디를 보고 있었는지 잃는다. */
+  const _isleKeepTop=_isleStale?(()=>{const r=tbody.querySelector(".isle-row:not(.isle-pin)");
+    return r?r.getBoundingClientRect().top:null;})():null;
   const cols=allCols.filter(c=>!c.sub||tExp.has(c.grp));
   renderFilters(ds); /* 서비스·제작자 드롭다운 옵션·유효성 먼저 확정 → 아래 필터링과 어긋나지 않게 */
   const rows=orderedRowsForTable(ds);
@@ -5614,7 +5735,7 @@ function renderTable(ds){const L=ds.L,S=ds.S,allCols=tableCols(L,ds),thead=$("#t
       /* 기간이 바뀌었다 — 새 기간 데이터로 내용을 다시 만들고, 보던 소재를 화면 맨 위에 즉시 고정한다.
          스크롤 애니메이션은 넣지 않는다(순서가 재배치되는 순간 화면이 흐르면 어지럽다 — '그 자리에 그대로 있던 것처럼') */
       mountIsland(ds,_isleName,rtr);
-      scrollRowToTop(rtr);}
+      if(_isleKeepTop!=null)scrollIsleToKeepTop(rtr,_isleKeepTop);else scrollRowToTop(rtr);}
     else ISLE.name=null;}
   /* 고정(핀)해 둔 상세들은 표를 다시 그려도 살아남아 활성 상세 아래에 다시 붙는다.
      기간이 바뀌었으면 고정본도 새 기간으로 다시 만든다 — 활성 상세만 갱신하면 옆에 옛 값이 남아 더 헷갈린다 */
@@ -5640,6 +5761,26 @@ function scrollRowToTop(tr){
     document.documentElement.style.scrollBehavior=prev;};
   doIt();
   requestAnimationFrame(doIt);} /* 상세가 붙으면서 위 콘텐츠 높이가 바뀔 수 있어 한 프레임 뒤 재보정 */
+/* 기간을 바꿔도 상세가 '보던 그 자리'에 머물게 — 재렌더 전의 화면상 y(wantTop)로 되돌린다.
+   기간이 바뀌면 그 소재의 표 순서가 달라져 위쪽 행 높이 합이 통째로 변한다. 그래서 스크롤 값을
+   그대로 두면 화면이 흐르고, 맨 위로 끌어올리면(종전) 보던 위치를 잃는다. 답은 둘 다 아니고
+   **상세 블록 자체의 화면 좌표를 고정**하는 것 — 위에 뭐가 몇 픽셀 들어오든 상세는 제자리로 보인다. */
+function scrollIsleToKeepTop(tr,wantTop){
+  if(!tr)return;
+  const head=document.querySelector("#table thead");
+  const minTop=(head?head.getBoundingClientRect().height:0)+12; /* 고정 헤더 밑으로 숨지 않게 */
+  const want=Math.max(minTop,wantTop);
+  const doIt=()=>{
+    const nx=tr.nextElementSibling;
+    const isle=(nx&&nx.classList.contains("isle-row"))?nx:tr;
+    const d=isle.getBoundingClientRect().top-want;
+    if(Math.abs(d)<1)return;
+    const prev=document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior="auto"; /* CSS smooth가 걸려 있어도 무시 */
+    window.scrollTo(0,Math.max(0,window.pageYOffset+d));
+    document.documentElement.style.scrollBehavior=prev;};
+  doIt();
+  requestAnimationFrame(doIt);} /* 상세 내용 높이가 확정된 뒤 한 번 더 */
 /* 유튜브 제목이 캐시에 도착하면 다시 그리지 않고 화면의 URL 이름만 제자리 갱신 */
 function refreshDisplayNames(){
   if(!curDS)return;
@@ -6014,8 +6155,14 @@ const IDB={_db:null,
   async set(k,v){try{const db=await this.open();
     return await new Promise((res,rej)=>{const t=db.transaction("kv","readwrite").objectStore("kv").put(v,k);
       t.onsuccess=()=>res(true);t.onerror=()=>rej(t.error);});}catch(_){return false;}}};
-function bootSigOf(st){return {rows:+((st&&st.rows)||0),last:String((st&&st.last_upload)||"")};}
-function bootSigSame(a,b){return !!(a&&b&&a.rows===b.rows&&a.last===b.last);}
+/* ⚠️ 시그니처에 dataver가 반드시 들어가야 한다.
+   행수·last_upload만 보면 **payload 안의 키만 고치는 제자리 UPDATE를 통째로 놓친다** — 행이 늘지도 줄지도
+   않고 uploaded_at도 안 바뀌기 때문이다. 실제로 2026-08-06 몰로코 거짓 노출 0을 지운 뒤에도
+   브라우저는 캐시를 "최신"이라 판단해 옛 데이터를 계속 보여줬고, 화면엔 '노출 미수집' 배지가 남았다.
+   dataver는 sr_weekly_creative_stats에 걸린 문장 트리거가 INSERT/UPDATE/DELETE마다 올리는 마커다.
+   (옛 캐시에는 ver이 없어 undefined ≠ 문자열 → 새 코드 첫 부팅에서 자동으로 한 번 다시 받는다) */
+function bootSigOf(st){return {rows:+((st&&st.rows)||0),last:String((st&&st.last_upload)||""),ver:String((st&&st.dataver)||"")};}
+function bootSigSame(a,b){return !!(a&&b&&a.rows===b.rows&&a.last===b.last&&a.ver===b.ver);}
 async function bootCacheSave(rows,kvb,sig){try{await IDB.set("boot",{rows,kv:kvb,sig,at:Date.now()});}catch(_){}}
 /* 전체 로드(무거운 경로) — 성공 시 캐시 갱신. sig는 호출측이 아는 최신 시그니처(없으면 cr_status 재조회) */
 async function cloudFullLoad(pw,sig){
@@ -7770,6 +7917,27 @@ function CR_SELFTEST(){
    t("매체·탭·상세 중 하나만 달라도 다른 서명",
      new Set([{m:"Meta",t:"table",ad:"a"},{m:"Google",t:"table",ad:"a"},
               {m:"Meta",t:"analysis",ad:"a"},{m:"Meta",t:"table",ad:"b"}].map(navSig)).size,4);}
+  /* ── 부팅 캐시 시그니처 (payload 내부 수정을 놓치면 옛 데이터가 화면에 남는다) ── */
+  {const A={rows:20437,last_upload:"2026-08-06T08:38:44Z",dataver:"v1"};
+   t("dataver가 바뀌면 캐시를 새로 받는다",bootSigSame(bootSigOf(A),bootSigOf({...A,dataver:"v2"})),false);
+   t("행수·업로드시각이 같아도 dataver가 다르면 갱신",
+     bootSigSame(bootSigOf(A),bootSigOf({rows:20437,last_upload:"2026-08-06T08:38:44Z",dataver:"v9"})),false);
+   t("전부 같으면 캐시 재사용",bootSigSame(bootSigOf(A),bootSigOf({...A})),true);
+   t("옛 캐시(dataver 없음)는 반드시 한 번 갱신",bootSigSame({rows:20437,last:"2026-08-06T08:38:44Z"},bootSigOf(A)),false);}
+  /* ── 용어 — 맥락 없이 읽어도 통해야 한다 ── */
+  {t("서비스 라벨은 괄호를 떼고 '접속'을 붙인다",
+     [svc7Lab("앱 접속(홈피드)"),svc7Lab("알바"),svc7Lab("재방문"),svc7Lab("중고거래")],
+     ["홈피드 접속","알바 탭 접속","앱 재방문","중고거래 접속"]);
+   t("이미 '접속·방문'으로 끝나면 덧붙이지 않는다",svc7Lab("홈피드 접속"),"홈피드 접속");
+   t("모르는 말도 죽지 않는다",svc7Lab("낯선서비스"),"낯선서비스 접속");}
+  /* ── 요약 레이더 ── */
+  {const mk=n=>Array.from({length:n},(_,i)=>({lab:"m"+i,pct:50,tier:"g1"}));
+   t("축 2개 이하면 도형을 그리지 않는다",[radarHTML(mk(2)),radarHTML([])],["",""]);
+   t("축 3개면 그린다",/^<svg class="rdr"/.test(radarHTML(mk(3))),true);
+   t("꼭짓점은 축 수만큼",(radarHTML(mk(5)).match(/<circle/g)||[]).length,5);
+   t("등급색이 꼭짓점에 반영된다",/fill="var\(--w1\)"/.test(radarHTML([
+     {lab:"a",pct:10,tier:"w1"},{lab:"b",pct:50,tier:"g1"},{lab:"c",pct:90,tier:"g2"}])),true);
+   t("백분위가 없는 축은 빠진다",radarHTML([{lab:"a",pct:null,tier:"m"},{lab:"b",pct:1,tier:"m"},{lab:"c",pct:2,tier:"m"}]),"");}
   const msg=out.length?`CR_SELFTEST: ${pass}건 통과 · ${out.length}건 실패\n`+out.join("\n"):`CR_SELFTEST: ${pass}건 전부 통과 ✅`;
   (out.length?console.error:console.log)(msg);
   return{pass,fail:out.length,detail:out};}
