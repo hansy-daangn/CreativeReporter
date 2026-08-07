@@ -147,10 +147,7 @@
   /* ── C3 · 판정 레일: 점수·진단·KPI 히어로(스파크 내장) + 미니 2열 ── */
   /* r-top(점수·등급·진단) 폐지 — 이름·등급은 표 행에 이미 있고, 점수는 화면에서 쓰지 않는다.
      진단 문장도 아래 KPI 히어로가 같은 말을 더 정확히 하므로 중복이었다. 남길 것은 조작 버튼뿐. */
-  .c3 .r-bar{display:flex;align-items:center;gap:8px;margin-bottom:10px;min-width:0}
-  .c3 .r-bar .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-    font-size:var(--fs-2);font-weight:700;color:var(--muted)}
-  .c3 .r-bar .navr{flex:0 0 auto}
+  .c3 .r-bar{display:flex;justify-content:flex-end;margin-bottom:6px}
   /* 수명·시청유지를 가로로 — 세로형 소재에서 상세가 세로로 길어지는 것을 막는다 */
   /* 고정 2열 — auto-fit이면 영상이 없는 소재(그래프 1개)에서 수명 곡선이 전폭으로 늘어나
      같은 화면인데 소재마다 그래프 크기가 달라진다. 폭은 소재와 무관하게 일정해야 비교가 된다. */
@@ -172,14 +169,25 @@
   .c3 .kpi .kv{display:flex;align-items:baseline;gap:7px;margin:3px 0 5px}
   .c3 .kpi .kv b{font-size:var(--fs-5);font-weight:790;letter-spacing:-.02em}
   .c3 .kpi .kv small{font-size:var(--fs-2);color:var(--muted);font-weight:600}
-  .c3 .mini2{display:grid;grid-template-columns:1fr 1fr;gap:0 34px;margin-top:8px}
-  @media(max-width:1100px){.c3 .mini2{grid-template-columns:1fr}}
-  .c3 .lr{grid-template-columns:104px 76px 80px 1fr;gap:10px;padding:6px 4px}
+  /* ── 근접성 ──
+     종전엔 순위(상위 N%)가 열 끝에 붙어(justify-self:end) **다음 열 라벨과 10px**,
+     같은 행의 스파크와는 30px 넘게 떨어졌다. 관련 없는 것끼리 더 붙어 보이는 배치였다.
+     이제 순위를 스파크 바로 옆에 붙이고, 남는 폭은 열 오른쪽 밖으로 흘려보낸다.
+     그러면 남는 폭이 그대로 '열 사이 여백'이 되어 덩어리 경계가 저절로 생긴다.
+     규칙: 한 행 안 = 10px · 열 사이 = 최소 56px (5배 이상 차이나야 덩어리로 읽힌다) */
+  .c3 .mini2{display:grid;grid-template-columns:1fr 1fr;gap:0 56px;margin-top:8px}
+  @media(max-width:1100px){.c3 .mini2{grid-template-columns:1fr;gap:0}}
+  .c3 .lr{grid-template-columns:104px 76px 80px minmax(52px,1fr);gap:10px;padding:6px 4px}
   .c3 .lr .v{font-size:var(--fs-2)}
-  .c3 .lr.cmp{grid-template-columns:150px auto 1fr;gap:12px}
+  .c3 .lr .r{justify-self:start}          /* 스파크 옆에 — 열 끝으로 밀지 않는다 */
+  .c3 .lr.cmp{grid-template-columns:150px auto minmax(52px,1fr);gap:12px}
   .c3 .lr.cmp .v{text-align:left}
+  /* 덩어리 제목 — 왼쪽은 성과, 오른쪽은 유저 질. 무엇끼리 묶였는지 한 줄로 밝힌다 */
+  .c3 .grp-h{font-size:var(--fs-1);font-weight:750;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--faint);padding:0 4px 3px}
   .c3 .divider{margin:18px 0 6px}
-  .c3 .cmp2{display:grid;grid-template-columns:1fr 1fr;gap:0 34px}
+  .c3 .cmp2{display:grid;grid-template-columns:1fr 1fr;gap:0 56px}
+  @media(max-width:1100px){.c3 .cmp2{grid-template-columns:1fr;gap:0}}
   @media(max-width:1100px){.c3 .cmp2{grid-template-columns:1fr}}
 
   /* ═════ 미디어 목업 ═════ */
@@ -275,8 +283,8 @@ aeo:{
   score:"87.4",tier:"g2",tierLab:"매우 좋음",
   diag:['신규 단가 <b>상위 8%</b> · 노출 <b>상위 14%</b> — 증액 후보.','유저 질(다음날 재방문)도 중앙값 <b>+6.3%p</b>.'],
   kpi:[
+    {k:"광고비",role:"규모",v:"1,240만원",tier:"m",rank:"상위 31%",med:"중앙값 486만원",sp:[3,4,6,7,9,10,9,11]},
     {k:"신규 단가",role:"효율",v:"₩3,420",tier:"g2",rank:"상위 8%",med:"중앙값 ₩5,210",sp:[9,8,8,7,6,6,5,5]},
-    {k:"노출",role:"규모",v:"182만",tier:"g1",rank:"상위 14%",med:"중앙값 74만",sp:[4,5,7,8,10,11,10,12]},
     {k:"다음날 재방문",role:"유저 질",v:"41.2%",tier:"g1",rank:"상위 21%",med:"중앙값 34.9%",sp:[5,6,6,7,7,7,8,8]}],
   perf:[
     {k:"광고비",v:"1,240만원",tier:"m",rank:"상위 31%",sp:[3,4,6,7,9,10,9,11]},
@@ -304,8 +312,8 @@ ace:{
   score:"62.1",tier:"g1",tierLab:"좋음",
   diag:['CPM <b>상위 22%</b>로 효율은 좋으나 홈피드 접속이 중앙값 <b>−4.1%p</b>.','현 수준 유지 관찰.'],
   kpi:[
+    {k:"광고비",role:"규모",v:"2,980만원",tier:"g1",rank:"상위 12%",med:"중앙값 640만원",sp:[5,7,8,9,11,11,12,12]},
     {k:"CPM",role:"효율",v:"₩2,150",tier:"g1",rank:"상위 22%",med:"중앙값 ₩2,840",sp:[8,8,7,7,7,6,6,6]},
-    {k:"노출",role:"규모",v:"412만",tier:"g2",rank:"상위 6%",med:"중앙값 121만",sp:[6,7,9,10,11,11,12,12]},
     {k:"홈피드 접속 7일",role:"유저 질",v:"18.3%",tier:"w1",rank:"하위 28%",med:"중앙값 22.4%",sp:[7,7,6,6,6,5,5,5]}],
   perf:[
     {k:"광고비",v:"2,870만원",tier:"g1",rank:"상위 18%",sp:[6,7,8,9,9,10,11,11]},
@@ -330,9 +338,9 @@ moloco:{
   score:"74.8",tier:"g1",tierLab:"좋음",
   diag:['eCPA <b>상위 18%</b> · 유효 복귀 자연 기준선 대비 <b>+9.2%p</b>.','재관여 전담으로 안정적 — 집행은 7/27 주 종료.'],
   kpi:[
+    {k:"광고비",role:"규모",v:"1,090만원",tier:"m",rank:"상위 35%",med:"중앙값 402만원",sp:[3,5,6,7,8,7,5]},
     {k:"eCPA",role:"효율",v:"₩1,870",tier:"g2",rank:"상위 18%",med:"중앙값 ₩2,660",sp:[8,7,6,6,5,5,5]},
-    {k:"데려온 유저",role:"규모",v:"5,851",tier:"g1",rank:"상위 23%",med:"중앙값 2,540",sp:[4,6,8,9,10,9,7]},
-    {k:"유효 복귀",role:"유저 질",v:"46.1%",tier:"g1",rank:"기준선 +9.2%p",med:"자연 복귀 36.9%",sp:[5,6,6,7,7,8,8]}],
+    {k:"홈피드 접속 7일",role:"유저 질",v:"58.9%",tier:"g2",rank:"상위 11%",med:"중앙값 41.2%",sp:[5,6,6,7,7,8,8]}],
   perf:[
     {k:"광고비",v:"1,090만원",tier:"m",rank:"상위 35%",sp:[5,7,8,9,10,8,6,0]},
     {k:"데려온 유저",v:"5,851",tier:"g1",rank:"상위 23%",sp:[4,6,8,9,10,9,7,0]},
@@ -464,27 +472,33 @@ const footHTML=d=>d.gmore?`<div class="r-foot"><button class="more">${d.gmore.sp
 /* ═════ C3 · 판정 레일 ═════ */
 function render3(d){
   const kpiLabels=new Set(d.kpi.map(k=>k.k));
-  const rest=[...d.perf.filter(o=>!kpiLabels.has(o.k)),...d.cohort.filter(o=>!kpiLabels.has(o.k))];
-  const half=Math.ceil(rest.length/2);
+  /* 반으로 자르지 않는다 — 성과 지표와 유저 질은 성격이 달라, 개수를 맞추려고 섞으면
+     한 열 안에 관련 없는 것이 들어온다. 원래 묶음(perf / cohort)을 그대로 열로 쓴다. */
+  const gPerf=d.perf.filter(o=>!kpiLabels.has(o.k));
+  const gCoh =d.cohort.filter(o=>!kpiLabels.has(o.k));
   const lr=o=>`<div class="lr hv"><span class="k">${o.k}</span><b class="v num" style="color:${TIERC[o.tier]}">${o.v}</b>${o.sp?spk(o.sp,76,18):"<span></span>"}<span class="r">${o.rank||""}</span></div>`;
   const cmp=o=>`<div class="lr cmp hv" title="${CMP_TIP.replace(/&#10;/g,"\n")}"><span class="k" title="${o.k}">${o.k}</span><b class="v num" style="color:${TIERC[o.tier]}">${o.v}</b><span class="r">${o.rank||""}</span></div>`;
-  const chalf=Math.ceil(d.cmp.length/2);
+  /* 비교군도 성격이 둘이다 — '이 매체 안'과 '타 매체'. 반으로 자르면 이 경계가 흐려진다 */
+  const cIn=d.cmp.filter(o=>!/몰로코|메타|구글/.test(o.k)||/개$/.test(o.k));
+  const cX =d.cmp.filter(o=>!cIn.includes(o));
   return `<div class="cc c3" style="--stw:340px">
   ${stageHTML(d,1)}
   <div class="rail">
-    <div class="r-bar">${d.live?'<span class="livedot" title="라이브"></span>':""}<span class="nm">${d.name}</span>${navBtns}</div>
+    <!-- 이름·라이브·등급은 넣지 않는다. 이 블록은 표에서 소재를 클릭하면 그 행 바로 아래에 열리므로
+         바로 위에 같은 정보가 이미 있다. 남길 것은 조작 버튼뿐. -->
+    <div class="r-bar">${navBtns}</div>
     <div class="r-charts">${chartsHTML(d,300)}</div>
     <div class="kpis">
       ${d.kpi.map(k=>`<div class="kpi hv" title="${k.med}"><div class="role">${k.role} · ${k.k}</div><div class="kv"><b class="num" style="color:${TIERC[k.tier]}">${k.v}</b><small>${k.rank}</small></div>${spk(k.sp,118,24)}</div>`).join("")}
     </div>
     <div class="mini2">
-      <div>${rest.slice(0,half).map(lr).join("")}</div>
-      <div>${rest.slice(half).map(lr).join("")}</div>
+      <div><div class="grp-h">성과</div>${gPerf.map(lr).join("")}</div>
+      <div><div class="grp-h">유저 질</div>${gCoh.map(lr).join("")}</div>
     </div>
     <hr class="divider">
     <div class="cmp2">
-      <div>${d.cmp.slice(0,chalf).map(cmp).join("")}</div>
-      <div>${d.cmp.slice(chalf).map(cmp).join("")}</div>
+      <div><div class="grp-h">이 매체 안</div>${cIn.map(cmp).join("")}</div>
+      <div><div class="grp-h">타 매체 · 같은 소재</div>${cX.map(cmp).join("")}</div>
     </div>
     ${footHTML(d)}
   </div>
