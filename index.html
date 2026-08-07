@@ -4378,7 +4378,10 @@ function nameTokensOf(e){
   /* URL은 이름이 아니다 — `youtube.com/watch`처럼 공통 토큰만 남아 서로 다른 영상이 '소재명 일치'로 묶인다.
      이름이 아직 없는 소재는 이름 매칭을 포기하고 아래 그룹 다리(xmGroupBridge)로 넘긴다 */
   if(/^https?:\/\//.test(dn))return e._nmTok=new Set();
-  let s=dn.toLowerCase();
+  /* ⚠️ NFC 정규화 필수 — 원천(BigQuery)의 한글 소재명 7.9%가 NFD(분해형)라(2026-08-07 실측)
+     그대로 토큰화하면 화면상 같은 이름이 서로 다른 토큰이 돼 타매체 매칭이 **무경고로** 실패한다.
+     제로폭(U+200B ACE 마커 등)도 함께 털어낸다 — umNorm과 같은 규약. */
+  let s=dn.normalize("NFC").replace(/[\u200B\u200C\u200D\uFEFF]/g,"").toLowerCase();
   s=s.replace(/\.(mp4|png|jpe?g|gif|webp|mov|webm)\b/g,"");
   /* 붙여 쓴 포맷 접두(vidmaugrowth…)만 떼어낸다. 순서가 중요하다 — 하나의 정규식으로 쓰면
      "video_..."에서 엔진이 백트래킹해 `vid`만 떼고 "eo_..."를 남긴다(실제로 겪은 버그).
@@ -7610,6 +7613,11 @@ function CR_SELFTEST(){
    t("A/B 변형은 다른 소재로 남긴다",key("maugrowth_flea_beauty_A.png")===key("maugrowth_flea_beauty_B.png"),false);
    t("서로 다른 소재가 같은 키로 뭉개지지 않는다",key("720_720-64.png")===key("720_720-66.png"),false);
    /* 토큰이 1개 이하면 crossMediaMatches의 myTok.size>=2 게이트에서 걸러진다 */
+   /* NFD(분해형)와 NFC(완성형)는 화면상 같은 이름이므로 같은 토큰이어야 한다 */
+   t("NFD 한글 이름도 NFC와 같은 토큰으로 묶인다",
+     key("maugrowth_주방_1080x1080.mp4".normalize("NFD"))===key("maugrowth_주방_1080x1080.mp4".normalize("NFC")),true);
+   t("제로폭(ACE 마커)이 붙어도 같은 토큰",
+     key("maugrowth_flea_beauty.png\u200B")===key("maugrowth_flea_beauty.png"),true);
    t("이름이 사실상 비면 매칭을 포기한다",nameTokensOf({name:"B_720x720.png",_name:"B_720x720.png"}).size<2,true);}
   t("진짜 이름이 있으면 토큰이 생긴다",
     nameTokensOf({name:"https://www.youtube.com/watch?v=AAA",_name:"안 입는 옷들 당근으로 정리하고"}).size>0,true);
