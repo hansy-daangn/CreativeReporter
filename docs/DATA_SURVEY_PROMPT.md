@@ -1,3 +1,6 @@
+> **✅ 수행 완료(2026-08-07).** 결과는 사용자 보유 보고서와 `docs/ARCHITECTURE.md`·`docs/WEEKLY_SYNC_TASK.md`에 반영됐다.
+> 재조사가 필요할 때 다시 쓰는 문서로 남긴다. 확정된 사실 요약은 `docs/REWRITE_AUTOMATION_PROMPT.md` [0]절 참고.
+
 # CR 데이터 소스 전수 조사 — 데스크톱 Claude용 프롬프트
 
 > 회사 네트워크의 Claude 데스크톱(superset/bigquery MCP 설치본)에 아래 코드블록을 그대로 붙여넣으세요.
