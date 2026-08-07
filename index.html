@@ -2709,59 +2709,63 @@ function perfPillHTML(e){
   const cls="sp "+(t==="g2"?"sp-g2":t==="g1"?"sp-g1":t==="w1"?"sp-w1":t==="w2"?"sp-w2":"sp-mid")+(p.est?" pf-est":"");
   const tip=p.est?"구글 알고리즘 기반 추정 실적":"구글 리포트 실적"; /* 툴팁은 이 두 마디만 — 상세 설명은 푸터 '실적 분석' */
   return `<span class="${cls}" title="${escAttr(tip)}">${escHtml(p.lab)}${p.est?`<i class="cc">(cc)</i>`:""}</span>`;}
-/* ═════ 주차별 실적 — 그 주 값으로 그 주 등급을 낸다 (2026-08-07 재작성) ═════
-   앞선 판(2026-08-07 오전)은 weeklyScoresOf(사이트 종합 점수)의 등급을 막대 밑에 적었는데, 그건
-   **효율 85% + 규모 15%** 짜리 다른 잣대다. 그래서 "광고비가 확 줄었는데 여전히 매우좋음"(효율이 좋으면
-   규모가 빠져도 등급 유지)이나 "CPM이 좋아졌는데 나쁨"(CPM은 대부분 매체에서 채점 지표가 아니고,
-   규모 축이 점수를 끌어내림) 같은 어긋남이 생겼다. 실적 등급을 보고 싶은 자리에 점수 등급이 있었던 것.
+/* ═════ 주차별 실적 — 구글 실적 등급을 그 주 데이터로 재현한다 (2026-08-07 재작성 2판) ═════
+   구글 공식 문서(App campaigns 애셋 리포트)가 밝힌 것:
+     · "Performance rating 열은 **평균 일일 비용에 기반한 백분위 순위**를 보여준다"
+     · "'Low'·'Good'·'Best'는 **같은 캠페인 안, 같은 유형의** 다른 애셋들과 비교한 **상대 순위**다"
+     · 기준 창은 **최근 14일**, 애셋 수가 적으면 'Unrated'(등급 없음)
+   즉 절대 임계값이 아니라 **비교군 안에서의 등수**이고, 그 등수는 **비용**이 만든다.
+   (구글이 좋다고 판단한 애셋에 예산을 몰아주므로, 비용 순위가 곧 구글의 판정 결과를 드러낸다)
 
-   이제 estimatePerfLabels와 **같은 공식(PERF_EST)** 을 '그 주 데이터'에만 적용한다:
-     S = 0.30·(전환수 코호트 등수) + 0.20·(CTR 코호트 등수) + 0.30·(전환수÷코호트 최대) + 0.20·(광고비÷코호트 최대)
-     S ≥ 0.673 → 매우 좋음 · S < 0.265 → 낮음 · 그 외 → 좋음
-   코호트는 **그 주에 함께 집행된 소재들**이며 구글과 같이 광고그룹 안에서만 비교한다(좁은 순서로 확장).
+   ── 실측 검증 (2026-08-07 · 실제 라벨 130개, 학습 제외) ──
+   공식별 정확도                     | 비교군별 정확도(비용 백분위 고정)
+     비용 백분위만          69.2% ★  |   캠페인×유형    69.2% ★
+     비용70+전환30          68.5%    |   광고그룹×유형  69.2%
+     비용50+전환50          66.9%    |   캠페인만       57.7%
+     전환 백분위만          65.4%    |   광고그룹만     57.7%
+     구 PERF_EST 4항 혼합   60.8%    |   비교군 없음    54.6%
+   → ① 비용 단일 지표가 가장 정확하다 ② **유형별로 나누는 것이 결정적**(+11.5%p)
+      ③ 효율(CPA 역백분위)을 섞으면 오히려 떨어진다(85:15 → 62.3% · 75:25 → 60.8%)
+   경계는 0.89/0.48로 잡았다(전체 67.7% · 세 등급 고루 맞히는 균형 66.3%).
+   순수 정확도 최대는 0.95/0.48(69.2%)이지만 '매우 좋음' 재현율이 8/18로 떨어져 화면에서 의미를 잃는다.
 
-   실측(구글 리포트 라벨)은 그 라벨이 실제로 붙어 있는 주에만 쓴다. 실측 확인 결과 라벨은
-   최신 주 154행에만 있고 그 이전 주는 0건이라, 사실상 최신 주만 실측이고 나머지는 추정이다.
-   과거 주에 현재 라벨을 복사하면 "그 주에 이 등급이었다"는 거짓이 되므로 절대 하지 않는다. */
+   ⚠️ 광고비가 줄면 등급이 내려가는 것은 이 방식의 **의도된 성질**이다 — 구글 자신이 비용 순위로
+      등급을 매기므로, 예산이 빠진 소재는 구글 눈에도 등급이 내려간 소재다.
+      반면 '단가가 비싸지면 등급 하락'은 넣지 않았다. 실측에서 정확도를 7%p 떨어뜨렸다(위 ③).
+      효율은 점수·지표 열이 이미 보여주므로, 이 자리는 구글 재현에 충실한 편이 낫다. */
+const WPERF={HI:0.89,LO:0.48,MIN_COHORT:4};
 function weeklyPerfOf(ds,e){
   if(!ds._wkPerf){
-    const L=ds.L,nameCol=L.nameCol,byW=new Map();
+    const L=ds.L,byW=new Map();
     for(const r of ds.data){const d=String(r.date||"").slice(0,10);
       if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;
       let a=byW.get(d);if(!a){a=[];byW.set(d,a);}a.push(r);}
+    /* 동률 안전 중위 등수(0~1) — 같은 비용이 여럿이면 그 구간의 가운데 값을 준다 */
     const pr=(vals,v)=>{let lo=0,hi=0;for(const x of vals){if(x<v)lo++;if(x<=v)hi++;}return vals.length?(lo+hi)/(2*vals.length):0.5;};
+    /* 비교군 키 — 구글은 캠페인×애셋유형(문서 그대로). 그 값이 없는 매체는 광고그룹×포맷으로 같은 모양을 만든다 */
+    const grpOf=x=>String(x._g_campaignId||x._g_adGroupId||x._m_group||"*");
+    const tyOf=x=>String(x._g_assetType||(x.tags&&x.tags.fo)||"*");
+    const keys=[x=>grpOf(x)+"|"+tyOf(x),x=>grpOf(x),x=>"*|"+tyOf(x),x=>"*"];
     const out=new Map();
     for(const[w,rows]of byW){
-      /* 그 주에 실제로 집행된 소재만 — 광고비 0은 코호트도 대상도 아니다(구글도 등급을 유보한다) */
+      /* 그 주에 실제로 집행된 소재만 — 광고비 0은 코호트에도 대상에도 넣지 않는다(구글도 등급을 유보한다) */
       const ents=aggregate(rows,L).filter(x=>(x.비용||0)>0);
       const wm=new Map();out.set(w,wm);
       if(!ents.length)continue;
-      /* 전환 물량 지표는 그 주 안에서 고른다 — 주마다 가용 지표가 달라도 코호트 안에서는 하나로 통일된다 */
-      const ck=perfConvKeyOf(ents);
-      const gidOf=x=>String(x._g_adGroupId||x._m_group||"");
-      const keys=[x=>gidOf(x)+"|"+((x.tags&&x.tags.fo)||"?"),x=>gidOf(x),x=>"*|"+((x.tags&&x.tags.fo)||"?"),x=>"*"];
       const maps=keys.map(fn=>{const m=new Map();for(const x of ents){const k=fn(x);let a=m.get(k);if(!a){a=[];m.set(k,a);}a.push(x);}return m;});
-      const vOf=x=>+(x[ck]||0),cOf=x=>+(x.비용||0);
-      const stat=new Map();
-      const statOf=g=>{let s=stat.get(g);if(s)return s;
-        const convs=g.map(vOf),costs=g.map(cOf),ctrs=[];
-        for(const x of g){if(!(x._clkMix||x._impBad)&&(x["노출 수"]||0)>0)ctrs.push((x["클릭 수"]||0)/x["노출 수"]);}
-        s={convs,ctrs,mxV:Math.max(0,...convs)||1,mxC:Math.max(0,...costs)||1};
-        stat.set(g,s);return s;};
+      const costs=new Map();
+      const costsOf=g=>{let c=costs.get(g);if(!c){c=g.map(x=>+(x.비용||0));costs.set(g,c);}return c;};
       for(const x of ents){
         /* 실측 라벨이 이 주 행에 실제로 있으면 그대로 — 추정으로 덮지 않는다 */
         const act0=String(x._g_perfLabel||"").trim();
         const act=PERF_LABEL_ALIAS[act0]||act0;
         if(act&&act!=="--"&&act!=="-"){wm.set(x.name,{lab:act,est:false});continue;}
-        let g=ents;
-        for(let i=0;i<maps.length;i++){const cand=maps[i].get(keys[i](x));if(cand&&cand.length>=3){g=cand;break;}}
-        if(g.length<3)continue; /* 비교 상대가 없으면 등급을 내지 않는다(표본 없이 붙이면 거짓 신호) */
-        const s=statOf(g);
-        const ctr=(!(x._clkMix||x._impBad)&&(x["노출 수"]||0)>0)?(x["클릭 수"]||0)/x["노출 수"]:null;
-        const rctr=(ctr!=null&&s.ctrs.length>=3)?pr(s.ctrs,ctr):0.5; /* CTR 무효면 중립 */
-        const S=PERF_EST.W_RV*pr(s.convs,vOf(x))+PERF_EST.W_CTR*rctr
-               +PERF_EST.W_FV*(vOf(x)/s.mxV)+PERF_EST.W_FC*(cOf(x)/s.mxC);
-        wm.set(x.name,{lab:S>=PERF_EST.HI?"매우 좋음":S<PERF_EST.LO?"낮음":"좋음",est:true,S,n:g.length,ck});}}
+        let g=null,kd=-1;
+        for(let i=0;i<maps.length;i++){const c=maps[i].get(keys[i](x));if(c&&c.length>=WPERF.MIN_COHORT){g=c;kd=i;break;}}
+        if(!g)continue; /* 구글의 'Unrated' — 비교할 애셋이 부족하면 등급을 내지 않는다 */
+        const S=pr(costsOf(g),+(x.비용||0));
+        wm.set(x.name,{lab:S>=WPERF.HI?"매우 좋음":S<WPERF.LO?"낮음":"좋음",est:true,S,n:g.length,
+          scope:kd===0?"같은 캠페인·같은 유형":kd===1?"같은 캠페인":kd===2?"같은 유형":"전체"});}}
     ds._wkPerf=out;}
   const nm=e&&e.name;
   return w=>{const m=ds._wkPerf.get(w);return (m&&m.get(nm))||null;};}
@@ -3857,7 +3861,7 @@ function creativeTrendHTML(ds,e){
     let tipTxt=`<b>${w.slice(5).replace("-","/")} 주</b><br>광고비 ${fmtWon(o.c)}`;
     const pl=pls[i];
     if(pl&&pl.lab)tipTxt+=`<br><span class="t-k">${pl.est?"추정 실적":"실적"}</span> <b style="color:${TIER_C[PERF_TIER[pl.lab]]||"var(--mid)"}">${escHtml(pl.lab)}</b>`
-      +(pl.est?`<br><span class="t-k" style="font-size:var(--fs-1)">이 주에 함께 집행된 같은 광고그룹 ${pl.n}개와 비교 · 전환수·CTR·광고비 기준</span>`
+      +(pl.est?`<br><span class="t-k" style="font-size:var(--fs-1)">${escHtml(pl.scope||"")} ${pl.n}개 중 광고비 상위 ${Math.max(1,Math.round(100-(pl.S||0)*100))}% · 구글이 쓰는 방식(비용 백분위)</span>`
               :`<br><span class="t-k" style="font-size:var(--fs-1)">구글 리포트 실측</span>`);
     for(const ts of tipSpecs)if(ts.vals[i]!=null)tipTxt+=`<br><span class="t-k">${ts.lab}</span> ${ts.fmt(ts.vals[i])}`;
     s+=`<rect class="ispk-b" data-tip="${escAttr(tipTxt)}" x="${(x-bw/2).toFixed(1)}" y="${(H-pb-h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="var(--karrot)" fill-opacity="0.5"/>`;
@@ -3894,7 +3898,7 @@ function creativeTrendHTML(ds,e){
   /* 범례는 최소한으로: 주 수 · 색=지표 매핑 · 최신값. 비율·설명은 푸터/툴팁이 담당(중복 금지) */
   const leg=lines.map(ln=>`<span><i class="lgd" style="background:${ln.col}"></i>${ln.lab} <b>${ln.last!=null?ln.fmt(ln.last):"–"}</b></span>`).join(" ");
   const _nEst=pls.filter(p=>p&&p.est).length,_nAct=pls.filter(p=>p&&p.lab&&!p.est).length;
-  const plLeg=hasPl?` · <span title="막대 밑 = 그 주의 실적. 구글 리포트 라벨이 그 주에 실제로 붙어 있으면 실측(굵게), 없으면 그 주에 함께 집행된 같은 광고그룹 소재들과 비교해 구글과 같은 공식으로 추정(점선 밑줄).">막대 밑 <b>실적</b>${_nAct?` 실측 ${_nAct}주`:""}${_nEst?` · 추정 ${_nEst}주`:""}</span>`:"";
+  const plLeg=hasPl?` · <span title="막대 밑 = 그 주의 실적. 구글 리포트 라벨이 그 주에 실제로 붙어 있으면 실측(굵게), 없으면 추정(점선 밑줄). 추정은 구글이 쓰는 방식 그대로 — 같은 캠페인·같은 유형 소재들 사이에서 그 주 광고비가 몇 등인지로 매깁니다. 실제 라벨 130개로 맞춰 정확도 67.7%.">막대 밑 <b>실적</b>${_nAct?` 실측 ${_nAct}주`:""}${_nEst?` · 추정 ${_nEst}주`:""}</span>`:"";
   return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · <i class="lgd" style="background:var(--karrot);opacity:.55"></i>광고비 ${leg}${plLeg}</span></div>${picker}<div class="ispark-scroll"><svg class="ispark-svg" viewBox="0 0 ${W} ${H}">${s}</svg></div></div>`;}
 /* 상세 '영상 시청' — 어디까지 많이 보고 어디서 이탈했는지 (영상 소재만).
    구간 도달 곡선 데이터 우선순위: ① 소재 자체 구간별 재생수(_v25~_v100 ÷ 노출, 선택 기간)
@@ -5538,8 +5542,8 @@ function tableCols(L,ds){const meta=[{k:"name",t:L.name},{k:"score",t:"실적",h
     if(c.lead)g.lead++;else if(c.sub)g.subs.push(c);}
   for(const[,g]of byGrp)if(!g.lead&&g.subs.length){const p=g.subs[0];delete p.sub;p.lead=1;}
   /* 채점 가중치를 컬럼 툴팁에 자동 표기 — SCORING과 표기가 어긋날 수 없게 스펙에서 직접 읽는다 */
-  try{const _ws=Object.fromEntries(specsFor(ds).map(x=>[x.k,x.w]));
-    for(const c of filtered)if(_ws[c.k])c.help=(c.help||"")+" · 점수 "+Math.round(_ws[c.k]*100)+"% 반영";}catch(_){}
+  /* 컬럼 툴팁의 "· 점수 N% 반영" 표기는 내렸다(2026-08-07) — 점수를 화면에서 안 쓰기로 한 이상
+     모든 지표 툴팁 끝에 붙는 이 꼬리표는 정보가 아니라 잡음이다. 계산은 그대로다. */
   return meta.concat(filtered);}
 function fcell(v,f){return f==="won"?fmtWon(v):f==="int"?fmtInt(v):f==="pct"?fmtPct(v):f==="num"?(v!=null&&isFinite(v)?v.toFixed(1)+"×":"–"):(v??"–");}
 /* ── 반응형 열 숨김 — 창이 좁으면 상위 카테고리를 '중요도 낮은 순'으로 통째 숨긴다(가로 스크롤 대신).
@@ -6126,7 +6130,7 @@ function wireHoverThumbs(root){
     t.addEventListener("mouseleave",hideTip);});}
 
 /* glossary */
-const GLOSSARY=[["광고비","이 소재에 쓴 돈"],["노출","사용자에게 보여진 횟수"],["클릭","눌린 횟수"],["CTR","클릭률 = 클릭÷노출",1,"높을수록 좋음"],["CPC","클릭 1번당 비용",1,"낮을수록 좋음"],["설치","이 소재로 생긴 앱 설치 수(어트리뷰션)"],["eCPI","설치 1건당 비용",1,"낮을수록 좋음"],["CPA","전환(모든 인앱 액션) 1건당 비용 — 구글 ACE 기본 획득단가 = 비용÷전환수",1,"낮을수록 좋음"],["신규 단가","신규 유저(앱 최초 실행) 1명당 비용 — 구글 AEO 채점 1순위 = 비용÷first_open",1,"낮을수록 좋음"],["홈 단가","홈 도달 1건당 비용 — 구글 ACE '홈 기준' 토글 시 채점 = 비용÷home",1,"낮을수록 좋음"],["신규 실행","앱 최초 실행 = 새로 유입된 신규 유저 수 (구글 first_open)"],["홈 도달","홈 화면 도달 = 주요 인앱 액션 수 (구글 home)"],["활성 유저","설치 후 실제로 앱을 쓴 사람 (구글은 '인앱 액션' 값이 여기 담김)"],["eCPA","활성 유저 1명당 비용",1,"낮을수록 좋음"],["신규+재활성 eCPA","신규·복귀 유저 1명당 비용 — 몰로코·메타 채점 1순위",1,"낮을수록 좋음"],["완주율","영상을 끝까지 본 비율 (노출 가중 평균)",1,"높을수록 좋음"],["신규+재활성","신규 유저 + 휴면에서 돌아온 유저 수"],["설치(몰로코)","몰로코 리포트 자체 집계 설치 수 — MMP 어트리뷰션과 다를 수 있음"],["D1 잔존율","설치 다음날 앱에 돌아온 비율 (AppsFlyer 코호트 실측) — 데려온 유저의 질 (메타 14%·몰로코 6% 반영)",1,"높을수록 좋음"],["D7 잔존율","설치 7일 뒤에도 남아 있는 비율 (AF 코호트)",1,"높을수록 좋음"],["ROAS D7","설치 후 7일 코호트 매출 ÷ 광고비 (AF 실측 매출 · 참고용)",1,"높을수록 좋음"],["신규 설치","AppsFlyer 기준 순수 신규 설치 수 (재참여 제외)"],["재참여","리인게이지먼트 — 기존 설치 유저를 다시 활동시킨 수 (AF)"],["점수","효율(85%)+규모(15%) 종합, 0~100 · 효율은 매체별 획득단가(신규+재활성 eCPA·신규 단가·CPA) 중심, 규모는 데려온 유저 수의 광고비 가중 백분위 · ROAS·CPM은 점수 제외(실데이터 검증) · 표본 적은 지표는 중앙으로 축소"],["학습중","집행 2주 미만 또는 전환 30건 미만 — 표본 축적 중이라 점수 변동 가능, 볼륨 확대 판단 보류 권장"]];
+const GLOSSARY=[["광고비","이 소재에 쓴 돈"],["노출","사용자에게 보여진 횟수"],["클릭","눌린 횟수"],["CTR","클릭률 = 클릭÷노출",1,"높을수록 좋음"],["CPC","클릭 1번당 비용",1,"낮을수록 좋음"],["설치","이 소재로 생긴 앱 설치 수(어트리뷰션)"],["eCPI","설치 1건당 비용",1,"낮을수록 좋음"],["CPA","전환(모든 인앱 액션) 1건당 비용 — 구글 ACE 기본 획득단가 = 비용÷전환수",1,"낮을수록 좋음"],["신규 단가","신규 유저(앱 최초 실행) 1명당 비용 — 구글 AEO 채점 1순위 = 비용÷first_open",1,"낮을수록 좋음"],["홈 단가","홈 도달 1건당 비용 — 구글 ACE '홈 기준' 토글 시 채점 = 비용÷home",1,"낮을수록 좋음"],["신규 실행","앱 최초 실행 = 새로 유입된 신규 유저 수 (구글 first_open)"],["홈 도달","홈 화면 도달 = 주요 인앱 액션 수 (구글 home)"],["활성 유저","설치 후 실제로 앱을 쓴 사람 (구글은 '인앱 액션' 값이 여기 담김)"],["eCPA","활성 유저 1명당 비용",1,"낮을수록 좋음"],["신규+재활성 eCPA","신규·복귀 유저 1명당 비용 — 몰로코·메타 채점 1순위",1,"낮을수록 좋음"],["완주율","영상을 끝까지 본 비율 (노출 가중 평균)",1,"높을수록 좋음"],["신규+재활성","신규 유저 + 휴면에서 돌아온 유저 수"],["설치(몰로코)","몰로코 리포트 자체 집계 설치 수 — MMP 어트리뷰션과 다를 수 있음"],["D1 잔존율","설치 다음날 앱에 돌아온 비율 (AppsFlyer 코호트 실측) — 데려온 유저의 질 (메타 14%·몰로코 6% 반영)",1,"높을수록 좋음"],["D7 잔존율","설치 7일 뒤에도 남아 있는 비율 (AF 코호트)",1,"높을수록 좋음"],["ROAS D7","설치 후 7일 코호트 매출 ÷ 광고비 (AF 실측 매출 · 참고용)",1,"높을수록 좋음"],["신규 설치","AppsFlyer 기준 순수 신규 설치 수 (재참여 제외)"],["재참여","리인게이지먼트 — 기존 설치 유저를 다시 활동시킨 수 (AF)"],["실적(매우 좋음·좋음·낮음)","구글이 매기는 상대 등급 — 같은 캠페인 안, 같은 유형(영상/이미지) 소재들끼리 비교한 순위예요. 절대 기준이 아니라 등수라서, 다른 소재가 좋아지면 내 등급이 내려갈 수도 있어요"],["추정 실적 (cc)","구글이 라벨을 안 준 소재·주차를 같은 방식으로 추정한 값. 구글 문서대로 '같은 캠페인·같은 유형 안에서의 그 주 광고비 순위'로 매겨요. 실제 라벨 130개와 맞춰본 정확도 67.7%",1,"연한 글씨 + 점선 밑줄이 추정, 진한 글씨가 구글 실측"],["주차별 추이 막대 밑 등급","그 주의 실적. 구글 라벨이 그 주에 실제로 붙어 있으면 실측(진하게), 없으면 추정(연하게·점선). 광고비가 크게 줄면 등급도 함께 내려가요 — 구글도 비용 순위로 매기기 때문이에요"],["한눈에 보기 (레이더)","지표별로 또래 대비 어디쯤인지를 한 도형에 모은 그림. 가운데가 꼴찌, 바깥 테두리가 1등, 점선 고리가 또래 중간이에요. 점선 밖으로 나간 축이 잘하고 있는 항목"],["비교군 내 위치","가로 = 매체 범위(이 매체 안 / 전 매체), 세로 = 비교 대상(같은 광고그룹 / 같은 서비스). 전 매체는 매체마다 집계 기준이 달라 광고비만 비교해요"],["7일 내 서비스 접속","설치하고 7일 안에 그 화면까지 실제로 온 사람 비율. 홈피드 접속·알바 탭 접속처럼 어디에 왔는지로 나눠 봐요"],["앱 재방문","설치한 날 말고 다시 앱을 연 사람 비율"],["첫 주 4일 이상 방문","설치 후 첫 주에 4일 넘게 들어온 사람 비율 — 습관이 붙었다는 신호"],["설치 한 달 뒤 방문","설치 4주차(30일 무렵)에도 앱에 들어온 사람 비율"],["노출 미수집 주","광고비는 나갔는데 원천 리포트에 노출이 안 들어온 주. 노출이 0이었다는 뜻이 아니라 데이터가 안 온 것이라, 그 주를 빼고 CTR·CPM을 계산해요"],["학습중","집행 2주 미만 또는 전환 30건 미만 — 아직 표본이 쌓이는 중이라 수치가 크게 흔들려요. 볼륨 확대 판단은 보류를 권해요"]];
 function renderGlossary(){$("#glossGrid").innerHTML=GLOSSARY.map(g=>`<div><b>${g[0]}</b> — ${g[1]}${g[2]?`<span class="dir">${g[3]}</span>`:""}</div>`).join("");}
 $("#glossBtn").onclick=()=>$("#gloss").classList.add("show");
 $("#glossClose").onclick=()=>$("#gloss").classList.remove("show");
@@ -6292,7 +6296,7 @@ function loadCloudRows(rows){
   loadMarks().then(()=>{renderViewSeg();if(active&&DATASETS[active])renderTable(DATASETS[active]);});
   /* 마지막으로 보던 탭 복원 + 히스토리 시작점 등록 — 매체는 rebuildAllDatasets 단계에서 이미 복원됐다.
      딥링크(#ad=)로 들어온 경우엔 그 링크가 이길 수 있게 탭 복원을 건너뛴다. */
-  if(!/ad=/.test(_initHash))navRestoreTab();
+  navRestoreView();
   navInit();
   setTimeout(openDeepLink,700);
   /* 유튜브 제목 일괄 조회 중단 — 이름은 payload._name이 전부 갖고 있다(외부 왕복 제거) */
@@ -6318,7 +6322,9 @@ function navSig(s){return[(s&&s.m)||"",(s&&s.t)||"",(s&&s.ad)||""].join("|");}
 function navHash(s){return s&&s.ad
   ?"#ad="+encodeURIComponent(s.ad)+"&ch="+encodeURIComponent(s.m||"")
   :location.pathname+location.search;}
-function navSave(s){try{localStorage.setItem(NAV_LS,JSON.stringify({m:s.m,t:s.t}));}catch(_){}}
+/* 상세 소재까지 저장한다 — 매체·탭만 기억하면 "보던 소재"로 돌아오지 못한다.
+   저장되는 건 {매체, 탭, 소재이름} 문자열 셋뿐이라 수십~수백 바이트다(네트워크 왕복 0). */
+function navSave(s){try{localStorage.setItem(NAV_LS,JSON.stringify({m:s.m,t:s.t,ad:s.ad||null}));}catch(_){}}
 let _navApplying=false;
 /* 같은 화면이면 항목을 새로 쌓지 않고 갈아끼운다 — 뒤로가기 중 되돌아온 화면이 다시 쌓여
    "뒤로 눌렀는데 제자리"가 되는 것을 막는다(popstate 직후엔 history.state가 이미 목적지 상태). */
@@ -6349,8 +6355,23 @@ window.addEventListener("popstate",ev=>{
 /* 저장된 마지막 매체 — 없거나 지금 데이터에 그 매체가 없으면 종전대로 첫 채널 */
 function navSavedMedia(chs){try{const o=JSON.parse(localStorage.getItem(NAV_LS)||"null");
   if(o&&o.m&&chs.includes(o.m))return o.m;}catch(_){}return null;}
-function navRestoreTab(){try{const o=JSON.parse(localStorage.getItem(NAV_LS)||"null");
-  if(o&&o.t&&o.t!==mainTab&&["analysis","table","ab"].includes(o.t))switchTab(o.t);}catch(_){}}
+/* 로그인/새로고침 후 마지막 화면으로 이어 붙인다 — 매체는 rebuildAllDatasets가 이미 복원했고,
+   여기서 탭과 상세 소재를 잇는다. loadCloudRows는 부팅 경로에 따라 두 번 불릴 수 있어(부분 로드 →
+   전체 로드) 한 번만 수행하도록 잠근다. resetAll이 ISLE.name을 지우므로 복원은 반드시 그 뒤여야 한다. */
+let _navRestored=false;
+function navRestoreView(){
+  if(_navRestored)return;_navRestored=true;
+  if(/ad=/.test(_initHash))return; /* 공유 링크로 들어왔으면 링크가 이긴다 */
+  let o=null;try{o=JSON.parse(localStorage.getItem(NAV_LS)||"null");}catch(_){}
+  if(!o)return;
+  if(o.t&&o.t!==mainTab&&["analysis","table","ab"].includes(o.t))switchTab(o.t);
+  if(!o.ad)return;
+  /* 표가 그려진 뒤라야 행을 찾을 수 있다. 소재가 사라졌거나(기간·필터) 못 찾으면 조용히 넘어간다 */
+  setTimeout(()=>{
+    if(_userActed)return; /* 기다리는 사이 사용자가 뭘 눌렀으면 가로채지 않는다 */
+    if(!curDS||!findRow(curDS,o.ad))return;
+    try{goToIslandFromQuad(o.ad);}catch(_){}
+  },600);}
 function openDeepLink(){
   if(_dlDone)return;_dlDone=true;
   if(_userActed)return;
@@ -7445,12 +7466,10 @@ function expRow(e,cols,withCreator,nRank){
   const cells=[nmCell,svcOf(e)||"기타"];
   if(withCreator)cells.push(rosterCreatorsOf(e).join(",")||"기타");
   for(const c of cols)cells.push(_fmtCell(e[c.k],c.f));
-  cells.push(e.score!=null?String(Math.round(e.score)):"–");
-  cells.push(TIER_LAB[e.tier]||"–");
-  cells.push(e.rank!=null?("#"+e.rank+(nRank?"/"+nRank:"")):"–");
+  /* 점수·등급·순위 열 제외(2026-08-07) — 헤더와 짝을 맞춘다. 계산은 그대로 살아 있다 */
   return "| "+cells.join(" | ")+" |";}
 function expTable(list,cols,withCreator,nRank){
-  const h=["소재","서비스",...(withCreator?["제작자"]:[]),...cols.map(c=>c.lab),"점수","등급","순위"];
+  const h=["소재","서비스",...(withCreator?["제작자"]:[]),...cols.map(c=>c.lab)]; /* 점수·등급·순위 제외(2026-08-07) */
   const lines=["| "+h.join(" | ")+" |","| "+h.map(()=>"---").join(" | ")+" |"];
   for(const e of list)lines.push(expRow(e,cols,withCreator,nRank));
   return lines.join("\n");}
@@ -7583,7 +7602,7 @@ function openExportModal(){
       `<div class="xt-field"><div class="xt-lab">매체 <span class="xt-hint">복수 선택</span></div><div class="xt-seg" id="xtMedia"></div></div>`+
       `<div class="xt-field"><div class="xt-lab">기간</div><div class="xt-seg" id="xtPeriod"></div><div class="xt-range" id="xtRange" hidden><input type="date" id="xtStart"><span class="xt-tilde">~</span><input type="date" id="xtEnd"></div></div>`+
       `<div class="xt-field"><div class="xt-lab">비교 데이터 <span class="xt-hint">동기간·동매체 타 제작자 — 요약=기준선 통계+상위 3개</span></div><div class="xt-seg" id="xtCompare"></div></div>`+
-      `<div class="xt-field"><div class="xt-lab">최소 점수 <span class="xt-hint">미만·무점수는 표에서 제외(요약 통계는 전체 기준)</span></div><div class="xt-seg" id="xtMinScore"></div></div>`+
+      `<div class="xt-field" hidden><div class="xt-lab">최소 점수 <span class="xt-hint">미만·무점수는 표에서 제외(요약 통계는 전체 기준)</span></div><div class="xt-seg" id="xtMinScore"></div></div>`+
     `</div>`+
     `<div class="xt-foot"><button type="button" class="xt-cancel">취소</button><button type="button" class="xt-go">추출하기</button></div>`+
   `</div>`;
@@ -7998,32 +8017,46 @@ function CR_SELFTEST(){
      ["홈피드 접속","알바 탭 접속","앱 재방문","중고거래 접속"]);
    t("이미 '접속·방문'으로 끝나면 덧붙이지 않는다",svc7Lab("홈피드 접속"),"홈피드 접속");
    t("모르는 말도 죽지 않는다",svc7Lab("낯선서비스"),"낯선서비스 접속");}
-  /* ── 주차별 실적 — 그 주 값으로 그 주 등급 ── */
+  /* ── 주차별 실적 — 구글 방식(같은 캠페인·같은 유형 안에서의 비용 백분위) ── */
   {const L={nameCol:"ad_name",hasConv:false,volCol:"클릭 수",volLab:"클릭"};
-   /* 같은 주에 함께 집행된 4개 — 전환수·CTR·광고비가 모두 1등인 소재와 모두 꼴찌인 소재 */
-   const mk=(n,w,c,cv,imp,clk)=>({ad_name:n,date:w,"비용":c,"_g_conversions":cv,"노출 수":imp,"클릭 수":clk,_g_adGroupId:"G1"});
-   const ds={L,data:[
-     mk("top","2026-07-06",1000,100,10000,500), mk("mid","2026-07-06",500,50,10000,250),
-     mk("low","2026-07-06",100,1,10000,10),     mk("mid2","2026-07-06",400,40,10000,200),
-     /* 다음 주 — top의 광고비·전환이 급감(1000→50), 나머지는 그대로 */
-     mk("top","2026-07-13",50,1,10000,10),      mk("mid","2026-07-13",500,50,10000,250),
-     mk("low","2026-07-13",100,1,10000,10),     mk("mid2","2026-07-13",400,40,10000,200)]};
-   const f=weeklyPerfOf(ds,{name:"top"});
-   t("1등이던 주는 매우 좋음",(f("2026-07-06")||{}).lab,"매우 좋음");
-   t("광고비·전환이 급감한 다음 주는 등급이 내려간다",(f("2026-07-13")||{}).lab,"낮음");
-   t("추정으로 표시된다",(f("2026-07-06")||{}).est,true);
-   t("코호트는 그 주 안에서만 잡힌다",(f("2026-07-06")||{}).n,4);
-   /* 실측 라벨이 그 주 행에 있으면 추정으로 덮지 않는다 */
-   const ds2={L,data:ds.data.map(r=>r.ad_name==="top"&&r.date==="2026-07-13"?{...r,_g_perfLabel:"인기순"}:r)};
-   const g=weeklyPerfOf(ds2,{name:"top"});
-   t("실측 라벨이 있는 주는 실측이 이긴다",[(g("2026-07-13")||{}).lab,(g("2026-07-13")||{}).est],["매우 좋음",false]);
-   t("실측은 그 주에만 — 다른 주로 번지지 않는다",(g("2026-07-06")||{}).est,true);
-   /* 광고비 0인 주는 코호트에서도 대상에서도 빠진다 */
-   const ds3={L,data:ds.data.concat([mk("zero","2026-07-06",0,0,0,0)])};
-   t("광고비 0인 소재는 등급을 내지 않는다",weeklyPerfOf(ds3,{name:"zero"})("2026-07-06"),null);
-   /* 비교 상대가 3개 미만이면 등급 없음 */
-   const ds4={L,data:[mk("a","2026-07-06",100,1,100,1),mk("b","2026-07-06",200,2,100,2)]};
-   t("코호트 3개 미만이면 등급 없음",weeklyPerfOf(ds4,{name:"a"})("2026-07-06"),null);}
+   const mk=(n,w,c,extra)=>Object.assign({ad_name:n,date:w,"비용":c,"노출 수":1000,"클릭 수":10,
+     _g_campaignId:"C1",_g_assetType:"동영상"},extra||{});
+   /* 같은 캠페인·같은 유형 5개 — 비용만 다르다 */
+   const wk=w=>[mk("a",w,1000),mk("b",w,800),mk("c",w,600),mk("d",w,400),mk("e",w,100)];
+   const ds={L,data:wk("2026-07-06")};
+   const f=n=>weeklyPerfOf(ds,{name:n})("2026-07-06");
+   t("비용 1등은 매우 좋음",f("a").lab,"매우 좋음");
+   t("비용 꼴찌는 낮음",f("e").lab,"낮음");
+   t("가운데는 좋음",[f("b").lab,f("c").lab],["좋음","좋음"]);
+   t("비교군은 같은 캠페인·같은 유형",f("a").scope,"같은 캠페인·같은 유형");
+   t("추정으로 표시된다",f("a").est,true);
+   /* 유형이 다르면 다른 비교군 — 이미지 1개뿐이면 유형 경계를 넓혀서라도 4개를 채운다 */
+   {const ds2={L,data:wk("2026-07-06").concat([mk("img","2026-07-06",50,{_g_assetType:"이미지"})])};
+    t("유형이 달라 코호트가 부족하면 넓힌 비교군을 쓴다",
+      weeklyPerfOf(ds2,{name:"img"})("2026-07-06").scope,"같은 캠페인");}
+   /* 광고비가 줄면 등급이 내려간다 — 사용자가 보고한 증상의 고정 */
+   {const ds3={L,data:wk("2026-07-06").concat([
+      mk("a","2026-07-13",50),mk("b","2026-07-13",800),mk("c","2026-07-13",600),
+      mk("d","2026-07-13",400),mk("e","2026-07-13",300)])};
+    const g=weeklyPerfOf(ds3,{name:"a"});
+    t("1등이던 소재도 광고비가 빠지면 등급이 내려간다",
+      [g("2026-07-06").lab,g("2026-07-13").lab],["매우 좋음","낮음"]);}
+   /* 실측 우선 · 비전파 */
+   {const ds4={L,data:wk("2026-07-06").concat(wk("2026-07-13").map(r=>
+      r.ad_name==="e"?Object.assign({},r,{_g_perfLabel:"인기순"}):r))};
+    const g=weeklyPerfOf(ds4,{name:"e"});
+    t("실측 라벨이 있는 주는 실측이 이긴다",[g("2026-07-13").lab,g("2026-07-13").est],["매우 좋음",false]);
+    t("실측은 그 주에만 — 다른 주로 번지지 않는다",[g("2026-07-06").lab,g("2026-07-06").est],["낮음",true]);}
+   /* 광고비 0 · 비교군 부족 */
+   t("광고비 0인 소재는 등급을 내지 않는다",
+     weeklyPerfOf({L,data:wk("2026-07-06").concat([mk("z","2026-07-06",0)])},{name:"z"})("2026-07-06"),null);
+   t("비교군이 4개 미만이면 등급 없음(구글 Unrated)",
+     weeklyPerfOf({L,data:[mk("x","2026-07-06",100),mk("y","2026-07-06",200)]},{name:"x"})("2026-07-06"),null);
+   t("경계값은 실측으로 맞춘 값(0.89/0.48)",[WPERF.HI,WPERF.LO],[0.89,0.48]);}
+  /* ── 마지막 화면 기억 ── */
+  {t("저장 항목은 매체·탭·상세 셋뿐",Object.keys(navSnap()).sort(),["ad","m","t"]);
+   t("상세까지 서명에 들어간다",
+     navSig({m:"Meta",t:"table",ad:"a"})===navSig({m:"Meta",t:"table",ad:null}),false);}
   /* ── 요약 레이더 ── */
   {const mk=n=>Array.from({length:n},(_,i)=>({lab:"m"+i,pct:50,tier:"g1"}));
    t("축 2개 이하면 도형을 그리지 않는다",[radarHTML(mk(2)),radarHTML([])],["",""]);
