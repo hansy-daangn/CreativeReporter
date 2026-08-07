@@ -70,10 +70,6 @@
   .q{display:inline-grid;place-items:center;width:13px;height:13px;border-radius:50%;background:var(--surface-3);color:var(--faint);font-size:9px;font-weight:800;cursor:help;flex:0 0 auto}
   .microcap{font-size:var(--fs-1);font-weight:750;letter-spacing:.02em;color:var(--faint);display:flex;align-items:center;gap:6px}
   .microcap em{font-style:normal;font-weight:550;letter-spacing:0;text-transform:none;color:var(--faint)}
-  .ghostbtn{display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 10px;border-radius:999px;background:transparent;color:var(--muted);font-size:var(--fs-2);font-weight:650;transition:.12s}
-  .ghostbtn:hover{background:var(--surface-2);color:var(--ink)}
-  .ghostbtn.sq{width:26px;padding:0;justify-content:center}
-  .navr{flex:0 0 auto;display:flex;gap:2px;margin-left:8px}
 
   /* 스파크라인 — 평시 회색(시각 우선순위 낮게), 행 호버 시에만 잉크색으로 선명해진다 */
   .spk path{stroke:var(--spk);transition:stroke .12s}
@@ -87,21 +83,19 @@
   .cc{display:grid;grid-template-columns:var(--stw,340px) minmax(0,1fr);gap:0;align-items:stretch}
   @media(max-width:980px){.cc{grid-template-columns:1fr}}
   .cc-stage{background:var(--surface-2);padding:24px 26px;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:flex-start}
-  .cc-frame{width:100%;border-radius:12px;overflow:hidden;box-shadow:var(--sh)}
+  .cc-frame{position:relative;width:100%;border-radius:12px;overflow:hidden;box-shadow:var(--sh)}
+  /* 조작 버튼 — 썸네일 좌측 상단에 얹는다. 어두운 영상 위에도, 밝은 이미지 위에도 읽혀야 하므로
+     반투명 검정 바탕 + 흰 글자로 고정한다(소재 색에 따라 대비가 무너지지 않게). */
+  .fr-act{position:absolute;top:8px;left:8px;display:flex;gap:5px;z-index:2}
+  .fbtn{padding:4px 11px;border-radius:999px;background:rgba(12,11,8,.62);color:#F5F2EA;
+    font-size:var(--fs-1);font-weight:750;backdrop-filter:blur(4px);transition:.12s}
+  .fbtn:hover{background:rgba(12,11,8,.86);color:#fff}
   .cc-frame.v{max-width:212px} .cc-frame.p{max-width:240px} .cc-frame.s{max-width:264px} .cc-frame.h{max-width:300px}
-  .cc-meta{display:flex;align-items:center;gap:7px;font-size:var(--fs-1);color:var(--faint);flex-wrap:wrap;justify-content:center}
-  .cc-meta b{color:var(--muted);font-weight:650}
-  .cc-meta a{color:var(--muted);text-decoration:none}
-  .cmp-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:999px;background:rgba(20,19,15,.78);color:#F3F0E8;font-size:var(--fs-1);font-weight:700;cursor:pointer}
   .st-charts{width:100%;max-width:300px;margin-top:14px;display:flex;flex-direction:column;gap:14px}
   .st-blk .microcap{margin-bottom:5px}
 
   /* ═════ 레일 공통 ═════ */
   .rail{padding:22px 26px 20px;min-width:0}
-  .r-name{font-size:var(--fs-4);font-weight:760;letter-spacing:-.01em;display:flex;align-items:center;gap:8px;min-width:0}
-  .r-name span.nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-  .r-diag{margin-top:5px;font-size:var(--fs-2);color:var(--muted);line-height:1.55}
-  .r-diag b{color:var(--ink);font-weight:700}
   .r-foot{display:flex;gap:6px;align-items:center;margin-top:16px;padding-top:10px;border-top:1px solid var(--hair)}
   .r-foot .more{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:999px;border:1px solid var(--surface-3);color:var(--muted);font-size:var(--fs-1);font-weight:650}
   .r-foot .more:hover{border-color:var(--muted);color:var(--ink)}
@@ -147,7 +141,6 @@
   /* ── C3 · 판정 레일: 점수·진단·KPI 히어로(스파크 내장) + 미니 2열 ── */
   /* r-top(점수·등급·진단) 폐지 — 이름·등급은 표 행에 이미 있고, 점수는 화면에서 쓰지 않는다.
      진단 문장도 아래 KPI 히어로가 같은 말을 더 정확히 하므로 중복이었다. 남길 것은 조작 버튼뿐. */
-  .c3 .r-bar{display:flex;justify-content:flex-end;margin-bottom:6px}
   /* 호버하면 그 지점 값이 뜬다(네이티브 title) — 점도 같이 커져 어디를 짚었는지 보인다 */
   .hz{cursor:default}
   .hz:hover .hd{opacity:1}
@@ -202,8 +195,6 @@
   .ph{position:relative;width:100%;overflow:hidden;background:#141410}
   .ph.v{aspect-ratio:9/16} .ph.s{aspect-ratio:1/1} .ph.h{aspect-ratio:16/9} .ph.p{aspect-ratio:3/4}
   .ph .bg{position:absolute;inset:0}
-  .ph .cap{position:absolute;left:0;right:0;bottom:0;padding:26px 14px 12px;background:linear-gradient(transparent,rgba(0,0,0,.55));color:#fff;font-weight:800;letter-spacing:-.02em}
-  .ph .cap small{display:block;font-weight:600;opacity:.85;letter-spacing:0}
   .ph .play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center}
   .ph .play::after{content:"";display:block;border-style:solid;border-width:8px 0 8px 13px;border-color:transparent transparent transparent #fff;margin-left:3px}
   .ph .dur{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.6);color:#fff;font-size:var(--fs-1);font-weight:700;padding:1px 6px;border-radius:4px}
@@ -457,9 +448,10 @@ function phHTML(d){
   const grad=isImg?"background:linear-gradient(150deg,#FF6F0F,#FF8A3D 55%,#FFB37A)"
     :d.ar==="v"?"background:linear-gradient(165deg,#20242E,#33404F 60%,#4A6076)"
     :"background:linear-gradient(160deg,#25211B,#3E362A 60%,#5A4D38)";
-  const cap=isImg?`<div class="cap">이번 달 픽업왕<small>동네에서 바로 픽업</small></div>`
-    :`<div class="cap">${d.media==="구글 ACE"?"당근 10년, 동네의 시간":"동네 알바, 오늘 바로"}<small>당근에서 검색</small></div>`;
-  return `<div class="ph ${d.ar}"><div class="bg" style="${grad}"></div>${cap}${d.fo==="영상"?'<div class="play"></div>':""}${d.dur?`<div class="dur num">${d.dur}</div>`:""}</div>`;
+  /* 소재 안 카피는 그리지 않는다 — 실제 화면에선 진짜 미디어가 들어오고, 목업의 가짜 문구는
+     "이 글자가 데이터인가?"라는 오해만 만든다. 재생 표시·길이는 남긴다(영상임을 알리는 정보). */
+  return `<div class="ph ${d.ar}"><div class="bg" style="${grad}"></div>`
+    +`${d.fo==="영상"?'<div class="play"></div>':""}${d.dur?`<div class="dur num">${d.dur}</div>`:""}</div>`;
 }
 /* 수명 · 시청 유지 — 가로로 나란히. 세로형 소재에선 스테이지가 이미 높아, 이 둘까지 세로로
    쌓으면 상세 전체가 화면을 넘긴다. 캡션은 라벨("수명") 대신 **정보**를 싣는다 —
@@ -486,15 +478,18 @@ function chartsHTML(d,W){
 }
 /* 스테이지 — 미디어 · 메타 한 줄 (+옵션: 수명·시청 곡선) */
 function stageHTML(d,noCharts){
+  /* 메타 한 줄(라이브 · 해상도 · 길이 · 포맷 · 원본)은 뺐다 — 전부 표 행에 이미 있는 값이다.
+     조작 버튼은 썸네일 좌측 상단에 얹는다. 별도 줄로 빼면 빈 칸 하나가 더 생긴다. */
   return `<div class="cc-stage">
-    <div class="cc-frame ${d.ar}">${phHTML(d)}</div>
-    <div class="cc-meta">${d.live?"<b>라이브</b>":"<b>종료</b>"} · <b class="num">${d.res}</b>${d.dur?` · <span class="num">${d.dur}</span>`:""} · ${d.fo} · <a href="#" onclick="return false">원본 ↗</a></div>
-    <span class="cmp-pill">＋ 비교 담기</span>
+    <div class="cc-frame ${d.ar}">${phHTML(d)}
+      <div class="fr-act">
+        <button class="fbtn" title="이 상세를 고정해 다른 소재와 나란히 본다">고정</button>
+        <button class="fbtn" title="비교 목록에 담는다">비교</button>
+      </div>
+    </div>
     ${noCharts?"":`<div class="st-charts">${chartsHTML(d,300)}</div>`}
   </div>`;
 }
-const navBtns=`<span class="navr"><button class="ghostbtn sq" title="이전 소재">‹</button><button class="ghostbtn sq" title="다음 소재">›</button><button class="ghostbtn" title="이 상세를 고정">고정</button><button class="ghostbtn sq" title="닫기">✕</button></span>`;
-const nameHTML=d=>`<div class="r-name">${d.live?'<span class="livedot" title="라이브"></span>':""}<span class="nm">${d.name}</span></div>`;
 const footHTML=d=>d.gmore?`<div class="r-foot"><button class="more">${d.gmore.split(" · ")[0]} <i>${d.gmore.split(" · ")[1]}</i> ▾</button></div>`:"";
 
 /* ═════ C1 · 원장 레일 ═════ */
@@ -521,9 +516,6 @@ function render3(d){
   return `<div class="cc c3" style="--stw:340px">
   ${stageHTML(d)}
   <div class="rail">
-    <!-- 이름·라이브·등급은 넣지 않는다. 이 블록은 표에서 소재를 클릭하면 그 행 바로 아래에 열리므로
-         바로 위에 같은 정보가 이미 있다. 남길 것은 조작 버튼뿐. -->
-    <div class="r-bar">${navBtns}</div>
     <div class="kpis">
       ${d.kpi.map(k=>`<div class="kpi hv" title="${k.med}"><div class="role">${k.role} · ${k.k}</div><div class="kv"><b class="num" style="color:${TIERC[k.tier]}">${k.v}</b><small>${k.rank}</small></div>${spk(k.sp,118,24)}</div>`).join("")}
     </div>
