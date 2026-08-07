@@ -818,8 +818,7 @@
   .ispk-chip.sc{color:var(--muted)}
   .ispk-chip:hover{border-color:var(--muted);color:var(--ink)}
   .ispk-chip.on{background:var(--karrot-f);border-color:var(--karrot);color:var(--karrot)}
-  .ispk-chip.tf{color:var(--muted);font-weight:700}
-  .ispk-sep{width:1px;align-self:stretch;background:var(--surface-3);margin:0 3px}
+
   .cmp-radar{display:block;width:100%;max-width:620px;height:auto;margin:0 auto}
   .cmp-radar-note{font-size:var(--fs-1);color:var(--faint);text-align:center;margin:-4px 0 6px}
   polygon.cmp-ln,polyline.cmp-ln{transition:stroke-width .12s,opacity .12s,fill-opacity .12s}
@@ -3678,15 +3677,12 @@ const WK_METRIC={ /* 채점 키 → 주차 값 계산 (weeklyAggOf 합계 기반
 /* 주차별 추이에 어떤 선을 그릴지 — null이면 자동(점수 반영 지표 상위 3개).
    사용자가 칩으로 고르면 그 지표만 그린다. 상세를 닫아도 유지돼 소재를 옮겨도 같은 잣대로 본다. */
 let ISLE_TREND_KEYS=null;
-/* 주차별 추이 기간 — 기본 '전체 기간'(2026-08-06 확정). nav 기간 필터와 무관하게 소재의 전 수명을 보여주되,
-   칩으로 '선택 기간'(nav 필터 적용)으로 좁힐 수 있다. 소재를 옮겨도 유지. */
-let ISLE_TREND_FULL=true;
 const TREND_NU_KEY="__nu"; /* 실증 신규 실유저(umetrics) — WK_METRIC이 아니라 별도 소스라 예약 키 */
 function trendLabOf(k){
   if(k===TREND_NU_KEY)return "신규 실유저";
   return (MET_META[k]&&MET_META[k].lab)||k;}
 function creativeTrendHTML(ds,e){
-  const all=weeklyAggOf(ds,e,ISLE_TREND_FULL);
+  const all=weeklyAggOf(ds,e); /* nav에서 선택한 기간을 그대로 따른다 — 전체 수명은 '수명' 차트가 담당 */
   /* 선택 기간 안의 모든 주를 표시(13주 자름 폐지) — 주가 많으면 가로 스크롤(최신이 먼저 보이게 오른쪽 정렬) */
   const ws=all.ws;
   if(ws.length<2)return "";
@@ -3747,11 +3743,7 @@ function creativeTrendHTML(ds,e){
     return {lab:p.lab,w:p.w,col:LINE_COLS[i%LINE_COLS.length],fmt:p.fmt,vals:p.vals,mx,last,dash:p.dash};});
   /* 지표 선택 칩 — 켜진 것만 선으로 그린다. '자동'은 점수 반영 상위 3개로 되돌린다 */
   const onSet=new Set(chosen.map(p=>p.k));
-  const picker=`<div class="ispk-pick">`
-    +`<button type="button" class="ispk-chip tf${ISLE_TREND_FULL?" on":""}" data-tf="1" title="이 소재가 가진 모든 주차 — 위 기간 필터와 무관">전체 기간</button>`
-    +`<button type="button" class="ispk-chip tf${ISLE_TREND_FULL?"":" on"}" data-tf="0" title="위 기간 필터가 적용된 주차만">선택 기간</button>`
-    +`<span class="ispk-sep"></span>`
-    +`<button type="button" class="ispk-chip${sel&&sel.length?"":" on"}" data-tk="__auto">자동</button>`
+  const picker=`<div class="ispk-pick"><button type="button" class="ispk-chip${sel&&sel.length?"":" on"}" data-tk="__auto">자동</button>`
     +pool.map(p=>`<button type="button" class="ispk-chip${onSet.has(p.k)&&sel&&sel.length?" on":""}${p.scored?" sc":""}" data-tk="${escAttr(p.k)}" title="${escAttr((MET_META[p.k]&&MET_META[p.k].desc)||p.lab)}${p.scored?" · 점수 반영 지표":""}">${escHtml(p.lab)}</button>`).join("")
     +`</div>`;
   /* ⚠️ 실적 등급은 주차별 추이에 올리지 않는다(2026-08-06 확정).
@@ -5064,14 +5056,6 @@ function renderIsleMid(ds,e,mid){if(!mid)return;
   mid.innerHTML=(peerRankHTML(ds,e)||"")+(umCohortHTML(ds,e)||"")+(gAssetHTML(ds,e)||"")+(tabs.length>1?`<div class="dtog gtabs">${tabs.map(t=>`<button data-gt="${t.k}" class="${t.k===cur.k?"on":""}">${t.lab}</button>`).join("")}</div>`:"")+`<div class="gtab-body">${cur.html}</div>`;
   fitMrows(mid);
   mid.querySelectorAll(".gtabs button").forEach(b=>b.onclick=()=>{ISLE.gtab=b.dataset.gt;renderIsleMid(ds,e,mid);});
-  /* 주차별 추이 기간 토글(전체/선택) — 고정본까지 같은 기간으로 맞춘다 */
-  mid.querySelectorAll(".ispk-chip[data-tf]").forEach(b=>b.onclick=()=>{
-    const v=b.dataset.tf==="1";
-    if(ISLE_TREND_FULL===v)return;
-    ISLE_TREND_FULL=v;
-    renderIsleMid(ds,e,mid);
-    for(const p of ISLE_PINS){const pe=findRow(ds,p.name),pm=p.node&&p.node.querySelector(".ir-mid");
-      if(pe&&pm)renderIsleMid(ds,pe,pm);}});
   /* 주차별 추이 지표 선택 — 고른 지표는 소재를 옮겨도 유지된다(같은 잣대로 이어 보기) */
   mid.querySelectorAll(".ispk-chip[data-tk]").forEach(b=>b.onclick=()=>{
     const k=b.dataset.tk;
