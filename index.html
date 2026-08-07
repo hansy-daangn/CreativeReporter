@@ -1296,7 +1296,7 @@
     <div class="lview" id="registerView" hidden>
       <h1 class="ltitle">회원가입</h1>
       <input class="lin" type="text" id="regName" autocomplete="off" maxlength="24" placeholder="daangn name (영문)">
-      <input class="lin" type="password" id="regPw" autocomplete="new-password" maxlength="40" placeholder="비밀번호">
+      <input class="lin" type="password" id="regPw" autocomplete="new-password" minlength="6" maxlength="40" placeholder="비밀번호 (6자 이상)">
       <input class="lin" type="password" id="regPw2" autocomplete="new-password" maxlength="40" placeholder="비밀번호 확인">
       <button class="lbtn primary" type="button" id="doRegister">가입하기</button>
       <button class="llink" type="button" id="toLogin">← 로그인</button>
@@ -3746,11 +3746,18 @@ function creativeTrendHTML(ds,e){
   const picker=`<div class="ispk-pick"><button type="button" class="ispk-chip${sel&&sel.length?"":" on"}" data-tk="__auto">자동</button>`
     +pool.map(p=>`<button type="button" class="ispk-chip${onSet.has(p.k)&&sel&&sel.length?" on":""}${p.scored?" sc":""}" data-tk="${escAttr(p.k)}" title="${escAttr((MET_META[p.k]&&MET_META[p.k].desc)||p.lab)}${p.scored?" · 점수 반영 지표":""}">${escHtml(p.lab)}</button>`).join("")
     +`</div>`;
-  /* ⚠️ 실적 등급은 주차별 추이에 올리지 않는다(2026-08-06 확정).
-     실적은 누적 이력이 아니라 **조회 시점의 현재 상태값**이라, 주차 축에 늘어놓으면 "이 주에 이 등급이었다"로
-     오독된다(실제로는 오늘 관측한 하나의 값이 과거 주에 번져 보이는 것). 관측일과 함께 구글 애셋 보고서
-     블록(gAssetHTML)에서 한 번만 보여준다. */
-  const hasPl=false;
+  /* 주차 등급 — 막대 밑에 그 주의 등급을 적는다(2026-08-07 복구).
+     2026-08-06엔 이걸 껐었는데, 그때 끈 대상은 '구글 실적 라벨'이었다. 그 라벨은 누적 이력이 아니라
+     조회 시점의 **현재 상태값** 하나라, 주차 축에 늘어놓으면 과거 주에 번져 "이 주에 이 등급이었다"로
+     오독된다 — 그 판단은 지금도 유효해서 구글 라벨은 여전히 gAssetHTML에서 관측일과 함께 한 번만 보여준다.
+     여기 쓰는 값은 성격이 다르다. weeklyScoresOf는 **그 주의 데이터만** 총점과 같은 자로 채점한 결과라
+     주마다 실제로 다른 값이 나오고, 매체를 가리지 않아(구글 라벨이 없는 몰로코·메타도) 지표만 있으면
+     항상 등급이 나온다 — "일부 소재만 밑이 비어 있다"는 문제가 여기서 함께 해소된다. */
+  const wkTier=(typeof weeklyScoresOf==="function")?weeklyScoresOf(ds,e):()=>null;
+  const pls=ws.map(w=>wkTier(w));
+  const hasPl=pls.some(p=>p&&p.t);
+  /* 슬롯이 좁으면 글자가 서로 먹으므로 색점만 찍고 값은 툴팁으로 넘긴다(등급 자체는 절대 빠지지 않는다) */
+  const TIER_C={g2:"var(--g2)",g1:"var(--g1)",m:"var(--mid)",w1:"var(--w1)",w2:"var(--w2)"};
   /* viewBox를 렌더 폭(≈820)에 맞춰 배율 1로 둔다 — 좌표계가 작으면 SVG가 통째로 확대돼(실측 2.7배)
      글자·선이 타이포 스케일을 무시하고 커진다. 주가 많으면 폭 대신 슬롯을 좁혀 담는다(가로 스크롤 없음). */
   const W=820,pl=10,pr=10,pt=14;
@@ -3764,8 +3771,15 @@ function creativeTrendHTML(ds,e){
     const h=Math.max(2,(o.c/cmax)*ih);
     /* 주차 점수 표기·티어색 제거 — 점수는 내부 계산 전용, 화면엔 지표 원값만 */
     let tipTxt=`<b>${w.slice(5).replace("-","/")} 주</b><br>광고비 ${fmtWon(o.c)}`;
+    const pl=pls[i];
+    if(pl&&pl.t)tipTxt+=`<br><span class="t-k">주차 등급</span> <b style="color:${TIER_C[pl.t]||"var(--mid)"}">${TIER_LAB[pl.t]||"–"}</b>${pl.s!=null?` <span class="t-k">(${pl.s.toFixed(1)}점)</span>`:""}`;
     for(const ts of tipSpecs)if(ts.vals[i]!=null)tipTxt+=`<br><span class="t-k">${ts.lab}</span> ${ts.fmt(ts.vals[i])}`;
     s+=`<rect class="ispk-b" data-tip="${escAttr(tipTxt)}" x="${(x-bw/2).toFixed(1)}" y="${(H-pb-h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="var(--karrot)" fill-opacity="0.5"/>`;
+    if(hasPl){
+      const col=(pl&&pl.t)?(TIER_C[pl.t]||"var(--mid)"):"var(--faint)";
+      if(!pl||!pl.t)s+=`<text x="${x.toFixed(1)}" y="${H-19}" font-size="9" fill="var(--faint)" text-anchor="middle">–</text>`;
+      else if(slot>=42)s+=`<text x="${x.toFixed(1)}" y="${H-19}" font-size="9" font-weight="750" fill="${col}" text-anchor="middle">${escHtml(TIER_LAB[pl.t])}</text>`;
+      else s+=`<rect x="${(x-3).toFixed(1)}" y="${H-25}" width="6" height="6" rx="1.5" fill="${col}"/>`;}
     s+=`<text x="${x.toFixed(1)}" y="${H-6}" font-size="10" fill="var(--faint)" text-anchor="middle">${w.slice(5,7)}/${w.slice(8,10)}</text>`;});
   for(const ln of lines){let p="",st=false,dots="";
     ws.forEach((w,i)=>{const v=ln.vals[i];if(v==null)return;
@@ -3789,7 +3803,8 @@ function creativeTrendHTML(ds,e){
       s+=`<text x="${x.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="10" font-weight="750" fill="${ln.col}" paint-order="stroke" stroke="#FFFDF7" stroke-width="3" stroke-linejoin="round">${escHtml(ln.fmt(mk.v))}</text>`;}}
   /* 범례는 최소한으로: 주 수 · 색=지표 매핑 · 최신값. 비율·설명은 푸터/툴팁이 담당(중복 금지) */
   const leg=lines.map(ln=>`<span><i class="lgd" style="background:${ln.col}"></i>${ln.lab} <b>${ln.last!=null?ln.fmt(ln.last):"–"}</b></span>`).join(" ");
-  return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · <i class="lgd" style="background:var(--karrot);opacity:.55"></i>광고비 ${leg}</span></div>${picker}<div class="ispark-scroll"><svg class="ispark-svg" viewBox="0 0 ${W} ${H}">${s}</svg></div></div>`;}
+  const plLeg=hasPl?` · <span title="막대 밑 등급 — 그 주의 지표만 총점과 같은 자로 채점한 결과. 구글 실적 라벨과는 다른 값이며, 매체와 무관하게 계산된다">막대 밑 <b>주차 등급</b></span>`:"";
+  return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · <i class="lgd" style="background:var(--karrot);opacity:.55"></i>광고비 ${leg}${plLeg}</span></div>${picker}<div class="ispark-scroll"><svg class="ispark-svg" viewBox="0 0 ${W} ${H}">${s}</svg></div></div>`;}
 /* 상세 '영상 시청' — 어디까지 많이 보고 어디서 이탈했는지 (영상 소재만).
    구간 도달 곡선 데이터 우선순위: ① 소재 자체 구간별 재생수(_v25~_v100 ÷ 노출, 선택 기간)
    ② 구글 광고그룹 보고서 누적 퍼널 v25~v100(소재별 데이터가 없어 그룹 단위임을 캡션에 명시).
@@ -4696,7 +4711,7 @@ function refreshCrossBlock(){ /* 지문이 새로 계산되면 열린 상세의 
   const e=findRow(curDS,ISLE.name);if(!e||e._isGroup)return;
   wrap.innerHTML=crossBlockHTML(curDS,e);wireCrossBlock(wrap,curDS);}
 function crossGo(ch,nm){const ds=curDS;if(!ds||!ds.aggByChannel||!ds.aggByChannel.has(ch))return;
-  ds.media=ch;cmpResetForMedia(ch);tPage=1;tGroupByTouched=false;show(ds); /* 매체 드롭다운과 같은 전환 경로 */
+  ds.media=ch;cmpResetForMedia(ch);tPage=1;tGroupByTouched=false;show(ds);navMark(); /* 매체 드롭다운과 같은 전환 경로 */
   setTimeout(()=>{try{goToIslandFromQuad(nm);}catch(_){}},250);}
 /* ═════ 소재 비교(멀티) — 상세 미디어 프레임 좌상단 '비교' 버튼으로 소재를 무제한 담아 한 화면에서 겹쳐 보기 ═════
    흐름: 소재마다 '비교' 클릭 → 목록에 추가 → 2개째에 겹침 모달 자동 오픈, 이후에도 계속 추가 가능(개수 무제한).
@@ -5251,13 +5266,12 @@ function mountIsland(ds,name,tr){
   return row;}
 function toggleIsland(ds,name,tr){const existing=document.querySelector(".isle-row:not(.isle-pin)");const wasOpen=ISLE.name===name;
   if(existing)existing.remove();$$("#table tbody tr.exp:not(.pinned)").forEach(t=>t.classList.remove("exp"));
-  if(wasOpen){ISLE.name=null;try{history.replaceState(null,"",location.pathname+location.search);}catch(_){}
+  if(wasOpen){ISLE.name=null;navMark();
     /* 상세가 열려 있는 동안 실측 치수가 도착해 미룬 표 갱신이 있으면, 닫는 시점에 한 번 반영(사이즈 칩) */
     if(_mdimDeferred){_mdimDeferred=false;if(curDS&&mainTab==="table")renderTable(curDS);}
     return;}
   if(!findRow(ds,name))return;
-  try{history.replaceState(null,"","#ad="+encodeURIComponent(name)+"&ch="+encodeURIComponent(ds.media||""));}catch(_){}
-  mountIsland(ds,name,tr);}
+  mountIsland(ds,name,tr);navMark();}
 /* 표 컬럼 — 성격이 같은 지표는 그룹으로 묶고, 기본은 대표(lead) 컬럼만.
    대표 컬럼 헤더의 +를 누르면 하위(sub) 지표가 펼쳐진다. 점수·이름은 항상 표시 */
 /* 표 컬럼 — 매체별로 '점수에 중요한 순서'의 MECE 상위 카테고리(대표 컬럼)로 구성.
@@ -6061,6 +6075,10 @@ function loadCloudRows(rows){
      막혀 표가 다시 안 그려졌고, 그 결과 로그인 직후 전체목록에선 별·칩이 안 보였다(상세 비교 섬은
      나중에 그려져 보였음). 탭과 무관하게 표를 다시 그려 마크를 채운다(숨은 표 재렌더는 값싼 작업). */
   loadMarks().then(()=>{renderViewSeg();if(active&&DATASETS[active])renderTable(DATASETS[active]);});
+  /* 마지막으로 보던 탭 복원 + 히스토리 시작점 등록 — 매체는 rebuildAllDatasets 단계에서 이미 복원됐다.
+     딥링크(#ad=)로 들어온 경우엔 그 링크가 이길 수 있게 탭 복원을 건너뛴다. */
+  if(!/ad=/.test(_initHash))navRestoreTab();
+  navInit();
   setTimeout(openDeepLink,700);
   /* 유튜브 제목 일괄 조회 중단 — 이름은 payload._name이 전부 갖고 있다(외부 왕복 제거) */
   setTimeout(()=>{prehashAllImages().catch(()=>{});},4000); /* 이미지 지문(dHash) 백그라운드 수집 — 매체 간 동일 소재 판정용 */
@@ -6072,6 +6090,52 @@ function loadCloudRows(rows){
    또한 사용자가 이미 무언가를 눌렀다면(_userActed) 자동 이동을 포기해 조작을 가로채지 않는다. */
 let _dlDone=false,_userActed=false;
 const _initHash=(()=>{try{return location.hash||"";}catch(_){return"";}})();
+/* ── 뒤로가기 · 마지막 화면 기억 ────────────────────────────────────────────
+   문제 ① 페이지 안에서 아무리 돌아다녀도 상세 열기는 replaceState만 써서 히스토리 항목이
+   하나도 안 쌓였다 → 뒤로가기 한 번에 사이트를 벗어난다.
+   문제 ② 새로고침하면 매체가 늘 chs[0](구글 AEO)로 리셋된다.
+   비용: 브라우저 내장 history + localStorage 한 건(수십 바이트)이 전부다.
+   네트워크 요청·타이머·주기 실행·추가 렌더가 없어서 상시 부하는 0에 가깝다. */
+const NAV_LS="cr_nav";
+function navSnap(){const ds=curDS||(active&&DATASETS[active])||null;
+  return{m:(ds&&ds.media)||null,t:mainTab,ad:ISLE.name||null};}
+function navSig(s){return[(s&&s.m)||"",(s&&s.t)||"",(s&&s.ad)||""].join("|");}
+function navHash(s){return s&&s.ad
+  ?"#ad="+encodeURIComponent(s.ad)+"&ch="+encodeURIComponent(s.m||"")
+  :location.pathname+location.search;}
+function navSave(s){try{localStorage.setItem(NAV_LS,JSON.stringify({m:s.m,t:s.t}));}catch(_){}}
+let _navApplying=false;
+/* 같은 화면이면 항목을 새로 쌓지 않고 갈아끼운다 — 뒤로가기 중 되돌아온 화면이 다시 쌓여
+   "뒤로 눌렀는데 제자리"가 되는 것을 막는다(popstate 직후엔 history.state가 이미 목적지 상태). */
+function navMark(force){
+  const s=navSnap();navSave(s);
+  if(_navApplying&&!force)return;
+  try{
+    if(history.state&&navSig(history.state)===navSig(s))history.replaceState(s,"",navHash(s));
+    else history.pushState(s,"",navHash(s));
+  }catch(_){}}
+function navInit(){try{history.replaceState(navSnap(),"",location.href);}catch(_){}}
+window.addEventListener("popstate",ev=>{
+  const s=ev.state;
+  if(!s||typeof s!=="object"){navInit();return;} /* 우리가 만든 항목이 아니면 관여하지 않는다 */
+  _navApplying=true;
+  try{
+    const ds=active?DATASETS[active]:null;
+    if(ds&&s.m&&ds.media!==s.m){ds.media=s.m;cmpResetForMedia(s.m);tPage=1;tGroupByTouched=false;show(ds);}
+    if(s.t&&s.t!==mainTab)switchTab(s.t);
+    const cur=ISLE.name||null,want=s.ad||null;
+    if(cur!==want){
+      if(!want){const ex=document.querySelector(".isle-row:not(.isle-pin)");if(ex)ex.remove();
+        $$("#table tbody tr.exp:not(.pinned)").forEach(t=>t.classList.remove("exp"));ISLE.name=null;}
+      else if(curDS&&findRow(curDS,want))goToIslandFromQuad(want);}
+  }catch(e){logErr("popstate",e);}
+  finally{_navApplying=false;}
+  navSave(navSnap());});
+/* 저장된 마지막 매체 — 없거나 지금 데이터에 그 매체가 없으면 종전대로 첫 채널 */
+function navSavedMedia(chs){try{const o=JSON.parse(localStorage.getItem(NAV_LS)||"null");
+  if(o&&o.m&&chs.includes(o.m))return o.m;}catch(_){}return null;}
+function navRestoreTab(){try{const o=JSON.parse(localStorage.getItem(NAV_LS)||"null");
+  if(o&&o.t&&o.t!==mainTab&&["analysis","table","ab"].includes(o.t))switchTab(o.t);}catch(_){}}
 function openDeepLink(){
   if(_dlDone)return;_dlDone=true;
   if(_userActed)return;
@@ -6297,7 +6361,7 @@ function rebuildAllDatasets(){
         const chAgg=aggregate(chData,L);
         chAgg.forEach(e=>{e.tags.ch=ch;});
         ds.aggByChannel.set(ch,{aggAll:chAgg,...buildIndex(chAgg)});}
-      if(!ds.media||!chs.includes(ds.media))ds.media=chs[0]||null;
+      if(!ds.media||!chs.includes(ds.media))ds.media=navSavedMedia(chs)||chs[0]||null;
     }else{ds.channels=[];ds.aggByChannel=null;ds.media=null;}}}
 /* 분석 기간 윈도우 — 최근 N주("4"=1달|"13"=3달) | "all" | "custom"(최근 N 주/달) | "abs"(날짜 범위·월별 — P6, 2026-07 회의).
    회의: "기간을 직접 설정할 수 있으면(오늘 기준 고정 해소)" + "1~6월 월별로 누가 승리했나 + 월내 흐름" — abs 모드가 둘 다 담당
@@ -6490,7 +6554,7 @@ function renderMediaSeg(ds){const el=$("#mseg"),sec=$("#msegSec");if(!el||!sec)r
     <div class="sf-dd-menu" role="listbox" hidden>${chans.map(ch=>`<button type="button" role="option" data-m="${escAttr(ch)}" class="${ch===cur?"on":""}">${escHtml(ch)} <em>${counts.get(ch).toLocaleString()}</em></button>`).join("")}</div></div>${reengBadgeHTML(cur)}`;
   const dd=el.querySelector(".sf-dd"),btn=dd.querySelector(".sf-dd-btn"),menu=dd.querySelector(".sf-dd-menu");
   btn.onclick=e=>{e.stopPropagation();const willOpen=menu.hidden;closeAllDD();if(willOpen){dd.classList.add("open");menu.hidden=false;btn.setAttribute("aria-expanded","true");}};
-  menu.querySelectorAll("button").forEach(b=>b.onclick=()=>{const m=b.dataset.m;closeAllDD();if(ds.media===m)return;ds.media=m;cmpResetForMedia(m);tPage=1;tGroupByTouched=false;show(ds);});} /* 매체 전환 시 그룹뷰 기본값 재적용 + 비교 목록 초기화 */
+  menu.querySelectorAll("button").forEach(b=>b.onclick=()=>{const m=b.dataset.m;closeAllDD();if(ds.media===m)return;ds.media=m;cmpResetForMedia(m);tPage=1;tGroupByTouched=false;show(ds);navMark();});} /* 매체 전환 시 그룹뷰 기본값 재적용 + 비교 목록 초기화 */
 function show(ds){scope(ds);
   /* 구글 = 그룹뷰 기본(2026-07 회의: "구글만 그룹뷰로 보면 돼요") — 사용자가 직접 토글했으면 그 선택 존중 */
   if(!tGroupByTouched&&tMarkView==="all"){
@@ -6897,7 +6961,7 @@ function updateLandingVisibility(){const el=document.getElementById("landing");i
   const bo=document.getElementById("bootOv");if(bo)bo.hidden=!(cloudBooting&&!hasData);
   /* 첫 화면이면 비밀번호 입력에 바로 포커스 (다른 입력 사용 중일 땐 건드리지 않음) */
   if(!hasData&&!cloudPw&&!cloudBooting){const p=$("#pwIn");if(p&&(document.activeElement===document.body||document.activeElement==null))try{p.focus({preventScroll:true});}catch(e){}}}
-$$("#mtabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.t));
+$$("#mtabs button").forEach(b=>b.onclick=()=>{switchTab(b.dataset.t);navMark();});
 /* D10 — 전역 오류 가시화 + 로깅(현장 실패가 안 보이던 문제) */
 function logErr(ctx,e){try{console.error("[CR]",ctx,e&&(e.stack||e.message||e));}catch(_){}}
 window.addEventListener("error",e=>{if(e&&e.message&&/ResizeObserver loop|Script error\.?$/.test(e.message))return;logErr("uncaught",(e&&(e.error||e.message))||e);try{toast("문제가 생겼어요 — 계속되면 새로고침해 주세요");}catch(_){}});
@@ -6906,8 +6970,25 @@ document.addEventListener("click",()=>closeAllDD()); /* 커스텀 드롭다운 �
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeAllDD();});
 renderGlossary();renderFooter();refreshAll();updateLandingVisibility();
 /* 클라우드 저장소 UI 배선 */
-/* 비밀번호 규칙 — 4자 이상이면 OK (서버 _cr_pwok과 동일). 중복은 pw_taken로 별도 차단 */
-const pwOk=p=>String(p||"").length>=4;
+/* 비밀번호 규칙 — 서버 _cr_pwok과 같은 판정을 미리 돌려 즉시 안내한다(최종 판정은 서버).
+   기존 계정은 로그인 시 해시만 대조하므로(cr_login·_cr_check_pw는 _cr_pwok을 부르지 않음)
+   이 규칙이 조여져도 이미 가입된 사람은 그대로 로그인된다 — 신규 가입·비밀번호 변경에만 적용. */
+const PW_MIN=6;
+const PW_COMMON=new Set(["password","passw0rd","p@ssword","qwerty","qwerty123","qwertyui","asdfgh","asdfasdf",
+  "zxcvbn","zxcvbnm","1q2w3e","1q2w3e4r","qwer1234","asdf1234","q1w2e3r4","1qaz2wsx",
+  "abc123","abcd1234","123123","121212","112233","123321","1234qwer","iloveyou",
+  "letmein","welcome","admin","admin123","administrator","root123","test123","guest123",
+  "dragon","monkey","sunshine","princess","football","baseball","trustno1","master",
+  "daangn","karrot","danggn","daangn123","karrot123","creative","report","creativereport"]);
+function pwWeak(p){const s=String(p||"");
+  if(s.length<PW_MIN)return `비밀번호는 ${PW_MIN}자 이상으로 정해 주세요`;
+  if(/^(.)\1*$/.test(s))return "같은 글자만 반복된 비밀번호는 쓸 수 없어요";
+  let up=true,dn=true;
+  for(let i=0;i<s.length-1;i++){const a=s.charCodeAt(i),b=s.charCodeAt(i+1);if(b!==a+1)up=false;if(b!==a-1)dn=false;}
+  if(up||dn)return "123456·abcdef 처럼 순서대로 이어지는 비밀번호는 쓸 수 없어요";
+  if(PW_COMMON.has(s.toLowerCase()))return "너무 흔한 비밀번호예요 · 다른 걸로 정해 주세요";
+  return "";}
+const pwOk=p=>!pwWeak(p);
 /* 즐겨찾기 / 내 소재 — 개별 계정 단위(뷰어도 가능, 0715 불가). Supabase 저장.
    fav=본인 것만 로드(비공개) · mine=전체 로드(등록자 이름 공개). 채널=현재 매체(ds.media) */
 const STAR_SVG=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.3l2.83 5.73 6.32.92-4.57 4.46 1.08 6.3L12 16.93 6.34 19.9l1.08-6.3L2.85 8.95l6.32-.92z"/></svg>`;
@@ -7522,7 +7603,7 @@ if(_regName)_regName.addEventListener("input",e=>{const c=e.target.selectionStar
 async function doRegister(){
   const name=($("#regName").value||"").trim(),pw=$("#regPw").value||"",pw2=$("#regPw2").value||"";
   if(!/^[A-Za-z][A-Za-z0-9]{1,23}$/.test(name)){toast("daangn name은 영문으로 시작하는 2~24자 영문·숫자로 정해 주세요");$("#regName").focus();return;}
-  if(!pwOk(pw)){toast("비밀번호는 4자 이상으로 정해 주세요");$("#regPw").focus();return;}
+  {const w=pwWeak(pw);if(w){toast(w);$("#regPw").focus();return;}}
   if(pw!==pw2){toast("비밀번호와 비밀번호 확인이 서로 달라요");$("#regPw2").focus();return;}
   const btn=$("#doRegister"),bt=btn.textContent;btn.disabled=true;btn.textContent="신청 중…";
   try{
@@ -7535,7 +7616,7 @@ async function doRegister(){
           m==="pw_taken"?"이미 쓰이고 있는 비밀번호예요 · 다른 걸로 정해 주세요":
           m==="pw_reserved"?"그 비밀번호는 쓸 수 없어요 · 다른 걸로 정해 주세요":
           m==="name_invalid"?"daangn name 형식이 올바르지 않아요 (영문 시작, 2~24자)":
-          (m==="pw_format"||m==="pw_weak")?"비밀번호는 4자 이상으로 정해 주세요":
+          (m==="pw_format"||m==="pw_weak")?(pwWeak(pw)||`비밀번호는 ${PW_MIN}자 이상이어야 하고, 너무 단순하면 쓸 수 없어요`):
           "가입 신청에 실패했어요 · "+m);
   }finally{btn.disabled=false;btn.textContent=bt;}}
 const _doReg=$("#doRegister");if(_doReg)_doReg.onclick=doRegister;
@@ -7675,6 +7756,20 @@ function CR_SELFTEST(){
      [cls(giPct(pool,20,1)),cls(giPct(pool,1,1)),cls(giPct(pool,10,1))],["b","r","m"]);
    t("단가류(dir<0)는 낮을수록 파랑",cls(giPct(pool,1,-1)),"b");
    t("비교군 4개 미만이면 칩 없음",giPct([1,2,3],2,1),"");}
+  /* ── 비밀번호 규칙 (서버 _cr_pwok과 같은 판정이어야 한다) ── */
+  {const bad=["1234","abc12","12345","123456","654321","abcdef","111111","aaaaaa","qwerty","password","daangn","abc123"];
+   t("약한 비밀번호는 전부 거부",bad.filter(pwOk),[]);
+   t("정상 비밀번호는 통과",["hansy1","a1b2c3","Karrot!7","mango77"].filter(p=>!pwOk(p)),[]);
+   t("6자 미만은 길이 사유로 거부",/6자/.test(pwWeak("ab1")),true);
+   t("사유 문구는 규칙마다 다르다",new Set(["1234","111111","123456","qwerty"].map(pwWeak)).size,4);}
+  /* ── 뒤로가기 히스토리 ── */
+  {t("상세가 열려 있으면 해시에 소재가 담긴다",/^#ad=x%2Fy&ch=Moloco$/.test(navHash({m:"Moloco",t:"table",ad:"x/y"})),true);
+   t("상세가 닫히면 해시가 사라진다",/#/.test(navHash({m:"Moloco",t:"table",ad:null})),false);
+   t("같은 화면은 같은 서명(중복 항목 방지)",
+     navSig({m:"Meta",t:"table",ad:"a"})===navSig({m:"Meta",t:"table",ad:"a"}),true);
+   t("매체·탭·상세 중 하나만 달라도 다른 서명",
+     new Set([{m:"Meta",t:"table",ad:"a"},{m:"Google",t:"table",ad:"a"},
+              {m:"Meta",t:"analysis",ad:"a"},{m:"Meta",t:"table",ad:"b"}].map(navSig)).size,4);}
   const msg=out.length?`CR_SELFTEST: ${pass}건 통과 · ${out.length}건 실패\n`+out.join("\n"):`CR_SELFTEST: ${pass}건 전부 통과 ✅`;
   (out.length?console.error:console.log)(msg);
   return{pass,fail:out.length,detail:out};}

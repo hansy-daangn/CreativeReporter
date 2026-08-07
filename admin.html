@@ -121,7 +121,7 @@
   <!-- 계정 직접 추가 (승인됨으로 생성) -->
   <div class="addbox" id="addBox" hidden>
     <input class="af" type="text" id="afName" placeholder="daangn name (영문)" maxlength="24">
-    <input class="af" type="text" id="afPw" placeholder="비밀번호 (4자+)" maxlength="40">
+    <input class="af" type="text" id="afPw" placeholder="비밀번호 (6자 이상)" maxlength="40">
     <select class="af" id="afRole"><option value="viewer">뷰어</option><option value="editor">에디터</option></select>
     <button class="btn pri" id="afGo" type="button">추가</button>
     <button class="btn" id="afCancel" type="button">닫기</button>
@@ -247,8 +247,24 @@ async function setRole(id,role){
     await load();
   }catch(e){toast("권한을 바꾸지 못했어요 · "+(e.message||""));}
 }
-const PWMSG="비밀번호는 4자 이상이어야 해요";
-const pwOk=p=>String(p||"").length>=4;
+/* 서버 _cr_pwok과 같은 판정 — 기존 계정 로그인은 해시 대조라 영향 없고, 신규·변경에만 적용된다 */
+const PW_MIN=6;
+const PWMSG=`비밀번호는 ${PW_MIN}자 이상이어야 하고, 너무 단순하면 쓸 수 없어요`;
+const PW_COMMON=new Set(["password","passw0rd","p@ssword","qwerty","qwerty123","qwertyui","asdfgh","asdfasdf",
+  "zxcvbn","zxcvbnm","1q2w3e","1q2w3e4r","qwer1234","asdf1234","q1w2e3r4","1qaz2wsx",
+  "abc123","abcd1234","123123","121212","112233","123321","1234qwer","iloveyou",
+  "letmein","welcome","admin","admin123","administrator","root123","test123","guest123",
+  "dragon","monkey","sunshine","princess","football","baseball","trustno1","master",
+  "daangn","karrot","danggn","daangn123","karrot123","creative","report","creativereport"]);
+function pwWeak(p){const s=String(p||"");
+  if(s.length<PW_MIN)return `비밀번호는 ${PW_MIN}자 이상이어야 해요`;
+  if(/^(.)\1*$/.test(s))return "같은 글자만 반복된 비밀번호는 쓸 수 없어요";
+  let up=true,dn=true;
+  for(let i=0;i<s.length-1;i++){const a=s.charCodeAt(i),b=s.charCodeAt(i+1);if(b!==a+1)up=false;if(b!==a-1)dn=false;}
+  if(up||dn)return "순서대로 이어지는 비밀번호(123456·abcdef)는 쓸 수 없어요";
+  if(PW_COMMON.has(s.toLowerCase()))return "너무 흔한 비밀번호예요";
+  return "";}
+const pwOk=p=>!pwWeak(p);
 const nameOk=n=>/^[A-Za-z][A-Za-z0-9]{1,23}$/.test(n||"");
 const ERRMAP={name_taken:"이미 누군가 쓰고 있는 이름이에요",pw_taken:"이미 쓰이고 있는 비밀번호예요 · 다른 걸로 정해 주세요",pw_reserved:"그 비밀번호는 쓸 수 없어요 · 다른 걸로 정해 주세요",name_invalid:"이름은 영문 시작 2~24자 영문·숫자여야 해요",pw_weak:PWMSG,pw_format:PWMSG,bad_role:"권한 값이 올바르지 않아요"};
 async function renameUser(id){
@@ -265,9 +281,9 @@ async function renameUser(id){
 function mapErr(m){return ERRMAP[m]||m||"실패했어요";}
 async function changePw(id){
   const u=USERS.find(x=>x.id===id);if(!u)return;
-  const np=prompt(`${u.name} 의 새 비밀번호를 입력해 주세요 (4자 이상)`);
+  const np=prompt(`${u.name} 의 새 비밀번호를 입력해 주세요 (6자 이상 · 너무 단순한 건 불가)`);
   if(np==null)return; const pw=np.trim();
-  if(!pwOk(pw)){toast(PWMSG);return;}
+  if(!pwOk(pw)){toast(pwWeak(pw)||PWMSG);return;}
   const reviewer="";
   try{await rpc("cr_admin_setpw",{admin_pw:adminPw,p_id:id,p_new_pw:pw,reviewer});
     toast(`${u.name} 비밀번호를 바꿨어요`);
@@ -277,7 +293,7 @@ async function changePw(id){
 async function addAccount(){
   const name=($("#afName").value||"").trim(),pw=($("#afPw").value||"").trim(),role=$("#afRole").value;
   if(!/^[A-Za-z][A-Za-z0-9]{1,23}$/.test(name)){toast("이름은 영문 시작 2~24자 영문·숫자여야 해요");$("#afName").focus();return;}
-  if(!pwOk(pw)){toast(PWMSG);$("#afPw").focus();return;}
+  if(!pwOk(pw)){toast(pwWeak(pw)||PWMSG);$("#afPw").focus();return;}
   const reviewer="";
   const btn=$("#afGo"),bt=btn.textContent;btn.disabled=true;btn.textContent="추가 중…";
   try{await rpc("cr_admin_create",{admin_pw:adminPw,p_name:name,p_pw:pw,p_role:role,reviewer});
