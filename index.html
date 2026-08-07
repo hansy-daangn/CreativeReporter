@@ -2268,9 +2268,13 @@ function aggregate(data,L){const map=new Map();
     e.tags=tagEntity(e.name,e);return e;});
   /* 몰로코 '네이티브 영상' 오등록 보정 — 이 리포트가 완주율을 제공하는데(영상이면 값이 찍혀야 함)
      첨부 미리보기가 이미지 파일이고 완주율이 전 기간 비어 있으면 실제 노출물을 이미지로 보고 재분류.
-     완주율이 찍혀 있으면 미리보기만 썸네일인 진짜 영상이므로 유지, 리포트에 완주율 컬럼 자체가 없으면 판단 보류 */
+     완주율이 찍혀 있으면 미리보기만 썸네일인 진짜 영상이므로 유지, 리포트에 완주율 컬럼 자체가 없으면 판단 보류.
+     ⚠️ 소재명이 영상 파일(.mp4 등)이면 절대 뒤집지 않는다 — NATIVE_VIDEO는 미리보기 자산이 이미지(썸네일)로
+     오는 경우가 많고(실측: 36개 소재·921행이 이 조합), 완주율 데이터가 안 실려 온 주가 있다는 이유로
+     진짜 영상을 이미지로 강등하던 것이 원본 대시보드와 표시가 갈린 원인이었다(2026-08-06). */
   if(arr.some(x=>(x._vcrDen||0)>0))for(const x of arr){
-    if(x._m_ctype&&/VIDEO/.test(x._m_ctype)&&(x._vcrDen||0)<=0&&/\.(png|jpe?g|gif|webp)(\?|$)/i.test(String(x._m_url||""))){
+    if(x._m_ctype&&/VIDEO/.test(x._m_ctype)&&(x._vcrDen||0)<=0&&/\.(png|jpe?g|gif|webp)(\?|$)/i.test(String(x._m_url||""))
+       &&!/\.(mp4|mov|webm|m4v)\s*$/i.test(String(x.name||""))){
       x.tags.fo="이미지";x._foFix=1;}}
   /* 몰로코 영상 '클릭' = 재생 혼입(실측: 영상 소재 CTR 중앙값 31% · 25% 재생수≈클릭수 · 영상 내 CTR↔eCPA 무상관 +0.02)
      → 클릭률·CPC는 랜딩 클릭 지표로 성립 불가라 무효화. 영상의 반응 신호는 완주율이 담당(채점도 동일) */
@@ -4096,7 +4100,8 @@ function umSvc7For(ds,e){
     basisLabel:(sm.basis_label&&sm.basis_label[basis])||(basis==="svc7"?"신규 설치 7일":"복귀 후 7일"),base,distOf};}
 function umCohortHTML(ds,e){
   const hit=umCohortFor(ds,e),tr=umTrendFor(ds,e),re=umReengFor(ds,e),lf=umLifeFor(ds,e),sv=umSvc7For(ds,e);
-  if(!hit&&!tr&&!re&&!lf&&!sv)return "";
+  /* 조기 반환 없음 — 실증(kv) 데이터가 하나도 없어도 '수명'은 주간 광고비만으로 그려져 스트립이 항상 나온다.
+     (kv 실증은 최근 몇 주만 커버해 일부 소재에서 블록이 통째로 사라지던 문제의 수정 · 2026-08-06) */
   const md=w=>String(w||"").slice(5,7).replace(/^0/,"")+"/"+String(w||"").slice(8,10).replace(/^0/,"");
   const base="설치 코호트 실방문 기준 · 하한 추정치";
   const NB=(()=>{const r=umLatest(/^reeng_w(\d{2})(\d{2})$/);return r&&isFinite(+r.val.naturalBaseline_pct)?+r.val.naturalBaseline_pct:null;})();
@@ -4166,15 +4171,22 @@ function umCohortHTML(ds,e){
      종전엔 일자 막대에 화살표만 얹어 "몇 배 늘었고 높은 상태를 얼마나 유지했나"가 전혀 안 보였다.
      실제 주간 광고비를 그려 ① 언제 시작해 언제까지 갔는지(가로) ② 얼마나 크게 붙었는지(세로)
      ③ 고소진(매체 상위 25%)을 몇 주나 유지했는지(음영 구간) ④ 피크·최대 증액이 어디였는지를 한 그림에 담는다. */
+  /* ── 수명 — 주간 광고비 곡선 ──
+     ⚠️ kv(UMET.lifecycle)에 의존하지 않는다. 수명 곡선의 재료(주차·광고비)는 사이트가 이미 전부 갖고 있고,
+     kv는 일부 소재만 커버해 "어떤 소재는 수명이 있고 어떤 소재는 없는" 상태를 만들었다.
+     이제 주간 데이터에서 직접 유도하고, kv 값(lf)이 있으면 증액 배수·고소진 주 수만 보강한다. */
   let lifeHtml="";
-  if(lf){
-    const wa=weeklyAggOf(ds,e,true); /* 기간 필터 무시 — 수명은 이 소재가 가진 전 주차 */
+  {const wa=weeklyAggOf(ds,e,true); /* 기간 필터 무시 — 수명은 이 소재가 가진 전 주차 */
     const ws=wa.ws,cs=wa.os.map(o=>o.c||0);
-    if(ws.length>=2&&cs.some(c=>c>0)){
-      const lc=UMET.lifecycle;let maxL="";
-      for(const k in lc){if(k==="basis")continue;const v=lc[k];if(v&&v.l&&v.l>maxL)maxL=v.l;}
-      const ongoing=lf.l===maxL;
-      /* 고소진 경계 = 이 매체 소재들의 '주간 광고비' 상위 25%(p75) — lf.hi(고소진 주 수)와 같은 잣대 */
+    if(ws.length&&cs.some(c=>c>0)){
+      /* 진행중 판정 — 이 매체(데이터셋)의 최신 주에 이 소재도 있으면 진행중 */
+      const dsLast=(ds&&ds.liveWeek)||(typeof WEEKS!=="undefined"&&WEEKS.length?WEEKS[WEEKS.length-1]:ws[ws.length-1]);
+      const ongoing=ws[ws.length-1]>=dsLast;
+      /* 최대 증액 — kv 값 우선, 없으면 주간 광고비에서 직접(직전 주 대비 최대 배수, 1.5배 미만은 표시 안 함) */
+      let rxI=-1,rxV=null;
+      if(lf&&lf.rw&&isFinite(+lf.rx)){const i=ws.indexOf(String(lf.rw).slice(0,10));if(i>=0){rxI=i;rxV=+lf.rx;}}
+      if(rxI<0)for(let i=1;i<ws.length;i++){if(cs[i-1]>0&&cs[i]/cs[i-1]>=1.5&&(rxV==null||cs[i]/cs[i-1]>rxV)){rxI=i;rxV=cs[i]/cs[i-1];}}
+      /* 고소진 경계 = 이 매체 소재들의 '주간 광고비' 상위 25%(p75) */
       const allW=[];
       for(const r of (ds.dataAll||ds.data||[])){const c=num(r["비용"]);if(c!=null&&c>0)allW.push(c);}
       const hiCut=allW.length>=8?quantile(allW.slice().sort((a,b)=>a-b),0.75):null;
@@ -4184,37 +4196,36 @@ function umCohortHTML(ds,e){
       const Y=v=>pt+(1-v/mx)*ih;
       const pkI=cs.indexOf(Math.max(...cs));
       let g="";
-      /* 고소진 밴드 — 경계선 위쪽을 통째로 옅게 칠해 '높은 상태'가 면적으로 읽히게 */
       if(hiCut!=null&&hiCut<mx){
         g+=`<rect x="${pl}" y="${pt}" width="${iw}" height="${(Y(hiCut)-pt).toFixed(1)}" fill="var(--karrot)" fill-opacity="0.05"/>`;
         g+=`<line x1="${pl}" y1="${Y(hiCut).toFixed(1)}" x2="${W-pr}" y2="${Y(hiCut).toFixed(1)}" stroke="var(--karrot)" stroke-width="1" stroke-dasharray="3 3" stroke-opacity="0.55" data-tip="${escAttr(`<b>고소진 경계 ${fmtKRW(hiCut)}원/주</b><br>이 매체 소재들의 주간 광고비 상위 25% 지점 — 이 선 위에 머문 구간이 '크게 밀어준' 기간입니다`)}"/>`;
         g+=`<text x="${W-pr}" y="${(Y(hiCut)-3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--karrot)" fill-opacity="0.8">상위 25%</text>`;}
-      /* 광고비 곡선 + 면 */
-      let ln="";ws.forEach((w,i)=>{ln+=(i?" L":"M")+` ${X(i).toFixed(1)} ${Y(cs[i]).toFixed(1)}`;});
-      g+=`<path d="${ln} L ${X(ws.length-1).toFixed(1)} ${(H-pb).toFixed(1)} L ${X(0).toFixed(1)} ${(H-pb).toFixed(1)} Z" fill="var(--karrot)" fill-opacity="0.14"/>`;
-      g+=`<path d="${ln}" fill="none" stroke="var(--karrot)" stroke-width="2" stroke-linejoin="round"/>`;
-      /* 주마다 얇은 호버 타깃 — 값은 툴팁으로만(선 위에 숫자를 얹으면 곡선이 안 보인다) */
-      ws.forEach((w,i)=>{
-        const up=i>0&&cs[i-1]>0?cs[i]/cs[i-1]:null;
-        g+=`<rect x="${(X(i)-iw/ws.length/2).toFixed(1)}" y="${pt}" width="${(iw/ws.length).toFixed(1)}" height="${ih}" fill="transparent" data-tip="${escAttr(`<b>${md(w)} 주</b><br>주간 광고비 ${fmtKRW(cs[i])}원`+(up?`<br>직전 주 대비 ×${up.toFixed(2)}`:"")+(hiCut!=null?`<br>${cs[i]>=hiCut?"고소진 구간":"평시 구간"}`:""))}"/>`;});
-      /* 최대 증액 — 그 주 지점에 세로 눈금 + ×N */
-      if(lf.rw&&isFinite(+lf.rx)){
-        const ri=ws.indexOf(String(lf.rw).slice(0,10));
-        if(ri>=0){const x=X(ri);
-          g+=`<line x1="${x.toFixed(1)}" y1="${Y(cs[ri]).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(H-pb).toFixed(1)}" stroke="var(--g2)" stroke-width="1.2" stroke-dasharray="2 2"/>`;
-          g+=`<circle cx="${x.toFixed(1)}" cy="${Y(cs[ri]).toFixed(1)}" r="3" fill="var(--g2)"/>`;
-          g+=`<text x="${x.toFixed(1)}" y="${Math.max(11,Y(cs[ri])-8).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="750" fill="var(--g2)" paint-order="stroke" stroke="#FFFDF7" stroke-width="3" stroke-linejoin="round" data-tip="${escAttr(`<b>최대 증액 ×${(+lf.rx).toFixed(1)}</b> · ${md(lf.rw)} 주<br>직전 주 대비 주간 광고비 증가 배수`)}">×${(+lf.rx).toFixed(1)}</text>`;}}
-      /* 피크 — 값까지 적어 준다(가장 궁금한 한 숫자) */
-      {const x=X(pkI),y=Y(cs[pkI]);
-       g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.6" fill="var(--karrot)" stroke="#FFFDF7" stroke-width="1.4"/>`;
-       const anch=pkI===0?"start":(pkI===ws.length-1?"end":"middle");
-       g+=`<text x="${x.toFixed(1)}" y="${Math.max(10,y-9).toFixed(1)}" text-anchor="${anch}" font-size="10" font-weight="800" fill="var(--karrot)" paint-order="stroke" stroke="#FFFDF7" stroke-width="3" stroke-linejoin="round" data-tip="${escAttr(`<b>피크 ${fmtKRW(cs[pkI])}원</b> · ${md(ws[pkI])} 주`)}">피크 ${fmtKRW(cs[pkI])}</text>`;}
-      /* 끝점 상태 — 진행중이면 초록 점 */
-      g+=`<circle cx="${X(ws.length-1).toFixed(1)}" cy="${Y(cs[ws.length-1]).toFixed(1)}" r="3.2" fill="${ongoing?"#35B979":"var(--faint)"}" data-tip="${escAttr(ongoing?"진행중 — 최신 주에도 집행":`중단 — 마지막 집행 ${md(lf.l)} 주`)}"/>`;
+      if(ws.length===1){
+        /* 1주짜리 — 곡선 대신 막대 하나. 곡선이 없다고 블록을 숨기면 "왜 어떤 소재는 수명이 없냐"가 된다 */
+        const bw=26,x=X(0);
+        g+=`<rect x="${(x-bw/2).toFixed(1)}" y="${Y(cs[0]).toFixed(1)}" width="${bw}" height="${(H-pb-Y(cs[0])).toFixed(1)}" rx="4" fill="var(--karrot)" fill-opacity="0.5" data-tip="${escAttr(`<b>${md(ws[0])} 주</b><br>주간 광고비 ${fmtKRW(cs[0])}원`)}"/>`;
+        g+=`<text x="${x.toFixed(1)}" y="${Math.max(10,Y(cs[0])-8).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--karrot)">${fmtKRW(cs[0])}</text>`;}
+      else{
+        let ln="";ws.forEach((w,i)=>{ln+=(i?" L":"M")+` ${X(i).toFixed(1)} ${Y(cs[i]).toFixed(1)}`;});
+        g+=`<path d="${ln} L ${X(ws.length-1).toFixed(1)} ${(H-pb).toFixed(1)} L ${X(0).toFixed(1)} ${(H-pb).toFixed(1)} Z" fill="var(--karrot)" fill-opacity="0.14"/>`;
+        g+=`<path d="${ln}" fill="none" stroke="var(--karrot)" stroke-width="2" stroke-linejoin="round"/>`;
+        ws.forEach((w,i)=>{
+          const up=i>0&&cs[i-1]>0?cs[i]/cs[i-1]:null;
+          g+=`<rect x="${(X(i)-iw/ws.length/2).toFixed(1)}" y="${pt}" width="${(iw/ws.length).toFixed(1)}" height="${ih}" fill="transparent" data-tip="${escAttr(`<b>${md(w)} 주</b><br>주간 광고비 ${fmtKRW(cs[i])}원`+(up?`<br>직전 주 대비 ×${up.toFixed(2)}`:"")+(hiCut!=null?`<br>${cs[i]>=hiCut?"고소진 구간":"평시 구간"}`:""))}"/>`;});
+        if(rxI>0&&rxV!=null){const x=X(rxI);
+          g+=`<line x1="${x.toFixed(1)}" y1="${Y(cs[rxI]).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(H-pb).toFixed(1)}" stroke="var(--g2)" stroke-width="1.2" stroke-dasharray="2 2"/>`;
+          g+=`<circle cx="${x.toFixed(1)}" cy="${Y(cs[rxI]).toFixed(1)}" r="3" fill="var(--g2)"/>`;
+          g+=`<text x="${x.toFixed(1)}" y="${Math.max(11,Y(cs[rxI])-8).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="750" fill="var(--g2)" paint-order="stroke" stroke="#FFFDF7" stroke-width="3" stroke-linejoin="round" data-tip="${escAttr(`<b>최대 증액 ×${rxV.toFixed(1)}</b> · ${md(ws[rxI])} 주<br>직전 주 대비 주간 광고비 증가 배수`)}">×${rxV.toFixed(1)}</text>`;}
+        {const x=X(pkI),y=Y(cs[pkI]);
+         g+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.6" fill="var(--karrot)" stroke="#FFFDF7" stroke-width="1.4"/>`;
+         const anch=pkI===0?"start":(pkI===ws.length-1?"end":"middle");
+         g+=`<text x="${x.toFixed(1)}" y="${Math.max(10,y-9).toFixed(1)}" text-anchor="${anch}" font-size="10" font-weight="800" fill="var(--karrot)" paint-order="stroke" stroke="#FFFDF7" stroke-width="3" stroke-linejoin="round" data-tip="${escAttr(`<b>피크 ${fmtKRW(cs[pkI])}원</b> · ${md(ws[pkI])} 주`)}">피크 ${fmtKRW(cs[pkI])}</text>`;}
+        g+=`<circle cx="${X(ws.length-1).toFixed(1)}" cy="${Y(cs[ws.length-1]).toFixed(1)}" r="3.2" fill="${ongoing?"#35B979":"var(--faint)"}" data-tip="${escAttr(ongoing?"진행중 — 최신 주에도 집행":`중단 — 마지막 집행 ${md(ws[ws.length-1])} 주`)}"/>`;}
       g+=`<text x="${pl}" y="${H-5}" font-size="10" fill="var(--faint)">${md(ws[0])}</text>`;
-      g+=`<text x="${W-pr}" y="${H-5}" text-anchor="end" font-size="10" fill="var(--faint)">${md(ws[ws.length-1])}${ongoing?" · 진행중":""}</text>`;
-      const hiN=lf.hi?+lf.hi:(hiCut!=null?cs.filter(c=>c>=hiCut).length:0);
-      const sub=[`${fmtInt(ws.length)}주`,`누적 ${fmtKRW(lf.tot||cs.reduce((a,b)=>a+b,0))}원`];
+      if(ws.length>1)g+=`<text x="${W-pr}" y="${H-5}" text-anchor="end" font-size="10" fill="var(--faint)">${md(ws[ws.length-1])}${ongoing?" · 진행중":""}</text>`;
+      const tot=(lf&&isFinite(+lf.tot))?+lf.tot:cs.reduce((a,b)=>a+b,0);
+      const hiN=(lf&&lf.hi)?+lf.hi:(hiCut!=null?cs.filter(c=>c>=hiCut).length:0);
+      const sub=[`${fmtInt(ws.length)}주`,`누적 ${fmtKRW(tot)}원`];
       if(hiN)sub.push(`고소진 ${fmtInt(hiN)}주`);
       lifeHtml=`<div class="us-sub">수명 <em>${escHtml(sub.join(" · "))}</em></div><svg class="us-life" viewBox="0 0 ${W} ${H}" style="max-width:${W}px">${g}</svg>`;}}
   if(!rowsHtml.length&&!svcHtml&&!reengHtml&&!lifeHtml)return "";

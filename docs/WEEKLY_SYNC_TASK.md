@@ -33,16 +33,37 @@
 - 2순위(차트 데이터 조회가 안 되면): superset MCP로 각 차트의 SQL을 얻어 bigquery MCP `execute_sql`로 W 조건을 걸어 실행.
 - 컬럼은 수동 CSV와 동일해야 한다(몰로코: `date,ad_name,creative_type,creative_preview,…지표`, 메타: `date,ad_name,…어트리뷰션/활성/신규+재활성 지표`, 구글: `date,adset_name,비용,노출 수,CPM,클릭 수,CPC,어트리뷰션 수,eCPI,활성 유저 수,활성 유저 eCPA,신규+재활성 유저 수,신규+재활성 유저 eCPA`). 다르면 중단·실패 알림(컬럼 목록 포함).
 
-#### ⚠️ 몰로코 노출 수는 AppsFlyer가 아니라 몰로코 콘솔에서 가져와야 한다
+#### ⚠️ 몰로코 — 대시보드 쿼리의 IFNULL 폴백을 이해하고 기록해야 한다
 
-**원칙(2026-07 확정): 몰로코 노출·VTR은 콘솔(`molocoAD_daily_metrics`), 비용·클릭·기여는 AppsFlyer(`adset_report`). 혼용 금지.**
+대시보드 2075 몰로코 차트의 노출·클릭은 이렇게 정의돼 있다(뷰 SQL 실물 확인, 2026-08-06):
 
-`adset_report`에는 노출 컬럼이 있지만 **값이 항상 0**이다. 이걸 그대로 쓰면 `노출 수 = 0`이 기록되고, 클릭은 정상이라 **클릭 > 노출**이라는 물리적으로 불가능한 행이 만들어진다(2026-07-27 실측: 146행 전부, 클릭 779,895 · 노출 0 · 광고비 3,527만원).
+```sql
+CASE WHEN media_source='moloco_int' THEN IFNULL(콘솔.imp, AF.imp_af) ELSE AF.imp_af END AS impressions
+CASE WHEN media_source='moloco_int' THEN IFNULL(콘솔.clk, AF.clk_af) ELSE AF.clk_af END AS clicks
+```
 
-- 몰로코 차트가 `adset_report`만 준다면 **`molocoAD_daily_metrics`를 조인해 노출을 채워라.**
-- 조인이 불가능하면 **`노출 수` 키를 아예 넣지 마라.** `0`으로 채우지 말 것 — 아래 '절대 규칙 5' 참고.
+즉 **콘솔(`molocoAD_daily_metrics`)이 1순위이고, 그 주 콘솔 데이터가 아직 안 실렸으면 AppsFlyer 값으로 조용히 폴백**한다. AF에는 몰로코 노출이 없고(0), AF 클릭은 콘솔보다 크게 잡힌다.
 
-> 이 사고의 전말: 46주(2025-09-08~2026-07-20)는 사람이 몰로코 콘솔 내보내기로 올려 노출이 정상이었고, 자동화 첫 주(2026-07-27)에 소스가 Superset 차트로 바뀌면서 노출만 0이 됐다. **같은 실행의 구글 154행·메타 19행은 노출이 정상**이라 자동화 전체 문제가 아니라 몰로코 소스 문제임이 확정된다.
+**사고 실측(2026-07-27주)**: 노출 0 · 클릭 779,895(직전 3주 콘솔 클릭 548K~564K 대비 +38%) — 노출·클릭 모두 폴백이 발화한 지문이다. 실행 시점에 콘솔 테이블에 그 주 데이터가 없었던 것. 수동 업로드 46주는 콘솔 데이터가 실린 뒤 내보냈기 때문에 정상이었다.
+
+**따라서 몰로코는 기록 전에 반드시 확인한다:**
+- 조회 결과에서 `SUM(노출)=0`이면 → **콘솔 미적재 신호. 몰로코는 그 주 기록을 통째로 보류**한다(노출만이 아니라 클릭도 AF 잣대로 바뀌고 완주율도 비므로, 부분 기록도 오염이다). `[CR] 수퍼셋 최신화 부분 완료 ⚠️ — 몰로코 보류(콘솔 미적재)` 알림 후 **다음날 재실행**.
+- **되채움(매 실행)**: 최근 4주의 몰로코 주차 중 `노출 수` 키가 없는 주가 있으면 소스를 재조회해, 이제 콘솔 값이 있으면 그 (채널, 주)를 `delete` 후 재삽입한다(`on conflict do nothing`이라 delete 없이는 안 채워진다).
+
+#### 몰로코 — 기왕 가져올 때 원시 카운트까지 (사이트가 이미 읽는 키들)
+
+차트 CSV(1순위)는 비율(완주율·리텐션)만 내보내 분자·분모를 복원할 수 없다. **2순위 SQL 경로에서 `virtual_table` 내부의 원시 컬럼을 함께 SELECT**해 payload에 그대로 실어라 — 사이트 화면(유저 질·영상 시청 탭)이 이 키들을 이미 렌더한다:
+
+| 쿼리 컬럼 | payload 키 | 화면 |
+|---|---|---|
+| `video_play_25/50/75/100` | `_v25`/`_v50`/`_v75`/`_v100` | 영상 시청(구간별 유지) |
+| `ret_d1_base`/`ret_d1_users` | `_q_retD1Base`/`_q_retD1Users` | 유저 질(D1 잔존) |
+| `ret_d7_base`/`ret_d7_users` | `_q_retD7Base`/`_q_retD7Users` | 유저 질(D7 잔존) |
+| `cohort_revenue_krw_d0/d7` | `_q_revD0`/`_q_revD7` | 유저 질(코호트 매출·ROAS D7) |
+| `af_installs` / `re_attributions` / `re_engagements` | `_q_afInstalls` / `_q_reAtt` / `_q_reEng` | 유저 질(유입 구성) |
+| `moloco_installs` | `_m_installs` | 참고 지표 |
+| `creative_group_name` / `creative_type` / `resolution` | `_m_group` / `_m_ctype` / `_m_resName` | 그룹·유형·해상도 |
+| `asset_url` | `_m_url` | 미리보기 — **NATIVE_VIDEO는 `creative_preview`가 이미지 썸네일이어도 영상이다. `video_url`이 풀린 `asset_url`을 넣어야 미리보기가 영상으로 열린다** |
 
 ### 2) 기록 (Supabase MCP)
 - **몰로코/메타** → `sr_weekly_creative_stats`에 행 단위 INSERT. 규칙(서버 cr_save와 동일):
