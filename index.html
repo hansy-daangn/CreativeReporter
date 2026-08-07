@@ -258,6 +258,7 @@
   /* 비교군 카드 — 가로 나란히. 카드 사이 간격(28px)이 카드 안 간격(4px)보다 확실히 커야 묶임이 읽힌다 */
   .peer-cards{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:6px}
   .peer-card{flex:1 1 300px;min-width:0;max-width:520px;padding-left:9px;border-left:2px solid var(--surface-3)}
+  .peer-card.xm{border-left-color:var(--karrot)} /* 전매체 카드 — 잣대가 다름(광고비만)을 색으로 구분 */
   .peer-ch{font-size:var(--fs-1);font-weight:700;color:var(--muted);display:flex;align-items:baseline;gap:6px;
     flex-wrap:wrap;margin-bottom:3px}
   .peer-ch em{font-style:normal;font-weight:500;color:var(--faint);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -295,6 +296,7 @@
   /* 섹션 소제목 — 블록 안 구분 */
   .us-sub{font-size:var(--fs-1);font-weight:700;color:var(--muted);margin:9px 0 3px;padding-top:8px;border-top:1px solid var(--surface-2);display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
   .us-sub em{font-style:normal;font-weight:500;color:var(--faint)}
+  .us-note{grid-column:1/-1;font-size:var(--fs-1);color:var(--faint);margin:4px 0 2px}
   /* viewBox 560 기준. max-width로 위를, min-width로 아래를 막아 배율을 0.84~1에 가둔다 —
      상한이 없으면 넓은 창에서 글자만 커지고, 하한이 없으면 좁은 창에서 절반으로 쪼그라든다 */
   /* min-width는 max-content 그리드 안에서 차트가 쪼그라드는 것을 막는다(코호트 행이 없으면 열이 붕괴한다).
@@ -3975,21 +3977,51 @@ function peerRankHTML(ds,e){
   if(svc){const g=pool.filter(p=>svcOf(p)===svc);
     if(g.length>=4&&(!groups.length||g.length!==groups[0].list.length))groups.push({lab:"같은 서비스",sub:svc,list:g});}
   if(!groups.length){const g=pool;if(g.length>=6)groups.push({lab:"이 매체 전체",sub:String(ds.media||""),list:g});}
+  /* ── 전 매체 비교군 (2026-08-06) ──
+     ⚠️ 매체를 넘으면 유저·전환 지표는 귀속 단위가 달라 못 섞는다 — **광고비만** 비교한다(costOnly).
+     그리고 타매체 인덱스(aggAll)는 전체 기간 합산이라, 이쪽 값도 전체 기간 인덱스에서 다시 찾아
+     같은 잣대로 맞춘다(기간 필터된 내 값과 섞으면 백분위가 왜곡된다).
+     · 전매체 같은 광고그룹 = 그룹 다리(이름이 똑같은 이미지·지문·URL로 이어진 그룹 계열)
+     · 전매체 같은 서비스   = svcOf 일치 */
+  const xPools=(dsMode==="channeled")?_xmPools(ds):[];
+  if(xPools.length){
+    const myIdx=ds.aggByChannel&&ds.media&&ds.aggByChannel.get(ds.media);
+    const meFull=(myIdx&&(myIdx.aggAll||[]).find(p=>p&&p.name===e.name))||e;
+    const myPoolFull=((myIdx&&myIdx.aggAll)||pool).filter(p=>p&&!p._isGroup&&(p.비용||0)>0);
+    if(gid){
+      const B=xmGroupBridge(ds);
+      const linked=[];
+      for(const{ch,list}of xPools){
+        const m=B.get(ch+" "+String(gid));if(!m)continue;
+        for(const p of list){if(p&&!p._isGroup&&(p.비용||0)>0&&m.has(String(_xmGrpOf(p)||"")))linked.push(p);}}
+      if(linked.length){
+        const mine=myPoolFull.filter(p=>String(p._g_adGroupId||p._m_group||"")===String(gid));
+        const g=mine.concat(linked);
+        if(g.length>=4)groups.push({lab:"전매체 같은 광고그룹",sub:`타매체 ${linked.length}개 합류`,list:g,costOnly:true,me:meFull});}}
+    if(svc){
+      const x=[];
+      for(const{list}of xPools)for(const p of list){if(p&&!p._isGroup&&(p.비용||0)>0&&svcOf(p)===svc)x.push(p);}
+      if(x.length){
+        const g=myPoolFull.filter(p=>svcOf(p)===svc).concat(x);
+        if(g.length>=4)groups.push({lab:"전매체 같은 서비스",sub:`${svc} · 타매체 ${x.length}개`,list:g,costOnly:true,me:meFull});}}}
   if(!groups.length)return "";
   /* 비교군을 **가로로 나란히** 놓는다. 세로로 쌓으면 '광고비 ₩3,408,000'이 어느 비교군의 값인지 헷갈린다
      — 근접성 원리: 한 비교군의 제목과 그 지표 행들을 하나의 카드로 묶고, 카드끼리는 간격으로 떼어 놓는다. */
   const cards=[];
   for(const g of groups){
-    const cells=[["비용","광고비",v=>fmtKRW(v)+"원"],[rk,"실유저",v=>fmtInt(v)]].map(([k,lab,fmt])=>{
+    /* 전매체 카드는 광고비만 — 유저·전환은 매체마다 귀속이 달라 한 줄에 세우는 순간 거짓 비교가 된다 */
+    const specs2=g.costOnly?[["비용","광고비",v=>fmtKRW(v)+"원"]]:[["비용","광고비",v=>fmtKRW(v)+"원"],[rk,"실유저",v=>fmtInt(v)]];
+    const me=g.me||e;
+    const cells=specs2.map(([k,lab,fmt])=>{
       const vs=g.list.map(p=>+p[k]).filter(v=>v!=null&&isFinite(v));
-      const v=+e[k];
+      const v=+me[k];
       const t=umTrack(vs,v,1);
       if(!t)return "";
       return umRow({k:lab,v:fmt(v),tr:t,rank:umRankTxt(t),
         tip:`<b>${g.lab}(${g.list.length}개) · ${lab}</b><br>이 소재 ${fmt(v)}${t.pct!=null?` — <b>상위 ${Math.max(1,Math.round(100-t.pct))}%</b>`:""}`
           +`<br>비교군 중앙값 ${fmt(t.med)}`});}).join("");
     if(!cells)continue;
-    cards.push(`<div class="peer-card"><div class="peer-ch">${escHtml(g.lab)}<em>${escHtml(g.sub)} · ${g.list.length}개</em></div><div class="peer-rows">${cells}</div></div>`);}
+    cards.push(`<div class="peer-card${g.costOnly?" xm":""}"><div class="peer-ch">${escHtml(g.lab)}<em>${escHtml(g.sub)} · ${g.list.length}개</em>${g.costOnly?`<span class="uc-q" data-tip="${escAttr("<b>전 매체 비교 — 광고비만</b><br>유저·전환 지표는 매체마다 귀속 단위가 달라 비교에서 제외합니다.<br>전체 기간 합산 기준(타매체 데이터가 전체 기간 인덱스라 잣대를 맞춤).<br>같은 광고그룹 판정 = 이름이 똑같은 이미지 소재로 이어진 그룹 계열.")}">?</span>`:""}</div><div class="peer-rows">${cells}</div></div>`);}
   if(!cards.length)return "";
   return `<div class="peer">
     <div class="us-h">비교군 내 위치<span class="uc-q" data-tip="${escAttr(`<b>또래 대비 위치</b><br>같은 광고그룹·같은 서비스 소재들 사이에서 이 소재가 어디쯤인지.<br>광고비 = 예산이 얼마나 몰렸나(머신러닝 신호) · 실유저 = 실제로 몇 명을 데려왔나.<br>둘 다 상위면 위너, 광고비만 상위면 재검토 대상.<br>눈금(가운데)이 비교군 중앙값이고 마커가 오른쪽일수록 상위.<br><b>각 카드 안의 수치는 그 비교군 기준</b>입니다.`)}">?</span><span class="n">기간·매체 기준</span></div>
@@ -4171,6 +4203,18 @@ function umCohortHTML(ds,e){
      종전엔 일자 막대에 화살표만 얹어 "몇 배 늘었고 높은 상태를 얼마나 유지했나"가 전혀 안 보였다.
      실제 주간 광고비를 그려 ① 언제 시작해 언제까지 갔는지(가로) ② 얼마나 크게 붙었는지(세로)
      ③ 고소진(매체 상위 25%)을 몇 주나 유지했는지(음영 구간) ④ 피크·최대 증액이 어디였는지를 한 그림에 담는다. */
+  /* ── 실증 없음 안내 — 왜 없는지 화면이 직접 말한다 ──
+     실증(kv)은 외부 배치가 주간으로 넣는 스냅샷이라 ① 라이브 직후엔 아직 안 쌓였고
+     ② 배치 커버리지 밖(과거 주·미백필)이면 없다. 침묵하면 "버그인가?"가 되므로 이유를 밝힌다. */
+  let noUm="";
+  if(!hit&&!tr&&!re&&!sv){
+    const _wa0=weeklyAggOf(ds,e,true);
+    const _n=_wa0.ws.length;
+    const _dsLast=(ds&&ds.liveWeek)||(typeof WEEKS!=="undefined"&&WEEKS.length?WEEKS[WEEKS.length-1]:"");
+    const _young=_n>0&&_n<=2&&(!_dsLast||_wa0.ws[_wa0.ws.length-1]>=_dsLast);
+    noUm=`<div class="us-note">${_young
+      ?`🌱 라이브 ${_n}주차 — 실증(유저 단위) 데이터가 아직 쌓이는 중이에요. 다음 주간 갱신부터 순차 반영됩니다.`
+      :`실증(유저 단위) 데이터 없음 — 주간 실증 배치에 이 소재가 아직 안 잡혔어요(과거 주차는 백필로 채울 수 있어요).`}</div>`;}
   /* ── 수명 — 주간 광고비 곡선 ──
      ⚠️ kv(UMET.lifecycle)에 의존하지 않는다. 수명 곡선의 재료(주차·광고비)는 사이트가 이미 전부 갖고 있고,
      kv는 일부 소재만 커버해 "어떤 소재는 수명이 있고 어떤 소재는 없는" 상태를 만들었다.
@@ -4241,7 +4285,7 @@ function umCohortHTML(ds,e){
   if(hit&&hit.ch==="Moloco"&&hit.news==null&&nmol)hdr.push("신규 없음 정상(재관여 전담)");
   return `<div class="umet-strip">
     <div class="us-h">실유저(주간)<span class="uc-q" data-tip="${escAttr(tip)}" title="유저 단위 실증 — 마우스를 올려 기준 확인">?</span><span class="n">${hdr.map(escHtml).join(" · ")}</span></div>
-    <div class="mrows">${rowsHtml.join("")}${svcHtml}${reengHtml}${lifeHtml}</div>
+    <div class="mrows">${rowsHtml.join("")}${svcHtml}${reengHtml}${noUm}${lifeHtml}</div>
   </div>`;}
 /* ═════ 교차 매체 동일/유사 소재 탐지 ═════
    "이 소재가 다른 매체에선 어떤가"를 보기 위해, 신호 강한 순서로 매칭한다:
@@ -4463,12 +4507,19 @@ let _xmbCache=null,_xmbKey="";
 function xmGroupBridge(ds){
   const key=(ds&&ds.media||"")+"|"+_dhashGen+"|"+_xmPools(ds).length;
   if(_xmbCache&&_xmbKey===key)return _xmbCache;
+  /* 그룹을 잇는 근거 3종: ① 같은 미리보기 URL ② 이미지 지문(dHash) ③ **정규화 이름이 똑같은 이미지**
+     — ③이 기준의 주축이다(사용자 지정: 구글 영상은 이름이 제목이라 못 잇지만 이미지는 원본 파일명이
+     남으므로, '같은 이름의 이미지가 있는 그룹 = 같은 캠페인 계열'로 본다). */
   const imgsOf=arr=>{const o=[];
     for(const x of arr||[]){
       if(x._isGroup||!(x.tags&&x.tags.fo==="이미지"))continue;
-      const g=_xmGrpOf(x),u=previewUrlOf(x);if(!g||!u||ytIdOf(u))continue;
-      const h=DHASH[u];if(!h)continue;
-      o.push({g,u,h});}
+      const g=_xmGrpOf(x);if(!g)continue;
+      const u=previewUrlOf(x);if(u&&ytIdOf(u))continue;
+      const h=(u&&DHASH[u])||null;
+      const tk=nameTokensOf(x);
+      const nk=tk.size>=2?[...tk].sort().join("|"):"";
+      if(!h&&!nk&&!u)continue;
+      o.push({g,u,h,nk});}
     return o;};
   const mine=imgsOf(ds&&(ds.aggAll||ds.agg));
   const bridge=new Map(); /* `${ch} ${내 그룹}` → Map(저쪽 그룹 → 근거 이미지 수) */
@@ -4476,7 +4527,8 @@ function xmGroupBridge(ds){
     const theirs=imgsOf(list);
     if(!theirs.length)continue;
     for(const a of mine)for(const b of theirs){
-      if(a.u!==b.u&&dhashHam(a.h,b.h)>6)continue;
+      const link=(a.u&&a.u===b.u)||(a.h&&b.h&&dhashHam(a.h,b.h)<=6)||(a.nk&&a.nk===b.nk);
+      if(!link)continue;
       const k=ch+" "+a.g;let m=bridge.get(k);if(!m)bridge.set(k,m=new Map());
       m.set(b.g,(m.get(b.g)||0)+1);}}
   _xmbKey=key;return _xmbCache=bridge;}
@@ -4520,7 +4572,15 @@ function crossMediaMatches(ds,e){
         if(d<=6&&arOk){conf=2;why=`동일 이미지(지문 차이 ${d}/64)`;}}
       if(conf==null&&myHash&&oU&&!oYt&&DHASH[oU]===undefined&&oFo==="이미지")pend++;
       if(conf==null&&myTok.size>=2&&myKey===[...nameTokensOf(o)].sort().join("|")){
-        conf=2;why=`소재명 일치${(myFo&&oFo&&myFo!==oFo)?` (${oFo} 버전)`:""}${(myAi&&oAi&&arDispOf(o)&&arDispOf(e)!==arDispOf(o))?` · ${arDispOf(o)}`:""}`;}
+        /* 이름이 같아도 **규격이 명확히 다르면 다른 소재**다(2026-08-06 확정) —
+           720×720과 1200×628은 같은 캠페인의 다른 제작물이고, 영상/이미지 버전도 마찬가지.
+           '동일'은 이름 + (양쪽 다 아는 한) 유형·해상도까지 맞을 때만. 규격이 다르면 '유사'로 낮춰
+           "같은 캠페인의 다른 규격"임을 명시한다. 한쪽 규격을 모르면 반증이 없으므로 동일 유지. */
+        const fmtDiff=!!(myFo&&oFo&&myFo!==oFo);
+        const myD=arDispOf(e),oD=arDispOf(o);
+        const resDiff=!!(myD&&oD&&myD!==oD);
+        if(fmtDiff||resDiff){conf=1;why=`이름 일치 · ${fmtDiff?`${oFo} 버전`:`해상도 다름(${oD})`} — 같은 캠페인의 다른 규격(다른 소재)`;}
+        else{conf=2;why="소재명 일치"+(myD&&oD?` · ${oD}`:"");}}
       if(conf==null){
         /* ── 약한 신호(이름 유사·그룹 다리)는 포맷·해상도가 맞을 때만 ── */
         if(myFo&&oFo&&myFo!==oFo)continue;
@@ -7554,7 +7614,14 @@ function CR_SELFTEST(){
    const prev=dsMode;dsMode="channeled";
    const hit=crossMediaMatches(ds,g).list;
    dsMode=prev;
-   t("해상도가 달라도 소재명이 같으면 동일로 잡는다",[hit.length,hit[0]&&hit[0].conf],[1,2]);
+   /* 이름이 같아도 규격이 명확히 다르면 다른 소재(2026-08-06 확정) — 720×720 vs 1200×628은 '유사'로 낮춘다 */
+   t("이름 같고 해상도 다르면 '동일'이 아니라 '유사'",[hit.length,hit[0]&&hit[0].conf],[1,1]);
+   {const g2=Object.assign({},g,{_res:"1200x628"});
+    const ds2={media:"Google",aggAll:[g2],agg:[g2],aggByChannel:new Map([["Google",{aggAll:[g2]}],["Moloco",{aggAll:[m]}]])};
+    const keep=dsMode;dsMode="channeled"; /* _xmPools가 channeled 모드에서만 타매체 풀을 돌려준다 */
+    const hit2=crossMediaMatches(ds2,g2).list;
+    dsMode=keep;
+    t("이름 같고 해상도까지 같으면 '동일'",[hit2.length,hit2[0]&&hit2[0].conf],[1,2]);}
    const d=xmDeltaHTML(g,m);
    t("광고비가 낮으면 빨강(−), 노출이 많으면 파랑(+)",
      [/xd-down[^>]*>[^<]*<i>광고비<\/i>−/.test(d),/xd-up[^>]*>[^<]*<i>노출<\/i>\+/.test(d)],[true,true]);
