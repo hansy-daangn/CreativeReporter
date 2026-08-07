@@ -157,7 +157,14 @@
   .gi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px 18px;margin-top:8px}
   .gi-r{display:flex;justify-content:space-between;gap:10px;font-size:var(--fs-3);border-bottom:1px dashed var(--surface-3);padding:3px 0;min-width:0}
   .gi-r.wide{grid-column:1/-1}
-  .gi-k{color:var(--muted);white-space:nowrap} .gi-v{color:var(--ink);font-weight:650;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .gi-k{color:var(--muted);white-space:nowrap}
+  /* 비교 백분위 칩 — 파랑(최상)>초록>회색>노랑>빨강(최하) */
+  .gpct{margin-left:6px;font-size:var(--fs-1);font-weight:750;padding:0 6px;border-radius:999px;white-space:nowrap;cursor:help;flex:0 0 auto}
+  .gpct.b{background:rgba(30,111,217,.12);color:#1E6FD9}
+  .gpct.g{background:rgba(46,160,95,.13);color:var(--g1)}
+  .gpct.m{background:var(--surface-3);color:var(--muted)}
+  .gpct.y{background:rgba(240,165,0,.15);color:#C07A00}
+  .gpct.r{background:rgba(211,69,59,.12);color:var(--w2)} .gi-v{color:var(--ink);font-weight:650;text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .lcard.gold .chip,.lcard.bad .chip{background:rgba(255,255,255,.55)}
   .chip.fo{background:var(--surface-3);color:var(--muted)} .lcard.gold .chip.fo,.lcard.bad .chip.fo{background:rgba(255,255,255,.6)}
   .chip.warn{background:rgba(240,165,0,.16);color:#c07a00;font-weight:650;cursor:help}
@@ -811,6 +818,8 @@
   .ispk-chip.sc{color:var(--muted)}
   .ispk-chip:hover{border-color:var(--muted);color:var(--ink)}
   .ispk-chip.on{background:var(--karrot-f);border-color:var(--karrot);color:var(--karrot)}
+  .ispk-chip.tf{color:var(--muted);font-weight:700}
+  .ispk-sep{width:1px;align-self:stretch;background:var(--surface-3);margin:0 3px}
   .cmp-radar{display:block;width:100%;max-width:620px;height:auto;margin:0 auto}
   .cmp-radar-note{font-size:var(--fs-1);color:var(--faint);text-align:center;margin:-4px 0 6px}
   polygon.cmp-ln,polyline.cmp-ln{transition:stroke-width .12s,opacity .12s,fill-opacity .12s}
@@ -1994,12 +2003,15 @@ function unifiedNameOf(e){
    그것마저 없으면 ad_name 원본. 내부 식별 키(data-name, 저장, 병합)는 항상 원본 name을 그대로 쓴다 */
 function displayNameOf(e){if(!e)return "";
   if(e._isGroup)return groupPrettyName(e.name); /* 그룹 행은 분절형 이름으로 표시 */
-  const _ok=nameOvrKey(e); /* 0순위: 관리자가 손으로 바꾼 이름(편집 중이면 미저장분 우선, ''=기본명 복원) */
-  if(_ok!=null){
-    if(Object.prototype.hasOwnProperty.call(NAME_PENDING,_ok)){if(NAME_PENDING[_ok]!=="")return NAME_PENDING[_ok];}
-    else if(NAME_OVR[_ok]&&NAME_OVR[_ok]!=="")return NAME_OVR[_ok];}
-  {const un=unifiedNameOf(e);if(un)return un;} /* 1순위: 통합 키 _name — 전 매체 공통 표시 이름 */
-  {const an=(e._g_assetName||"").trim();if(an&&!/^https?:\/\//.test(an))return an;} /* 2순위: 같은 소스의 애셋 이름(백필 이전 행 대비) */
+  const _ok=nameOvrKey(e);
+  /* 편집 중(미저장분)만 최우선 — 입력 중에 글자가 딴 걸로 바뀌면 편집이 불가능하다 */
+  if(_ok!=null&&Object.prototype.hasOwnProperty.call(NAME_PENDING,_ok)){if(NAME_PENDING[_ok]!=="")return NAME_PENDING[_ok];}
+  /* ⚠️ 본명(_name)이 있으면 **무조건 1순위**다(2026-08-06 확정). 관리자 수동 이름(nameovr)은
+     본명을 몰라 임시로 붙였던 것 — 본명이 오면 물러난다. 본명은 네이밍 룰셋(서비스·규격·날짜)을
+     담고 있어 매칭·분류의 근거인데, 수동 이름이 덮으면 타매체 매칭이 끊긴다. */
+  {const un=unifiedNameOf(e);if(un)return un;}
+  if(_ok!=null&&NAME_OVR[_ok]&&NAME_OVR[_ok]!=="")return NAME_OVR[_ok]; /* 본명이 없을 때만 수동 이름 */
+  {const an=(e._g_assetName||"").trim();if(an&&!/^https?:\/\//.test(an))return an;} /* 같은 소스의 애셋 이름(백필 이전 행 대비) */
   return e.name;}
 /* OCR·유튜브 제목 이름 경로는 은퇴(2026-08-06).
    _name 백필이 전 매체 100%(구글 7,557 · 몰로코 11,951 · 메타 929 · URL 이름 0건)가 되면서
@@ -3453,28 +3465,32 @@ function fmtSpecVal(k,v){if(v==null)return"–";
    동영상 재생 퍼널(v25~v100)은 여기가 아니라 가운데 그래프 열의 '영상 시청' 탭이 그린다 */
 function groupInfoHTML(gi){if(!gi)return "";
   const cells=[];
-  const add=(k,v,tip,wide)=>{if(v!=null&&v!=="")cells.push(`<div class="gi-r${wide?" wide":""}" ${tip?`title="${escAttr(tip)}"`:""}><span class="gi-k">${escHtml(k)}</span><b class="gi-v num">${escHtml(v)}</b></div>`);};
+  const add=(k,v,tip,wide,pct)=>{if(v!=null&&v!=="")cells.push(`<div class="gi-r${wide?" wide":""}" ${tip?`title="${escAttr(tip)}"`:""}><span class="gi-k">${escHtml(k)}</span><b class="gi-v num">${escHtml(v)}</b>${pct||""}</div>`);};
+  /* 다른 광고그룹 전체(gInfoMap) 대비 백분위 — 같은 보고서·같은 기간의 스냅샷끼리라 잣대가 같다 */
+  const GI=(of,dir,fmt)=>{const a=[];for(const k in gInfoMap){const x=of(gInfoMap[k]||{});if(x!=null&&isFinite(x))a.push(x);}return giPct(a,of(gi),dir,fmt);};
   add("캠페인",gi.cpNm?trunc(groupPrettyName(gi.cpNm),40):null,(gi.cpNm||"")+" — 캠페인 이름 기준 표기. 여러 서비스의 광고그룹이 한 캠페인에 속할 수 있어요(예: AEO는 캠페인 1개에 전 서비스 그룹)",true);
-  add("타겟 CPA",gi.tcpa!=null?fmtWon(gi.tcpa):null,"목표 CPA — 그룹에 별도 설정이 없으면 캠페인 값이 상속되어 여러 그룹에 같은 값으로 보일 수 있어요");
-  add("참여율",gi.eng!=null?gi.eng+"%":null,"Google 참여율 (보고서 기간 누적)");
-  add("설치 시작 first_open",gi.fopen!=null?fmtInt(gi.fopen):null);
-  add("홈 진입 home",gi.home!=null?fmtInt(gi.home):null);
+  add("타겟 CPA",gi.tcpa!=null?fmtWon(gi.tcpa):null,"목표 CPA — 그룹에 별도 설정이 없으면 캠페인 값이 상속되어 여러 그룹에 같은 값으로 보일 수 있어요",false,GI(g=>g.tcpa,-1,fmtWon));
+  add("참여율",gi.eng!=null?gi.eng+"%":null,"Google 참여율 (보고서 기간 누적)",false,GI(g=>g.eng,1,v=>v+"%"));
+  add("설치 시작 first_open",gi.fopen!=null?fmtInt(gi.fopen):null,null,false,GI(g=>g.fopen,1,fmtInt));
+  add("홈 진입 home",gi.home!=null?fmtInt(gi.home):null,null,false,GI(g=>g.home,1,fmtInt));
   add("평균 시청 시간/노출",gi.watch!=null?gi.watch:null);
   if(!cells.length)return "";
   return `<section><div class="ish">보고서 추가 정보 <span class="n">광고그룹 보고서${gi.from?` · ${gi.from}~${gi.to||""}`:""} 누적</span></div><div class="gi-grid">${cells.join("")}</div></section>`;}
 /* 정확 소스(gwstat) 상세 블록 — 소재 합산이 못 만드는 실측 광고비·노출·클릭 + 진짜 활성/신규유저 수(글자 애셋 포함).
    현재 선택 기간 합산. 사이트의 '활성 유저 수'(=인앱 액션)·'신규+재활성'(=조회연결 전환)과 달리 실제 유저 수라 별도 표기. */
-function gwStatHTML(e){if(!e||!e._authGw)return "";
+function gwStatHTML(ds,e){if(!e||!e._authGw)return "";
   const cells=[];
-  const add=(k,v,tip)=>{if(v!=null&&v!=="")cells.push(`<div class="gi-r" ${tip?`title="${escAttr(tip)}"`:""}><span class="gi-k">${escHtml(k)}</span><b class="gi-v num">${escHtml(v)}</b></div>`);};
+  const add=(k,v,tip,pct)=>{if(v!=null&&v!=="")cells.push(`<div class="gi-r" ${tip?`title="${escAttr(tip)}"`:""}><span class="gi-k">${escHtml(k)}</span><b class="gi-v num">${escHtml(v)}</b>${pct||""}</div>`);};
+  /* 정확 소스를 가진 다른 그룹들(같은 기간 합산) 대비 백분위 */
+  const GW=(of,dir,fmt)=>{const a=[];for(const g of ((ds&&ds._aggGrpCache)||[])){if(!g||!g._authGw)continue;const x=of(g);if(x!=null&&isFinite(x))a.push(x);}return giPct(a,of(e),dir,fmt);};
   add("광고비",fmtWon(e["비용"]),"글자(텍스트) 애셋까지 포함한 실제 집행 광고비");
   add("노출",fmtInt(e["노출 수"]));
   add("클릭",fmtInt(e["클릭 수"]));
-  if(e._gwCover!=null)add("소재 커버리지",Math.round(e._gwCover*100)+"%","신뢰도 지표 — 소재(영상·이미지) 합산 광고비 ÷ 정확 광고비. 100%에 가까울수록 사이트 소재 데이터가 그룹 전체를 잘 대표. 나머지는 주로 글자(텍스트) 애셋 몫");
-  add("진짜 활성 유저",e._gwAU!=null?fmtInt(e._gwAU):null,"실제 활성 유저 수 — 사이트 표의 '활성 유저 수'(=인앱 액션)와 다른 실측 유저 수");
-  add("활성 유저 단가",e._gwAUcpa!=null?fmtWon(e._gwAUcpa):null,"광고비 ÷ 진짜 활성 유저");
-  add("진짜 신규+재활성",e._gwNU!=null?fmtInt(e._gwNU):null,"실제 신규+재활성 유저 수 — 사이트의 '조회연결 전환'과 다른 실측 유저 수");
-  add("신규+재활성 단가",e._gwNUcpa!=null?fmtWon(e._gwNUcpa):null,"광고비 ÷ 진짜 신규+재활성");
+  if(e._gwCover!=null)add("소재 커버리지",Math.round(e._gwCover*100)+"%","신뢰도 지표 — 소재(영상·이미지) 합산 광고비 ÷ 정확 광고비. 100%에 가까울수록 사이트 소재 데이터가 그룹 전체를 잘 대표. 나머지는 주로 글자(텍스트) 애셋 몫",GW(g=>g._gwCover,1,v=>Math.round(v*100)+"%"));
+  add("진짜 활성 유저",e._gwAU!=null?fmtInt(e._gwAU):null,"실제 활성 유저 수 — 사이트 표의 '활성 유저 수'(=인앱 액션)와 다른 실측 유저 수",GW(g=>g._gwAU,1,fmtInt));
+  add("활성 유저 단가",e._gwAUcpa!=null?fmtWon(e._gwAUcpa):null,"광고비 ÷ 진짜 활성 유저",GW(g=>g._gwAUcpa,-1,fmtWon));
+  add("진짜 신규+재활성",e._gwNU!=null?fmtInt(e._gwNU):null,"실제 신규+재활성 유저 수 — 사이트의 '조회연결 전환'과 다른 실측 유저 수",GW(g=>g._gwNU,1,fmtInt));
+  add("신규+재활성 단가",e._gwNUcpa!=null?fmtWon(e._gwNUcpa):null,"광고비 ÷ 진짜 신규+재활성",GW(g=>g._gwNUcpa,-1,fmtWon));
   if(!cells.length)return "";
   return `<section><div class="ish">정확 소스 <span class="n">광고그룹 주간 성과 · 글자 포함 · ${e._authGw}주 합산</span></div><div class="gi-grid">${cells.join("")}</div></section>`;}
 function scorePosHTML(ds,e){const S=ds.S;
@@ -3495,33 +3511,47 @@ function scorePosHTML(ds,e){const S=ds.S;
      ③ 비율 4종(비용/설치·전환율·1,000회 노출당 설치·CTR·평균 CPC)은 payload에 값이 오지 않는다.
         선택 기간 합산 카운트에서 그대로 나눠 만든다 — 한 주치 비율을 여러 주 소재에 붙이면 틀리기 때문.
         CTR·CPC는 이미 신뢰성 게이트(CTR_PLAUSIBLE_MAX)를 통과한 e.CTR·e.CPC를 그대로 쓴다. */
+/* ── 비교 백분위 칩 — "같은 매체·같은 기간에서 어떤 편인지"를 5색으로 ──
+   파랑(상위 10%) · 초록(상위 30%) · 회색(중간) · 노랑(하위 30%) · 빨강(하위 10%). dir<0 = 낮을수록 좋음. */
+function giPct(pool,v,dir,fmt){
+  if(!pool||pool.length<4||v==null||!isFinite(v))return "";
+  const pct=umPctRank(pool,v);if(pct==null)return "";
+  const good=dir<0?100-pct:pct;
+  const cls=good>=90?"b":good>=70?"g":good>30?"m":good>10?"y":"r";
+  const top=Math.max(1,Math.round(100-good));
+  const med=quantile(pool.slice().sort((a,b)=>a-b),0.5);
+  return `<span class="gpct ${cls}" data-tip="${escAttr(`같은 매체·기간 ${pool.length}개 중 <b>상위 ${top}%</b>${dir<0?" (낮을수록 좋음 기준)":""}<br>비교군 중앙값 ${fmt?fmt(med):med}`)}">상위 ${top}%</span>`;}
 const GA_INSTALL_NOTE="애셋까지 귀속된 설치만 집계됩니다(광고그룹 합계의 일부). 소재 간 비교용으로 보세요.";
 const GA_EVENT_NOTE="이벤트 수입니다 — 유저 수가 아닙니다(한 유저가 여러 번 발생시킬 수 있어요).";
 function gAssetHTML(ds,e){
   if(!e||e._isGroup||!e._gaSeen)return ""; /* 키 자체가 없으면 블록을 통째로 숨긴다 — 0%·'-'로 채우지 않는다 */
   const cells=[];
-  const add=(k,v,tip)=>{if(v!=null&&v!=="")cells.push(`<div class="gi-r" ${tip?`title="${escAttr(tip)}"`:""}><span class="gi-k">${escHtml(k)}</span><b class="gi-v num">${escHtml(v)}</b></div>`);};
+  const add=(k,v,tip,pct)=>{if(v!=null&&v!=="")cells.push(`<div class="gi-r" ${tip?`title="${escAttr(tip)}"`:""}><span class="gi-k">${escHtml(k)}</span><b class="gi-v num">${escHtml(v)}</b>${pct||""}</div>`);};
   const inst=e._g_assetInstalls,cost=e.비용||0,imp=e["노출 수"]||0,clk=e["클릭 수"]||0;
   const has=v=>v!=null&&isFinite(v);
+  /* 같은 매체·기간 비교군(ds.agg) — 값이 있는 소재만 풀에 넣고 백분위 칩을 만든다 */
+  const GA=(of,dir,fmt)=>{if(!ds||!Array.isArray(ds.agg))return "";
+    const a=[];for(const p of ds.agg){if(!p||p._isGroup)continue;const x=of(p);if(x!=null&&isFinite(x))a.push(x);}
+    return giPct(a,of(e),dir,fmt);};
   /* ── 설치(애셋 귀속)와 그 파생 ──
      파생 비율(비용/설치·전환율·1,000회 노출당)은 DB에 저장하지 않는다(handoff [4]) — 선택 기간 합산 카운트에서 계산한다.
      한 주치 비율을 여러 주 소재에 붙이면 틀리기 때문이고, 합산에서 나눈 값은 정의상 정확하다. */
   if(has(inst)){
-    add("설치(애셋 귀속)",fmtInt(inst),GA_INSTALL_NOTE);
-    if(inst>0&&cost>0)add("비용/설치",fmtWon(cost/inst),"광고비 ÷ 애셋 귀속 설치 · "+GA_INSTALL_NOTE);
-    if(clk>0)add("전환율(설치)",fmtPct(inst/clk),"애셋 귀속 설치 ÷ 클릭 · "+GA_INSTALL_NOTE);
-    if(imp>0)add("1,000회 노출당 설치",(inst/imp*1000).toFixed(2),"애셋 귀속 설치 ÷ 노출 × 1,000 · "+GA_INSTALL_NOTE);}
+    add("설치(애셋 귀속)",fmtInt(inst),GA_INSTALL_NOTE,GA(p=>has(p._g_assetInstalls)?p._g_assetInstalls:null,1,fmtInt));
+    if(inst>0&&cost>0)add("비용/설치",fmtWon(cost/inst),"광고비 ÷ 애셋 귀속 설치 · "+GA_INSTALL_NOTE,GA(p=>(p._g_assetInstalls>0&&(p.비용||0)>0)?p.비용/p._g_assetInstalls:null,-1,fmtWon));
+    if(clk>0)add("전환율(설치)",fmtPct(inst/clk),"애셋 귀속 설치 ÷ 클릭 · "+GA_INSTALL_NOTE,GA(p=>(has(p._g_assetInstalls)&&(p["클릭 수"]||0)>0)?p._g_assetInstalls/p["클릭 수"]:null,1,fmtPct));
+    if(imp>0)add("1,000회 노출당 설치",(inst/imp*1000).toFixed(2),"애셋 귀속 설치 ÷ 노출 × 1,000 · "+GA_INSTALL_NOTE,GA(p=>(has(p._g_assetInstalls)&&(p["노출 수"]||0)>0)?p._g_assetInstalls/p["노출 수"]*1000:null,1,v=>v.toFixed(2)));}
   /* CTR·CPC는 저장하지 않는다 — 화면에서 계산. 신뢰성 게이트(CTR_PLAUSIBLE_MAX)를 통과한 e.CTR·e.CPC를 그대로 쓴다 */
-  if(e.CTR!=null)add("클릭률(CTR)",fmtPct(e.CTR),"클릭 ÷ 노출 (선택 기간 합산 · 저장값이 아니라 화면 계산)");
-  if(e.CPC!=null)add("평균 CPC",fmtWon(e.CPC),"광고비 ÷ 클릭 (선택 기간 합산 · 저장값이 아니라 화면 계산)");
+  if(e.CTR!=null)add("클릭률(CTR)",fmtPct(e.CTR),"클릭 ÷ 노출 (선택 기간 합산 · 저장값이 아니라 화면 계산)",GA(p=>p.CTR,1,fmtPct));
+  if(e.CPC!=null)add("평균 CPC",fmtWon(e.CPC),"광고비 ÷ 클릭 (선택 기간 합산 · 저장값이 아니라 화면 계산)",GA(p=>p.CPC,-1,fmtWon));
   /* ── 전환 계열 ── */
-  if(has(e._g_conversions))add("전환수",fmtInt(e._g_conversions),"전환수 = 설치 + 인앱 액션 (구글 애셋 보고서 실측 관계)");
+  if(has(e._g_conversions))add("전환수",fmtInt(e._g_conversions),"전환수 = 설치 + 인앱 액션 (구글 애셋 보고서 실측 관계)",GA(p=>p._g_conversions,1,fmtInt));
   if(has(e._g_allConv))add("모든 전환",fmtInt(e._g_allConv),"전환 시간 기준 모든 전환");
   if(has(e._g_convValueCore)&&e._g_convValueCore>0)add("전환 가치",fmtWon(e._g_convValueCore),"구글이 매긴 전환 가치(핵심 전환 기준)");
   if(has(e._g_convValue)&&e._g_convValue>0)add("모든 전환 가치",fmtWon(e._g_convValue),"모든 전환의 가치 합 — 모델 추정값이 섞여 있습니다");
   /* ── 이벤트 수(유저 수 아님) ── */
-  if(has(e._g_inAppActions))add("인앱 액션",fmtInt(e._g_inAppActions),"인앱 액션 "+GA_EVENT_NOTE);
-  if(has(e._g_viewThroughConv))add("조회연결 전환",fmtInt(e._g_viewThroughConv),"조회연결 전환 "+GA_EVENT_NOTE);
+  if(has(e._g_inAppActions))add("인앱 액션",fmtInt(e._g_inAppActions),"인앱 액션 "+GA_EVENT_NOTE,GA(p=>p._g_inAppActions,1,fmtInt));
+  if(has(e._g_viewThroughConv))add("조회연결 전환",fmtInt(e._g_viewThroughConv),"조회연결 전환 "+GA_EVENT_NOTE,GA(p=>p._g_viewThroughConv,1,fmtInt));
   /* ── 상태 ── */
   const st=String(e._g_assetState||e._g_assetStatus||"").trim();
   if(st)add("애셋 상태",st);
@@ -3648,12 +3678,15 @@ const WK_METRIC={ /* 채점 키 → 주차 값 계산 (weeklyAggOf 합계 기반
 /* 주차별 추이에 어떤 선을 그릴지 — null이면 자동(점수 반영 지표 상위 3개).
    사용자가 칩으로 고르면 그 지표만 그린다. 상세를 닫아도 유지돼 소재를 옮겨도 같은 잣대로 본다. */
 let ISLE_TREND_KEYS=null;
+/* 주차별 추이 기간 — 기본 '전체 기간'(2026-08-06 확정). nav 기간 필터와 무관하게 소재의 전 수명을 보여주되,
+   칩으로 '선택 기간'(nav 필터 적용)으로 좁힐 수 있다. 소재를 옮겨도 유지. */
+let ISLE_TREND_FULL=true;
 const TREND_NU_KEY="__nu"; /* 실증 신규 실유저(umetrics) — WK_METRIC이 아니라 별도 소스라 예약 키 */
 function trendLabOf(k){
   if(k===TREND_NU_KEY)return "신규 실유저";
   return (MET_META[k]&&MET_META[k].lab)||k;}
 function creativeTrendHTML(ds,e){
-  const all=weeklyAggOf(ds,e);
+  const all=weeklyAggOf(ds,e,ISLE_TREND_FULL);
   /* 선택 기간 안의 모든 주를 표시(13주 자름 폐지) — 주가 많으면 가로 스크롤(최신이 먼저 보이게 오른쪽 정렬) */
   const ws=all.ws;
   if(ws.length<2)return "";
@@ -3714,7 +3747,11 @@ function creativeTrendHTML(ds,e){
     return {lab:p.lab,w:p.w,col:LINE_COLS[i%LINE_COLS.length],fmt:p.fmt,vals:p.vals,mx,last,dash:p.dash};});
   /* 지표 선택 칩 — 켜진 것만 선으로 그린다. '자동'은 점수 반영 상위 3개로 되돌린다 */
   const onSet=new Set(chosen.map(p=>p.k));
-  const picker=`<div class="ispk-pick"><button type="button" class="ispk-chip${sel&&sel.length?"":" on"}" data-tk="__auto">자동</button>`
+  const picker=`<div class="ispk-pick">`
+    +`<button type="button" class="ispk-chip tf${ISLE_TREND_FULL?" on":""}" data-tf="1" title="이 소재가 가진 모든 주차 — 위 기간 필터와 무관">전체 기간</button>`
+    +`<button type="button" class="ispk-chip tf${ISLE_TREND_FULL?"":" on"}" data-tf="0" title="위 기간 필터가 적용된 주차만">선택 기간</button>`
+    +`<span class="ispk-sep"></span>`
+    +`<button type="button" class="ispk-chip${sel&&sel.length?"":" on"}" data-tk="__auto">자동</button>`
     +pool.map(p=>`<button type="button" class="ispk-chip${onSet.has(p.k)&&sel&&sel.length?" on":""}${p.scored?" sc":""}" data-tk="${escAttr(p.k)}" title="${escAttr((MET_META[p.k]&&MET_META[p.k].desc)||p.lab)}${p.scored?" · 점수 반영 지표":""}">${escHtml(p.lab)}</button>`).join("")
     +`</div>`;
   /* ⚠️ 실적 등급은 주차별 추이에 올리지 않는다(2026-08-06 확정).
@@ -3786,7 +3823,8 @@ function videoRetentionHTML(ds,e){
       src=`광고그룹 보고서 누적${gi.from?` ${gi.from}~${gi.to||""}`:""}${e._isGroup?"":" · 소재별 구간 데이터가 없어 같은 광고그룹 단위"}`;}}
   if(seq){
     seq=[["노출",100]].concat(seq);
-    const W=300,H=138,pl=17,pr=17,pt=18,pb=19,iw=W-pl-pr,ih=H-pt-pb;
+    /* 좌표계 폭 = 컬럼 폭(≈820, ispark와 동일 규약) — 넓혀도 배율 1이라 폰트·굵기는 그대로다 */
+    const W=820,H=170,pl=26,pr=26,pt=22,pb=24,iw=W-pl-pr,ih=H-pt-pb;
     const X=i=>pl+i/(seq.length-1)*iw,Y=v=>pt+(1-v/100)*ih;
     let big=1;for(let i=2;i<seq.length;i++)if(seq[i-1][1]-seq[i][1]>seq[big-1][1]-seq[big][1])big=i;
     let g=`<rect x="${X(big-1).toFixed(1)}" y="${pt}" width="${(X(big)-X(big-1)).toFixed(1)}" height="${ih}" fill="var(--w2)" fill-opacity="0.07"/>`;
@@ -3795,9 +3833,9 @@ function videoRetentionHTML(ds,e){
     seq.forEach(([l,v],i)=>{
       const drop=i?seq[i-1][1]-v:0;
       const tip=i?`<b>${l} 지점 도달 ${v.toFixed(1)}%</b><br>직전 구간 이탈 −${drop.toFixed(1)}%p`:`<b>노출 100%</b><br>여기서부터 시청이 시작됩니다`;
-      g+=`<circle class="vp" data-tip="${escAttr(tip)}" cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="3.4" fill="var(--karrot)" stroke="#fff" stroke-width="1.4"/><text x="${X(i).toFixed(1)}" y="${(Y(v)-7).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="650" fill="var(--ink)">${v.toFixed(0)}%</text><text x="${X(i).toFixed(1)}" y="${H-4.5}" text-anchor="middle" font-size="7.2" fill="var(--faint)">${l}</text>`;
+      g+=`<circle class="vp" data-tip="${escAttr(tip)}" cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="3.4" fill="var(--karrot)" stroke="#fff" stroke-width="1.4"/><text x="${X(i).toFixed(1)}" y="${(Y(v)-7).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="650" fill="var(--ink)">${v.toFixed(0)}%</text><text x="${X(i).toFixed(1)}" y="${H-4.5}" text-anchor="middle" font-size="10" fill="var(--faint)">${l}</text>`;
       if(i&&drop>=1.5){const mx=(X(i-1)+X(i))/2,my=(Y(seq[i-1][1])+Y(v))/2+9;
-        g+=`<text x="${mx.toFixed(1)}" y="${Math.min(H-pb-3,my).toFixed(1)}" text-anchor="middle" font-size="7.2" font-weight="${i===big?"800":"500"}" fill="${i===big?"var(--w2)":"var(--faint)"}">−${drop.toFixed(0)}%p</text>`;}});
+        g+=`<text x="${mx.toFixed(1)}" y="${Math.min(H-pb-3,my).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="${i===big?"800":"500"}" fill="${i===big?"var(--w2)":"var(--faint)"}">−${drop.toFixed(0)}%p</text>`;}});
     s+=`<section><div class="ish">구간별 시청 유지 <span class="n">노출=100 기준 · 이탈 최대 구간 음영</span></div><svg class="vret-svg" viewBox="0 0 ${W} ${H}" style="max-width:${W}px">${g}</svg><div class="vret-cap">최대 이탈: <b>${seq[big-1][0]}→${seq[big][0]} 구간 −${(seq[big-1][1]-seq[big][1]).toFixed(1)}%p</b> · ${src}</div></section>`;
   }else if(e["영상 완주율"]!=null){
     const d=med!=null?(e["영상 완주율"]-med)*100:null;
@@ -3809,15 +3847,15 @@ function videoRetentionHTML(ds,e){
         ||mk("TrueView 조회율",o=>o.imp>0&&o.tv>0?o.tv/o.imp:null,"노출 대비 TrueView 조회(30초/전체 시청)");
   if(wl){
     const ws=wa.ws.slice(-13),vals=wl.vals.slice(-13);
-    const W=300,H=80,pl=8,pr=8,pt=12,pb=15,iw=W-pl-pr,ih=H-pt-pb;
+    const W=820,H=110,pl=18,pr=18,pt=14,pb=18,iw=W-pl-pr,ih=H-pt-pb;
     const medRef=wl.lab==="완주율"?med:null;
     const mx=Math.max(...vals.filter(v=>v!=null).concat(medRef!=null?[medRef]:[]))*1.15||1;
     const slot=iw/ws.length,xat=i=>pl+(i+0.5)*slot,yat=v=>pt+(1-v/mx)*ih;
     let g="",p="",st=false,prevMon="",last=null;
-    if(medRef!=null)g+=`<line x1="${pl}" y1="${yat(medRef).toFixed(1)}" x2="${W-pr}" y2="${yat(medRef).toFixed(1)}" stroke="var(--faint)" stroke-dasharray="3 3" stroke-opacity=".55"/><text x="${W-pr}" y="${(yat(medRef)-3).toFixed(1)}" text-anchor="end" font-size="6.25" fill="var(--faint)">영상 중앙값 ${fmtPct(medRef)}</text>`;
+    if(medRef!=null)g+=`<line x1="${pl}" y1="${yat(medRef).toFixed(1)}" x2="${W-pr}" y2="${yat(medRef).toFixed(1)}" stroke="var(--faint)" stroke-dasharray="3 3" stroke-opacity=".55"/><text x="${W-pr}" y="${(yat(medRef)-3).toFixed(1)}" text-anchor="end" font-size="9.5" fill="var(--faint)">영상 중앙값 ${fmtPct(medRef)}</text>`;
     ws.forEach((w,i)=>{
       const mon=w.slice(0,7);
-      if(mon!==prevMon){prevMon=mon;g+=`<text x="${xat(i).toFixed(1)}" y="${H-3}" font-size="7.2" fill="var(--faint)" text-anchor="middle">${w.slice(2,4)}-${parseInt(w.slice(5,7),10)}</text>`;}
+      if(mon!==prevMon){prevMon=mon;g+=`<text x="${xat(i).toFixed(1)}" y="${H-3}" font-size="10" fill="var(--faint)" text-anchor="middle">${w.slice(2,4)}-${parseInt(w.slice(5,7),10)}</text>`;}
       const v=vals[i];if(v==null)return;
       const x=xat(i),y=yat(v);last=v;
       p+=st?` L ${x.toFixed(1)} ${y.toFixed(1)}`:`M ${x.toFixed(1)} ${y.toFixed(1)}`;st=true;
@@ -3864,7 +3902,7 @@ function positioningHTML(ds,e){
   const kept=new Set(raw.slice(0,140));
   raw.forEach(p=>{if(p.name===e.name||inGrp(p))kept.add(p);});
   const pts=[...kept].map(p=>({p,x:good(dx,xM,p),y:good(dy,yM,p)}));
-  const W=320,H=230,pad={l:16,r:16,t:16,b:16};
+  const W=820,H=300,pad={l:24,r:24,t:20,b:22};
   const X=v=>pad.l+(v/100)*(W-pad.l-pad.r),Y=v=>H-pad.b-(v/100)*(H-pad.t-pad.b);
   const cmax=Math.max(...pts.map(o=>o.p.비용))||1,R=v=>2.6+Math.sqrt((v||0)/cmax)*4.5;
   /* 미니멀 방향 표시: 중앙(50) 십자선에 나쁨(빨강)→좋음(초록) 그라데이션 + 선 끝 +/− 글리프만.
@@ -3936,7 +3974,7 @@ function qualityHTML(ds,e){
     const w=String(r.date).slice(0,10);const o=byW.get(w)||{b:0,u:0};o.b+=b;o.u+=num(r._q_retD1Users)||0;byW.set(w,o);}
   const seq=[...byW.entries()].filter(([,o])=>o.b>=10).sort((a,b)=>a[0]<b[0]?-1:1).map(([w,o])=>[w,o.u/o.b]);
   if(seq.length>=2){
-    const W=300,H=104,pl=30,pr=12,pt=12,pb=18,iw=W-pl-pr,ih=H-pt-pb;
+    const W=820,H=120,pl=40,pr=18,pt=14,pb=20,iw=W-pl-pr,ih=H-pt-pb;
     const vmax=Math.max(...seq.map(x=>x[1]),med||0)*1.15||1;
     const X=i=>pl+i/(seq.length-1)*iw,Y=v=>pt+(1-v/vmax)*ih;
     let g="";
@@ -5026,6 +5064,14 @@ function renderIsleMid(ds,e,mid){if(!mid)return;
   mid.innerHTML=(peerRankHTML(ds,e)||"")+(umCohortHTML(ds,e)||"")+(gAssetHTML(ds,e)||"")+(tabs.length>1?`<div class="dtog gtabs">${tabs.map(t=>`<button data-gt="${t.k}" class="${t.k===cur.k?"on":""}">${t.lab}</button>`).join("")}</div>`:"")+`<div class="gtab-body">${cur.html}</div>`;
   fitMrows(mid);
   mid.querySelectorAll(".gtabs button").forEach(b=>b.onclick=()=>{ISLE.gtab=b.dataset.gt;renderIsleMid(ds,e,mid);});
+  /* 주차별 추이 기간 토글(전체/선택) — 고정본까지 같은 기간으로 맞춘다 */
+  mid.querySelectorAll(".ispk-chip[data-tf]").forEach(b=>b.onclick=()=>{
+    const v=b.dataset.tf==="1";
+    if(ISLE_TREND_FULL===v)return;
+    ISLE_TREND_FULL=v;
+    renderIsleMid(ds,e,mid);
+    for(const p of ISLE_PINS){const pe=findRow(ds,p.name),pm=p.node&&p.node.querySelector(".ir-mid");
+      if(pe&&pm)renderIsleMid(ds,pe,pm);}});
   /* 주차별 추이 지표 선택 — 고른 지표는 소재를 옮겨도 유지된다(같은 잣대로 이어 보기) */
   mid.querySelectorAll(".ispk-chip[data-tk]").forEach(b=>b.onclick=()=>{
     const k=b.dataset.tk;
@@ -5061,13 +5107,17 @@ function fillIsland(ds,e,inner){const L=ds.L;
   else{/* 통합 키 _res(실측·보고서 기준) 우선, 없으면 종전대로 몰로코 리포트 표기값 */
     const _res=String(e._res||e._m_res||"").match(/(\d+)\s*[x×]\s*(\d+)/i);
     if(_res)applyIsleAr(inner,+_res[1],+_res[2]);else inner.classList.add("ar-s");}
-  const sideMedia=e._isGroup?((gwStatHTML(e)||"")+(groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group))||"")):preview; /* 그룹은 정확 소스+보고서 정보가 미디어 자리 */
+  const sideMedia=e._isGroup?((gwStatHTML(ds,e)||"")+(groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group))||"")):preview; /* 그룹은 정확 소스+보고서 정보가 미디어 자리 */
   const leftCol=(sideMedia||"")+(_xmh?`<div class="xmedia-wrap">${_xmh}</div>`:"");
   /* 좌측 하단 옷핀 — 이 상세를 고정해 다른 소재와 위아래로 나란히 본다 */
   const _pinned=pinIndexOf(e.name,(ds&&ds.media)||"")>=0;
   inner.innerHTML=`<div class="isle-row2${leftCol?"":" nomedia"}">${leftCol?`<div class="ir-media">${leftCol}</div>`:""}<div class="ir-mid"></div></div>`
     +`<button type="button" class="isle-pinbtn${_pinned?" on":""}" aria-pressed="${_pinned}" data-nm="${escAttr(e.name)}" title="${_pinned?"고정 해제 — 이 상세를 닫습니다":"이 상세를 고정 — 다른 소재를 열어도 아래에 남습니다"}"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M9.6 1.2 14.8 6.4l-1.1 1.1-1.2-.4-2.6 2.6.5 2.4-1.1 1.1-3.2-3.2-3.9 3.9-.7-.7 3.9-3.9L2.2 6.1l1.1-1.1 2.4.5L8.3 2.9l-.4-1.2 1.1-1.1z" fill="currentColor"/></svg><span>${_pinned?"고정됨":"고정"}</span></button>`;
   renderIsleMid(ds,e,inner.querySelector(".ir-mid"));
+  /* 미디어 열(gi-grid 칩 등)의 data-tip — mid 배선과 동일 규칙 */
+  inner.querySelectorAll(".ir-media [data-tip]").forEach(el=>{
+    el.addEventListener("mousemove",ev=>showTip(el.dataset.tip||"",ev.clientX,ev.clientY));
+    el.addEventListener("mouseleave",hideTip);});
   {const pb=inner.querySelector(".isle-pinbtn");
    if(pb)pb.onclick=ev=>{ev.stopPropagation();togglePin(ds,e.name);};}
   const _xw=inner.querySelector(".xmedia-wrap");
@@ -7626,6 +7676,13 @@ function CR_SELFTEST(){
    t("광고비가 낮으면 빨강(−), 노출이 많으면 파랑(+)",
      [/xd-down[^>]*>[^<]*<i>광고비<\/i>−/.test(d),/xd-up[^>]*>[^<]*<i>노출<\/i>\+/.test(d)],[true,true]);
    t("단가는 낮은 쪽이 좋음으로 색이 뒤집힌다",/xd-good[^>]*>[^<]*<i>CPM<\/i>−/.test(d),true);}
+  /* ── 백분위 칩 5색 경계 ── */
+  {const pool=Array.from({length:20},(_,i)=>i+1);
+   const cls=h=>{const m=String(h).match(/gpct (\w)/);return m?m[1]:null;};
+   t("백분위 칩 색상 — 최상=파랑·최하=빨강·중간=회색",
+     [cls(giPct(pool,20,1)),cls(giPct(pool,1,1)),cls(giPct(pool,10,1))],["b","r","m"]);
+   t("단가류(dir<0)는 낮을수록 파랑",cls(giPct(pool,1,-1)),"b");
+   t("비교군 4개 미만이면 칩 없음",giPct([1,2,3],2,1),"");}
   const msg=out.length?`CR_SELFTEST: ${pass}건 통과 · ${out.length}건 실패\n`+out.join("\n"):`CR_SELFTEST: ${pass}건 전부 통과 ✅`;
   (out.length?console.error:console.log)(msg);
   return{pass,fail:out.length,detail:out};}
