@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>상세보기 확정안 — C3 판정 레일 · 당근 소재분석툴</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
+<style>
+  /* ═════ 사이트 토큰 그대로 ═════ */
+  :root{
+    --canvas:#ECECE7; --surface:#FFFFFF; --surface-2:#F4F4F0; --surface-3:#EDEDE7;
+    --ink:#1B1A16; --muted:#74726A; --faint:#A4A299;
+    --karrot:#FF6F0F; --karrot-2:#FF8A3D; --karrot-f:#FFEDDF;
+    --g2:#1E88E5; --g2-f:#D6ECFB; --g1:#1C8A6E; --g1-f:#E0F1EA;
+    --mid:#8A887E; --mid-f:#EBEBE4;
+    --w1:#C2871C; --w1-f:#F7EBD0; --w2:#C73F54; --w2-f:#F8DCE1;
+    --r:16px; --r-sm:10px;
+    --fs-1:10px; --fs-2:11.5px; --fs-3:12.5px; --fs-4:15px; --fs-5:23px;
+    --hair:#F0EFE9; --hair-2:#E6E5DE;
+    --spk:#C9C7BE; --spk-ep:#B4B2A8;
+    --sh:0 1px 2px rgba(20,20,15,.05), 0 8px 24px -16px rgba(20,20,15,.22);
+    --sans:"Pretendard Variable",Pretendard,system-ui,-apple-system,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--canvas);color:var(--ink);font-family:var(--sans);font-size:var(--fs-3);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+  button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+  svg{display:block}
+
+  /* ═════ 문서 크롬 ═════ */
+  .wrap{max-width:1280px;margin:0 auto;padding:40px 28px 90px}
+  .doc-h{margin:0 0 6px;font-size:var(--fs-5);font-weight:800;letter-spacing:-.02em}
+  .doc-s{margin:0 0 20px;color:var(--muted);font-size:var(--fs-3);max-width:860px}
+  .fb{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 18px;max-width:920px;margin:0 0 34px}
+  @media(max-width:860px){.fb{grid-template-columns:1fr}}
+  .fb div{display:flex;gap:8px;align-items:baseline;font-size:var(--fs-2);color:var(--muted);background:var(--surface);border-radius:var(--r-sm);padding:9px 12px}
+  .fb b{color:var(--g1);font-weight:800;flex:0 0 auto}
+  .cnav{position:sticky;top:0;z-index:50;display:flex;gap:4px;background:var(--canvas);padding:10px 0 14px;margin:0 0 8px}
+  .cnav a{flex:0 0 auto;text-decoration:none;color:var(--muted);font-weight:700;font-size:var(--fs-3);padding:7px 16px;border-radius:999px;background:var(--surface)}
+  .cnav a:hover{color:var(--ink)}
+  .cnav a.on{background:var(--ink);color:#fff}
+
+  .concept{margin:0 0 74px}
+  .c-head{display:flex;align-items:baseline;gap:12px;margin:0 0 4px}
+  .c-badge{flex:0 0 auto;padding:0 10px;height:30px;border-radius:9px;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:800;font-size:var(--fs-3);align-self:center}
+  .c-head h2{margin:0;font-size:19px;font-weight:800;letter-spacing:-.015em}
+  .c-head .c-tag{font-size:var(--fs-2);color:var(--muted);font-weight:600}
+  .c-sum{margin:6px 0 16px;color:var(--muted);font-size:var(--fs-3);max-width:860px}
+  .c-sum b{color:var(--ink);font-weight:700}
+
+  .mseg{display:inline-flex;gap:2px;background:rgba(27,26,22,.06);border-radius:10px;padding:3px;margin:0 0 14px}
+  .mseg button{padding:7px 18px;border-radius:8px;font-weight:700;font-size:var(--fs-3);color:var(--muted);transition:.12s}
+  .mseg button:hover{color:var(--ink)}
+  .mseg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(20,20,15,.12)}
+
+  .stage-out{background:var(--surface);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+  .stage-hd{padding:18px 20px 0}
+  .stage-cap{display:flex;align-items:center;gap:8px;font-size:var(--fs-1);color:var(--faint);font-weight:650;letter-spacing:.05em;text-transform:uppercase;margin:0 0 12px}
+  .stage-cap i{font-style:normal;color:var(--muted)}
+  .fake-row{display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:var(--fs-2);color:var(--faint);border-bottom:1px solid var(--hair)}
+  .fake-row b{color:var(--muted);font-weight:650}
+
+  /* ═════ 공통 어휘 ═════ */
+  .sp{display:inline-block;padding:2px 8px;border-radius:7px;font-weight:740;font-size:var(--fs-2);white-space:nowrap}
+  .sp-g2{background:var(--g2-f);color:var(--g2)} .sp-g1{background:var(--g1-f);color:var(--g1)}
+  .sp-mid{background:var(--mid-f);color:var(--mid)} .sp-w1{background:var(--w1-f);color:var(--w1)} .sp-w2{background:var(--w2-f);color:var(--w2)}
+  .livedot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--g1);flex:0 0 auto}
+  .q{display:inline-grid;place-items:center;width:13px;height:13px;border-radius:50%;background:var(--surface-3);color:var(--faint);font-size:9px;font-weight:800;cursor:help;flex:0 0 auto}
+  .microcap{font-size:var(--fs-1);font-weight:750;letter-spacing:.02em;color:var(--faint);display:flex;align-items:center;gap:6px}
+  .microcap em{font-style:normal;font-weight:550;letter-spacing:0;text-transform:none;color:var(--faint)}
+
+  /* 스파크라인 — 평시 회색(시각 우선순위 낮게), 행 호버 시에만 잉크색으로 선명해진다 */
+  .spk path{stroke:var(--spk);transition:stroke .12s}
+  .spk .ep{fill:var(--spk-ep);transition:fill .12s}
+  .hv:hover .spk path{stroke:var(--ink)}
+  .hv:hover .spk .ep{fill:var(--ink)}
+  .hv{border-radius:6px}
+  .hv:hover{background:var(--surface-2)}
+
+  /* ═════ 스테이지(공통 좌측) — 미디어 · 메타 · 수명 · (영상이면) 시청 유지 ═════ */
+  .cc{display:grid;grid-template-columns:var(--stw,340px) minmax(0,1fr);gap:0;align-items:stretch}
+  @media(max-width:980px){.cc{grid-template-columns:1fr}}
+  .cc-stage{background:var(--surface-2);padding:24px 26px;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:flex-start}
+  .cc-frame{position:relative;width:100%;border-radius:12px;overflow:hidden;box-shadow:var(--sh)}
+  /* 조작 버튼 — 썸네일 좌측 상단에 얹는다. 어두운 영상 위에도, 밝은 이미지 위에도 읽혀야 하므로
+     반투명 검정 바탕 + 흰 글자로 고정한다(소재 색에 따라 대비가 무너지지 않게). */
+  .fr-act{position:absolute;top:8px;left:8px;display:flex;gap:5px;z-index:2}
+  .fbtn{padding:4px 11px;border-radius:999px;background:rgba(12,11,8,.62);color:#F5F2EA;
+    font-size:var(--fs-1);font-weight:750;backdrop-filter:blur(4px);transition:.12s}
+  .fbtn:hover{background:rgba(12,11,8,.86);color:#fff}
+  .cc-frame.v{max-width:212px} .cc-frame.p{max-width:240px} .cc-frame.s{max-width:264px} .cc-frame.h{max-width:300px}
+  .st-charts{width:100%;max-width:300px;margin-top:14px;display:flex;flex-direction:column;gap:14px}
+  .st-blk .microcap{margin-bottom:5px}
+
+  /* ═════ 레일 공통 ═════ */
+  .rail{padding:22px 26px 20px;min-width:0}
+  .r-foot{display:flex;gap:6px;align-items:center;margin-top:16px;padding-top:10px;border-top:1px solid var(--hair)}
+  .r-foot .more{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:999px;border:1px solid var(--surface-3);color:var(--muted);font-size:var(--fs-1);font-weight:650}
+  .r-foot .more:hover{border-color:var(--muted);color:var(--ink)}
+  .r-foot .more i{font-style:normal;color:var(--faint);font-weight:500}
+  /* 지표와 비교를 가르는 단 하나의 구분선 — 소제목 대신 선과 여백이 말한다 */
+  .divider{border:0;border-top:1px solid var(--hair-2);margin:14px 0 4px}
+
+  /* 행 문법: [라벨 | 값 | 스파크 | (등급) | 상위%] */
+  .lr{display:grid;align-items:center;gap:12px;padding:5.5px 4px;border-top:1px solid var(--hair)}
+  .lr:first-child{border-top:0}
+  .lr .k{color:var(--muted);font-weight:600;font-size:var(--fs-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lr .v{font-weight:760;font-size:var(--fs-3);white-space:nowrap;text-align:right}
+  .lr .r{font-size:var(--fs-1);color:var(--faint);white-space:nowrap;justify-self:end}
+  .lr .spk{justify-self:start}
+
+  /* ── C1 · 원장 레일: 5열(등급 칩 포함) 단일 원장 ── */
+  .c1 .lr{grid-template-columns:124px 92px 88px 82px 1fr}
+  .c1 .lr .chip-slot{white-space:nowrap}
+  .c1 .lr.cmp .v{grid-column:2/4;text-align:left}
+  .c1 .gapline{height:9px;border-top:1px solid var(--hair)} /* 성과↔실증 사이 숨 고르기 */
+  .c1 .r-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+  .c1 .r-id{min-width:0;flex:1}
+  .c1 .r-score{flex:0 0 auto;text-align:right}
+  .c1 .r-score .n{font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1.05}
+  .c1 .r-score .sp{margin-top:4px}
+
+  /* ── C2 · 이열 레일: 성과|실증 나란히, 등급 칩 없음(색·상위%만), 촘촘 ── */
+  .c2 .r-top{display:flex;align-items:center;gap:10px;margin-bottom:4px;min-width:0}
+  .c2 .r-top .sp{flex:0 0 auto}
+  /* C2는 수명·영상 차트가 스테이지가 아니라 레일 3번째 열 — 스테이지는 미디어만 담아 짧고,
+     레일과 좌우 높이가 맞아 '한 화면 스캔'이라는 정체성이 성립한다 */
+  .c2 .cols{display:grid;grid-template-columns:1fr 1fr 180px;gap:0 24px;margin-top:12px}
+  .c2 .cols>*{min-width:0}
+  @media(max-width:1100px){.c2 .cols{grid-template-columns:1fr}}
+  .c2 .chartcol{display:flex;flex-direction:column;gap:14px;padding-top:19px}
+  .c2 .lr{grid-template-columns:94px 72px 74px 1fr;gap:9px;padding:4.5px 4px}
+  .c2 .lr.cmp{grid-template-columns:150px auto 1fr;gap:12px}
+  .c2 .lr.cmp .v{text-align:left}
+  .c2 .colcap{font-size:var(--fs-1);color:var(--faint);font-weight:650;padding:0 4px 4px;display:flex;gap:5px;align-items:center}
+  .c2 .cmp2{display:grid;grid-template-columns:1fr 1fr;gap:0 32px;max-width:840px}
+  @media(max-width:1100px){.c2 .cmp2{grid-template-columns:1fr}}
+
+  /* ── C3 · 판정 레일: 점수·진단·KPI 히어로(스파크 내장) + 미니 2열 ── */
+  /* r-top(점수·등급·진단) 폐지 — 이름·등급은 표 행에 이미 있고, 점수는 화면에서 쓰지 않는다.
+     진단 문장도 아래 KPI 히어로가 같은 말을 더 정확히 하므로 중복이었다. 남길 것은 조작 버튼뿐. */
+  /* 호버하면 그 지점 값이 뜬다(네이티브 title) — 점도 같이 커져 어디를 짚었는지 보인다 */
+  .hz{cursor:default}
+  .hz:hover .hd{opacity:1}
+  .c3 .r-top{display:flex;align-items:flex-start;gap:16px;margin-bottom:6px}
+  .c3 .r-verdict{display:flex;align-items:center;gap:12px;flex:0 0 auto}
+  .c3 .r-verdict .n{font-size:34px;font-weight:800;letter-spacing:-.035em;line-height:1}
+  .c3 .r-id{min-width:0;flex:1}
+  /* kpis가 레일의 첫 줄 — 위에 선도 여백도 두지 않는다. 아래 경계만으로 지표와 갈린다 */
+  .c3 .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0 0 8px;border-bottom:1px solid var(--hair)}
+  .c3 .kpi{padding:2px 20px 13px 4px}
+  .c3 .kpi+.kpi{border-left:1px solid var(--hair);padding-left:20px}
+  .c3 .kpi .role{font-size:var(--fs-1);color:var(--faint);font-weight:650}
+  .c3 .kpi .kv{display:flex;align-items:baseline;gap:7px;margin:3px 0 5px}
+  .c3 .kpi .kv b{font-size:var(--fs-5);font-weight:790;letter-spacing:-.02em}
+  .c3 .kpi .kv small{font-size:var(--fs-2);color:var(--muted);font-weight:600}
+  /* ── 근접성 ──
+     종전엔 순위(상위 N%)가 열 끝에 붙어(justify-self:end) **다음 열 라벨과 10px**,
+     같은 행의 스파크와는 30px 넘게 떨어졌다. 관련 없는 것끼리 더 붙어 보이는 배치였다.
+     이제 순위를 스파크 바로 옆에 붙이고, 남는 폭은 열 오른쪽 밖으로 흘려보낸다.
+     그러면 남는 폭이 그대로 '열 사이 여백'이 되어 덩어리 경계가 저절로 생긴다.
+     규칙: 한 행 안 = 10px · 열 사이 = 최소 56px (5배 이상 차이나야 덩어리로 읽힌다) */
+  .c3 .mini2{display:grid;grid-template-columns:1fr 1fr;gap:0 56px;margin-top:8px}
+  @media(max-width:1100px){.c3 .mini2{grid-template-columns:1fr;gap:0}}
+  .c3 .lr{grid-template-columns:104px 76px 80px minmax(56px,1fr);gap:10px;padding:6px 4px}
+  .c3 .lr .v{font-size:var(--fs-2)}
+  .c3 .lr .rslot{justify-self:start;min-width:0}   /* 스파크 옆에 — 열 끝으로 밀지 않는다 */
+  .c3 .lr .rslot .r{justify-self:unset}
+  .c3 .lr.cmp{grid-template-columns:158px auto minmax(52px,1fr);gap:12px}
+  .c3 .lr.cmp .v{text-align:left}
+  /* ── 타매체 교차 비교 ──
+     평소엔 숨어 있다가, 아래 '몰로코 같은 소재 비교' 행에 마우스를 올리면
+     위 지표 행에 그 매체의 값 차이와 추이가 겹쳐 나타난다.
+     항상 보이게 하면 한 행에 숫자가 셋이라 아무것도 읽히지 않는다 — 물어볼 때만 답한다. */
+  .c3 .xd{display:none;font-size:var(--fs-1);font-weight:800;white-space:nowrap}
+  .c3 .spk .xp{display:none;stroke-opacity:.85}
+  /* 델타는 '상위 N%' 자리를 **대체**한다 — 칸을 새로 만들면 그 열만 넓어져 표가 흔들린다.
+     비교하는 순간엔 순위보다 차이가 궁금하므로 자리를 내주는 편이 맞다. */
+  .c3 .rail.xm-moloco .lr.hasx-moloco .r,
+  .c3 .rail.xm-meta   .lr.hasx-meta   .r,
+  .c3 .rail.xm-aeo    .lr.hasx-aeo    .r{display:none}
+  .c3 .rail.xm-moloco .lr.hasx-moloco .xd-moloco,
+  .c3 .rail.xm-meta   .lr.hasx-meta   .xd-meta,
+  .c3 .rail.xm-aeo    .lr.hasx-aeo    .xd-aeo{display:inline}
+  .c3 .rail.xm-moloco .xp-moloco,.c3 .rail.xm-meta .xp-meta,.c3 .rail.xm-aeo .xp-aeo{display:block}
+  .c3 .lr.cmp[data-xm]{cursor:help}
+  .c3 .lr.cmp[data-xm]:hover{background:var(--karrot-f)}
+  .c3 .divider{margin:18px 0 6px}
+  .c3 .cmp2{display:grid;grid-template-columns:1fr 1fr;gap:0 56px}
+  @media(max-width:1100px){.c3 .cmp2{grid-template-columns:1fr;gap:0}}
+  @media(max-width:1100px){.c3 .cmp2{grid-template-columns:1fr}}
+
+  /* ═════ 미디어 목업 ═════ */
+  .ph{position:relative;width:100%;overflow:hidden;background:#141410}
+  .ph.v{aspect-ratio:9/16} .ph.s{aspect-ratio:1/1} .ph.h{aspect-ratio:16/9} .ph.p{aspect-ratio:3/4}
+  .ph .bg{position:absolute;inset:0}
+  .ph .play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center}
+  .ph .play::after{content:"";display:block;border-style:solid;border-width:8px 0 8px 13px;border-color:transparent transparent transparent #fff;margin-left:3px}
+  .ph .dur{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.6);color:#fff;font-size:var(--fs-1);font-weight:700;padding:1px 6px;border-radius:4px}
+
+  /* ═════ 채점표 ═════ */
+  .judge{margin-top:16px;background:var(--surface);border-radius:var(--r-sm);padding:16px 18px}
+  .judge-h{display:flex;align-items:baseline;gap:8px;margin:0 0 10px}
+  .judge-h b{font-size:var(--fs-3);font-weight:760}
+  .judge-h span{font-size:var(--fs-1);color:var(--faint)}
+  .judge table{width:100%;border-collapse:collapse;font-size:var(--fs-2)}
+  .judge td{padding:6px 10px;text-align:left;border-bottom:1px solid var(--hair)}
+  .judge tr:last-child td{border-bottom:0}
+  .judge td.c{white-space:nowrap;font-weight:760;width:52px}
+  .judge td.crit{white-space:nowrap;font-weight:650;color:var(--muted);width:120px}
+  .judge td.note{color:var(--muted)}
+  .judge .cut{margin:12px 0 0;padding-top:10px;border-top:1px dashed var(--hair-2);font-size:var(--fs-2);color:var(--muted);line-height:1.6}
+  .judge .cut b{color:var(--ink);font-weight:700}
+  .judge .cut li{margin:3px 0}
+  .judge .cut ul{margin:4px 0 0;padding-left:16px}
+
+  .final{background:var(--surface);border-radius:var(--r);box-shadow:var(--sh);padding:22px 26px;margin-top:8px}
+  .final h2{margin:0 0 12px;font-size:var(--fs-4);font-weight:780}
+  .final table{width:100%;border-collapse:collapse;font-size:var(--fs-2)}
+  .final th,.final td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--hair)}
+  .final th{color:var(--faint);font-weight:650;font-size:var(--fs-1);text-transform:uppercase;letter-spacing:.04em}
+  .final td:first-child{font-weight:700;white-space:nowrap}
+  .final .reco{margin:14px 0 0;padding:12px 14px;border-radius:var(--r-sm);background:var(--karrot-f);color:var(--ink);font-size:var(--fs-3);line-height:1.6}
+  .final .reco b{font-weight:760}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="doc-h">상세보기 확정안 — C3 · 판정 레일 <small>(C1·C2는 채택 후 정리, git 이력에 남아 있음)</small></h1>
+  <p class="doc-s">좌측 미디어 스테이지 + 우측 데이터 레일(C 골격)은 고정하고, <b>레일의 골격 자체</b>를 세 방향으로 다르게 설계했습니다. 매체 세그먼트(구글 AEO · 구글 ACE · 몰로코)를 눌러 같은 규칙의 렌더링을 확인하세요. 수치는 검증용 예시 데이터입니다.</p>
+  <div class="fb">
+    <div><b>✓ 1</b><span>영상 소재는 <b>영상 시청 유지</b>를 수명 곡선 바로 아래에 — 좌측 스테이지가 미디어·수명·시청을 한 열로 담습니다.</span></div>
+    <div><b>✓ 2</b><span>추이 탭 삭제 — 모든 지표 행 옆 <b>회색 스파크라인</b>이 대체. 평시엔 회색으로 물러나 있고 <b>행에 마우스를 올릴 때만 잉크색</b>으로 선명해집니다.</span></div>
+    <div><b>✓ 3</b><span>상세보기의 메타 칩(매체·포맷·해상도·그룹) 전부 삭제 — 해상도·시간·상태는 미디어 아래 한 줄, 그룹명은 비교 행 라벨로 흡수.</span></div>
+    <div><b>✓ 4</b><span>세그먼트·소제목(&lt;지표&gt;·&lt;비교&gt;) 삭제 — 지표 아래 <b>구분선 하나</b>를 두고 비교(비교군·타매체)가 이어집니다. 남긴 캡션은 코호트 기준 주차·표본뿐(정보라서).</span></div>
+  </div>
+
+  <nav class="cnav" id="cnav">
+    <a href="#c3" class="on">C3 · 판정 레일</a>
+  </nav>
+
+
+
+  <!-- ═════ C3 ═════ -->
+  <section class="concept" id="c3">
+    <div class="c-head"><span class="c-badge">C3</span><h2>판정 레일</h2><span class="c-tag">대표지표 3슬롯이 히어로 — 타매체 비교는 호버로 겹쳐 본다</span></div>
+    <p class="c-sum">레일 상단의 점수·등급·진단 블록을 걷어낸 안. 이름·등급은 표 행에 이미 있고 점수는 쓰지 않으며, 진단 문장이 하던 말은 <b>KPI 히어로 3슬롯</b>(광고비·단가·재방문)이 더 정확히 한다. 수명·시청유지는 미리보기 아래에 세로로 두고, 시청유지는 <b>유독 큰 이탈 구간 하나만</b> 적는다. 아래 <b>타매체 같은 소재 비교</b> 행에 마우스를 올리면 그 매체의 값 차이가 위 지표 행의 순위 자리에 들어오고, 미니 그래프에도 그 매체 추이가 점선으로 겹친다.</p>
+    <div class="mseg" data-c="3"><button class="on" data-m="aeo">구글 AEO</button><button data-m="ace">구글 ACE</button><button data-m="moloco">몰로코</button></div>
+    <div class="stage-out">
+      <div class="stage-hd"><div class="stage-cap">상세보기 <i id="cap3"></i>· 표의 행을 펼친 상태</div>
+      <div class="fake-row"><b>▾</b> <span>표 행 (소재 목록의 현재 행 — 클릭으로 여닫음)</span></div></div>
+      <div id="mk3"></div>
+    </div>
+    <div class="judge">
+      <div class="judge-h"><b>적대자 채점</b><span>10점 만점 · 피드백 반영 후 재채점</span></div>
+      <table>
+        <tr><td class="crit">가독성</td><td class="c">9</td><td class="note">첫 시선은 KPI 히어로, 둘째가 세부, 셋째가 비교 — 읽는 순서가 강제된다.</td></tr>
+        <tr><td class="crit">공간 활용</td><td class="c">9</td><td class="note">미니 2열이 세부 지표를 압축해 히어로에 쓴 공간을 회수.</td></tr>
+        <tr><td class="crit">계층·위계</td><td class="c">10</td><td class="note">23px KPI → 11.5px 세부의 2단 크기 위계. 점수를 걷어내며 히어로가 하나로 줄어 위계가 더 또렷해졌다.</td></tr>
+        <tr><td class="crit">미니멀리즘</td><td class="c">8</td><td class="note">점수·진단 블록을 걷어내 상단 잉크가 줄었다. 남은 무게는 KPI 히어로 하나뿐.</td></tr>
+        <tr><td class="crit">직관·간결</td><td class="c">10</td><td class="note">"밀까 말까"에 3초 안에 답한다. 이탈 표시가 "왜", 타매체 호버가 "다른 데선?"까지 답한다.</td></tr>
+        <tr><td class="crit">톤앤매너</td><td class="c">9</td><td class="note">기존 스케일(23px)을 넘는 예외가 사라졌다 — 34px 점수를 걷어낸 결과.</td></tr>
+      </table>
+      <div class="cut"><b>라운드에서 잘려나간 것</b><ul>
+        <li>덩어리 제목(성과·유저 질 / 이 매체 안·타 매체) — 라벨이 자기설명적이라 제목을 위한 제목이었다.</li>
+        <li>비교 행의 실제 그룹명(AEO_알바_전국) — "그게 뭔데"가 되므로 <b>광고그룹 내 비교</b>로. 개수는 남겼다.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <!-- ═════ 비교 · 추천 ═════ -->
+</div>
+
+<script>
+/* ═════ 예시 데이터 — 매체 3종, 같은 스키마 ═════ */
+const M={
+aeo:{
+  media:"구글 AEO",name:"당근알바_구인구직_세로30s_B",live:true,fo:"영상",ar:"v",res:"1080×1920",dur:"0:30",grp:"AEO_알바_전국",
+  score:"87.4",tier:"g2",tierLab:"매우 좋음",
+  diag:['신규 단가 <b>상위 8%</b> · 노출 <b>상위 14%</b> — 증액 후보.','유저 질(다음날 재방문)도 중앙값 <b>+6.3%p</b>.'],
+  kpi:[
+    {k:"광고비",role:"규모",v:"1,240만원",tier:"m",rank:"상위 31%",med:"중앙값 486만원",sp:[3,4,6,7,9,10,9,11]},
+    {k:"신규 단가",role:"효율",v:"₩3,420",tier:"g2",rank:"상위 8%",med:"중앙값 ₩5,210",sp:[9,8,8,7,6,6,5,5]},
+    {k:"다음날 재방문",role:"유저 질",v:"41.2%",tier:"g1",rank:"상위 21%",med:"중앙값 34.9%",sp:[5,6,6,7,7,7,8,8]}],
+  perf:[
+    {k:"광고비",v:"1,240만원",tier:"m",rank:"상위 31%",sp:[3,4,6,7,9,10,9,11]},
+    {k:"노출",v:"182만",tier:"g1",rank:"상위 14%",sp:[4,5,7,8,10,11,10,12]},
+    {k:"신규 단가",v:"₩3,420",tier:"g2",rank:"상위 8%",sp:[9,8,8,7,6,6,5,5]},
+    {k:"신규 전환율",v:"2.4%",tier:"g1",rank:"상위 19%",sp:[5,5,6,7,7,8,8,9]},
+    {k:"CTR",v:"0.84%",tier:"m",rank:"상위 41%",sp:[6,6,7,6,7,7,6,7]}],
+  cohortCap:"실유저 실증 · 7/28 주 설치 코호트 · 표본 1,208명",
+  cohort:[
+    {k:"신규 실유저",v:"2,180",tier:"g1",rank:"상위 18%",sp:[4,5,6,7,8,8,9,9]},
+    {k:"다음날 재방문",v:"41.2%",tier:"g1",rank:"상위 21%",sp:[5,6,6,7,7,7,8,8]},
+    {k:"7일 내 재방문",v:"63.8%",tier:"g2",rank:"상위 9%",sp:[6,6,7,7,8,8,8,9]},
+    {k:"첫 주 4일 이상",v:"22.4%",tier:"m",rank:"상위 46%",sp:[5,5,6,5,6,6,6,6]},
+    {k:"알바 탭 접속 7일",v:"27.4%",tier:"g1",rank:"상위 24%",sp:[5,6,6,6,7,7,8,8]}],
+  cmp:[
+    {k:"광고그룹 내 비교 · 12개",v:"실유저 상위 12%",tier:"g2",rank:"광고비 상위 21%"},
+    {k:"서비스 내 비교 · 28개",v:"실유저 상위 18%",tier:"g1",rank:"광고비 상위 33%"},
+    {k:"몰로코 같은 소재 비교",v:"eCPA −₩120",tier:"g2",rank:"광고비 −455만원",xm:"moloco",
+     x:{"광고비":{d:"−455만원",t:"g2",sp:[2,3,4,5,6,6,5,6]},
+        "노출":{d:"−41만",t:"m",sp:[3,4,5,6,7,7,7,8]},
+        "CTR":{d:"+0.78%p",t:"g2",sp:[7,8,8,9,9,10,9,10]},
+        "7일 내 재방문":{d:"−9.4%p",t:"w2",sp:[4,4,5,5,5,6,5,6]}}},
+    {k:"메타 같은 소재 비교",v:"광고비 +455만원",tier:"m",rank:"",xm:"meta",
+     x:{"광고비":{d:"+455만원",t:"m",sp:[5,6,8,9,11,12,12,13]},
+        "노출":{d:"+118만",t:"g1",sp:[6,7,9,10,12,13,12,14]},
+        "신규 전환율":{d:"−0.9%p",t:"w2",sp:[3,3,4,4,4,5,4,5]},
+        "첫 주 4일 이상":{d:"+3.1%p",t:"g2",sp:[6,6,7,7,7,8,8,8]}}}],
+  life:{wk:8,hi:5,tot:"6,160만원",sp:[3,4,6,7,9,11,10,12]},
+  video:{pts:[100,68,41,28,19]},
+  gmore:"구글 애셋 세부 · 6"},
+ace:{
+  media:"구글 ACE",name:"홈피드_10years_브랜딩_가로_A",live:true,fo:"영상",ar:"h",res:"1920×1080",dur:"0:15",grp:"ACE_브랜딩_홈",
+  score:"62.1",tier:"g1",tierLab:"좋음",
+  diag:['CPM <b>상위 22%</b>로 효율은 좋으나 홈피드 접속이 중앙값 <b>−4.1%p</b>.','현 수준 유지 관찰.'],
+  kpi:[
+    {k:"광고비",role:"규모",v:"2,980만원",tier:"g1",rank:"상위 12%",med:"중앙값 640만원",sp:[5,7,8,9,11,11,12,12]},
+    {k:"CPM",role:"효율",v:"₩2,150",tier:"g1",rank:"상위 22%",med:"중앙값 ₩2,840",sp:[8,8,7,7,7,6,6,6]},
+    {k:"홈피드 접속 7일",role:"유저 질",v:"18.3%",tier:"w1",rank:"하위 28%",med:"중앙값 22.4%",sp:[7,7,6,6,6,5,5,5]}],
+  perf:[
+    {k:"광고비",v:"2,870만원",tier:"g1",rank:"상위 18%",sp:[6,7,8,9,9,10,11,11]},
+    {k:"노출",v:"412만",tier:"g2",rank:"상위 6%",sp:[6,7,9,10,11,11,12,12]},
+    {k:"CPM",v:"₩2,150",tier:"g1",rank:"상위 22%",sp:[8,8,7,7,7,6,6,6]},
+    {k:"조회율",v:"31.7%",tier:"m",rank:"상위 38%",sp:[6,7,7,8,7,8,8,8]}],
+  cohortCap:"실유저 실증 · 7/28 주 설치 코호트 · 광고그룹 단위",
+  cohort:[
+    {k:"신규 실유저",v:"940",tier:"m",rank:"상위 44%",sp:[5,5,6,6,6,7,6,7]},
+    {k:"7일 내 재방문",v:"51.2%",tier:"m",rank:"상위 52%",sp:[6,6,6,7,6,7,7,7]},
+    {k:"홈피드 접속 7일",v:"18.3%",tier:"w1",rank:"하위 28%",sp:[7,7,6,6,6,5,5,5]},
+    {k:"설치 한 달 뒤 방문",v:"24.1%",tier:"m",rank:"상위 55%",sp:[6,6,6,6,7,6,6,6]}],
+  cmp:[
+    {k:"광고그룹 내 비교 · 9개",v:"실유저 상위 39%",tier:"m",rank:"광고비 상위 18%"},
+    {k:"서비스 내 비교 · 17개",v:"실유저 상위 47%",tier:"m",rank:"광고비 상위 24%"},
+    {k:"구글 AEO 같은 소재 비교",v:"CPM −₩310",tier:"g2",rank:"",xm:"aeo",
+     x:{"광고비":{d:"−1,630만원",t:"w1",sp:[3,4,5,6,6,7,7,8]},
+        "노출":{d:"−230만",t:"w1",sp:[3,4,5,6,6,7,7,7]},
+        "조회율":{d:"+6.2%p",t:"g2",sp:[8,8,9,9,10,10,11,11]}}}],
+  life:{wk:8,hi:6,tot:"7,960만원",sp:[5,6,8,9,9,10,11,11]},
+  video:{pts:[100,74,52,37,26]},
+  gmore:"구글 애셋 세부 · 6"},
+moloco:{
+  media:"몰로코",name:"img_maugrowth_PickUpMonthly_768x1024",live:false,fo:"이미지",ar:"p",res:"768×1024",dur:null,grp:"CG_재관여_홈피드",
+  score:"74.8",tier:"g1",tierLab:"좋음",
+  diag:['eCPA <b>상위 18%</b> · 유효 복귀 자연 기준선 대비 <b>+9.2%p</b>.','재관여 전담으로 안정적 — 집행은 7/27 주 종료.'],
+  kpi:[
+    {k:"광고비",role:"규모",v:"1,090만원",tier:"m",rank:"상위 35%",med:"중앙값 402만원",sp:[3,5,6,7,8,7,5]},
+    {k:"eCPA",role:"효율",v:"₩1,870",tier:"g2",rank:"상위 18%",med:"중앙값 ₩2,660",sp:[8,7,6,6,5,5,5]},
+    {k:"홈피드 접속 7일",role:"유저 질",v:"58.9%",tier:"g2",rank:"상위 11%",med:"중앙값 41.2%",sp:[5,6,6,7,7,8,8]}],
+  perf:[
+    {k:"광고비",v:"1,090만원",tier:"m",rank:"상위 35%",sp:[5,7,8,9,10,8,6,0]},
+    {k:"데려온 유저",v:"5,851",tier:"g1",rank:"상위 23%",sp:[4,6,8,9,10,9,7,0]},
+    {k:"eCPA",v:"₩1,870",tier:"g2",rank:"상위 18%",sp:[8,7,6,6,5,5,5]},
+    {k:"CTR(외부 지면)",v:"1.62%",tier:"m",rank:"상위 44%",sp:[6,6,7,7,6,7,6]},
+    {k:"D1 잔존율",v:"38.9%",tier:"g1",rank:"상위 27%",sp:[6,7,7,8,8,8,8]}],
+  cohortCap:"실유저 실증 · 재관여 · 7/21·7/28 주",
+  cohort:[
+    {k:"되돌린 유저",v:"4,320",tier:"g1",rank:"상위 21%",sp:[4,6,7,8,8,7,6]},
+    {k:"유효 복귀",v:"46.1%",tier:"g1",rank:"기준선 +9.2%p",sp:[5,6,6,7,7,8,8]},
+    {k:"유효 복귀 단가",v:"₩4,060",tier:"m",rank:"상위 37%",sp:[8,7,7,6,6,6,6]},
+    {k:"홈피드 접속 7일",v:"58.9%",tier:"g2",rank:"상위 11%",sp:[6,7,7,8,8,8,9]}],
+  cmp:[
+    {k:"광고그룹 내 비교 · 8개",v:"실유저 상위 19%",tier:"g1",rank:"광고비 상위 26%"},
+    {k:"서비스 내 비교 · 21개",v:"실유저 상위 28%",tier:"g1",rank:"광고비 상위 42%"},
+    {k:"구글 AEO 같은 소재 비교",v:"광고비 +455만원",tier:"m",rank:"",xm:"aeo",
+     x:{"광고비":{d:"+455만원",t:"m",sp:[5,7,9,10,12,13,12]},
+        "데려온 유저":{d:"−1,240",t:"w1",sp:[3,4,5,6,7,6,5]},
+        "홈피드 접속 7일":{d:"−31.5%p",t:"w2",sp:[3,3,4,4,4,4,5]}}},
+    {k:"메타 같은 소재 비교",v:"eCPA +₩240",tier:"w2",rank:"",xm:"meta",
+     x:{"광고비":{d:"+1,210만원",t:"m",sp:[6,8,10,11,12,11,9]},
+        "eCPA":{d:"+₩240",t:"w2",sp:[9,9,8,8,8,7,7]},
+        "D1 잔존율":{d:"−6.2%p",t:"w1",sp:[5,5,6,6,6,7,7]}}}],
+  life:{wk:7,hi:3,tot:"3,140만원",ended:1,sp:[3,5,6,7,8,7,5,0]},
+  video:null,
+  gmore:null}
+};
+
+/* ═════ 헬퍼 ═════ */
+const TIERC={g2:"var(--g2)",g1:"var(--g1)",m:"var(--ink)",w1:"var(--w1)",w2:"var(--w2)"};
+const spCls=t=>t==="g2"?"sp-g2":t==="g1"?"sp-g1":t==="w1"?"sp-w1":t==="w2"?"sp-w2":"sp-mid";
+const tierLab=t=>({g2:"매우 좋음",g1:"좋음",m:"보통",w1:"낮음",w2:"매우 낮음"})[t];
+const spChip=t=>t==="m"?"":`<span class="sp ${spCls(t)}">${tierLab(t)}</span>`;
+const COHORT_TIP="유저 단위 실증(BigQuery 주간 갱신) — 등급·상위%는 같은 주 코호트 안 백분위";
+const CMP_TIP="구분선 아래 = 비교.&#10;비교군(같은 광고그룹·서비스): 값 = 실유저 위치 · 회색 = 광고비 위치.&#10;타매체(같은 소재): 그 매체와의 지표 차이.";
+
+/* 스파크라인 — min-max 정규화, 평시 회색(호버 시 CSS로 잉크색) */
+/* over: 겹쳐 그릴 타매체 시리즈들 {키:배열}. 같은 축(min-max)에 얹어야 모양 비교가 성립한다 —
+   각자 정규화하면 두 선이 항상 비슷해 보여 비교가 무의미해진다. */
+function spk(arr,w,h,over){
+  w=w||84;h=h||20;const p=2.5,n=arr.length;
+  const all=[...arr,...Object.values(over||{}).flat()];
+  const mn=Math.min(...all),mx=Math.max(...all);
+  const X=i=>p+i*(w-2*p)/(n-1),Y=v=>h-p-((v-mn)/((mx-mn)||1))*(h-2*p);
+  const path=a=>a.map((v,i)=>(i?" L":"M")+` ${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join("");
+  let ov="";
+  for(const k in (over||{}))
+    ov+=`<path class="xp xp-${k}" d="${path(over[k].slice(0,n))}" fill="none" stroke="var(--karrot)" stroke-width="1.4" stroke-dasharray="3 2" stroke-linejoin="round"/>`;
+  return `<svg class="spk" viewBox="0 0 ${w} ${h}" style="width:${w}px;height:${h}px">${ov}<path d="${path(arr)}" fill="none" stroke-width="1.4" stroke-linejoin="round"/><circle class="ep" cx="${X(n-1).toFixed(1)}" cy="${Y(arr[n-1]).toFixed(1)}" r="2.2"/></svg>`;
+}
+/* 수명 미니 곡선(스테이지) */
+function lifeSVG(sp,W,H){
+  W=W||300;H=H||62;const p=6,n=sp.length,mx=Math.max(...sp,1);
+  const X=i=>p+i*(W-2*p)/(n-1),Y=v=>H-10-(v/mx)*(H-20);
+  let ln="";sp.forEach((v,i)=>{ln+=(i?" L":"M")+` ${X(i).toFixed(1)} ${Y(v).toFixed(1)}`;});
+  let g=`<path d="${ln} L ${X(n-1).toFixed(1)} ${H-10} L ${X(0).toFixed(1)} ${H-10} Z" fill="var(--karrot)" fill-opacity="0.13"/><path d="${ln}" fill="none" stroke="var(--karrot)" stroke-width="1.7" stroke-linejoin="round"/>`;
+  /* 크게 늘린 구간 — 직전 주 대비 배수가 가장 큰 한 곳만, 1.5배 이상일 때. 그 선분만 붉게 덧그린다.
+     모든 증가에 표시하면 곡선이 이미 말하는 것을 글자로 반복하는 셈이라 하나만 고른다. */
+  let ri=-1,rx=0;
+  for(let i=1;i<n;i++){if(sp[i-1]>0){const r=sp[i]/sp[i-1];if(r>=1.5&&r>rx){rx=r;ri=i;}}}
+  if(ri>0)g+=`<path d="M ${X(ri-1).toFixed(1)} ${Y(sp[ri-1]).toFixed(1)} L ${X(ri).toFixed(1)} ${Y(sp[ri]).toFixed(1)}" fill="none" stroke="var(--w2)" stroke-width="2.4" stroke-linecap="round"/>`;
+  /* 피크 — 아래로 뾰족한 작은 삼각형. 점보다 방향이 있어 "여기가 꼭대기"가 한눈에 잡힌다 */
+  const pk=sp.indexOf(Math.max(...sp)),px=X(pk),py=Y(sp[pk]);
+  g+=`<path d="M ${(px-4).toFixed(1)} ${(py-11).toFixed(1)} L ${(px+4).toFixed(1)} ${(py-11).toFixed(1)} L ${px.toFixed(1)} ${(py-4).toFixed(1)} Z" fill="var(--w2)"/>`;
+  g+=`<circle cx="${X(n-1)}" cy="${Y(sp[n-1])}" r="2.6" fill="${sp[n-1]>0?"#35B979":"var(--faint)"}"/>`;
+  const bw=(W-2*p)/(n-1);
+  sp.forEach((v,i)=>{
+    g+=`<g class="hz"><rect x="${(X(i)-bw/2).toFixed(1)}" y="0" width="${bw.toFixed(1)}" height="${H}" fill="transparent"/>`
+      +`<title>${i+1}주차 · 주간 광고비 ${v.toLocaleString()}백만원${i===pk?" · 피크":""}${i===ri?` · 직전 주 대비 ×${rx.toFixed(1)}`:""}</title>`
+      +`<circle class="hd" cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="3.4" fill="var(--karrot)" opacity="0"/></g>`;});
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto">${g}</svg>`;
+}
+/* 영상 시청 유지(스테이지 · 수명 바로 아래) */
+function vretSVG(pts,W,H){
+  W=W||300;H=H||76;const pl=8,pr=8,pt=14,pb=10,iw=W-pl-pr,ih=H-pt-pb;
+  const SEG=["0→25%","25→50%","50→75%","75→100%"];
+  const X=i=>pl+i*iw/(pts.length-1),Y=v=>pt+(1-v/100)*ih;
+  let ln="";pts.forEach((v,i)=>{ln+=(i?" L":"M")+` ${X(i).toFixed(1)} ${Y(v).toFixed(1)}`;});
+  let g=`<path d="${ln} L ${X(pts.length-1)} ${H-pb} L ${X(0)} ${H-pb} Z" fill="var(--g1)" fill-opacity="0.1"/><path d="${ln}" fill="none" stroke="var(--g1)" stroke-width="1.7"/>`;
+  /* 구간별 이탈폭 — 어디서 빠지는지가 핵심이라 '유독 큰 한 곳'만 적는다.
+     기준: 최대 이탈이 평균 이탈의 1.5배 이상이면서 15%p 이상. 고르게 빠지면 아무것도 적지 않는다
+     (전 구간에 숫자를 붙이면 '어디가 문제인가'라는 질문에 답하지 못한다). */
+  const drop=pts.slice(1).map((v,i)=>pts[i]-v);
+  const mxD=Math.max(...drop),avg=drop.reduce((a,b)=>a+b,0)/drop.length,di=drop.indexOf(mxD);
+  const notable=mxD>=15&&mxD>=avg*1.5;
+  pts.forEach((v,i)=>{g+=`<circle cx="${X(i)}" cy="${Y(v)}" r="2.2" fill="var(--g1)"/>`;});
+  /* 구간 호버 — 라벨을 지운 대신 값은 호버로 전부 읽힌다 */
+  drop.forEach((dv,i)=>{
+    g+=`<g class="hz"><rect x="${X(i).toFixed(1)}" y="0" width="${(X(i+1)-X(i)).toFixed(1)}" height="${H}" fill="transparent"/>`
+      +`<title>${SEG[i]} 구간 · 도달 ${pts[i]}% → ${pts[i+1]}% · 이탈 ${dv}%p</title></g>`;});
+  if(notable){
+    /* 구간 중앙보다 살짝 오른쪽·아래 — 정중앙에 두면 급락 구간에서 시작 점과 겹친다 */
+    const mx1=X(di)+(X(di+1)-X(di))*0.66, my=(Y(pts[di])+Y(pts[di+1]))/2+5;
+    g+=`<line x1="${X(di).toFixed(1)}" y1="${Y(pts[di]).toFixed(1)}" x2="${X(di+1).toFixed(1)}" y2="${Y(pts[di+1]).toFixed(1)}" stroke="var(--w1)" stroke-width="2.4"/>`;
+    g+=`<text x="${mx1.toFixed(1)}" y="${Math.max(9,my-7).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--w1)" paint-order="stroke" stroke="#FFFDF7" stroke-width="3" stroke-linejoin="round">−${mxD}%p</text>`;}
+  /* 차트 안 '완주 N%'는 뺐다 — 캡션이 이미 같은 값을 말한다. 한 화면에 같은 숫자를 두 번 쓰지 않는다 */
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto">${g}</svg>`;
+}
+/* 미디어 목업 */
+function phHTML(d){
+  const isImg=d.ar==="s"||d.ar==="p";
+  const grad=isImg?"background:linear-gradient(150deg,#FF6F0F,#FF8A3D 55%,#FFB37A)"
+    :d.ar==="v"?"background:linear-gradient(165deg,#20242E,#33404F 60%,#4A6076)"
+    :"background:linear-gradient(160deg,#25211B,#3E362A 60%,#5A4D38)";
+  /* 소재 안 카피는 그리지 않는다 — 실제 화면에선 진짜 미디어가 들어오고, 목업의 가짜 문구는
+     "이 글자가 데이터인가?"라는 오해만 만든다. 재생 표시·길이는 남긴다(영상임을 알리는 정보). */
+  return `<div class="ph ${d.ar}"><div class="bg" style="${grad}"></div>`
+    +`${d.fo==="영상"?'<div class="play"></div>':""}${d.dur?`<div class="dur num">${d.dur}</div>`:""}</div>`;
+}
+/* 수명 · 시청 유지 — 가로로 나란히. 세로형 소재에선 스테이지가 이미 높아, 이 둘까지 세로로
+   쌓으면 상세 전체가 화면을 넘긴다. 캡션은 라벨("수명") 대신 **정보**를 싣는다 —
+   "수명 · 8주 · 누적 6,160만원"에서 '수명'은 그림이 이미 말하고 있어 글자만 차지한다. */
+function lifeCap(L){
+  const parts=[`총 ${L.wk}주`];
+  if(L.hi)parts.push(`<span title="주간 광고비가 매체 상위 25%였던 주">High ${L.hi}주</span>`);
+  parts.push(`누적 ${L.tot}`);
+  if(L.ended)parts.push(`<em>종료</em>`);
+  return parts.join(" · ");
+}
+function vretCap(pts){
+  const drop=pts.slice(1).map((v,i)=>pts[i]-v);
+  const mx=Math.max(...drop),avg=drop.reduce((a,b)=>a+b,0)/drop.length;
+  const SEG=["0→25%","25→50%","50→75%","75→100%"];
+  const parts=[`완주 ${pts[pts.length-1]}%`];
+  if(mx>=15&&mx>=avg*1.5)parts.push(`최대 이탈 ${SEG[drop.indexOf(mx)]}`);
+  else parts.push(`<em>고른 이탈</em>`);
+  return parts.join(" · ");
+}
+function chartsHTML(d,W){
+  return `<div class="st-blk"><div class="microcap">${lifeCap(d.life)}</div>${lifeSVG(d.life.sp,W,62)}</div>
+    ${d.video?`<div class="st-blk"><div class="microcap">${vretCap(d.video.pts)}</div>${vretSVG(d.video.pts,W,76)}</div>`:""}`;
+}
+/* 스테이지 — 미디어 · 메타 한 줄 (+옵션: 수명·시청 곡선) */
+function stageHTML(d,noCharts){
+  /* 메타 한 줄(라이브 · 해상도 · 길이 · 포맷 · 원본)은 뺐다 — 전부 표 행에 이미 있는 값이다.
+     조작 버튼은 썸네일 좌측 상단에 얹는다. 별도 줄로 빼면 빈 칸 하나가 더 생긴다. */
+  return `<div class="cc-stage">
+    <div class="cc-frame ${d.ar}">${phHTML(d)}
+      <div class="fr-act">
+        <button class="fbtn" title="이 상세를 고정해 다른 소재와 나란히 본다">고정</button>
+        <button class="fbtn" title="비교 목록에 담는다">비교</button>
+      </div>
+    </div>
+    ${noCharts?"":`<div class="st-charts">${chartsHTML(d,300)}</div>`}
+  </div>`;
+}
+const footHTML=d=>d.gmore?`<div class="r-foot"><button class="more">${d.gmore.split(" · ")[0]} <i>${d.gmore.split(" · ")[1]}</i> ▾</button></div>`:"";
+
+/* ═════ C1 · 원장 레일 ═════ */
+/* ═════ C2 · 이열 레일 ═════ */
+/* ═════ C3 · 판정 레일 ═════ */
+function render3(d){
+  const kpiLabels=new Set(d.kpi.map(k=>k.k));
+  const gPerf=d.perf.filter(o=>!kpiLabels.has(o.k));
+  const gCoh =d.cohort.filter(o=>!kpiLabels.has(o.k));
+  /* 타매체 비교군 — 지표별 차이(d)와 그 매체의 추이(sp)를 들고 있다. 호버 시 위 지표 행에 겹쳐 보인다 */
+  const xRows=d.cmp.filter(o=>o.xm);
+  const overOf=k=>{const o={};for(const r of xRows)if(r.x&&r.x[k])o[r.xm]=r.x[k].sp;return o;};
+  const deltaOf=k=>xRows.filter(r=>r.x&&r.x[k])
+    .map(r=>`<span class="xd xd-${r.xm}" style="color:${TIERC[r.x[k].t]}">${r.x[k].d}</span>`).join("");
+  const hasx=k=>xRows.filter(r=>r.x&&r.x[k]).map(r=>" hasx-"+r.xm).join("");
+  const lr=o=>`<div class="lr hv${hasx(o.k)}"><span class="k">${o.k}</span>`
+    +`<b class="v num" style="color:${TIERC[o.tier]}">${o.v}</b>`
+    +`${o.sp?spk(o.sp,76,18,overOf(o.k)):"<span></span>"}`
+    +`<span class="rslot"><span class="r">${o.rank||""}</span>${deltaOf(o.k)}</span></div>`;
+  const cmp=o=>`<div class="lr cmp hv"${o.xm?` data-xm="${o.xm}"`:""} title="${CMP_TIP.replace(/&#10;/g,"\n")}">`
+    +`<span class="k" title="${o.k}">${o.k}</span>`
+    +`<b class="v num" style="color:${TIERC[o.tier]}">${o.v}</b><span class="r">${o.rank||""}</span></div>`;
+  const cIn=d.cmp.filter(o=>!o.xm), cX=xRows;
+  return `<div class="cc c3" style="--stw:340px">
+  ${stageHTML(d)}
+  <div class="rail">
+    <div class="kpis">
+      ${d.kpi.map(k=>`<div class="kpi hv" title="${k.med}"><div class="role">${k.role} · ${k.k}</div><div class="kv"><b class="num" style="color:${TIERC[k.tier]}">${k.v}</b><small>${k.rank}</small></div>${spk(k.sp,118,24)}</div>`).join("")}
+    </div>
+    <div class="mini2">
+      <div>${gPerf.map(lr).join("")}</div>
+      <div>${gCoh.map(lr).join("")}</div>
+    </div>
+    <hr class="divider">
+    <div class="cmp2">
+      <div>${cIn.map(cmp).join("")}</div>
+      <div>${cX.map(cmp).join("")}</div>
+    </div>
+    ${footHTML(d)}
+  </div>
+</div>`;}
+
+/* ═════ 마운트 + 매체 전환 ═════ */
+const R={3:render3};
+const CUR={3:"aeo"};
+function mount(c){
+  const d=M[CUR[c]];
+  const host=document.getElementById("mk"+c);
+  host.innerHTML=R[c](d);
+  document.getElementById("cap"+c).textContent=d.media+" · "+d.name+" ";
+  /* 타매체 비교 행에 마우스를 올리면 위 지표 행에 그 매체 값이 겹쳐 보인다.
+     항상 보이게 하면 한 행에 숫자가 셋이라 읽히지 않는다 — 물어볼 때만 답하게 한다. */
+  const rail=host.querySelector(".rail");
+  if(!rail)return;
+  host.querySelectorAll(".lr.cmp[data-xm]").forEach(row=>{
+    const m=row.dataset.xm;
+    const on=()=>rail.classList.add("xm-"+m);
+    const off=()=>rail.classList.remove("xm-"+m);
+    row.addEventListener("mouseenter",on); row.addEventListener("mouseleave",off);
+    row.addEventListener("focusin",on);    row.addEventListener("focusout",off);
+  });
+}
+document.querySelectorAll(".mseg").forEach(seg=>{
+  seg.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+    seg.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));
+    CUR[seg.dataset.c]=b.dataset.m;mount(seg.dataset.c);
+  });
+});
+[3].forEach(mount);
+
+const secs=[...document.querySelectorAll(".concept, .final")];
+const links=[...document.querySelectorAll("#cnav a")];
+addEventListener("scroll",()=>{
+  let cur=0;
+  secs.forEach((s,i)=>{if(s.getBoundingClientRect().top<140)cur=i;});
+  links.forEach((l,i)=>l.classList.toggle("on",i===cur));
+},{passive:true});
+</script>
+</body>
+</html>

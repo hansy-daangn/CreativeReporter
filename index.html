@@ -154,6 +154,25 @@
   .gst.lim{background:var(--w1-f);color:var(--w1)}
   .gst.auth{background:var(--g1-f);color:var(--g1)}
   .lvb{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--g1);margin-right:7px;vertical-align:1px;flex:0 0 auto}
+  /* ═════ KPI 히어로 3슬롯 — 상세 레일의 첫 줄 ═════
+     위에 선도 여백도 두지 않는다(첫 줄이므로). 아래 경계만으로 지표 목록과 갈린다. */
+  .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0 0 8px;border-bottom:1px solid var(--line)}
+  @media(max-width:900px){.kpis{grid-template-columns:1fr}}
+  .kpi{padding:2px 20px 12px 4px;min-width:0}
+  .kpi+.kpi{border-left:1px solid var(--line);padding-left:20px}
+  @media(max-width:900px){.kpi+.kpi{border-left:0;border-top:1px solid var(--line);padding-left:4px;padding-top:10px}}
+  .kpi-role{font-size:var(--fs-1);color:var(--faint);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kpi-v{display:flex;align-items:baseline;gap:7px;margin:3px 0 5px;min-width:0}
+  .kpi-v b{font-size:var(--fs-5);font-weight:790;letter-spacing:-.02em;white-space:nowrap}
+  .kpi-v small{font-size:var(--fs-2);color:var(--muted);font-weight:600;white-space:nowrap}
+  .kspk path{stroke:var(--surface-3);transition:stroke .12s}
+  .kspk .ep{fill:var(--faint);transition:fill .12s}
+  .kpi:hover .kspk path{stroke:var(--ink)}
+  .kpi:hover .kspk .ep{fill:var(--ink)}
+  /* 좌측 열의 수명·시청유지 — 미리보기 바로 아래 */
+  .ir-chart{margin-top:12px}
+  .ir-chart .umet-strip.life-only{background:none;border:0;padding:0;margin:0}
+  .ir-chart .us-h{display:none}
   .gi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px 18px;margin-top:8px}
   .gi-r{display:flex;justify-content:space-between;gap:10px;font-size:var(--fs-3);border-bottom:1px dashed var(--surface-3);padding:3px 0;min-width:0}
   .gi-r.wide{grid-column:1/-1}
@@ -4380,7 +4399,7 @@ function umSvc7For(ds,e){
   const distOf=key=>{const a=[];for(const k in src){const v=src[k];const x=+(v&&v[key]);if(isFinite(x))a.push(x);}return a;};
   return {rows,basis,wk,n:+hit.n||0,svc,svcLabel:mapped.label,
     basisLabel:(sm.basis_label&&sm.basis_label[basis])||(basis==="svc7"?"신규 설치 7일":"복귀 후 7일"),base,distOf};}
-function umCohortHTML(ds,e){
+function umCohortHTML(ds,e,opt){opt=opt||{};
   const hit=umCohortFor(ds,e),tr=umTrendFor(ds,e),re=umReengFor(ds,e),lf=umLifeFor(ds,e),sv=umSvc7For(ds,e);
   /* 조기 반환 없음 — 실증(kv) 데이터가 하나도 없어도 '수명'은 주간 광고비만으로 그려져 스트립이 항상 나온다.
      (kv 실증은 최근 몇 주만 커버해 일부 소재에서 블록이 통째로 사라지던 문제의 수정 · 2026-08-06) */
@@ -4530,6 +4549,10 @@ function umCohortHTML(ds,e){
       const sub=[`${fmtInt(ws.length)}주`,`누적 ${fmtKRW(tot)}원`];
       if(hiN)sub.push(`고소진 ${fmtInt(hiN)}주`);
       lifeHtml=`<div class="us-sub">수명 <em>${escHtml(sub.join(" · "))}</em></div><svg class="us-life" viewBox="0 0 ${W} ${H}" style="max-width:${W}px">${g}</svg>`;}}
+  /* 수명 곡선은 상세 좌측(미리보기 아래)이 제자리다 — 세로로 긴 소재에서 우측 레일까지 길어지는 것을 막는다.
+     lifeOnly: 좌측 열이 이 블록만 가져간다 · noLife: 우측 레일은 나머지만 그린다 */
+  if(opt.lifeOnly)return lifeHtml?`<div class="umet-strip life-only"><div class="mrows">${lifeHtml}</div></div>`:"";
+  if(opt.noLife)lifeHtml="";
   if(!rowsHtml.length&&!svcHtml&&!reengHtml&&!lifeHtml)return "";
   const n=+((c&&c.n)||0);
   const hdr=[];
@@ -5281,14 +5304,68 @@ function renderCmpModal(){
   const tm=m.querySelector(".cmp-trmin");if(tm)tm.onchange=()=>{cmpTrendMinN=+tm.value;renderCmpModal();};
   hideCmpDotTip();wireCmpDots(m);}
 document.addEventListener("keydown",ev=>{if(ev.key==="Escape"){const m=$("#cmpModal");if(m&&!m.hidden){closeCmpModal();ev.stopPropagation();}}},true);
+/* ═════ KPI 히어로 3슬롯 — 규모 · 효율 · 유저 질 (2026-08-07 C3 개편) ═════
+   상세를 열자마자 "밀까 말까"에 답해야 하는 세 값만 크게 세운다. 나머지는 아래 목록으로 물러난다.
+   ⚠️ 슬롯을 늘리지 마라. 넷이 되는 순간 '가장 중요한 것'이 사라지고 그냥 지표 줄이 된다.
+   · 규모  = 광고비 (수명 곡선과 같은 값 — 그래서 곡선이 이 슬롯의 배경 설명이 된다)
+   · 효율  = 그 매체 채점 1순위 단가 (specsFor의 가중치 최상위 · 낮을수록 좋은 지표)
+   · 유저 질 = 있는 것 중 앞선 것 하나(다음날 재방문 → 7일 내 재방문 → 서비스 접속).
+     소재마다 가용 지표가 달라 고정하면 빈 칸이 생긴다 — 빈 슬롯보다 다른 지표가 낫다. */
+function kpiHeroHTML(ds,e){
+  const pool=(ds.agg||[]).filter(p=>p&&!p._isGroup===!e._isGroup&&(p.비용||0)>0);
+  if(pool.length<4)return "";
+  const wa=weeklyAggOf(ds,e),os=wa.os;
+  const spkOf=k=>{const wm=WK_METRIC[k];if(!wm)return null;
+    const v=os.map(wm.of).filter(x=>x!=null&&isFinite(x));return v.length>=2?v:null;};
+  const slot=(role,k,lab,fmt,dir,sparkKey)=>{
+    const v=+e[k];if(v==null||!isFinite(v))return null;
+    const vs=pool.map(p=>+p[k]).filter(x=>x!=null&&isFinite(x));
+    const t=umTrack(vs,v,dir);if(!t)return null;
+    return{role,lab,v:fmt(v),tier:(t.tier&&t.tier.t)||"m",rank:umRankTxt(t),
+      med:t.med!=null?`비교군 중앙값 ${fmt(t.med)}`:"",sp:spkOf(sparkKey||k)};};
+  const out=[];
+  {const o=slot("규모","비용","광고비",fmtWon,1,"비용");if(o)out.push(o);}
+  /* 효율 — 채점 스펙에서 '낮을수록 좋은' 최상위 가중치 지표를 그대로 가져온다(코드에 이름을 박지 않는다) */
+  {const sp=((typeof specsFor==="function"?specsFor(ds):[])||[]).filter(x=>x.dir<0).sort((a,b)=>b.w-a.w)[0];
+   if(sp){const o=slot("효율",sp.k,sp.lab,(MET_META[sp.k]&&MET_META[sp.k].fmt)||fmtWon,-1);if(o)out.push(o);}}
+  /* 유저 질 — 실증(코호트)에서 먼저 있는 것 하나 */
+  {const hit=(typeof umCohortFor==="function")?umCohortFor(ds,e):null;
+   const sv=(typeof umSvc7For==="function")?umSvc7For(ds,e):null;
+   const c=(hit&&hit.cohort)||{};
+   const ix=umIndex(),wb=hit&&ix&&ix.byWeek.get(hit.week);
+   const dist=k=>{const a=[];if(wb)for(const x of wb.cohort.values()){const n=+x[k];if(isFinite(n))a.push(n);}return a;};
+   const cand=[["d1","다음날 재방문"],["d7","7일 내 재방문"],["home7","홈피드 접속"]];
+   let done=false;
+   for(const[k,lab]of cand){const v=+c[k];if(!isFinite(v))continue;
+     const t=umTrack(dist(k),v,1);if(!t)continue;
+     out.push({role:"유저 질",lab,v:v.toFixed(1)+"%",tier:(t.tier&&t.tier.t)||"m",rank:umRankTxt(t),
+       med:t.med!=null?`같은 주 코호트 중앙값 ${t.med.toFixed(1)}%`:"",sp:null});done=true;break;}
+   if(!done&&sv&&sv.rows.length){const r=sv.rows[0],t=umTrack(sv.distOf(r.key),r.v,1);
+     out.push({role:"유저 질",lab:svc7Lab(r.label),v:r.v.toFixed(1)+"%",tier:(t&&t.tier&&t.tier.t)||"m",
+       rank:t?umRankTxt(t):"",med:"",sp:null});}}
+  if(out.length<2)return "";
+  return `<div class="kpis">${out.slice(0,3).map(o=>
+    `<div class="kpi hv"${o.med?` data-tip="${escAttr(`<b>${escHtml(o.lab)}</b><br>${escHtml(o.med)}`)}"`:""}>`
+    +`<div class="kpi-role">${escHtml(o.role)} · ${escHtml(o.lab)}</div>`
+    +`<div class="kpi-v"><b class="num" style="color:${TIER_COL[o.tier]||"var(--ink)"}">${escHtml(o.v)}</b>`
+    +`<small>${escHtml(o.rank||"")}</small></div>`
+    +(o.sp?kpiSpark(o.sp):"")+`</div>`).join("")}</div>`;}
+/* KPI 슬롯 안 스파크 — 평시 회색으로 물러나 있다가 슬롯 호버 시 잉크색이 된다 */
+function kpiSpark(a){
+  const w=124,h=26,p=3,n=a.length,mn=Math.min(...a),mx=Math.max(...a);
+  const X=i=>p+i*(w-2*p)/(n-1),Y=v=>h-p-((v-mn)/((mx-mn)||1))*(h-2*p);
+  const d=a.map((v,i)=>(i?" L":"M")+` ${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join("");
+  return `<svg class="kspk" viewBox="0 0 ${w} ${h}" style="width:${w}px;height:${h}px"><path d="${d}" fill="none" stroke-width="1.5" stroke-linejoin="round"/><circle class="ep" cx="${X(n-1).toFixed(1)}" cy="${Y(a[n-1]).toFixed(1)}" r="2.3"/></svg>`;}
 function renderIsleMid(ds,e,mid){if(!mid)return;
+  /* 탭은 둘만 — 큰 그래프 둘(주차별 추이·포지셔닝)이라 자리를 나눠 쓸 수밖에 없다.
+     영상 시청은 좌측 미리보기 아래로, 유저 질은 아래 지표 목록으로 흡수했다(2026-08-07 C3). */
   const tabs=[{k:"trend",lab:"주차별 추이",html:creativeTrendHTML(ds,e)||`<div class="fam-note">주차 데이터가 2주 이상 쌓이면 추이가 표시됩니다.</div>`}];
-  const qh=qualityHTML(ds,e);if(qh)tabs.push({k:"qual",lab:"유저 질",html:qh});
-  const vh=videoRetentionHTML(ds,e);if(vh)tabs.push({k:"video",lab:"영상 시청",html:vh});
   const ph=positioningHTML(ds,e);if(ph)tabs.push({k:"pos",lab:"포지셔닝",html:ph});
   const cur=tabs.find(t=>t.k===ISLE.gtab)||tabs[0];
-  /* 실유저(주간) 실증 블록 — 탭 위 상시 노출(탭 전환과 무관). 데이터 없으면 빈 문자열이라 미렌더 */
-  mid.innerHTML=(peerRankHTML(ds,e)||"")+(umCohortHTML(ds,e)||"")+(gAssetHTML(ds,e)||"")+(tabs.length>1?`<div class="dtog gtabs">${tabs.map(t=>`<button data-gt="${t.k}" class="${t.k===cur.k?"on":""}">${t.lab}</button>`).join("")}</div>`:"")+`<div class="gtab-body">${cur.html}</div>`;
+  /* 위에서부터: 판정(KPI 3슬롯) → 지표(실증·유저 질) → 비교 → 큰 그래프 탭 → 구글 애셋 */
+  mid.innerHTML=(kpiHeroHTML(ds,e)||"")+(umCohortHTML(ds,e,{noLife:1})||"")+(qualityHTML(ds,e)||"")
+    +(peerRankHTML(ds,e)||"")+(gAssetHTML(ds,e)||"")
+    +(tabs.length>1?`<div class="dtog gtabs">${tabs.map(t=>`<button data-gt="${t.k}" class="${t.k===cur.k?"on":""}">${t.lab}</button>`).join("")}</div>`:"")+`<div class="gtab-body">${cur.html}</div>`;
   fitMrows(mid);
   mid.querySelectorAll(".gtabs button").forEach(b=>b.onclick=()=>{ISLE.gtab=b.dataset.gt;renderIsleMid(ds,e,mid);});
   /* 주차별 추이 지표 선택 — 고른 지표는 소재를 옮겨도 유지된다(같은 잣대로 이어 보기) */
@@ -5327,7 +5404,13 @@ function fillIsland(ds,e,inner){const L=ds.L;
     const _res=String(e._res||e._m_res||"").match(/(\d+)\s*[x×]\s*(\d+)/i);
     if(_res)applyIsleAr(inner,+_res[1],+_res[2]);else inner.classList.add("ar-s");}
   const sideMedia=e._isGroup?((gwStatHTML(ds,e)||"")+(groupInfoHTML(groupInfoOf(e._g_adGroupId||e._m_group))||"")):preview; /* 그룹은 정확 소스+보고서 정보가 미디어 자리 */
-  const leftCol=(sideMedia||"")+(_xmh?`<div class="xmedia-wrap">${_xmh}</div>`:"");
+  /* 수명·영상 시청은 미리보기 바로 아래 — 소재를 보면서 "얼마나 오래·어디까지 봤나"를 같이 읽는 자리다.
+     우측 레일에 두면 세로로 긴 소재에서 상세 전체가 화면을 넘긴다(2026-08-07 C3). */
+  const _life=e._isGroup?"":(umCohortHTML(ds,e,{lifeOnly:1})||"");
+  const _vret=e._isGroup?"":(videoRetentionHTML(ds,e)||"");
+  const leftCol=(sideMedia||"")+(_life?`<div class="ir-chart">${_life}</div>`:"")
+    +(_vret?`<div class="ir-chart">${_vret}</div>`:"")
+    +(_xmh?`<div class="xmedia-wrap">${_xmh}</div>`:"");
   /* 좌측 하단 옷핀 — 이 상세를 고정해 다른 소재와 위아래로 나란히 본다 */
   const _pinned=pinIndexOf(e.name,(ds&&ds.media)||"")>=0;
   inner.innerHTML=`<div class="isle-row2${leftCol?"":" nomedia"}">${leftCol?`<div class="ir-media">${leftCol}</div>`:""}<div class="ir-mid"></div></div>`
