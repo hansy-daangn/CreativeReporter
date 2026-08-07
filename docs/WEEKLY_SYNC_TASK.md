@@ -6,8 +6,14 @@
 
 - Claude 데스크톱 앱에 확장 설치: `karrotsuperset.mcpb`, `karrotbigquery.mcpb` (설정 → 확장 → 파일 열기, 첫 사용 시 Okta 로그인)
 - claude.ai 커넥터: **Supabase**, **Slack** 연결(이미 연결돼 있으면 그대로)
-- 예약 작업 프롬프트(매주 월요일 09:30 권장):
+- 예약 작업 프롬프트 — **같은 프롬프트를 여러 시각에 걸어라(재시도 스케줄)**:
   > https://raw.githubusercontent.com/hansy-daangn/CreativeReporter/main/docs/WEEKLY_SYNC_TASK.md 를 읽고 그대로 수행해줘
+
+  권장: **월 09:30 · 12:30 · 16:30 + 화 09:30** (총 4개). 데스크톱 예약 작업은 "2시간 뒤 다시"를
+  스스로 기다릴 수 없으므로, **여러 번 걸어두고 멱등 체크가 알아서 거르게 하는 것**이 올바른 재시도 방식이다.
+  0) 멱등 체크가 채널별로 이미 들어간 것은 건너뛰고 빠진 것(예: 보류된 몰로코)만 채우므로 몇 번을 돌아도 안전하다.
+  콘솔(molocoAD) 적재가 실제로 몇 시에 끝나는지는 DATA_SURVEY_PROMPT.md [1]의 요일별 적재 패턴 조사로
+  확인해, 그 결과에 맞춰 시각을 조정하라.
 
 ## 절대 규칙
 
@@ -25,7 +31,8 @@
 - **멱등 체크**: Supabase(project `newoydegfbnnqujgiips`)에서
   `select channel,count(*) from sr_weekly_creative_stats where week_start='W' and channel in ('Moloco','Meta','Google') group by channel;`
   와 `select count(*) from sr_kv, jsonb_each(v) g where k='gwstat' and g.value ? 'W';`
-  — 넷 다 이미 있으면 "[CR] 이미 최신이에요 ✅ (W주)" DM 후 종료.
+  — 넷 다 이미 있으면 종료. DM("[CR] 이미 최신이에요 ✅ (W주)")은 **그날 첫 실행에서만** 보낸다 —
+  재시도 스케줄로 하루 여러 번 돌 때 같은 알림이 반복되면 소음이다(당일 두 번째 이후 실행은 조용히 종료).
 
 ### 1) 데이터 조회 (Superset 대시보드 2075의 세 차트, 대상 주만)
 - 차트: **[MAU Marketing] 몰로코 크리에이티브별 성과 + 소재 미리보기** / **[MAU Marketing] 메타 광고소재별 성과 V2** / **[MAU Marketing] 구글 광고그룹별 성과 V2**
