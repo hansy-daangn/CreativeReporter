@@ -148,8 +148,9 @@
   .c3 .r-verdict{display:flex;align-items:center;gap:12px;flex:0 0 auto}
   .c3 .r-verdict .n{font-size:34px;font-weight:800;letter-spacing:-.035em;line-height:1}
   .c3 .r-id{min-width:0;flex:1}
-  .c3 .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:16px 0 8px;border-block:1px solid var(--hair)}
-  .c3 .kpi{padding:15px 20px 13px 4px}
+  /* kpis가 레일의 첫 줄 — 위에 선도 여백도 두지 않는다. 아래 경계만으로 지표와 갈린다 */
+  .c3 .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0 0 8px;border-bottom:1px solid var(--hair)}
+  .c3 .kpi{padding:2px 20px 13px 4px}
   .c3 .kpi+.kpi{border-left:1px solid var(--hair);padding-left:20px}
   .c3 .kpi .role{font-size:var(--fs-1);color:var(--faint);font-weight:650}
   .c3 .kpi .kv{display:flex;align-items:baseline;gap:7px;margin:3px 0 5px}
@@ -405,14 +406,19 @@ function lifeSVG(sp,W,H){
   const X=i=>p+i*(W-2*p)/(n-1),Y=v=>H-10-(v/mx)*(H-20);
   let ln="";sp.forEach((v,i)=>{ln+=(i?" L":"M")+` ${X(i).toFixed(1)} ${Y(v).toFixed(1)}`;});
   let g=`<path d="${ln} L ${X(n-1).toFixed(1)} ${H-10} L ${X(0).toFixed(1)} ${H-10} Z" fill="var(--karrot)" fill-opacity="0.13"/><path d="${ln}" fill="none" stroke="var(--karrot)" stroke-width="1.7" stroke-linejoin="round"/>`;
-  const pk=sp.indexOf(Math.max(...sp));
-  g+=`<circle cx="${X(pk)}" cy="${Y(sp[pk])}" r="2.8" fill="var(--karrot)"/>`;
+  /* 크게 늘린 구간 — 직전 주 대비 배수가 가장 큰 한 곳만, 1.5배 이상일 때. 그 선분만 붉게 덧그린다.
+     모든 증가에 표시하면 곡선이 이미 말하는 것을 글자로 반복하는 셈이라 하나만 고른다. */
+  let ri=-1,rx=0;
+  for(let i=1;i<n;i++){if(sp[i-1]>0){const r=sp[i]/sp[i-1];if(r>=1.5&&r>rx){rx=r;ri=i;}}}
+  if(ri>0)g+=`<path d="M ${X(ri-1).toFixed(1)} ${Y(sp[ri-1]).toFixed(1)} L ${X(ri).toFixed(1)} ${Y(sp[ri]).toFixed(1)}" fill="none" stroke="var(--w2)" stroke-width="2.4" stroke-linecap="round"/>`;
+  /* 피크 — 아래로 뾰족한 작은 삼각형. 점보다 방향이 있어 "여기가 꼭대기"가 한눈에 잡힌다 */
+  const pk=sp.indexOf(Math.max(...sp)),px=X(pk),py=Y(sp[pk]);
+  g+=`<path d="M ${(px-4).toFixed(1)} ${(py-11).toFixed(1)} L ${(px+4).toFixed(1)} ${(py-11).toFixed(1)} L ${px.toFixed(1)} ${(py-4).toFixed(1)} Z" fill="var(--w2)"/>`;
   g+=`<circle cx="${X(n-1)}" cy="${Y(sp[n-1])}" r="2.6" fill="${sp[n-1]>0?"#35B979":"var(--faint)"}"/>`;
-  /* 주별 호버 — 넓은 투명 띠를 얹어 정확히 겨누지 않아도 값이 뜨게 한다 */
   const bw=(W-2*p)/(n-1);
   sp.forEach((v,i)=>{
     g+=`<g class="hz"><rect x="${(X(i)-bw/2).toFixed(1)}" y="0" width="${bw.toFixed(1)}" height="${H}" fill="transparent"/>`
-      +`<title>${i+1}주차 · 주간 광고비 ${v.toLocaleString()}백만원${i===pk?" · 피크":""}</title>`
+      +`<title>${i+1}주차 · 주간 광고비 ${v.toLocaleString()}백만원${i===pk?" · 피크":""}${i===ri?` · 직전 주 대비 ×${rx.toFixed(1)}`:""}</title>`
       +`<circle class="hd" cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="3.4" fill="var(--karrot)" opacity="0"/></g>`;});
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto">${g}</svg>`;
 }
