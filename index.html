@@ -295,6 +295,7 @@
   /* 섹션 소제목 — 블록 안 구분 */
   .us-sub{font-size:var(--fs-1);font-weight:700;color:var(--muted);margin:9px 0 3px;padding-top:8px;border-top:1px solid var(--surface-2);display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
   .us-sub em{font-style:normal;font-weight:500;color:var(--faint)}
+  .us-note{grid-column:1/-1;font-size:var(--fs-1);color:var(--faint);margin:4px 0 2px}
   /* viewBox 560 기준. max-width로 위를, min-width로 아래를 막아 배율을 0.84~1에 가둔다 —
      상한이 없으면 넓은 창에서 글자만 커지고, 하한이 없으면 좁은 창에서 절반으로 쪼그라든다 */
   /* min-width는 max-content 그리드 안에서 차트가 쪼그라드는 것을 막는다(코호트 행이 없으면 열이 붕괴한다).
@@ -4171,6 +4172,18 @@ function umCohortHTML(ds,e){
      종전엔 일자 막대에 화살표만 얹어 "몇 배 늘었고 높은 상태를 얼마나 유지했나"가 전혀 안 보였다.
      실제 주간 광고비를 그려 ① 언제 시작해 언제까지 갔는지(가로) ② 얼마나 크게 붙었는지(세로)
      ③ 고소진(매체 상위 25%)을 몇 주나 유지했는지(음영 구간) ④ 피크·최대 증액이 어디였는지를 한 그림에 담는다. */
+  /* ── 실증 없음 안내 — 왜 없는지 화면이 직접 말한다 ──
+     실증(kv)은 외부 배치가 주간으로 넣는 스냅샷이라 ① 라이브 직후엔 아직 안 쌓였고
+     ② 배치 커버리지 밖(과거 주·미백필)이면 없다. 침묵하면 "버그인가?"가 되므로 이유를 밝힌다. */
+  let noUm="";
+  if(!hit&&!tr&&!re&&!sv){
+    const _wa0=weeklyAggOf(ds,e,true);
+    const _n=_wa0.ws.length;
+    const _dsLast=(ds&&ds.liveWeek)||(typeof WEEKS!=="undefined"&&WEEKS.length?WEEKS[WEEKS.length-1]:"");
+    const _young=_n>0&&_n<=2&&(!_dsLast||_wa0.ws[_wa0.ws.length-1]>=_dsLast);
+    noUm=`<div class="us-note">${_young
+      ?`🌱 라이브 ${_n}주차 — 실증(유저 단위) 데이터가 아직 쌓이는 중이에요. 다음 주간 갱신부터 순차 반영됩니다.`
+      :`실증(유저 단위) 데이터 없음 — 주간 실증 배치에 이 소재가 아직 안 잡혔어요(과거 주차는 백필로 채울 수 있어요).`}</div>`;}
   /* ── 수명 — 주간 광고비 곡선 ──
      ⚠️ kv(UMET.lifecycle)에 의존하지 않는다. 수명 곡선의 재료(주차·광고비)는 사이트가 이미 전부 갖고 있고,
      kv는 일부 소재만 커버해 "어떤 소재는 수명이 있고 어떤 소재는 없는" 상태를 만들었다.
@@ -4241,7 +4254,7 @@ function umCohortHTML(ds,e){
   if(hit&&hit.ch==="Moloco"&&hit.news==null&&nmol)hdr.push("신규 없음 정상(재관여 전담)");
   return `<div class="umet-strip">
     <div class="us-h">실유저(주간)<span class="uc-q" data-tip="${escAttr(tip)}" title="유저 단위 실증 — 마우스를 올려 기준 확인">?</span><span class="n">${hdr.map(escHtml).join(" · ")}</span></div>
-    <div class="mrows">${rowsHtml.join("")}${svcHtml}${reengHtml}${lifeHtml}</div>
+    <div class="mrows">${rowsHtml.join("")}${svcHtml}${reengHtml}${noUm}${lifeHtml}</div>
   </div>`;}
 /* ═════ 교차 매체 동일/유사 소재 탐지 ═════
    "이 소재가 다른 매체에선 어떤가"를 보기 위해, 신호 강한 순서로 매칭한다:
