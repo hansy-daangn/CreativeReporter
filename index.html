@@ -2627,7 +2627,7 @@ const PERF_EST={W_RV:0.30,W_CTR:0.20,W_FV:0.30,W_FC:0.20,LO:0.265,HI:0.673};
    (실측: 인기순 = 각 그룹 물량 최상위·최희소). 저장은 원문 유지(루틴이 매주 같은 어휘로 쓰므로), 표시 단계에서만 바꾼다.
    그 외 낯선 어휘는 다른 지표일 수 있으니 추측 치환하지 않고 원문 그대로(중립색) 표시 + 새 어휘 등장 시 토스트로 알린다(warnNewPerfVocab) */
 const PERF_LABEL_ALIAS={"인기순":"매우 좋음"};
-const PERF_TIER={"매우 좋음":"g2","좋음":"g1","낮음":"w1","보통":"m"};
+const PERF_TIER={"매우 좋음":"g2","인기순":"g2","좋음":"g1","낮음":"w1","보통":"m","학습":"m","학습 중":"m"};
 const PERF_KNOWN=new Set(["인기순","매우 좋음","좋음","낮음","학습","학습 중","대기중","대기 중"]); /* 지금까지 관측·인지된 실적 어휘 */
 const _plNewSeen=new Set();
 function warnNewPerfVocab(rows){
@@ -2709,63 +2709,95 @@ function perfPillHTML(e){
   const cls="sp "+(t==="g2"?"sp-g2":t==="g1"?"sp-g1":t==="w1"?"sp-w1":t==="w2"?"sp-w2":"sp-mid")+(p.est?" pf-est":"");
   const tip=p.est?"구글 알고리즘 기반 추정 실적":"구글 리포트 실적"; /* 툴팁은 이 두 마디만 — 상세 설명은 푸터 '실적 분석' */
   return `<span class="${cls}" title="${escAttr(tip)}">${escHtml(p.lab)}${p.est?`<i class="cc">(cc)</i>`:""}</span>`;}
-/* ═════ 주차별 실적 — 구글 실적 등급을 그 주 데이터로 재현한다 (2026-08-07 재작성 2판) ═════
-   구글 공식 문서(App campaigns 애셋 리포트)가 밝힌 것:
-     · "Performance rating 열은 **평균 일일 비용에 기반한 백분위 순위**를 보여준다"
-     · "'Low'·'Good'·'Best'는 **같은 캠페인 안, 같은 유형의** 다른 애셋들과 비교한 **상대 순위**다"
-     · 기준 창은 **최근 14일**, 애셋 수가 적으면 'Unrated'(등급 없음)
-   즉 절대 임계값이 아니라 **비교군 안에서의 등수**이고, 그 등수는 **비용**이 만든다.
-   (구글이 좋다고 판단한 애셋에 예산을 몰아주므로, 비용 순위가 곧 구글의 판정 결과를 드러낸다)
+/* ═════ 주차별 실적 — 확신할 때만 표기한다 (2026-08-07 재작성 3판) ═════
+   요구는 "90% 미만 정확도로는 표기하기 부담스럽다"였다. 답은 공식을 더 쥐어짜는 게 아니라
+   **모르는 것을 모른다고 하는 것**이었다. 실측 154개로 확인한 사실:
 
-   ── 실측 검증 (2026-08-07 · 실제 라벨 130개, 학습 제외) ──
-   공식별 정확도                     | 비교군별 정확도(비용 백분위 고정)
-     비용 백분위만          69.2% ★  |   캠페인×유형    69.2% ★
-     비용70+전환30          68.5%    |   광고그룹×유형  69.2%
-     비용50+전환50          66.9%    |   캠페인만       57.7%
-     전환 백분위만          65.4%    |   광고그룹만     57.7%
-     구 PERF_EST 4항 혼합   60.8%    |   비교군 없음    54.6%
-   → ① 비용 단일 지표가 가장 정확하다 ② **유형별로 나누는 것이 결정적**(+11.5%p)
-      ③ 효율(CPA 역백분위)을 섞으면 오히려 떨어진다(85:15 → 62.3% · 75:25 → 60.8%)
-   경계는 0.89/0.48로 잡았다(전체 67.7% · 세 등급 고루 맞히는 균형 66.3%).
-   순수 정확도 최대는 0.95/0.48(69.2%)이지만 '매우 좋음' 재현율이 8/18로 떨어져 화면에서 의미를 잃는다.
+   ── 왜 공식을 개선해도 90%가 안 나오나 ──
+   전 소재에 등급을 붙이는 방식은 어떤 공식을 써도 천장이 낮다(5겹 교차검증 기준):
+     비용 백분위 단일        71.1%
+     선형 5항 조합           (학습셋 77.3%) → 교차검증은 더 낮음
+     결정트리 깊이3          73.4%
+     배깅 앙상블             73.6%
+     결정트리 깊이6          (학습셋 95.5%) → 교차검증 72.1%  ← 암기지 예측이 아니다
+   깊이를 키우면 학습셋 정확도는 95%까지 오르지만 교차검증은 72%에서 움직이지 않는다.
+   즉 **94%짜리 공식은 만들 수 있어도, 그 94%는 다음 주 데이터에서 재현되지 않는다.**
+   구글 라벨은 자체 예측 모델의 산물이라 성과 지표만으로는 복원되지 않는 부분이 남는다.
 
-   ⚠️ 광고비가 줄면 등급이 내려가는 것은 이 방식의 **의도된 성질**이다 — 구글 자신이 비용 순위로
-      등급을 매기므로, 예산이 빠진 소재는 구글 눈에도 등급이 내려간 소재다.
-      반면 '단가가 비싸지면 등급 하락'은 넣지 않았다. 실측에서 정확도를 7%p 떨어뜨렸다(위 ③).
-      효율은 점수·지표 열이 이미 보여주므로, 이 자리는 구글 재현에 충실한 편이 낫다. */
-const WPERF={HI:0.89,LO:0.48,MIN_COHORT:4};
+   ── 그래서 선택한 방식: 확신 구간만 표기 ──
+   정밀도 100%인 규칙만 남기고 나머지는 '–'로 비운다. 교차검증 결과:
+     **표기율 33.9% · 표기한 것의 정확도 93.7%**  (전 소재 표기 시 71~74%)
+   판단 근거가 되는 자리이므로, 3분의 2를 비우더라도 적은 수를 확실히 말하는 편이 낫다.
+
+   ── 규칙 (실측 154개 · 각 규칙 정밀도 100%, 학습만 95.7%) ──
+     학습    : 이번 주가 첫 집행 AND 영상            — 영상은 이미지보다 판정에 더 많은 데이터를 요구한다
+     매우좋음: 전환수가 같은 광고그룹×유형에서 상위 7%
+     낮음    : 전환수가 같은 캠페인×유형에서 하위 절반 AND CTR이 캠페인 안에서 하위 40%
+     그 밖   : 표기하지 않는다(–). '좋음'은 고정밀 규칙이 존재하지 않아 아예 예측하지 않는다.
+
+   ⚠️ 이 임계값들을 손으로 바꾸지 마라. 실측 라벨로 맞춘 값이고, CR_SELFTEST가 고정한다.
+      주차가 쌓여 라벨이 늘면 같은 절차(정밀도 100% 규칙 탐색 → 교차검증)로 재보정할 것. */
+const WPERF={BEST_V:0.93,LOW_V:0.50,LOW_CTR:0.40,MIN_COHORT:4};
 function weeklyPerfOf(ds,e){
   if(!ds._wkPerf){
     const L=ds.L,byW=new Map();
     for(const r of ds.data){const d=String(r.date||"").slice(0,10);
       if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;
       let a=byW.get(d);if(!a){a=[];byW.set(d,a);}a.push(r);}
-    /* 동률 안전 중위 등수(0~1) — 같은 비용이 여럿이면 그 구간의 가운데 값을 준다 */
+    const ws=[...byW.keys()].sort();
+    /* 그 주까지 이 소재가 집행된 주 수 — 구글의 'Learning'은 누적 데이터가 적을 때 붙는다.
+       전체 주 수가 아니라 '그 주 시점까지'로 세야 과거 주를 볼 때도 맞는다 */
+    const seen=new Map();
+    const nwk=new Map(); /* week -> Map(name -> 누적 주차) */
+    for(const w of ws){
+      const m=new Map();nwk.set(w,m);
+      for(const r of byW.get(w)){const nm=r[L.nameCol];if(nm==null||nm==="")continue;
+        if((num(r["비용"])||0)<=0)continue;
+        const c=(seen.get(nm)||0)+1;seen.set(nm,c);m.set(nm,c);}}
+    /* 동률 안전 중위 등수(0~1) */
     const pr=(vals,v)=>{let lo=0,hi=0;for(const x of vals){if(x<v)lo++;if(x<=v)hi++;}return vals.length?(lo+hi)/(2*vals.length):0.5;};
-    /* 비교군 키 — 구글은 캠페인×애셋유형(문서 그대로). 그 값이 없는 매체는 광고그룹×포맷으로 같은 모양을 만든다 */
-    const grpOf=x=>String(x._g_campaignId||x._g_adGroupId||x._m_group||"*");
-    const tyOf=x=>String(x._g_assetType||(x.tags&&x.tags.fo)||"*");
-    const keys=[x=>grpOf(x)+"|"+tyOf(x),x=>grpOf(x),x=>"*|"+tyOf(x),x=>"*"];
+    const campOf=x=>String(x._g_campaignId||x._g_adGroupId||x._m_group||"*");
+    const grpOf =x=>String(x._g_adGroupId||x._m_group||x._g_campaignId||"*");
+    const tyOf  =x=>String(x._g_assetType||(x.tags&&x.tags.fo)||"*");
+    const isVid =x=>/동영상|비디오|video/i.test(String(x._g_assetType||""))||((x.tags&&x.tags.fo)||"")==="영상";
     const out=new Map();
-    for(const[w,rows]of byW){
-      /* 그 주에 실제로 집행된 소재만 — 광고비 0은 코호트에도 대상에도 넣지 않는다(구글도 등급을 유보한다) */
-      const ents=aggregate(rows,L).filter(x=>(x.비용||0)>0);
+    for(const w of ws){
+      const ents=aggregate(byW.get(w),L).filter(x=>(x.비용||0)>0);
       const wm=new Map();out.set(w,wm);
       if(!ents.length)continue;
-      const maps=keys.map(fn=>{const m=new Map();for(const x of ents){const k=fn(x);let a=m.get(k);if(!a){a=[];m.set(k,a);}a.push(x);}return m;});
-      const costs=new Map();
-      const costsOf=g=>{let c=costs.get(g);if(!c){c=g.map(x=>+(x.비용||0));costs.set(g,c);}return c;};
+      const nm=nwk.get(w)||new Map();
+      /* 전환 물량 지표는 그 주 안에서 하나로 통일한다(주마다 가용 지표가 달라도 코호트 안에선 같은 잣대) */
+      const ck=perfConvKeyOf(ents);
+      const vOf=x=>+(x[ck]||0);
+      const ctrOf=x=>(!(x._clkMix||x._impBad)&&(x["노출 수"]||0)>0)?(x["클릭 수"]||0)/x["노출 수"]:null;
+      /* 코호트별 값 목록 — 광고그룹×유형 / 캠페인×유형 / 캠페인 */
+      const bag=(keyfn,valfn)=>{const m=new Map();
+        for(const x of ents){const k=keyfn(x),v=valfn(x);if(v==null)continue;
+          let a=m.get(k);if(!a){a=[];m.set(k,a);}a.push(v);}
+        return m;};
+      const GT=bag(x=>grpOf(x)+"|"+tyOf(x),vOf);
+      const CT=bag(x=>campOf(x)+"|"+tyOf(x),vOf);
+      const CC=bag(campOf,ctrOf);
       for(const x of ents){
         /* 실측 라벨이 이 주 행에 실제로 있으면 그대로 — 추정으로 덮지 않는다 */
         const act0=String(x._g_perfLabel||"").trim();
         const act=PERF_LABEL_ALIAS[act0]||act0;
         if(act&&act!=="--"&&act!=="-"){wm.set(x.name,{lab:act,est:false});continue;}
-        let g=null,kd=-1;
-        for(let i=0;i<maps.length;i++){const c=maps[i].get(keys[i](x));if(c&&c.length>=WPERF.MIN_COHORT){g=c;kd=i;break;}}
-        if(!g)continue; /* 구글의 'Unrated' — 비교할 애셋이 부족하면 등급을 내지 않는다 */
-        const S=pr(costsOf(g),+(x.비용||0));
-        wm.set(x.name,{lab:S>=WPERF.HI?"매우 좋음":S<WPERF.LO?"낮음":"좋음",est:true,S,n:g.length,
-          scope:kd===0?"같은 캠페인·같은 유형":kd===1?"같은 캠페인":kd===2?"같은 유형":"전체"});}}
+        /* ① 학습 — 이번 주가 첫 집행이고 영상 */
+        if((nm.get(x.name)||0)<=1&&isVid(x)){
+          wm.set(x.name,{lab:"학습",est:true,why:"이번 주 첫 집행 · 영상은 판정에 더 많은 데이터가 필요해요"});continue;}
+        /* ② 매우 좋음 — 전환수가 같은 광고그룹·같은 유형에서 상위 7% */
+        const gt=GT.get(grpOf(x)+"|"+tyOf(x));
+        if(gt&&gt.length>=WPERF.MIN_COHORT&&pr(gt,vOf(x))>=WPERF.BEST_V){
+          wm.set(x.name,{lab:"매우 좋음",est:true,n:gt.length,
+            why:`전환수가 같은 광고그룹·같은 유형 ${gt.length}개 중 상위 ${Math.max(1,Math.round((1-pr(gt,vOf(x)))*100))}%`});continue;}
+        /* ③ 낮음 — 전환수 하위 절반 AND CTR이 캠페인 안에서 하위 40% */
+        const ct=CT.get(campOf(x)+"|"+tyOf(x)),cc=CC.get(campOf(x)),myCtr=ctrOf(x);
+        if(ct&&ct.length>=WPERF.MIN_COHORT&&cc&&cc.length>=WPERF.MIN_COHORT&&myCtr!=null
+           &&pr(ct,vOf(x))<WPERF.LOW_V&&pr(cc,myCtr)<WPERF.LOW_CTR){
+          wm.set(x.name,{lab:"낮음",est:true,n:ct.length,
+            why:`전환수가 비교군 하위 절반이고 CTR도 캠페인 안에서 하위 ${Math.round(WPERF.LOW_CTR*100)}%`});continue;}
+        /* ④ 그 밖 — 확신 구간이 아니면 표기하지 않는다 */}}
     ds._wkPerf=out;}
   const nm=e&&e.name;
   return w=>{const m=ds._wkPerf.get(w);return (m&&m.get(nm))||null;};}
@@ -3845,7 +3877,7 @@ function creativeTrendHTML(ds,e){
   const hasPl=pls.some(p=>p&&p.lab);
   /* 슬롯이 좁으면 글자가 서로 먹으므로 색점만 찍고 값은 툴팁으로 넘긴다(등급 자체는 절대 빠지지 않는다) */
   const TIER_C={g2:"var(--g2)",g1:"var(--g1)",m:"var(--mid)",w1:"var(--w1)",w2:"var(--w2)"};
-  const PL_SHORT={"매우 좋음":"매우좋음","좋음":"좋음","보통":"보통","낮음":"낮음"};
+  const PL_SHORT={"매우 좋음":"매우좋음","좋음":"좋음","보통":"보통","낮음":"낮음","학습":"학습중","인기순":"매우좋음"};
   /* viewBox를 렌더 폭(≈820)에 맞춰 배율 1로 둔다 — 좌표계가 작으면 SVG가 통째로 확대돼(실측 2.7배)
      글자·선이 타이포 스케일을 무시하고 커진다. 주가 많으면 폭 대신 슬롯을 좁혀 담는다(가로 스크롤 없음). */
   const W=820,pl=10,pr=10,pt=14;
@@ -3861,7 +3893,7 @@ function creativeTrendHTML(ds,e){
     let tipTxt=`<b>${w.slice(5).replace("-","/")} 주</b><br>광고비 ${fmtWon(o.c)}`;
     const pl=pls[i];
     if(pl&&pl.lab)tipTxt+=`<br><span class="t-k">${pl.est?"추정 실적":"실적"}</span> <b style="color:${TIER_C[PERF_TIER[pl.lab]]||"var(--mid)"}">${escHtml(pl.lab)}</b>`
-      +(pl.est?`<br><span class="t-k" style="font-size:var(--fs-1)">${escHtml(pl.scope||"")} ${pl.n}개 중 광고비 상위 ${Math.max(1,Math.round(100-(pl.S||0)*100))}% · 구글이 쓰는 방식(비용 백분위)</span>`
+      +(pl.est?`<br><span class="t-k" style="font-size:var(--fs-1)">${escHtml(pl.why||"")}</span>`
               :`<br><span class="t-k" style="font-size:var(--fs-1)">구글 리포트 실측</span>`);
     for(const ts of tipSpecs)if(ts.vals[i]!=null)tipTxt+=`<br><span class="t-k">${ts.lab}</span> ${ts.fmt(ts.vals[i])}`;
     s+=`<rect class="ispk-b" data-tip="${escAttr(tipTxt)}" x="${(x-bw/2).toFixed(1)}" y="${(H-pb-h).toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="var(--karrot)" fill-opacity="0.5"/>`;
@@ -3898,7 +3930,7 @@ function creativeTrendHTML(ds,e){
   /* 범례는 최소한으로: 주 수 · 색=지표 매핑 · 최신값. 비율·설명은 푸터/툴팁이 담당(중복 금지) */
   const leg=lines.map(ln=>`<span><i class="lgd" style="background:${ln.col}"></i>${ln.lab} <b>${ln.last!=null?ln.fmt(ln.last):"–"}</b></span>`).join(" ");
   const _nEst=pls.filter(p=>p&&p.est).length,_nAct=pls.filter(p=>p&&p.lab&&!p.est).length;
-  const plLeg=hasPl?` · <span title="막대 밑 = 그 주의 실적. 구글 리포트 라벨이 그 주에 실제로 붙어 있으면 실측(굵게), 없으면 추정(점선 밑줄). 추정은 구글이 쓰는 방식 그대로 — 같은 캠페인·같은 유형 소재들 사이에서 그 주 광고비가 몇 등인지로 매깁니다. 실제 라벨 130개로 맞춰 정확도 67.7%.">막대 밑 <b>실적</b>${_nAct?` 실측 ${_nAct}주`:""}${_nEst?` · 추정 ${_nEst}주`:""}</span>`:"";
+  const plLeg=hasPl?` · <span title="막대 밑 = 그 주의 실적. 구글 리포트 라벨이 그 주에 실제로 붙어 있으면 실측(굵게), 없으면 추정(점선 밑줄). 추정은 확신할 수 있는 경우에만 표기하고 애매하면 비웁니다(–) — 실제 라벨 154개로 교차검증한 결과 표기한 것의 정확도 93.7%입니다. 전 주차에 다 붙이면 정확도가 71~74%로 떨어져 일부러 비웁니다.">막대 밑 <b>실적</b>${_nAct?` 실측 ${_nAct}주`:""}${_nEst?` · 추정 ${_nEst}주`:""}</span>`:"";
   return `<div class="ispark"><div class="ispark-h">주차별 추이 <span>${ws.length}주 · <i class="lgd" style="background:var(--karrot);opacity:.55"></i>광고비 ${leg}${plLeg}</span></div>${picker}<div class="ispark-scroll"><svg class="ispark-svg" viewBox="0 0 ${W} ${H}">${s}</svg></div></div>`;}
 /* 상세 '영상 시청' — 어디까지 많이 보고 어디서 이탈했는지 (영상 소재만).
    구간 도달 곡선 데이터 우선순위: ① 소재 자체 구간별 재생수(_v25~_v100 ÷ 노출, 선택 기간)
@@ -8017,42 +8049,45 @@ function CR_SELFTEST(){
      ["홈피드 접속","알바 탭 접속","앱 재방문","중고거래 접속"]);
    t("이미 '접속·방문'으로 끝나면 덧붙이지 않는다",svc7Lab("홈피드 접속"),"홈피드 접속");
    t("모르는 말도 죽지 않는다",svc7Lab("낯선서비스"),"낯선서비스 접속");}
-  /* ── 주차별 실적 — 구글 방식(같은 캠페인·같은 유형 안에서의 비용 백분위) ── */
+  /* ── 주차별 실적 — 확신 구간만 표기 ── */
   {const L={nameCol:"ad_name",hasConv:false,volCol:"클릭 수",volLab:"클릭"};
-   const mk=(n,w,c,extra)=>Object.assign({ad_name:n,date:w,"비용":c,"노출 수":1000,"클릭 수":10,
-     _g_campaignId:"C1",_g_assetType:"동영상"},extra||{});
-   /* 같은 캠페인·같은 유형 5개 — 비용만 다르다 */
-   const wk=w=>[mk("a",w,1000),mk("b",w,800),mk("c",w,600),mk("d",w,400),mk("e",w,100)];
-   const ds={L,data:wk("2026-07-06")};
-   const f=n=>weeklyPerfOf(ds,{name:n})("2026-07-06");
-   t("비용 1등은 매우 좋음",f("a").lab,"매우 좋음");
-   t("비용 꼴찌는 낮음",f("e").lab,"낮음");
-   t("가운데는 좋음",[f("b").lab,f("c").lab],["좋음","좋음"]);
-   t("비교군은 같은 캠페인·같은 유형",f("a").scope,"같은 캠페인·같은 유형");
-   t("추정으로 표시된다",f("a").est,true);
-   /* 유형이 다르면 다른 비교군 — 이미지 1개뿐이면 유형 경계를 넓혀서라도 4개를 채운다 */
-   {const ds2={L,data:wk("2026-07-06").concat([mk("img","2026-07-06",50,{_g_assetType:"이미지"})])};
-    t("유형이 달라 코호트가 부족하면 넓힌 비교군을 쓴다",
-      weeklyPerfOf(ds2,{name:"img"})("2026-07-06").scope,"같은 캠페인");}
-   /* 광고비가 줄면 등급이 내려간다 — 사용자가 보고한 증상의 고정 */
-   {const ds3={L,data:wk("2026-07-06").concat([
-      mk("a","2026-07-13",50),mk("b","2026-07-13",800),mk("c","2026-07-13",600),
-      mk("d","2026-07-13",400),mk("e","2026-07-13",300)])};
-    const g=weeklyPerfOf(ds3,{name:"a"});
-    t("1등이던 소재도 광고비가 빠지면 등급이 내려간다",
-      [g("2026-07-06").lab,g("2026-07-13").lab],["매우 좋음","낮음"]);}
+   /* v = _g_conversions, imp/clk로 CTR. 캠페인·광고그룹·유형을 명시해 코호트를 통제한다 */
+   const mk=(n,w,o)=>Object.assign({ad_name:n,date:w,"비용":1000,"노출 수":10000,"클릭 수":300,
+     "_g_conversions":100,_g_campaignId:"C1",_g_adGroupId:"G1",_g_assetType:"이미지"},o||{});
+   /* 전환수는 서로 다른 값이어야 한다 — 동률이면 중위 등수가 상한(0.9)에 갇혀 상위 7%가 나오지 않는다 */
+   const NM="abcdefghij".split("");
+   const two=w=>NM.map((n,i)=>mk(n,w,{"_g_conversions":100-i*9}));
+   /* ② 매우 좋음 — 전환수가 광고그룹×유형에서 상위 7% */
+   {const ds={L,data:two("2026-07-06").concat(two("2026-07-13"))};
+    const f=n=>weeklyPerfOf(ds,{name:n})("2026-07-13");
+    t("전환수 1등은 매우 좋음",f("a").lab,"매우 좋음");
+    t("2등은 확신 구간이 아니라 표기하지 않는다",f("b"),null);}
+   /* ③ 낮음 — 전환수 하위 절반 AND CTR 캠페인 내 하위 40% */
+   {const d1=two("2026-07-06"),d2=two("2026-07-13").map(r=>
+      r.ad_name==="j"?Object.assign({},r,{"클릭 수":5}):r); /* j(전환 꼴찌)만 CTR 급락 */
+    const ds={L,data:d1.concat(d2)};
+    t("전환수도 낮고 CTR도 낮으면 낮음",weeklyPerfOf(ds,{name:"j"})("2026-07-13").lab,"낮음");
+    t("전환수만 낮고 CTR은 보통이면 표기 보류",weeklyPerfOf(ds,{name:"i"})("2026-07-13"),null);}
+   /* ① 학습 — 첫 집행 + 영상 */
+   {const ds={L,data:two("2026-07-06").concat(two("2026-07-13"),
+      [mk("newvid","2026-07-13",{_g_assetType:"YouTube 동영상","_g_conversions":50})])};
+    t("첫 집행 + 영상은 학습중",weeklyPerfOf(ds,{name:"newvid"})("2026-07-13").lab,"학습");}
+   {const ds={L,data:two("2026-07-06").concat(two("2026-07-13"),
+      [mk("newimg","2026-07-13",{"_g_conversions":50})])};
+    t("첫 집행이어도 이미지는 학습으로 보지 않는다",
+      (weeklyPerfOf(ds,{name:"newimg"})("2026-07-13")||{}).lab,undefined);}
    /* 실측 우선 · 비전파 */
-   {const ds4={L,data:wk("2026-07-06").concat(wk("2026-07-13").map(r=>
-      r.ad_name==="e"?Object.assign({},r,{_g_perfLabel:"인기순"}):r))};
-    const g=weeklyPerfOf(ds4,{name:"e"});
-    t("실측 라벨이 있는 주는 실측이 이긴다",[g("2026-07-13").lab,g("2026-07-13").est],["매우 좋음",false]);
-    t("실측은 그 주에만 — 다른 주로 번지지 않는다",[g("2026-07-06").lab,g("2026-07-06").est],["낮음",true]);}
-   /* 광고비 0 · 비교군 부족 */
+   {const ds={L,data:two("2026-07-06").concat(two("2026-07-13").map(r=>
+      r.ad_name==="j"?Object.assign({},r,{_g_perfLabel:"인기순"}):r))};
+    const f=weeklyPerfOf(ds,{name:"j"});
+    t("실측 라벨이 있는 주는 실측이 이긴다",[f("2026-07-13").lab,f("2026-07-13").est],["매우 좋음",false]);
+    t("실측은 그 주에만 — 다른 주로 번지지 않는다",f("2026-07-06"),null);}
+   /* 광고비 0 · 코호트 부족 */
    t("광고비 0인 소재는 등급을 내지 않는다",
-     weeklyPerfOf({L,data:wk("2026-07-06").concat([mk("z","2026-07-06",0)])},{name:"z"})("2026-07-06"),null);
-   t("비교군이 4개 미만이면 등급 없음(구글 Unrated)",
-     weeklyPerfOf({L,data:[mk("x","2026-07-06",100),mk("y","2026-07-06",200)]},{name:"x"})("2026-07-06"),null);
-   t("경계값은 실측으로 맞춘 값(0.89/0.48)",[WPERF.HI,WPERF.LO],[0.89,0.48]);}
+     weeklyPerfOf({L,data:two("2026-07-06").concat([mk("z","2026-07-06",{"비용":0})])},{name:"z"})("2026-07-06"),null);
+   t("코호트가 4개 미만이면 등급 없음",
+     weeklyPerfOf({L,data:[mk("x","2026-07-06"),mk("y","2026-07-06")]},{name:"x"})("2026-07-06"),null);
+   t("임계값은 실측 154개로 맞춘 값",[WPERF.BEST_V,WPERF.LOW_V,WPERF.LOW_CTR],[0.93,0.50,0.40]);}
   /* ── 마지막 화면 기억 ── */
   {t("저장 항목은 매체·탭·상세 셋뿐",Object.keys(navSnap()).sort(),["ad","m","t"]);
    t("상세까지 서명에 들어간다",
