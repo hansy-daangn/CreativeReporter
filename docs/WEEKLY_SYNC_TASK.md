@@ -15,6 +15,7 @@
 2. **검증 불일치 시 기록하지 않는다** — 조회 합계와 기록 예정 합계가 다르면 중단하고 실패 알림.
 3. **재실행은 언제나 안전** — 저장 규칙이 중복을 막아준다(아래). 같은 주를 두 번 돌려도 부작용 없음.
 4. 마지막에 **반드시 Slack DM 알림**(아래 포맷)을 보낸다 — 성공이든 실패든.
+5. **`0`은 '없음'이 아니다.** 어떤 지표든 값을 못 받았으면 **그 키를 아예 넣지 마라.** 0을 채우면 "0이었다"는 거짓 사실이 기록돼 CTR·CPM이 0이 되거나 분모가 사라진다. 사이트는 키가 없으면 '데이터 없음'으로 안전하게 처리하지만, 0은 참값으로 믿는다.
 
 ## 수행 절차
 
@@ -31,6 +32,17 @@
 - 1순위: superset MCP로 각 차트의 데이터를 주(week)=W 필터로 조회.
 - 2순위(차트 데이터 조회가 안 되면): superset MCP로 각 차트의 SQL을 얻어 bigquery MCP `execute_sql`로 W 조건을 걸어 실행.
 - 컬럼은 수동 CSV와 동일해야 한다(몰로코: `date,ad_name,creative_type,creative_preview,…지표`, 메타: `date,ad_name,…어트리뷰션/활성/신규+재활성 지표`, 구글: `date,adset_name,비용,노출 수,CPM,클릭 수,CPC,어트리뷰션 수,eCPI,활성 유저 수,활성 유저 eCPA,신규+재활성 유저 수,신규+재활성 유저 eCPA`). 다르면 중단·실패 알림(컬럼 목록 포함).
+
+#### ⚠️ 몰로코 노출 수는 AppsFlyer가 아니라 몰로코 콘솔에서 가져와야 한다
+
+**원칙(2026-07 확정): 몰로코 노출·VTR은 콘솔(`molocoAD_daily_metrics`), 비용·클릭·기여는 AppsFlyer(`adset_report`). 혼용 금지.**
+
+`adset_report`에는 노출 컬럼이 있지만 **값이 항상 0**이다. 이걸 그대로 쓰면 `노출 수 = 0`이 기록되고, 클릭은 정상이라 **클릭 > 노출**이라는 물리적으로 불가능한 행이 만들어진다(2026-07-27 실측: 146행 전부, 클릭 779,895 · 노출 0 · 광고비 3,527만원).
+
+- 몰로코 차트가 `adset_report`만 준다면 **`molocoAD_daily_metrics`를 조인해 노출을 채워라.**
+- 조인이 불가능하면 **`노출 수` 키를 아예 넣지 마라.** `0`으로 채우지 말 것 — 아래 '절대 규칙 5' 참고.
+
+> 이 사고의 전말: 46주(2025-09-08~2026-07-20)는 사람이 몰로코 콘솔 내보내기로 올려 노출이 정상이었고, 자동화 첫 주(2026-07-27)에 소스가 Superset 차트로 바뀌면서 노출만 0이 됐다. **같은 실행의 구글 154행·메타 19행은 노출이 정상**이라 자동화 전체 문제가 아니라 몰로코 소스 문제임이 확정된다.
 
 ### 2) 기록 (Supabase MCP)
 - **몰로코/메타** → `sr_weekly_creative_stats`에 행 단위 INSERT. 규칙(서버 cr_save와 동일):
@@ -55,13 +67,48 @@
   - 합산 후 비용 1500 미만 제외 · `on conflict (channel, week_start, ad_name) do nothing` · `uploaded_by='auto-weekly'`.
 
 ### 3) 검증
-- 기록 후 재조회해 대상 주의 (몰로코 행수·비용합), (메타 행수·비용합), (gwstat 그룹수·비용합)이 1)에서 조회한 원본 합계와 일치(±1원, 1500 미만 제외분 감안)하는지 확인.
+
+**(a) 합계 대조** — 기록 후 재조회해 대상 주의 (몰로코 행수·비용합), (메타 행수·비용합), (gwstat 그룹수·비용합)이 1)에서 조회한 원본 합계와 일치(±1원, 1500 미만 제외분 감안)하는지 확인.
+
+**(b) 지표 온전성 검사 (필수 · 2026-08-06 추가)** — 합계 대조만으로는 **광고비 말고 다른 지표가 통째로 빠져도 통과한다**. 실제로 몰로코 노출이 전부 0이 된 주가 행수·비용합 검증을 그대로 통과했다. 아래를 Supabase에서 실행해 **한 줄이라도 나오면 기록을 되돌리고(해당 키 삭제) 부분 완료 알림**을 보낼 것.
+
+```sql
+-- 대상 주 W. 결과가 0행이어야 정상.
+select channel, '노출 없음' issue, count(*) n
+from sr_weekly_creative_stats
+where week_start='W' and (payload->>'비용')::numeric>0
+  and (not payload ? '노출 수' or (payload->>'노출 수')::numeric=0)
+group by 1
+union all
+select channel, '클릭>노출(물리적 불가)', count(*)
+from sr_weekly_creative_stats
+where week_start='W' and payload ? '노출 수'
+  and (payload->>'클릭 수')::numeric > (payload->>'노출 수')::numeric
+group by 1
+union all
+select channel, '직전 주 대비 노출 90% 이상 급감', count(*)
+from sr_weekly_creative_stats t
+where week_start='W' and payload ? '노출 수'
+  and (select sum((payload->>'노출 수')::numeric) from sr_weekly_creative_stats p
+       where p.channel=t.channel and p.week_start=(date 'W' - 7)) > 0
+  and (select sum((payload->>'노출 수')::numeric) from sr_weekly_creative_stats c
+       where c.channel=t.channel and c.week_start='W')
+      < 0.1 * (select sum((payload->>'노출 수')::numeric) from sr_weekly_creative_stats p
+       where p.channel=t.channel and p.week_start=(date 'W' - 7))
+group by 1;
+```
+
+**(c) 필수 키 보유율** — 채널별로 `비용·클릭 수·노출 수`(메타·몰로코는 `어트리뷰션 수`도)가 **99% 이상의 행에 존재**해야 한다. 미달이면 그 지표 이름을 넣어 부분 완료 알림.
 
 ### 4) Slack DM 알림 (본인에게)
 - 성공: `[CR] 수퍼셋 최신화 완료! ✅ {M/D}주 · 몰로코 +N행 · 메타 +M행 · 구글그룹 K개 (중복 스킵 S)`
 - 이미 최신: `[CR] 이미 최신이에요 ✅ ({M/D}주) — 할 일 없음`
 - 실패: `[CR] 수퍼셋 최신화 실패 ❌ — 다시 실행해 주세요: {한 줄 사유}`
 - 부분 성공(일부 소스만 기록됨): `[CR] 수퍼셋 최신화 부분 완료 ⚠️ — 성공: {…} / 실패: {…} · 다시 실행하면 빠진 것만 채워져요`
+- **지표 누락(3-b/3-c 위반)**: `[CR] 지표 누락 ⚠️ {M/D}주 {채널} {지표명} — 0으로 채우지 않고 키를 비웠어요. 소스 확인 필요: {한 줄 사유}`
+
+> ⚠️ 재적재 주의: 저장이 `on conflict do nothing`이라 **이미 들어간 주는 다시 돌려도 갱신되지 않는다.** 소스를 고친 뒤 값을 채우려면 그 (채널, 주) 행을 지우고 다시 넣어야 한다.
+> 예: `delete from sr_weekly_creative_stats where channel='Moloco' and week_start='2026-07-27';`
 
 ## 최초 1회 검증(드라이런) — 사람이 직접 붙여넣기
 
