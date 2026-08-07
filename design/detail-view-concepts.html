@@ -68,7 +68,7 @@
   .sp-mid{background:var(--mid-f);color:var(--mid)} .sp-w1{background:var(--w1-f);color:var(--w1)} .sp-w2{background:var(--w2-f);color:var(--w2)}
   .livedot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--g1);flex:0 0 auto}
   .q{display:inline-grid;place-items:center;width:13px;height:13px;border-radius:50%;background:var(--surface-3);color:var(--faint);font-size:9px;font-weight:800;cursor:help;flex:0 0 auto}
-  .microcap{font-size:var(--fs-1);font-weight:750;letter-spacing:.055em;text-transform:uppercase;color:var(--faint);display:flex;align-items:center;gap:6px}
+  .microcap{font-size:var(--fs-1);font-weight:750;letter-spacing:.02em;color:var(--faint);display:flex;align-items:center;gap:6px}
   .microcap em{font-style:normal;font-weight:550;letter-spacing:0;text-transform:none;color:var(--faint)}
   .ghostbtn{display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 10px;border-radius:999px;background:transparent;color:var(--muted);font-size:var(--fs-2);font-weight:650;transition:.12s}
   .ghostbtn:hover{background:var(--surface-2);color:var(--ink)}
@@ -148,13 +148,6 @@
   /* r-top(점수·등급·진단) 폐지 — 이름·등급은 표 행에 이미 있고, 점수는 화면에서 쓰지 않는다.
      진단 문장도 아래 KPI 히어로가 같은 말을 더 정확히 하므로 중복이었다. 남길 것은 조작 버튼뿐. */
   .c3 .r-bar{display:flex;justify-content:flex-end;margin-bottom:6px}
-  /* 수명·시청유지를 가로로 — 세로형 소재에서 상세가 세로로 길어지는 것을 막는다 */
-  /* 고정 2열 — auto-fit이면 영상이 없는 소재(그래프 1개)에서 수명 곡선이 전폭으로 늘어나
-     같은 화면인데 소재마다 그래프 크기가 달라진다. 폭은 소재와 무관하게 일정해야 비교가 된다. */
-  .c3 .r-charts{display:grid;grid-template-columns:repeat(2,minmax(0,300px));justify-content:start;gap:6px 24px;margin-bottom:14px}
-  @media(max-width:900px){.c3 .r-charts{grid-template-columns:minmax(0,1fr)}}
-  .c3 .r-charts .st-blk{min-width:0}
-  .c3 .r-charts svg{max-width:100%!important}
   /* 호버하면 그 지점 값이 뜬다(네이티브 title) — 점도 같이 커져 어디를 짚었는지 보인다 */
   .hz{cursor:default}
   .hz:hover .hd{opacity:1}
@@ -177,14 +170,29 @@
      규칙: 한 행 안 = 10px · 열 사이 = 최소 56px (5배 이상 차이나야 덩어리로 읽힌다) */
   .c3 .mini2{display:grid;grid-template-columns:1fr 1fr;gap:0 56px;margin-top:8px}
   @media(max-width:1100px){.c3 .mini2{grid-template-columns:1fr;gap:0}}
-  .c3 .lr{grid-template-columns:104px 76px 80px minmax(52px,1fr);gap:10px;padding:6px 4px}
+  .c3 .lr{grid-template-columns:104px 76px 80px minmax(56px,1fr);gap:10px;padding:6px 4px}
   .c3 .lr .v{font-size:var(--fs-2)}
-  .c3 .lr .r{justify-self:start}          /* 스파크 옆에 — 열 끝으로 밀지 않는다 */
-  .c3 .lr.cmp{grid-template-columns:150px auto minmax(52px,1fr);gap:12px}
+  .c3 .lr .rslot{justify-self:start;min-width:0}   /* 스파크 옆에 — 열 끝으로 밀지 않는다 */
+  .c3 .lr .rslot .r{justify-self:unset}
+  .c3 .lr.cmp{grid-template-columns:158px auto minmax(52px,1fr);gap:12px}
   .c3 .lr.cmp .v{text-align:left}
-  /* 덩어리 제목 — 왼쪽은 성과, 오른쪽은 유저 질. 무엇끼리 묶였는지 한 줄로 밝힌다 */
-  .c3 .grp-h{font-size:var(--fs-1);font-weight:750;letter-spacing:.05em;text-transform:uppercase;
-    color:var(--faint);padding:0 4px 3px}
+  /* ── 타매체 교차 비교 ──
+     평소엔 숨어 있다가, 아래 '몰로코 같은 소재 비교' 행에 마우스를 올리면
+     위 지표 행에 그 매체의 값 차이와 추이가 겹쳐 나타난다.
+     항상 보이게 하면 한 행에 숫자가 셋이라 아무것도 읽히지 않는다 — 물어볼 때만 답한다. */
+  .c3 .xd{display:none;font-size:var(--fs-1);font-weight:800;white-space:nowrap}
+  .c3 .spk .xp{display:none;stroke-opacity:.85}
+  /* 델타는 '상위 N%' 자리를 **대체**한다 — 칸을 새로 만들면 그 열만 넓어져 표가 흔들린다.
+     비교하는 순간엔 순위보다 차이가 궁금하므로 자리를 내주는 편이 맞다. */
+  .c3 .rail.xm-moloco .lr.hasx-moloco .r,
+  .c3 .rail.xm-meta   .lr.hasx-meta   .r,
+  .c3 .rail.xm-aeo    .lr.hasx-aeo    .r{display:none}
+  .c3 .rail.xm-moloco .lr.hasx-moloco .xd-moloco,
+  .c3 .rail.xm-meta   .lr.hasx-meta   .xd-meta,
+  .c3 .rail.xm-aeo    .lr.hasx-aeo    .xd-aeo{display:inline}
+  .c3 .rail.xm-moloco .xp-moloco,.c3 .rail.xm-meta .xp-meta,.c3 .rail.xm-aeo .xp-aeo{display:block}
+  .c3 .lr.cmp[data-xm]{cursor:help}
+  .c3 .lr.cmp[data-xm]:hover{background:var(--karrot-f)}
   .c3 .divider{margin:18px 0 6px}
   .c3 .cmp2{display:grid;grid-template-columns:1fr 1fr;gap:0 56px}
   @media(max-width:1100px){.c3 .cmp2{grid-template-columns:1fr;gap:0}}
@@ -238,17 +246,15 @@
   </div>
 
   <nav class="cnav" id="cnav">
-    <a href="#c1" class="on">C1 · 원장 레일</a>
-    <a href="#c3">C3 · 판정 레일</a>
-    <a href="#fin">비교 · 추천</a>
+    <a href="#c3" class="on">C3 · 판정 레일</a>
   </nav>
 
 
 
   <!-- ═════ C3 ═════ -->
   <section class="concept" id="c3">
-    <div class="c-head"><span class="c-badge">C3</span><h2>판정 레일</h2><span class="c-tag">대표지표 3슬롯이 히어로 — 수명·시청유지는 상단 가로 2열</span></div>
-    <p class="c-sum">레일 상단의 점수·등급·진단 블록을 걷어낸 안. 이름·등급은 표 행에 이미 있고 점수는 쓰지 않으며, 진단 문장이 하던 말은 아래 <b>KPI 히어로 3슬롯</b>이 더 정확히 한다. 비운 자리에 <b>수명·시청유지를 가로 2열</b>로 올려 세로형 소재에서도 상세 높이가 늘지 않는다. 두 그래프는 호버로 구간 값을 읽고, 시청유지는 <b>유독 큰 이탈 구간 하나만</b> 표시한다.</p>
+    <div class="c-head"><span class="c-badge">C3</span><h2>판정 레일</h2><span class="c-tag">대표지표 3슬롯이 히어로 — 타매체 비교는 호버로 겹쳐 본다</span></div>
+    <p class="c-sum">레일 상단의 점수·등급·진단 블록을 걷어낸 안. 이름·등급은 표 행에 이미 있고 점수는 쓰지 않으며, 진단 문장이 하던 말은 <b>KPI 히어로 3슬롯</b>(광고비·단가·재방문)이 더 정확히 한다. 수명·시청유지는 미리보기 아래에 세로로 두고, 시청유지는 <b>유독 큰 이탈 구간 하나만</b> 적는다. 아래 <b>타매체 같은 소재 비교</b> 행에 마우스를 올리면 그 매체의 값 차이가 위 지표 행의 순위 자리에 들어오고, 미니 그래프에도 그 매체 추이가 점선으로 겹친다.</p>
     <div class="mseg" data-c="3"><button class="on" data-m="aeo">구글 AEO</button><button data-m="ace">구글 ACE</button><button data-m="moloco">몰로코</button></div>
     <div class="stage-out">
       <div class="stage-hd"><div class="stage-cap">상세보기 <i id="cap3"></i>· 표의 행을 펼친 상태</div>
@@ -258,16 +264,16 @@
     <div class="judge">
       <div class="judge-h"><b>적대자 채점</b><span>10점 만점 · 피드백 반영 후 재채점</span></div>
       <table>
-        <tr><td class="crit">가독성</td><td class="c">9</td><td class="note">첫 시선은 수명·시청유지, 둘째가 KPI 히어로, 셋째가 세부 — 읽는 순서가 강제된다.</td></tr>
+        <tr><td class="crit">가독성</td><td class="c">9</td><td class="note">첫 시선은 KPI 히어로, 둘째가 세부, 셋째가 비교 — 읽는 순서가 강제된다.</td></tr>
         <tr><td class="crit">공간 활용</td><td class="c">9</td><td class="note">미니 2열이 세부 지표를 압축해 히어로에 쓴 공간을 회수.</td></tr>
         <tr><td class="crit">계층·위계</td><td class="c">10</td><td class="note">23px KPI → 11.5px 세부의 2단 크기 위계. 점수를 걷어내며 히어로가 하나로 줄어 위계가 더 또렷해졌다.</td></tr>
         <tr><td class="crit">미니멀리즘</td><td class="c">8</td><td class="note">점수·진단 블록을 걷어내 상단 잉크가 줄었다. 남은 무게는 KPI 히어로 하나뿐.</td></tr>
-        <tr><td class="crit">직관·간결</td><td class="c">10</td><td class="note">"밀까 말까"에 3초 안에 답한다. 시청유지의 이탈 표시가 "왜"까지 답한다.</td></tr>
+        <tr><td class="crit">직관·간결</td><td class="c">10</td><td class="note">"밀까 말까"에 3초 안에 답한다. 이탈 표시가 "왜", 타매체 호버가 "다른 데선?"까지 답한다.</td></tr>
         <tr><td class="crit">톤앤매너</td><td class="c">9</td><td class="note">기존 스케일(23px)을 넘는 예외가 사라졌다 — 34px 점수를 걷어낸 결과.</td></tr>
       </table>
       <div class="cut"><b>라운드에서 잘려나간 것</b><ul>
-        <li>KPI 슬롯의 중앙값 서브라인 — 한 슬롯에 정보 4개는 과밀. 중앙값은 호버 툴팁으로.</li>
-        <li>진단 문장 자체 — KPI 히어로가 같은 말을 더 정확히 한다(2026-08-07 피드백).</li>
+        <li>덩어리 제목(성과·유저 질 / 이 매체 안·타 매체) — 라벨이 자기설명적이라 제목을 위한 제목이었다.</li>
+        <li>비교 행의 실제 그룹명(AEO_알바_전국) — "그게 뭔데"가 되므로 <b>광고그룹 내 비교</b>로. 개수는 남겼다.</li>
       </ul></div>
     </div>
   </section>
@@ -300,10 +306,18 @@ aeo:{
     {k:"첫 주 4일 이상",v:"22.4%",tier:"m",rank:"상위 46%",sp:[5,5,6,5,6,6,6,6]},
     {k:"알바 탭 접속 7일",v:"27.4%",tier:"g1",rank:"상위 24%",sp:[5,6,6,6,7,7,8,8]}],
   cmp:[
-    {k:"AEO_알바_전국 · 12개",v:"실유저 상위 12%",tier:"g2",rank:"광고비 상위 21%"},
-    {k:"알바 서비스 · 28개",v:"실유저 상위 18%",tier:"g1",rank:"광고비 상위 33%"},
-    {k:"몰로코 · 같은 소재",v:"eCPA −₩120",tier:"g2",rank:"광고비 −455만원"},
-    {k:"메타 · 같은 소재",v:"광고비 +455만원",tier:"m",rank:""}],
+    {k:"광고그룹 내 비교 · 12개",v:"실유저 상위 12%",tier:"g2",rank:"광고비 상위 21%"},
+    {k:"서비스 내 비교 · 28개",v:"실유저 상위 18%",tier:"g1",rank:"광고비 상위 33%"},
+    {k:"몰로코 같은 소재 비교",v:"eCPA −₩120",tier:"g2",rank:"광고비 −455만원",xm:"moloco",
+     x:{"광고비":{d:"−455만원",t:"g2",sp:[2,3,4,5,6,6,5,6]},
+        "노출":{d:"−41만",t:"m",sp:[3,4,5,6,7,7,7,8]},
+        "CTR":{d:"+0.78%p",t:"g2",sp:[7,8,8,9,9,10,9,10]},
+        "7일 내 재방문":{d:"−9.4%p",t:"w2",sp:[4,4,5,5,5,6,5,6]}}},
+    {k:"메타 같은 소재 비교",v:"광고비 +455만원",tier:"m",rank:"",xm:"meta",
+     x:{"광고비":{d:"+455만원",t:"m",sp:[5,6,8,9,11,12,12,13]},
+        "노출":{d:"+118만",t:"g1",sp:[6,7,9,10,12,13,12,14]},
+        "신규 전환율":{d:"−0.9%p",t:"w2",sp:[3,3,4,4,4,5,4,5]},
+        "첫 주 4일 이상":{d:"+3.1%p",t:"g2",sp:[6,6,7,7,7,8,8,8]}}}],
   life:{wk:8,hi:5,tot:"6,160만원",sp:[3,4,6,7,9,11,10,12]},
   video:{pts:[100,68,41,28,19]},
   gmore:"구글 애셋 세부 · 6"},
@@ -327,9 +341,12 @@ ace:{
     {k:"홈피드 접속 7일",v:"18.3%",tier:"w1",rank:"하위 28%",sp:[7,7,6,6,6,5,5,5]},
     {k:"설치 한 달 뒤 방문",v:"24.1%",tier:"m",rank:"상위 55%",sp:[6,6,6,6,7,6,6,6]}],
   cmp:[
-    {k:"ACE_브랜딩_홈 · 9개",v:"실유저 상위 39%",tier:"m",rank:"광고비 상위 18%"},
-    {k:"브랜딩 · 17개",v:"실유저 상위 47%",tier:"m",rank:"광고비 상위 24%"},
-    {k:"구글 AEO · 같은 소재",v:"CPM −₩310",tier:"g2",rank:""}],
+    {k:"광고그룹 내 비교 · 9개",v:"실유저 상위 39%",tier:"m",rank:"광고비 상위 18%"},
+    {k:"서비스 내 비교 · 17개",v:"실유저 상위 47%",tier:"m",rank:"광고비 상위 24%"},
+    {k:"구글 AEO 같은 소재 비교",v:"CPM −₩310",tier:"g2",rank:"",xm:"aeo",
+     x:{"광고비":{d:"−1,630만원",t:"w1",sp:[3,4,5,6,6,7,7,8]},
+        "노출":{d:"−230만",t:"w1",sp:[3,4,5,6,6,7,7,7]},
+        "조회율":{d:"+6.2%p",t:"g2",sp:[8,8,9,9,10,10,11,11]}}}],
   life:{wk:8,hi:6,tot:"7,960만원",sp:[5,6,8,9,9,10,11,11]},
   video:{pts:[100,74,52,37,26]},
   gmore:"구글 애셋 세부 · 6"},
@@ -354,10 +371,16 @@ moloco:{
     {k:"유효 복귀 단가",v:"₩4,060",tier:"m",rank:"상위 37%",sp:[8,7,7,6,6,6,6]},
     {k:"홈피드 접속 7일",v:"58.9%",tier:"g2",rank:"상위 11%",sp:[6,7,7,8,8,8,9]}],
   cmp:[
-    {k:"CG_재관여_홈피드 · 8개",v:"실유저 상위 19%",tier:"g1",rank:"광고비 상위 26%"},
-    {k:"홈피드 서비스 · 21개",v:"실유저 상위 28%",tier:"g1",rank:"광고비 상위 42%"},
-    {k:"구글 AEO · 같은 소재",v:"광고비 +455만원",tier:"m",rank:""},
-    {k:"메타 · 같은 소재",v:"eCPA +₩240",tier:"w2",rank:""}],
+    {k:"광고그룹 내 비교 · 8개",v:"실유저 상위 19%",tier:"g1",rank:"광고비 상위 26%"},
+    {k:"서비스 내 비교 · 21개",v:"실유저 상위 28%",tier:"g1",rank:"광고비 상위 42%"},
+    {k:"구글 AEO 같은 소재 비교",v:"광고비 +455만원",tier:"m",rank:"",xm:"aeo",
+     x:{"광고비":{d:"+455만원",t:"m",sp:[5,7,9,10,12,13,12]},
+        "데려온 유저":{d:"−1,240",t:"w1",sp:[3,4,5,6,7,6,5]},
+        "홈피드 접속 7일":{d:"−31.5%p",t:"w2",sp:[3,3,4,4,4,4,5]}}},
+    {k:"메타 같은 소재 비교",v:"eCPA +₩240",tier:"w2",rank:"",xm:"meta",
+     x:{"광고비":{d:"+1,210만원",t:"m",sp:[6,8,10,11,12,11,9]},
+        "eCPA":{d:"+₩240",t:"w2",sp:[9,9,8,8,8,7,7]},
+        "D1 잔존율":{d:"−6.2%p",t:"w1",sp:[5,5,6,6,6,7,7]}}}],
   life:{wk:7,hi:3,tot:"3,140만원",ended:1,sp:[3,5,6,7,8,7,5,0]},
   video:null,
   gmore:null}
@@ -372,11 +395,18 @@ const COHORT_TIP="유저 단위 실증(BigQuery 주간 갱신) — 등급·상�
 const CMP_TIP="구분선 아래 = 비교.&#10;비교군(같은 광고그룹·서비스): 값 = 실유저 위치 · 회색 = 광고비 위치.&#10;타매체(같은 소재): 그 매체와의 지표 차이.";
 
 /* 스파크라인 — min-max 정규화, 평시 회색(호버 시 CSS로 잉크색) */
-function spk(arr,w,h){
-  w=w||84;h=h||20;const p=2.5,n=arr.length,mn=Math.min(...arr),mx=Math.max(...arr);
+/* over: 겹쳐 그릴 타매체 시리즈들 {키:배열}. 같은 축(min-max)에 얹어야 모양 비교가 성립한다 —
+   각자 정규화하면 두 선이 항상 비슷해 보여 비교가 무의미해진다. */
+function spk(arr,w,h,over){
+  w=w||84;h=h||20;const p=2.5,n=arr.length;
+  const all=[...arr,...Object.values(over||{}).flat()];
+  const mn=Math.min(...all),mx=Math.max(...all);
   const X=i=>p+i*(w-2*p)/(n-1),Y=v=>h-p-((v-mn)/((mx-mn)||1))*(h-2*p);
-  let ln="";arr.forEach((v,i)=>{ln+=(i?" L":"M")+` ${X(i).toFixed(1)} ${Y(v).toFixed(1)}`;});
-  return `<svg class="spk" viewBox="0 0 ${w} ${h}" style="width:${w}px;height:${h}px"><path d="${ln}" fill="none" stroke-width="1.4" stroke-linejoin="round"/><circle class="ep" cx="${X(n-1).toFixed(1)}" cy="${Y(arr[n-1]).toFixed(1)}" r="2.2"/></svg>`;
+  const path=a=>a.map((v,i)=>(i?" L":"M")+` ${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join("");
+  let ov="";
+  for(const k in (over||{}))
+    ov+=`<path class="xp xp-${k}" d="${path(over[k].slice(0,n))}" fill="none" stroke="var(--karrot)" stroke-width="1.4" stroke-dasharray="3 2" stroke-linejoin="round"/>`;
+  return `<svg class="spk" viewBox="0 0 ${w} ${h}" style="width:${w}px;height:${h}px">${ov}<path d="${path(arr)}" fill="none" stroke-width="1.4" stroke-linejoin="round"/><circle class="ep" cx="${X(n-1).toFixed(1)}" cy="${Y(arr[n-1]).toFixed(1)}" r="2.2"/></svg>`;
 }
 /* 수명 미니 곡선(스테이지) */
 function lifeSVG(sp,W,H){
@@ -417,7 +447,7 @@ function vretSVG(pts,W,H){
     /* 구간 중앙보다 살짝 오른쪽·아래 — 정중앙에 두면 급락 구간에서 시작 점과 겹친다 */
     const mx1=X(di)+(X(di+1)-X(di))*0.66, my=(Y(pts[di])+Y(pts[di+1]))/2+5;
     g+=`<line x1="${X(di).toFixed(1)}" y1="${Y(pts[di]).toFixed(1)}" x2="${X(di+1).toFixed(1)}" y2="${Y(pts[di+1]).toFixed(1)}" stroke="var(--w1)" stroke-width="2.4"/>`;
-    g+=`<text x="${mx1.toFixed(1)}" y="${Math.max(9,my-7).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--w1)" paint-order="stroke" stroke="#FFFDF7" stroke-width="3" stroke-linejoin="round">이탈 ${mxD}%p</text>`;}
+    g+=`<text x="${mx1.toFixed(1)}" y="${Math.max(9,my-7).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="800" fill="var(--w1)" paint-order="stroke" stroke="#FFFDF7" stroke-width="3" stroke-linejoin="round">−${mxD}%p</text>`;}
   /* 차트 안 '완주 N%'는 뺐다 — 캡션이 이미 같은 값을 말한다. 한 화면에 같은 숫자를 두 번 쓰지 않는다 */
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto">${g}</svg>`;
 }
@@ -436,7 +466,7 @@ function phHTML(d){
    "수명 · 8주 · 누적 6,160만원"에서 '수명'은 그림이 이미 말하고 있어 글자만 차지한다. */
 function lifeCap(L){
   const parts=[`총 ${L.wk}주`];
-  if(L.hi)parts.push(`<span title="주간 광고비가 매체 상위 25%였던 주">👍 ${L.hi}주</span>`);
+  if(L.hi)parts.push(`<span title="주간 광고비가 매체 상위 25%였던 주">High ${L.hi}주</span>`);
   parts.push(`누적 ${L.tot}`);
   if(L.ended)parts.push(`<em>종료</em>`);
   return parts.join(" · ");
@@ -472,33 +502,39 @@ const footHTML=d=>d.gmore?`<div class="r-foot"><button class="more">${d.gmore.sp
 /* ═════ C3 · 판정 레일 ═════ */
 function render3(d){
   const kpiLabels=new Set(d.kpi.map(k=>k.k));
-  /* 반으로 자르지 않는다 — 성과 지표와 유저 질은 성격이 달라, 개수를 맞추려고 섞으면
-     한 열 안에 관련 없는 것이 들어온다. 원래 묶음(perf / cohort)을 그대로 열로 쓴다. */
   const gPerf=d.perf.filter(o=>!kpiLabels.has(o.k));
   const gCoh =d.cohort.filter(o=>!kpiLabels.has(o.k));
-  const lr=o=>`<div class="lr hv"><span class="k">${o.k}</span><b class="v num" style="color:${TIERC[o.tier]}">${o.v}</b>${o.sp?spk(o.sp,76,18):"<span></span>"}<span class="r">${o.rank||""}</span></div>`;
-  const cmp=o=>`<div class="lr cmp hv" title="${CMP_TIP.replace(/&#10;/g,"\n")}"><span class="k" title="${o.k}">${o.k}</span><b class="v num" style="color:${TIERC[o.tier]}">${o.v}</b><span class="r">${o.rank||""}</span></div>`;
-  /* 비교군도 성격이 둘이다 — '이 매체 안'과 '타 매체'. 반으로 자르면 이 경계가 흐려진다 */
-  const cIn=d.cmp.filter(o=>!/몰로코|메타|구글/.test(o.k)||/개$/.test(o.k));
-  const cX =d.cmp.filter(o=>!cIn.includes(o));
+  /* 타매체 비교군 — 지표별 차이(d)와 그 매체의 추이(sp)를 들고 있다. 호버 시 위 지표 행에 겹쳐 보인다 */
+  const xRows=d.cmp.filter(o=>o.xm);
+  const overOf=k=>{const o={};for(const r of xRows)if(r.x&&r.x[k])o[r.xm]=r.x[k].sp;return o;};
+  const deltaOf=k=>xRows.filter(r=>r.x&&r.x[k])
+    .map(r=>`<span class="xd xd-${r.xm}" style="color:${TIERC[r.x[k].t]}">${r.x[k].d}</span>`).join("");
+  const hasx=k=>xRows.filter(r=>r.x&&r.x[k]).map(r=>" hasx-"+r.xm).join("");
+  const lr=o=>`<div class="lr hv${hasx(o.k)}"><span class="k">${o.k}</span>`
+    +`<b class="v num" style="color:${TIERC[o.tier]}">${o.v}</b>`
+    +`${o.sp?spk(o.sp,76,18,overOf(o.k)):"<span></span>"}`
+    +`<span class="rslot"><span class="r">${o.rank||""}</span>${deltaOf(o.k)}</span></div>`;
+  const cmp=o=>`<div class="lr cmp hv"${o.xm?` data-xm="${o.xm}"`:""} title="${CMP_TIP.replace(/&#10;/g,"\n")}">`
+    +`<span class="k" title="${o.k}">${o.k}</span>`
+    +`<b class="v num" style="color:${TIERC[o.tier]}">${o.v}</b><span class="r">${o.rank||""}</span></div>`;
+  const cIn=d.cmp.filter(o=>!o.xm), cX=xRows;
   return `<div class="cc c3" style="--stw:340px">
-  ${stageHTML(d,1)}
+  ${stageHTML(d)}
   <div class="rail">
     <!-- 이름·라이브·등급은 넣지 않는다. 이 블록은 표에서 소재를 클릭하면 그 행 바로 아래에 열리므로
          바로 위에 같은 정보가 이미 있다. 남길 것은 조작 버튼뿐. -->
     <div class="r-bar">${navBtns}</div>
-    <div class="r-charts">${chartsHTML(d,300)}</div>
     <div class="kpis">
       ${d.kpi.map(k=>`<div class="kpi hv" title="${k.med}"><div class="role">${k.role} · ${k.k}</div><div class="kv"><b class="num" style="color:${TIERC[k.tier]}">${k.v}</b><small>${k.rank}</small></div>${spk(k.sp,118,24)}</div>`).join("")}
     </div>
     <div class="mini2">
-      <div><div class="grp-h">성과</div>${gPerf.map(lr).join("")}</div>
-      <div><div class="grp-h">유저 질</div>${gCoh.map(lr).join("")}</div>
+      <div>${gPerf.map(lr).join("")}</div>
+      <div>${gCoh.map(lr).join("")}</div>
     </div>
     <hr class="divider">
     <div class="cmp2">
-      <div><div class="grp-h">이 매체 안</div>${cIn.map(cmp).join("")}</div>
-      <div><div class="grp-h">타 매체 · 같은 소재</div>${cX.map(cmp).join("")}</div>
+      <div>${cIn.map(cmp).join("")}</div>
+      <div>${cX.map(cmp).join("")}</div>
     </div>
     ${footHTML(d)}
   </div>
@@ -509,8 +545,20 @@ const R={3:render3};
 const CUR={3:"aeo"};
 function mount(c){
   const d=M[CUR[c]];
-  document.getElementById("mk"+c).innerHTML=R[c](d);
+  const host=document.getElementById("mk"+c);
+  host.innerHTML=R[c](d);
   document.getElementById("cap"+c).textContent=d.media+" · "+d.name+" ";
+  /* 타매체 비교 행에 마우스를 올리면 위 지표 행에 그 매체 값이 겹쳐 보인다.
+     항상 보이게 하면 한 행에 숫자가 셋이라 읽히지 않는다 — 물어볼 때만 답하게 한다. */
+  const rail=host.querySelector(".rail");
+  if(!rail)return;
+  host.querySelectorAll(".lr.cmp[data-xm]").forEach(row=>{
+    const m=row.dataset.xm;
+    const on=()=>rail.classList.add("xm-"+m);
+    const off=()=>rail.classList.remove("xm-"+m);
+    row.addEventListener("mouseenter",on); row.addEventListener("mouseleave",off);
+    row.addEventListener("focusin",on);    row.addEventListener("focusout",off);
+  });
 }
 document.querySelectorAll(".mseg").forEach(seg=>{
   seg.querySelectorAll("button").forEach(b=>b.onclick=()=>{
